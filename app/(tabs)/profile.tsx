@@ -74,7 +74,9 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Uploading photo from camera...');
+      await updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Photo upload complete');
     }
   };
 
@@ -96,7 +98,9 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Uploading photo from library...');
+      await updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Photo upload complete');
     }
   };
 

@@ -142,23 +142,37 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfilePicture = async (uri: string | null) => {
+    console.log('🖼️ updateProfilePicture called with:', uri?.substring(0, 50));
+    console.log('🖼️ session user id:', session?.user?.id);
+
     // If we have a new image, upload it to Supabase Storage
     let publicUrl = uri;
 
     if (uri && session?.user?.id && !uri.startsWith('http')) {
       try {
-        const fileExt = uri.split('.').pop() || 'jpg';
+        const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
         const fileName = `${session.user.id}/avatar.${fileExt}`;
+        console.log('🖼️ Uploading to:', fileName);
+
+        // Fetch the image and convert to ArrayBuffer (works better in RN)
+        const response = await fetch(uri);
+        const arrayBuffer = await response.arrayBuffer();
+        console.log('🖼️ ArrayBuffer size:', arrayBuffer.byteLength);
 
         // Upload to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, { uri } as any, {
+          .upload(fileName, arrayBuffer, {
             upsert: true,
             contentType: `image/${fileExt}`,
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('🖼️ Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        console.log('🖼️ Upload successful!');
 
         // Get public URL
         const { data: urlData } = supabase.storage
@@ -166,15 +180,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           .getPublicUrl(fileName);
 
         publicUrl = urlData.publicUrl;
+        console.log('🖼️ Public URL:', publicUrl);
       } catch (error) {
-        console.error('Error uploading avatar:', error);
+        console.error('🖼️ Error uploading avatar:', error);
         // Fall back to local URI if upload fails
         publicUrl = uri;
       }
+    } else {
+      console.log('🖼️ Skipping upload - uri:', !!uri, 'session:', !!session?.user?.id, 'isHttp:', uri?.startsWith('http'));
     }
 
     setData(prev => ({ ...prev, profilePicture: publicUrl }));
     await updateProfile({ profile_picture_url: publicUrl });
+    console.log('🖼️ Profile updated with picture URL');
   };
 
   const completeOnboarding = async () => {

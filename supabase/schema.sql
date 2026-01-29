@@ -93,3 +93,27 @@ INSERT INTO resources (title, description, category, icon, target_roles) VALUES
   ('Supporting Your Child', 'Guide for parents navigating school during treatment', 'Parent Guide', 'heart-outline', '{parent}'),
   ('504 Plans & IEPs', 'Understanding educational accommodations', 'Legal Rights', 'document-outline', '{parent, staff}'),
   ('Creating Inclusive Classrooms', 'Best practices for supporting students with health conditions', 'Teaching', 'school-outline', '{staff}');
+
+-- ============================================
+-- Storage: Avatar bucket (run separately or create manually in Dashboard)
+-- ============================================
+-- Note: Create bucket manually in Dashboard → Storage → New bucket → "avatars" (public)
+-- Or run these SQL commands:
+
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
+
+-- Storage policies for avatars bucket
+CREATE POLICY "Users can upload own avatar"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Users can update own avatar"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Public read access for avatars"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'avatars');
