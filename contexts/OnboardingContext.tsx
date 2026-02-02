@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
@@ -13,6 +14,11 @@ interface OnboardingData {
   topics: string[];
   profilePicture: string | null;
   isCompleted: boolean;
+}
+
+export interface BookmarkWithTimestamp {
+  resourceId: string;
+  savedAt: number;
 }
 
 interface OnboardingContextType {
@@ -29,6 +35,12 @@ interface OnboardingContextType {
   resetOnboarding: () => Promise<void>;
   signInAnonymously: () => Promise<void>;
   signOut: () => Promise<void>;
+  // Bookmarks
+  bookmarks: string[];
+  bookmarksWithTimestamps: BookmarkWithTimestamp[];
+  addBookmark: (resourceId: string) => Promise<void>;
+  removeBookmark: (resourceId: string) => Promise<void>;
+  isBookmarked: (resourceId: string) => boolean;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -47,6 +59,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<OnboardingData>(initialData);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
 
   // Listen for auth state changes
   useEffect(() => {
@@ -93,11 +107,44 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           profilePicture: profile.profile_picture_url,
           isCompleted: profile.is_completed || false,
         });
+        // Fetch bookmarks
+        fetchBookmarks(userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch bookmarks from Supabase
+  const fetchBookmarks = async (userId: string) => {
+    try {
+      const { data: bookmarkData, error } = await supabase
+        .from('user_bookmarks')
+        .select('resource_id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (bookmarkData) {
+        const bookmarkIds = bookmarkData.map(b => b.resource_id);
+        const withTimestamps: BookmarkWithTimestamp[] = bookmarkData.map(b => ({
+          resourceId: b.resource_id,
+          savedAt: new Date(b.created_at).getTime(),
+        }));
+        setBookmarks(bookmarkIds);
+        setBookmarksWithTimestamps(withTimestamps);
+        AsyncStorage.setItem('@schoolkit_bookmarks', JSON.stringify(bookmarkIds));
+        AsyncStorage.setItem('@schoolkit_bookmarks_timestamps', JSON.stringify(withTimestamps));
+      }
+    } catch (error) {
+      console.error('Error fetching bookmarks:', error);
+      // Try to load from cache
+      const cached = await AsyncStorage.getItem('@schoolkit_bookmarks');
+      const cachedTimestamps = await AsyncStorage.getItem('@schoolkit_bookmarks_timestamps');
+      if (cached) setBookmarks(JSON.parse(cached));
+      if (cachedTimestamps) setBookmarksWithTimestamps(JSON.parse(cachedTimestamps));
     }
   };
 
@@ -159,7 +206,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         const arrayBuffer = await response.arrayBuffer();
         console.log('🖼️ ArrayBuffer size:', arrayBuffer.byteLength);
 
-        // Upload to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, arrayBuffer, {
@@ -174,7 +220,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         console.log('🖼️ Upload successful!');
 
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(fileName);
@@ -182,7 +227,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         publicUrl = urlData.publicUrl;
         console.log('🖼️ Public URL:', publicUrl);
       } catch (error) {
-        console.error('🖼️ Error uploading avatar:', error);
         // Fall back to local URI if upload fails
         publicUrl = uri;
       }
@@ -213,18 +257,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Sign in anonymously (for users who don't want to create an account)
   const signInAnonymously = async () => {
-    console.log('📱 signInAnonymously called');
     setLoading(true);
-    const { data, error } = await supabase.auth.signInAnonymously();
-    console.log('📱 signInAnonymously result:', { userId: data?.user?.id, error: error?.message });
+    const { error } = await supabase.auth.signInAnonymously();
     if (error) {
       console.error('Error signing in:', error);
       setLoading(false);
       throw error;
     }
-    console.log('📱 signInAnonymously success, user:', data?.user?.id);
   };
 
   const signOut = async () => {
@@ -234,7 +274,84 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       throw error;
     }
     setData(initialData);
+    setBookmarks([]);
   };
+
+  // Bookmark methods
+  const addBookmark = async (resourceId: string) => {
+    const now = Date.now();
+    const newBookmark: BookmarkWithTimestamp = { resourceId, savedAt: now };
+
+    setBookmarks(prev => {
+      const updated = [resourceId, ...prev];
+      AsyncStorage.setItem('@schoolkit_bookmarks', JSON.stringify(updated));
+      return updated;
+    });
+    setBookmarksWithTimestamps(prev => {
+      const updated = [newBookmark, ...prev];
+      AsyncStorage.setItem('@schoolkit_bookmarks_timestamps', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (!session?.user?.id) return;
+    const { error } = await supabase
+      .from('user_bookmarks')
+      .insert({ user_id: session.user.id, resource_id: resourceId });
+
+    if (error) {
+      console.error('Error adding bookmark:', error);
+      setBookmarks(prev => {
+        const updated = prev.filter(id => id !== resourceId);
+        AsyncStorage.setItem('@schoolkit_bookmarks', JSON.stringify(updated));
+        return updated;
+      });
+      setBookmarksWithTimestamps(prev => {
+        const updated = prev.filter(b => b.resourceId !== resourceId);
+        AsyncStorage.setItem('@schoolkit_bookmarks_timestamps', JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
+
+  const removeBookmark = async (resourceId: string) => {
+    const removedBookmark = bookmarksWithTimestamps.find(b => b.resourceId === resourceId);
+
+    setBookmarks(prev => {
+      const updated = prev.filter(id => id !== resourceId);
+      AsyncStorage.setItem('@schoolkit_bookmarks', JSON.stringify(updated));
+      return updated;
+    });
+    setBookmarksWithTimestamps(prev => {
+      const updated = prev.filter(b => b.resourceId !== resourceId);
+      AsyncStorage.setItem('@schoolkit_bookmarks_timestamps', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (!session?.user?.id) return;
+    const { error } = await supabase
+      .from('user_bookmarks')
+      .delete()
+      .eq('user_id', session.user.id)
+      .eq('resource_id', resourceId);
+
+    if (error) {
+      console.error('Error removing bookmark:', error);
+      setBookmarks(prev => {
+        const updated = [resourceId, ...prev];
+        AsyncStorage.setItem('@schoolkit_bookmarks', JSON.stringify(updated));
+        return updated;
+      });
+      if (removedBookmark) {
+        setBookmarksWithTimestamps(prev => {
+          const updated = [removedBookmark, ...prev];
+          AsyncStorage.setItem('@schoolkit_bookmarks_timestamps', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    }
+  };
+
+  const isBookmarked = (resourceId: string) => bookmarks.includes(resourceId);
 
   return (
     <OnboardingContext.Provider
@@ -252,6 +369,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         resetOnboarding,
         signInAnonymously,
         signOut,
+        bookmarks,
+        bookmarksWithTimestamps,
+        addBookmark,
+        removeBookmark,
+        isBookmarked,
       }}
     >
       {children}

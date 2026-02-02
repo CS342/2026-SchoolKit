@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
 
-// Resource data with consistent colors
+// Resource data - same as search.tsx for consistency
 const ALL_RESOURCES = [
   { id: '1', title: 'What you might experience', category: 'Health', icon: 'medical', color: '#7B68EE' },
   { id: '2', title: 'Friends and social life', category: 'Social', icon: 'people', color: '#0EA5E9' },
@@ -19,33 +19,22 @@ const ALL_RESOURCES = [
   { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
 ];
 
-// Default color for topics not in resources
-const DEFAULT_COLOR = '#7B68EE';
-
-interface TopicCardProps {
+interface ResourceCardProps {
+  id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  category: string;
+  icon: string;
   color: string;
-  resourceId: string | null;
   onPress: () => void;
 }
 
-function TopicCard({ title, icon, color, resourceId, onPress }: TopicCardProps) {
+function ResourceCard({ id, title, category, icon, color, onPress }: ResourceCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
+      Animated.timing(scaleAnim, { toValue: 0.96, duration: 100, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
     ]).start();
     onPress();
   };
@@ -54,16 +43,21 @@ function TopicCard({ title, icon, color, resourceId, onPress }: TopicCardProps) 
     <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
       <Animated.View
         style={[
-          styles.topicCard,
+          styles.resourceCard,
           { borderLeftColor: color, borderLeftWidth: 8, transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={[styles.topicIcon, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon} size={42} color={color} />
+        <View style={[styles.resourceIcon, { backgroundColor: color + '20' }]}>
+          <Ionicons name={icon as any} size={42} color={color} />
         </View>
-        <Text style={styles.topicTitle}>{title}</Text>
-        <View style={styles.topicActions}>
-          {resourceId && <BookmarkButton resourceId={resourceId} color={color} size={26} />}
+        <View style={styles.resourceContent}>
+          <Text style={styles.resourceTitle}>{title}</Text>
+          <View style={[styles.categoryBadge, { backgroundColor: color + '15' }]}>
+            <Text style={[styles.resourceCategory, { color }]}>{category}</Text>
+          </View>
+        </View>
+        <View style={styles.resourceActions}>
+          <BookmarkButton resourceId={id} color={color} />
           <Ionicons name="chevron-forward" size={30} color={color} />
         </View>
       </Animated.View>
@@ -71,79 +65,60 @@ function TopicCard({ title, icon, color, resourceId, onPress }: TopicCardProps) 
   );
 }
 
-export default function ForYouScreen() {
+export default function BookmarksScreen() {
   const router = useRouter();
-  const { data } = useOnboarding();
+  const { bookmarksWithTimestamps } = useOnboarding();
 
-  const getRoleDisplayName = () => {
-    switch (data.role) {
-      case 'student-k8':
-        return 'Student (K-8)';
-      case 'student-hs':
-        return 'Student (High School+)';
-      case 'parent':
-        return 'Parent/Caregiver';
-      case 'staff':
-        return 'School Staff';
-      default:
-        return 'User';
-    }
-  };
+  // Get bookmarked resources sorted by most recently saved
+  const bookmarkedResources = bookmarksWithTimestamps
+    .map(b => {
+      const resource = ALL_RESOURCES.find(r => r.id === b.resourceId);
+      return resource ? { ...resource, savedAt: b.savedAt } : null;
+    })
+    .filter((r): r is typeof ALL_RESOURCES[0] & { savedAt: number } => r !== null);
 
-  const handleTopicPress = (topic: string) => {
-    router.push(`/topic-detail?title=${encodeURIComponent(topic)}`);
+  const handleResourcePress = (id: string, title: string) => {
+    router.push(`/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.name}>{data.name}!</Text>
-        </View>
+        <Text style={styles.headerTitle}>Saved Resources</Text>
+        <Text style={styles.headerSubtitle}>
+          {bookmarkedResources.length} {bookmarkedResources.length === 1 ? 'item' : 'items'} saved
+        </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.roleBadge}>
-          <Ionicons name="person-circle-outline" size={20} color="#7B68EE" />
-          <Text style={styles.roleText}>{getRoleDisplayName()}</Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>Your Support Topics</Text>
-
-        {data.topics.length > 0 ? (
-          <View style={styles.topicsContainer}>
-            {data.topics.map((topic, index) => {
-              const resource = ALL_RESOURCES.find(r => r.title === topic);
-              const color = resource?.color || DEFAULT_COLOR;
-              const icon = resource?.icon || 'bookmarks';
-              return (
-                <TopicCard
-                  key={index}
-                  title={topic}
-                  icon={icon as keyof typeof Ionicons.glyphMap}
-                  color={color}
-                  resourceId={resource?.id || null}
-                  onPress={() => handleTopicPress(topic)}
-                />
-              );
-            })}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {bookmarkedResources.length > 0 ? (
+          <View style={styles.resourcesContainer}>
+            {bookmarkedResources.map((resource) => (
+              <ResourceCard
+                key={resource.id}
+                id={resource.id}
+                title={resource.title}
+                category={resource.category}
+                icon={resource.icon}
+                color={resource.color}
+                onPress={() => handleResourcePress(resource.id, resource.title)}
+              />
+            ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="compass-outline" size={64} color="#C8C8D8" />
-            <Text style={styles.emptyTitle}>No topics selected yet</Text>
+            <Ionicons name="bookmark-outline" size={80} color="#C8C8D8" />
+            <Text style={styles.emptyTitle}>No saved resources yet</Text>
             <Text style={styles.emptyText}>
-              Visit your profile to update your interests and get personalized support.
+              Tap the bookmark icon on any resource to save it here for quick access.
             </Text>
             <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push('/(tabs)/profile')}
+              style={styles.browseButton}
+              onPress={() => router.push('/(tabs)/search')}
+              activeOpacity={0.8}
             >
-              <Text style={styles.emptyButtonText}>Update Profile</Text>
+              <Ionicons name="search" size={20} color="#FFFFFF" />
+              <Text style={styles.browseButtonText}>Browse Resources</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -160,7 +135,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 28,
+    paddingBottom: 24,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 2,
     borderBottomColor: '#E8E8F0',
@@ -170,55 +145,26 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 5,
   },
-  greeting: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#6B6B85',
-    marginBottom: 6,
-  },
-  name: {
+  headerTitle: {
     fontSize: 38,
     fontWeight: '800',
     color: '#2D2D44',
+    marginBottom: 6,
+  },
+  headerSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B6B85',
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 24,
     paddingBottom: 40,
   },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#F5F3FF',
-    borderRadius: 24,
-    marginBottom: 32,
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: '#E8E0FF',
+  resourcesContainer: {
+    gap: 16,
   },
-  roleText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7B68EE',
-    marginLeft: 10,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 24,
-  },
-  topicsContainer: {
-    gap: 18,
-  },
-  topicCard: {
+  resourceCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -232,7 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 6,
   },
-  topicIcon: {
+  resourceIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
@@ -245,58 +191,67 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  topicTitle: {
+  resourceContent: {
     flex: 1,
+  },
+  resourceTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#2D2D44',
+    marginBottom: 8,
     lineHeight: 28,
   },
-  topicActions: {
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  resourceCategory: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  resourceActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
     paddingHorizontal: 32,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
   },
   emptyTitle: {
     fontSize: 26,
     fontWeight: '800',
     color: '#2D2D44',
     marginTop: 24,
-    marginBottom: 14,
+    marginBottom: 12,
     textAlign: 'center',
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '500',
     color: '#6B6B85',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 32,
   },
-  emptyButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+  browseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#7B68EE',
-    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+    gap: 10,
     shadowColor: '#7B68EE',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
   },
-  emptyButtonText: {
-    fontSize: 18,
+  browseButtonText: {
+    fontSize: 17,
     fontWeight: '700',
     color: '#FFFFFF',
   },

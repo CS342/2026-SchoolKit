@@ -4,45 +4,48 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
-const STUDENT_TOPICS = [
-  'What you might experience',
-  'Friends and social life',
-  'Dealing with feelings',
-  'Keeping up with school during treatment',
-  'Getting back to school after treatment',
-  'Coping with stress and emotions',
+interface TopicOption {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+}
+
+const STUDENT_TOPICS: TopicOption[] = [
+  { label: 'What you might experience', icon: 'leaf-outline', color: '#7B68EE' },
+  { label: 'Friends and social life', icon: 'people-outline', color: '#0EA5E9' },
+  { label: 'Dealing with feelings', icon: 'heart-outline', color: '#EC4899' },
+  { label: 'Keeping up with school during treatment', icon: 'book-outline', color: '#66D9A6' },
+  { label: 'Getting back to school after treatment', icon: 'arrow-forward-circle-outline', color: '#F59E0B' },
+  { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#7B68EE' },
 ];
 
-const PARENT_TOPICS = [
-  'Supporting my child during treatment',
-  'Becoming a strong advocate for my child',
-  'Collaborating with the school team',
-  'Working with healthcare providers',
-  'Easing the financial burden',
-  'Caregiving through cultural or language barriers',
-  'Coping with stress and emotions',
-  'Helping my child with friendships',
+const PARENT_TOPICS: TopicOption[] = [
+  { label: 'Supporting my child during treatment', icon: 'heart-outline', color: '#EC4899' },
+  { label: 'Becoming a strong advocate for my child', icon: 'megaphone-outline', color: '#7B68EE' },
+  { label: 'Collaborating with the school team', icon: 'people-outline', color: '#0EA5E9' },
+  { label: 'Working with healthcare providers', icon: 'medical-outline', color: '#66D9A6' },
+  { label: 'Easing the financial burden', icon: 'wallet-outline', color: '#F59E0B' },
+  { label: 'Caregiving through cultural or language barriers', icon: 'globe-outline', color: '#7B68EE' },
+  { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#EC4899' },
+  { label: 'Helping my child with friendships', icon: 'chatbubbles-outline', color: '#0EA5E9' },
 ];
 
-const STAFF_TOPICS = [
-  'Supporting students during treatment',
-  'Helping students transition back to school',
-  'Fostering emotional and physical safety',
-  'Working with families and medical teams',
-  'Collaborating with healthcare providers',
-  'Understanding treatment side effects',
+const STAFF_TOPICS: TopicOption[] = [
+  { label: 'Supporting students during treatment', icon: 'heart-outline', color: '#EC4899' },
+  { label: 'Helping students transition back to school', icon: 'arrow-forward-circle-outline', color: '#7B68EE' },
+  { label: 'Fostering emotional and physical safety', icon: 'shield-outline', color: '#66D9A6' },
+  { label: 'Working with families and medical teams', icon: 'people-outline', color: '#0EA5E9' },
+  { label: 'Collaborating with healthcare providers', icon: 'medical-outline', color: '#F59E0B' },
+  { label: 'Understanding treatment side effects', icon: 'information-circle-outline', color: '#7B68EE' },
 ];
-
-const TOPIC_COLORS = ['#7B68EE', '#7B68EE', '#7B68EE', '#7B68EE', '#7B68EE', '#7B68EE'];
 
 interface TopicCardProps {
-  topic: string;
-  color: string;
+  topic: TopicOption;
   isSelected: boolean;
   onPress: () => void;
 }
 
-function TopicCard({ topic, color, isSelected, onPress }: TopicCardProps) {
+function TopicCard({ topic, isSelected, onPress }: TopicCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -68,19 +71,22 @@ function TopicCard({ topic, color, isSelected, onPress }: TopicCardProps) {
         style={[
           styles.topicCard,
           isSelected && {
-            borderColor: color,
+            borderColor: topic.color,
             borderLeftWidth: 6,
-            backgroundColor: color + '0D',
+            backgroundColor: topic.color + '0D',
           },
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
+        <View style={[styles.iconContainer, { backgroundColor: topic.color + '20' }]}>
+          <Ionicons name={topic.icon} size={26} color={topic.color} />
+        </View>
         <Text style={[styles.topicText, isSelected && styles.topicTextSelected]}>
-          {topic}
+          {topic.label}
         </Text>
         {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+          <View style={[styles.checkmark, { backgroundColor: topic.color }]}>
+            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
           </View>
         )}
       </Animated.View>
@@ -92,6 +98,9 @@ export default function Step4Screen() {
   const router = useRouter();
   const { data, updateTopics, completeOnboarding } = useOnboarding();
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+
+  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const stepText = isStudent ? 'Step 5 of 5' : 'Step 4 of 4';
 
   const availableTopics = useMemo(() => {
     switch (data.role) {
@@ -133,7 +142,7 @@ export default function Step4Screen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 4 of 4</Text>
+        <Text style={styles.stepText}>{stepText}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -147,24 +156,24 @@ export default function Step4Screen() {
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
+            {isStudent && <View style={[styles.progressDot, styles.progressDotActive]} />}
           </View>
 
-          <Text style={styles.title}>What would you like support with right now?</Text>
+          <Text style={styles.title}>What would you like support with?</Text>
           <Text style={styles.subtitle}>
-            Pick anything that feels helpful - you don't need to know what you need yet, exploring is okay
+            Choose what feels right - you can always explore more later.
           </Text>
           <Text style={styles.count}>
             {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
           </Text>
 
           <View style={styles.topicsContainer}>
-            {availableTopics.map((topic, index) => (
+            {availableTopics.map((topic) => (
               <TopicCard
-                key={topic}
+                key={topic.label}
                 topic={topic}
-                color={TOPIC_COLORS[index % TOPIC_COLORS.length]}
-                isSelected={selectedTopics.includes(topic)}
-                onPress={() => toggleTopic(topic)}
+                isSelected={selectedTopics.includes(topic.label)}
+                onPress={() => toggleTopic(topic.label)}
               />
             ))}
           </View>
@@ -229,7 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 48,
   },
   progressDot: {
     width: 12,
@@ -242,10 +251,10 @@ const styles = StyleSheet.create({
     width: 32,
   },
   title: {
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 14,
+    marginBottom: 12,
     textAlign: 'center',
     lineHeight: 44,
   },
@@ -259,7 +268,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   count: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#7B68EE',
     textAlign: 'center',
@@ -273,30 +282,37 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 3,
     borderColor: '#E8E8F0',
-    padding: 22,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
   },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
   topicText: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '600',
     color: '#2D2D44',
-    lineHeight: 25,
+    lineHeight: 28,
   },
   topicTextSelected: {
     fontWeight: '700',
   },
   checkmark: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,

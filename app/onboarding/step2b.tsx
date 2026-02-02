@@ -2,27 +2,42 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
-const SCHOOL_STATUS_OPTIONS: {
-  value: SchoolStatus;
+interface GradeOption {
+  value: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
-}[] = [
-  { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: '#7B68EE' },
-  { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: '#0EA5E9' },
-  { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: '#66D9A6' },
-  { value: 'special-needs', label: 'Home/hospital school', icon: 'laptop-outline', color: '#EC4899' },
+}
+
+const K8_GRADES: GradeOption[] = [
+  { value: 'K', label: 'Kindergarten', icon: 'flower-outline', color: '#EC4899' },
+  { value: '1', label: '1st Grade', icon: 'star-outline', color: '#7B68EE' },
+  { value: '2', label: '2nd Grade', icon: 'star-outline', color: '#0EA5E9' },
+  { value: '3', label: '3rd Grade', icon: 'rocket-outline', color: '#66D9A6' },
+  { value: '4', label: '4th Grade', icon: 'rocket-outline', color: '#F59E0B' },
+  { value: '5', label: '5th Grade', icon: 'planet-outline', color: '#7B68EE' },
+  { value: '6', label: '6th Grade', icon: 'planet-outline', color: '#EC4899' },
+  { value: '7', label: '7th Grade', icon: 'compass-outline', color: '#0EA5E9' },
+  { value: '8', label: '8th Grade', icon: 'compass-outline', color: '#66D9A6' },
 ];
 
-interface OptionCardProps {
-  option: { value: SchoolStatus; label: string; icon: keyof typeof Ionicons.glyphMap; color: string };
+const HS_GRADES: GradeOption[] = [
+  { value: '9', label: '9th Grade (Freshman)', icon: 'leaf-outline', color: '#66D9A6' },
+  { value: '10', label: '10th Grade (Sophomore)', icon: 'flash-outline', color: '#0EA5E9' },
+  { value: '11', label: '11th Grade (Junior)', icon: 'ribbon-outline', color: '#7B68EE' },
+  { value: '12', label: '12th Grade (Senior)', icon: 'trophy-outline', color: '#F59E0B' },
+  { value: 'college', label: 'College / University', icon: 'school-outline', color: '#EC4899' },
+];
+
+interface GradeCardProps {
+  grade: GradeOption;
   isSelected: boolean;
   onPress: () => void;
 }
 
-function OptionCard({ option, isSelected, onPress }: OptionCardProps) {
+function GradeCard({ grade, isSelected, onPress }: GradeCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -46,24 +61,24 @@ function OptionCard({ option, isSelected, onPress }: OptionCardProps) {
     <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
       <Animated.View
         style={[
-          styles.optionCard,
+          styles.gradeCard,
           isSelected && {
-            borderColor: option.color,
+            borderColor: grade.color,
             borderLeftWidth: 6,
-            backgroundColor: option.color + '0D',
+            backgroundColor: grade.color + '0D',
           },
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={[styles.iconContainer, { backgroundColor: option.color + '20' }]}>
-          <Ionicons name={option.icon} size={28} color={option.color} />
+        <View style={[styles.iconContainer, { backgroundColor: grade.color + '20' }]}>
+          <Ionicons name={grade.icon} size={24} color={grade.color} />
         </View>
-        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-          {option.label}
+        <Text style={[styles.gradeText, isSelected && styles.gradeTextSelected]}>
+          {grade.label}
         </Text>
         {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: option.color }]}>
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+          <View style={[styles.checkmark, { backgroundColor: grade.color }]}>
+            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
           </View>
         )}
       </Animated.View>
@@ -71,31 +86,23 @@ function OptionCard({ option, isSelected, onPress }: OptionCardProps) {
   );
 }
 
-export default function Step3Screen() {
+export default function Step2bScreen() {
   const router = useRouter();
-  const { data, updateSchoolStatuses } = useOnboarding();
-  const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
+  const { data, updateGradeLevel } = useOnboarding();
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
-  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
-  const title = isStudent ? 'Your school journey' : "Your child's school journey";
-  const stepText = isStudent ? 'Step 4 of 5' : 'Step 3 of 4';
-
-  const toggleStatus = (status: SchoolStatus) => {
-    setSelectedStatuses(prev =>
-      prev.includes(status)
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
-    );
-  };
+  const grades = data.role === 'student-k8' ? K8_GRADES : HS_GRADES;
 
   const handleContinue = () => {
-    updateSchoolStatuses(selectedStatuses);
-    router.push('/onboarding/step4');
+    if (selectedGrade) {
+      updateGradeLevel(selectedGrade);
+      router.push('/onboarding/step3');
+    }
   };
 
   const handleSkip = () => {
-    updateSchoolStatuses([]);
-    router.push('/onboarding/step4');
+    updateGradeLevel('');
+    router.push('/onboarding/step3');
   };
 
   return (
@@ -104,7 +111,7 @@ export default function Step3Screen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
-        <Text style={styles.stepText}>{stepText}</Text>
+        <Text style={styles.stepText}>Step 3 of 5</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -117,25 +124,22 @@ export default function Step3Screen() {
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, isStudent && styles.progressDotActive]} />
-            {isStudent && <View style={styles.progressDot} />}
+            <View style={styles.progressDot} />
+            <View style={styles.progressDot} />
           </View>
 
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>What grade are you in?</Text>
           <Text style={styles.subtitle}>
-            Every path is valid - we're here to support yours.
-          </Text>
-          <Text style={styles.selectHint}>
-            Select all that apply
+            We'll tailor resources to fit where you are.
           </Text>
 
-          <View style={styles.options}>
-            {SCHOOL_STATUS_OPTIONS.map((option) => (
-              <OptionCard
-                key={option.value}
-                option={option}
-                isSelected={selectedStatuses.includes(option.value)}
-                onPress={() => toggleStatus(option.value)}
+          <View style={styles.gradesContainer}>
+            {grades.map((grade) => (
+              <GradeCard
+                key={grade.value}
+                grade={grade}
+                isSelected={selectedGrade === grade.value}
+                onPress={() => setSelectedGrade(grade.value)}
               />
             ))}
           </View>
@@ -152,17 +156,12 @@ export default function Step3Screen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, selectedStatuses.length === 0 && styles.buttonDisabled]}
+          style={[styles.button, !selectedGrade && styles.buttonDisabled]}
           onPress={handleContinue}
-          disabled={selectedStatuses.length === 0}
+          disabled={!selectedGrade}
           activeOpacity={0.8}
         >
-          <Text
-            style={[
-              styles.buttonText,
-              selectedStatuses.length === 0 && styles.buttonTextDisabled,
-            ]}
-          >
+          <Text style={[styles.buttonText, !selectedGrade && styles.buttonTextDisabled]}>
             Continue
           </Text>
         </TouchableOpacity>
@@ -194,12 +193,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 20,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
-    paddingBottom: 40,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -229,27 +228,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  selectHint: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7B68EE',
-    textAlign: 'center',
     marginBottom: 28,
   },
-  options: {
-    gap: 14,
+  gradesContainer: {
+    gap: 10,
   },
-  optionCard: {
+  gradeCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 18,
     borderWidth: 3,
     borderColor: '#E8E8F0',
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -257,27 +248,26 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  optionText: {
+  gradeText: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: '600',
     color: '#2D2D44',
-    lineHeight: 28,
   },
-  optionTextSelected: {
+  gradeTextSelected: {
     fontWeight: '700',
   },
   checkmark: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
