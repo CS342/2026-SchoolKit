@@ -60,10 +60,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#7B68EE',
     textAlign: 'center',
-    lineHeight: 38,
+    lineHeight: 32,
   },
 });

@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BookmarkButton } from "../../components/BookmarkButton";
+import { DownloadIndicator } from "../../components/DownloadIndicator";
 
 const ALL_RESOURCES = [
   {
@@ -160,6 +161,7 @@ function ResourceCard({
           </View>
         </View>
         <View style={styles.resourceActions}>
+          <DownloadIndicator resourceId={id} />
           <BookmarkButton resourceId={id} color={color} />
           <Ionicons name="chevron-forward" size={30} color={color} />
         </View>

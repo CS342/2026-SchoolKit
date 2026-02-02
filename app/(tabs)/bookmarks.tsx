@@ -1,9 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
+import { DownloadIndicator } from '../../components/DownloadIndicator';
+import { useOffline } from '../../contexts/OfflineContext';
 
 // Resource data - same as search.tsx for consistency
 const ALL_RESOURCES = [
@@ -26,9 +28,10 @@ interface ResourceCardProps {
   icon: string;
   color: string;
   onPress: () => void;
+  showBookmark?: boolean;
 }
 
-function ResourceCard({ id, title, category, icon, color, onPress }: ResourceCardProps) {
+function ResourceCard({ id, title, category, icon, color, onPress, showBookmark = true }: ResourceCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -57,7 +60,8 @@ function ResourceCard({ id, title, category, icon, color, onPress }: ResourceCar
           </View>
         </View>
         <View style={styles.resourceActions}>
-          <BookmarkButton resourceId={id} color={color} />
+          <DownloadIndicator resourceId={id} />
+          {showBookmark && <BookmarkButton resourceId={id} color={color} />}
           <Ionicons name="chevron-forward" size={30} color={color} />
         </View>
       </Animated.View>
@@ -65,9 +69,20 @@ function ResourceCard({ id, title, category, icon, color, onPress }: ResourceCar
   );
 }
 
+type TabType = 'saved' | 'downloaded';
+
 export default function BookmarksScreen() {
   const router = useRouter();
-  const { bookmarksWithTimestamps } = useOnboarding();
+  const { bookmarksWithTimestamps, downloads } = useOnboarding();
+  const { isOnline } = useOffline();
+  const [activeTab, setActiveTab] = useState<TabType>('saved');
+
+  // When offline, force Downloaded tab
+  useEffect(() => {
+    if (!isOnline) {
+      setActiveTab('downloaded');
+    }
+  }, [isOnline]);
 
   // Get bookmarked resources sorted by most recently saved
   const bookmarkedResources = bookmarksWithTimestamps
@@ -77,23 +92,70 @@ export default function BookmarksScreen() {
     })
     .filter((r): r is typeof ALL_RESOURCES[0] & { savedAt: number } => r !== null);
 
+  // Get downloaded resources
+  const downloadedResources = downloads
+    .map(id => ALL_RESOURCES.find(r => r.id === id))
+    .filter((r): r is typeof ALL_RESOURCES[0] => r !== undefined);
+
   const handleResourcePress = (id: string, title: string) => {
     router.push(`/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any);
   };
 
+  const currentResources = activeTab === 'saved' ? bookmarkedResources : downloadedResources;
+  const emptyIcon = activeTab === 'saved' ? 'bookmark-outline' : 'cloud-download-outline';
+  const emptyTitle = activeTab === 'saved' ? 'No saved resources yet' : 'No downloaded resources';
+  const emptyText = activeTab === 'saved'
+    ? 'Tap the bookmark icon on any resource to save it here for quick access.'
+    : 'Download resources from topic pages to access them offline.';
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Saved Resources</Text>
-        <Text style={styles.headerSubtitle}>
-          {bookmarkedResources.length} {bookmarkedResources.length === 1 ? 'item' : 'items'} saved
-        </Text>
+        <Text style={styles.headerTitle}>My Resources</Text>
+        {!isOnline && (
+          <View style={styles.offlineBadge}>
+            <Ionicons name="cloud-offline" size={14} color="#F59E0B" />
+            <Text style={styles.offlineBadgeText}>Offline</Text>
+          </View>
+        )}
       </View>
 
+      {/* Tab Selector - hidden when offline */}
+      {isOnline && (
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
+            onPress={() => setActiveTab('saved')}
+          >
+            <Ionicons
+              name={activeTab === 'saved' ? 'bookmark' : 'bookmark-outline'}
+              size={20}
+              color={activeTab === 'saved' ? '#7B68EE' : '#8E8EA8'}
+            />
+            <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>
+              Saved ({bookmarkedResources.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'downloaded' && styles.tabActive]}
+            onPress={() => setActiveTab('downloaded')}
+          >
+            <Ionicons
+              name={activeTab === 'downloaded' ? 'cloud-done' : 'cloud-download-outline'}
+              size={20}
+              color={activeTab === 'downloaded' ? '#7B68EE' : '#8E8EA8'}
+            />
+            <Text style={[styles.tabText, activeTab === 'downloaded' && styles.tabTextActive]}>
+              Downloaded ({downloadedResources.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {bookmarkedResources.length > 0 ? (
+        {currentResources.length > 0 ? (
           <View style={styles.resourcesContainer}>
-            {bookmarkedResources.map((resource) => (
+            {currentResources.map((resource) => (
               <ResourceCard
                 key={resource.id}
                 id={resource.id}
@@ -102,24 +164,25 @@ export default function BookmarksScreen() {
                 icon={resource.icon}
                 color={resource.color}
                 onPress={() => handleResourcePress(resource.id, resource.title)}
+                showBookmark={activeTab === 'saved'}
               />
             ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="bookmark-outline" size={80} color="#C8C8D8" />
-            <Text style={styles.emptyTitle}>No saved resources yet</Text>
-            <Text style={styles.emptyText}>
-              Tap the bookmark icon on any resource to save it here for quick access.
-            </Text>
-            <TouchableOpacity
-              style={styles.browseButton}
-              onPress={() => router.push('/(tabs)/search')}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="search" size={20} color="#FFFFFF" />
-              <Text style={styles.browseButtonText}>Browse Resources</Text>
-            </TouchableOpacity>
+            <Ionicons name={emptyIcon as any} size={80} color="#C8C8D8" />
+            <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+            <Text style={styles.emptyText}>{emptyText}</Text>
+            {isOnline && (
+              <TouchableOpacity
+                style={styles.browseButton}
+                onPress={() => router.push('/(tabs)/search')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="search" size={20} color="#FFFFFF" />
+                <Text style={styles.browseButtonText}>Browse Resources</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
@@ -133,9 +196,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBF9FF',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 24,
+    paddingBottom: 20,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 2,
     borderBottomColor: '#E8E8F0',
@@ -149,12 +215,51 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 6,
   },
-  headerSubtitle: {
-    fontSize: 18,
+  offlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  offlineBadgeText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#6B6B85',
+    color: '#D97706',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    gap: 12,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 16,
+    backgroundColor: '#F5F3FF',
+    gap: 8,
+  },
+  tabActive: {
+    backgroundColor: '#EDE9FE',
+    borderWidth: 2,
+    borderColor: '#7B68EE',
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#8E8EA8',
+  },
+  tabTextActive: {
+    color: '#7B68EE',
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 24,

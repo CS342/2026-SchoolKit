@@ -41,6 +41,12 @@ interface OnboardingContextType {
   addBookmark: (resourceId: string) => Promise<void>;
   removeBookmark: (resourceId: string) => Promise<void>;
   isBookmarked: (resourceId: string) => boolean;
+  // Downloads
+  downloads: string[];
+  downloadResource: (resourceId: string) => Promise<void>;
+  removeDownload: (resourceId: string) => Promise<void>;
+  isDownloaded: (resourceId: string) => boolean;
+  downloadAllResources: () => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -61,6 +67,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
+  const [downloads, setDownloads] = useState<string[]>([]);
+
+  // Load downloads from AsyncStorage on mount
+  useEffect(() => {
+    loadDownloads();
+  }, []);
+
+  const loadDownloads = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('@schoolkit_downloads');
+      if (stored) setDownloads(JSON.parse(stored));
+    } catch (error) {
+      console.error('Error loading downloads:', error);
+    }
+  };
 
   // Listen for auth state changes
   useEffect(() => {
@@ -353,6 +374,32 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const isBookmarked = (resourceId: string) => bookmarks.includes(resourceId);
 
+  // Download methods
+  const downloadResource = async (resourceId: string) => {
+    setDownloads(prev => {
+      if (prev.includes(resourceId)) return prev;
+      const updated = [...prev, resourceId];
+      AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const removeDownload = async (resourceId: string) => {
+    setDownloads(prev => {
+      const updated = prev.filter(id => id !== resourceId);
+      AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const isDownloaded = (resourceId: string) => downloads.includes(resourceId);
+
+  const downloadAllResources = async () => {
+    const allResourceIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+    setDownloads(allResourceIds);
+    await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(allResourceIds));
+  };
+
   return (
     <OnboardingContext.Provider
       value={{
@@ -374,6 +421,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         addBookmark,
         removeBookmark,
         isBookmarked,
+        downloads,
+        downloadResource,
+        removeDownload,
+        isDownloaded,
+        downloadAllResources,
       }}
     >
       {children}

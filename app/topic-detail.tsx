@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
+import { DownloadButton } from '../components/DownloadButton';
 
 const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];
 
@@ -22,7 +23,10 @@ export default function TopicDetailScreen() {
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Topic Details</Text>
-        <BookmarkButton resourceId={resourceId} color={color} size={26} />
+        <View style={styles.headerActions}>
+          <DownloadButton resourceId={resourceId} size={24} />
+          <BookmarkButton resourceId={resourceId} color={color} size={26} />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -98,6 +102,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   headerTitle: {
     fontSize: 20,
