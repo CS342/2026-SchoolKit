@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# SchoolKit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SchoolKit is a mobile application developed for the CS342: Building for Digital Health course at Stanford University (Winter 2026). This project aims to support young cancer survivors by providing coordinated academic and social support from parents and teachers to ensure a smoother, more successful transition back into the classroom.
 
-## Get started
+## 🎯 Need Statement
 
-1. Install dependencies
+Young cancer survivors returning to school need coordinated academic and social support from parents and teachers to ensure a smoother, more successful transition back into the classroom.
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
 
-2. Start the app
+*   **User Onboarding:** A guided, multi-step process for new users (survivors, parents, and teachers) to set up their profiles.
+*   **Role-Based Profiles:** Customizable profiles for each user type, capturing relevant information.
+*   **Topic Exploration:** A section for users to find and learn about relevant topics concerning the back-to-school transition.
+*   **Search Functionality:** The ability to search for resources or connect with others.
+*   **Secure Backend:** User data and authentication managed by Supabase.
 
-   ```bash
-   npx expo start
-   ```
+## 🏗️ Architecture
 
-In the output, you'll find options to open the app in a
+The application is built with a client-server architecture.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+*   **Frontend (Client):**
+    *   A mobile application built with **React Native** and **Expo**.
+    *   Handles all user interface, state management, and user interactions.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+*   **Backend (Server):**
+    *   **Supabase** provides the backend-as-a-service.
+    *   **Supabase Auth:** Manages user authentication (signup, login).
+    *   **PostgreSQL Database:** A relational database for storing all application data (user profiles, topics, etc.).
+    *   **Supabase API:** A PostgREST API that provides a secure interface for the frontend to communicate with the database.
 
-## Get a fresh project
+*   **Data Flow:**
+    1.  The user interacts with the **React Native App**.
+    2.  The app sends secure HTTPS requests to **Supabase** endpoints.
+    3.  **Supabase Auth** handles authentication requests.
+    4.  The **Supabase API** handles data-related requests (Create, Read, Update, Delete).
+    5.  The API layer reads from or writes to the **PostgreSQL Database** and returns the result to the mobile app.
 
-When you're ready, run:
 
-```bash
-npm run reset-project
-```
+## 🛠️ Tech Stack
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+*   **Frontend:**
+    *   [React Native](https://reactnative.dev/): Mobile application framework.
+    *   [Expo](https://expo.dev/): Platform for building and deploying React Native apps.
+    *   [Expo Router](https://expo.github.io/router/): File-based routing for React Native.
+    *   [TypeScript](https://www.typescriptlang.org/): Typed superset of JavaScript.
+*   **Backend:**
+    *   [Supabase](https://supabase.io/): Backend-as-a-Service platform.
+        *   **Authentication:** Manages user sign-up, login, and sessions.
+        *   **PostgreSQL Database:** For relational data storage.
+        *   **Auto-generated APIs:** Provides instant, secure APIs for database interaction.
 
-## Learn more
+## 🚀 Getting Started
 
-To learn more about developing your project with Expo, look at the following resources:
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+2.  **Start the development server:**
+    ```bash
+    npx expo start
+    ```
+    This will provide you with a QR code to run the app on your device using the Expo Go app or to run it in an iOS/Android simulator.
 
-## Join the community
+## 👥 The Team
 
-Join our community of developers creating universal apps.
+### Project Leads
+*   Dr. Yosiah Yarbrough
+*   Nicole Fernandez-Vina
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### CS342 Student Team
+| Name                 | GitHub                                     |
+| -------------------- | ------------------------------------------ |
+| Yuzhou Bian          | [yuzhoubian](https://github.com/yuzhoubian) |
+| Yihan Zhao           | [ehan1han](https://github.com/ehan1han)     |
+| Janina Troper        | [troper01](https://github.com/troper01)     |
+| Lour Drick Valsote   | [lourdrickvalsote](https://github.com/lourdrickvalsote) |
+| Seyma Kilic          | [Solskilic](https://github.com/Solskilic) |
+| Nikita Gounder       | [nikita-gounder](https://github.com/nikita-gounder) |
