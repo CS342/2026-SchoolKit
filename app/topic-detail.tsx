@@ -4,8 +4,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
+import { COLORS } from '../constants/onboarding-theme';
 
-const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];
+const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
 export default function TopicDetailScreen() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function TopicDetailScreen() {
     <View style={[styles.container, { backgroundColor: color + '08' }]}>
       <View style={[styles.header, { borderBottomColor: color }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Topic Details</Text>
         <View style={styles.headerActions}>

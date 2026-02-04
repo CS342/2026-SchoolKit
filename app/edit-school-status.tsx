@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, SchoolStatus } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
   { value: 'current-treatment', label: 'Currently in school' },
@@ -19,7 +20,7 @@ interface StatusCardProps {
 
 function StatusCard({ option, isSelected, onPress }: StatusCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const color = '#7B68EE';
+  const color = COLORS.primary;
 
   const handlePress = () => {
     Animated.sequence([
@@ -56,7 +57,7 @@ function StatusCard({ option, isSelected, onPress }: StatusCardProps) {
         </Text>
         {isSelected && (
           <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={22} color="#FFFFFF" />
+            <Ionicons name="checkmark" size={22} color={COLORS.white} />
           </View>
         )}
       </Animated.View>
@@ -86,7 +87,7 @@ export default function EditSchoolStatusScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit School Status</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>

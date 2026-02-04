@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 export default function EditNameScreen() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function EditNameScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Name</Text>
         <TouchableOpacity
@@ -39,7 +40,7 @@ export default function EditNameScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Enter your name"
-          placeholderTextColor="#A8A8B8"
+          placeholderTextColor={COLORS.inputPlaceholder}
           autoFocus
         />
       </View>
@@ -50,7 +51,7 @@ export default function EditNameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F7FF',
+    backgroundColor: COLORS.appBackgroundAlt,
   },
   header: {
     flexDirection: 'row',
@@ -59,10 +60,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: '#E8E8F0',
-    shadowColor: '#7B68EE',
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -74,24 +75,24 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   saveButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
     borderRadius: 16,
   },
   saveButtonDisabled: {
-    backgroundColor: '#D8D8E8',
+    backgroundColor: COLORS.disabledButton,
   },
   saveText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   saveTextDisabled: {
-    color: '#A8A8B8',
+    color: COLORS.inputPlaceholder,
   },
   content: {
     padding: 24,

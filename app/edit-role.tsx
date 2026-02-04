@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 interface RoleOption {
   value: UserRole;
@@ -65,7 +66,7 @@ function RoleCard({ option, isSelected, onPress }: RoleCardProps) {
         </Text>
         {isSelected && (
           <View style={[styles.checkmark, { backgroundColor: option.color }]}>
-            <Ionicons name="checkmark" size={22} color="#FFFFFF" />
+            <Ionicons name="checkmark" size={22} color={COLORS.white} />
           </View>
         )}
       </Animated.View>
@@ -89,7 +90,7 @@ export default function EditRoleScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Role</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>

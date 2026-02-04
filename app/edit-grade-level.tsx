@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 const K8_GRADES = [
   { value: 'K', label: 'Kindergarten' },
@@ -32,7 +33,7 @@ interface GradeCardProps {
 
 function GradeCard({ grade, isSelected, onPress }: GradeCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const color = '#7B68EE';
+  const color = COLORS.primary;
 
   const handlePress = () => {
     Animated.sequence([
@@ -69,7 +70,7 @@ function GradeCard({ grade, isSelected, onPress }: GradeCardProps) {
         </Text>
         {isSelected && (
           <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+            <Ionicons name="checkmark" size={20} color={COLORS.white} />
           </View>
         )}
       </Animated.View>
@@ -93,7 +94,7 @@ export default function EditGradeLevelScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Grade Level</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>

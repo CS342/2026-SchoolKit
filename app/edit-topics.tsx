@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 const AVAILABLE_TOPICS = [
   'What you might experience',
@@ -24,7 +25,7 @@ const AVAILABLE_TOPICS = [
   'Understanding What Cancer Is and Isn\'t',
 ];
 
-const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];
+const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
 interface TopicCardProps {
   topic: string;
@@ -71,7 +72,7 @@ function TopicCard({ topic, color, isSelected, onPress }: TopicCardProps) {
         </Text>
         {isSelected && (
           <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+            <Ionicons name="checkmark" size={20} color={COLORS.white} />
           </View>
         )}
       </Animated.View>
@@ -101,7 +102,7 @@ export default function EditTopicsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Topics</Text>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
