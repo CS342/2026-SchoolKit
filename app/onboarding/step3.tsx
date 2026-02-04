@@ -4,15 +4,20 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
 
-const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string; color: string }[] = [
-  { value: 'current-treatment', label: 'Currently in school', color: '#7B68EE' },
-  { value: 'returning-after-treatment', label: 'Taking a break from school', color: '#7B68EE' },
-  { value: 'supporting-student', label: 'Planning to return to school soon', color: '#7B68EE' },
-  { value: 'special-needs', label: 'Home/hospital school', color: '#7B68EE' },
+const SCHOOL_STATUS_OPTIONS: {
+  value: SchoolStatus;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+}[] = [
+  { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: '#7B68EE' },
+  { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: '#0EA5E9' },
+  { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: '#66D9A6' },
+  { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: '#EC4899' },
 ];
 
 interface OptionCardProps {
-  option: { value: SchoolStatus; label: string; color: string };
+  option: { value: SchoolStatus; label: string; icon: keyof typeof Ionicons.glyphMap; color: string };
   isSelected: boolean;
   onPress: () => void;
 }
@@ -50,12 +55,15 @@ function OptionCard({ option, isSelected, onPress }: OptionCardProps) {
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
+        <View style={[styles.iconContainer, { backgroundColor: option.color + '20' }]}>
+          <Ionicons name={option.icon} size={28} color={option.color} />
+        </View>
         <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
           {option.label}
         </Text>
         {isSelected && (
           <View style={[styles.checkmark, { backgroundColor: option.color }]}>
-            <Ionicons name="checkmark" size={22} color="#FFFFFF" />
+            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
           </View>
         )}
       </Animated.View>
@@ -69,7 +77,9 @@ export default function Step3Screen() {
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
-  const title = isStudent ? 'Your school journey' : "Your child's school journey";
+  const isSchoolStaff = data.role === 'staff';
+  const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
+  const stepText = isStudent ? 'Step 4 of 5' : 'Step 3 of 4';
 
   const toggleStatus = (status: SchoolStatus) => {
     setSelectedStatuses(prev =>
@@ -95,7 +105,7 @@ export default function Step3Screen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 3 of 4</Text>
+        <Text style={styles.stepText}>{stepText}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -108,15 +118,16 @@ export default function Step3Screen() {
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
             <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={styles.progressDot} />
+            <View style={[styles.progressDot, isStudent && styles.progressDotActive]} />
+            {isStudent && <View style={styles.progressDot} />}
           </View>
 
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>
-            School can look different during treatment - all of these are okay.
-          </Text>
           <Text style={styles.subtitle}>
-            Select all that apply{'\n'}(you can update this easily as things change!)
+            Every path is valid - we're here to support yours.
+          </Text>
+          <Text style={styles.selectHint}>
+            Select all that apply
           </Text>
 
           <View style={styles.options}>
@@ -195,7 +206,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    marginBottom: 40,
+    marginBottom: 48,
   },
   progressDot: {
     width: 12,
@@ -211,25 +222,23 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 14,
+    marginBottom: 12,
     textAlign: 'center',
-    lineHeight: 46,
   },
-  description: {
+  subtitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
     lineHeight: 22,
   },
-  subtitle: {
-    fontSize: 15,
+  selectHint: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#8E8EA8',
+    color: '#7B68EE',
     textAlign: 'center',
     marginBottom: 28,
-    lineHeight: 20,
   },
   options: {
     gap: 14,
@@ -237,10 +246,9 @@ const styles = StyleSheet.create({
   optionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 24,
+    padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     borderWidth: 3,
     borderColor: '#E8E8F0',
     shadowColor: '#000',
@@ -249,20 +257,28 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  iconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
   optionText: {
     flex: 1,
-    fontSize: 19,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#2D2D44',
-    lineHeight: 26,
+    lineHeight: 28,
   },
   optionTextSelected: {
-    color: '#2D2D44',
+    fontWeight: '700',
   },
   checkmark: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,

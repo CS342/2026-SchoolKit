@@ -34,7 +34,7 @@ function SettingItem({ icon, title, subtitle, onPress }: any) {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { data, resetOnboarding, updateProfilePicture } = useOnboarding();
+  const { data, resetOnboarding, updateProfilePicture, downloadAllResources, downloads } = useOnboarding();
 
   const getRoleDisplayName = () => {
     switch (data.role) {
@@ -74,7 +74,9 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Uploading photo from camera...');
+      await updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Photo upload complete');
     }
   };
 
@@ -96,7 +98,9 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Uploading photo from library...');
+      await updateProfilePicture(result.assets[0].uri);
+      console.log('📷 Photo upload complete');
     }
   };
 
@@ -124,6 +128,31 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleDownloadAll = () => {
+    const allDownloaded = downloads.length === 10;
+    if (allDownloaded) {
+      Alert.alert(
+        "Already Downloaded",
+        "All resources are already available offline."
+      );
+    } else {
+      Alert.alert(
+        "Download All Resources",
+        "This will save all resources for offline access.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Download All",
+            onPress: async () => {
+              await downloadAllResources();
+              Alert.alert("Success", "All resources are now available offline!");
+            },
+          },
+        ]
+      );
+    }
   };
 
   return (
@@ -191,6 +220,12 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
+          <SettingItem
+            icon="cloud-download-outline"
+            title="Download All Resources"
+            subtitle={downloads.length === 10 ? "All resources saved offline" : `${downloads.length}/10 resources saved`}
+            onPress={handleDownloadAll}
+          />
           <SettingItem
             icon="refresh-outline"
             title="Retake Survey"

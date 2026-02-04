@@ -2,12 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BookmarkButton } from '../components/BookmarkButton';
+import { DownloadButton } from '../components/DownloadButton';
 
 const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];
 
 export default function TopicDetailScreen() {
   const router = useRouter();
-  const { title } = useLocalSearchParams<{ title: string }>();
+  const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
+
+  const resourceId = id || title || '';
+
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
   const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
 
@@ -18,7 +23,10 @@ export default function TopicDetailScreen() {
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Topic Details</Text>
-        <View style={{ width: 28 }} />
+        <View style={styles.headerActions}>
+          <DownloadButton resourceId={resourceId} size={24} />
+          <BookmarkButton resourceId={resourceId} color={color} size={26} />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -94,6 +102,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   headerTitle: {
     fontSize: 20,

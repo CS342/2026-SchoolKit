@@ -21,6 +21,7 @@ const AVAILABLE_TOPICS = [
   'Helping students transition back to school',
   'Fostering emotional and physical safety',
   'Working with families and medical teams',
+  'Understanding What Cancer Is and Isn\'t',
 ];
 
 const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];

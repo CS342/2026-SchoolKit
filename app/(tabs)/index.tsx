@@ -3,18 +3,35 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { BookmarkButton } from '../../components/BookmarkButton';
 
-// Warm, vibrant color palette
-const TOPIC_COLORS = ['#7B68EE', '#0EA5E9', '#66D9A6', '#EF4444'];
+// Resource data with consistent colors
+const ALL_RESOURCES = [
+  { id: '1', title: 'What you might experience', category: 'Health', icon: 'medical', color: '#7B68EE' },
+  { id: '2', title: 'Friends and social life', category: 'Social', icon: 'people', color: '#0EA5E9' },
+  { id: '3', title: 'Dealing with feelings', category: 'Emotions', icon: 'heart', color: '#66D9A6' },
+  { id: '4', title: 'Keeping up with school during treatment', category: 'School', icon: 'school', color: '#EF4444' },
+  { id: '5', title: 'Getting back to school after treatment', category: 'School', icon: 'return-down-back', color: '#7B68EE' },
+  { id: '6', title: 'Coping with stress and emotions', category: 'Emotions', icon: 'sunny', color: '#0EA5E9' },
+  { id: '7', title: 'Supporting my child during treatment', category: 'Family', icon: 'heart-circle', color: '#66D9A6' },
+  { id: '8', title: 'Becoming a strong advocate for my child', category: 'Family', icon: 'megaphone', color: '#EF4444' },
+  { id: '9', title: 'Collaborating with the school team', category: 'School', icon: 'people-circle', color: '#7B68EE' },
+  { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
+  { id: '11', title: 'Understanding What Cancer Is and Isn\'t', category: 'Health', icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
+];
+
+// Default color for topics not in resources
+const DEFAULT_COLOR = '#7B68EE';
 
 interface TopicCardProps {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
+  resourceId: string | null;
   onPress: () => void;
 }
 
-function TopicCard({ title, icon, color, onPress }: TopicCardProps) {
+function TopicCard({ title, icon, color, resourceId, onPress }: TopicCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -46,7 +63,10 @@ function TopicCard({ title, icon, color, onPress }: TopicCardProps) {
           <Ionicons name={icon} size={42} color={color} />
         </View>
         <Text style={styles.topicTitle}>{title}</Text>
-        <Ionicons name="chevron-forward" size={30} color={color} />
+        <View style={styles.topicActions}>
+          {resourceId && <BookmarkButton resourceId={resourceId} color={color} size={26} />}
+          <Ionicons name="chevron-forward" size={30} color={color} />
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -71,8 +91,12 @@ export default function ForYouScreen() {
     }
   };
 
-  const handleTopicPress = (topic: string) => {
-    router.push(`/topic-detail?title=${encodeURIComponent(topic)}`);
+  const handleTopicPress = (topic: string, route?: string) => {
+    if (route) {
+      router.push(route as any);
+    } else {
+      router.push(`/topic-detail?title=${encodeURIComponent(topic)}`);
+    }
   };
 
   return (
@@ -94,18 +118,26 @@ export default function ForYouScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Your Support Topics</Text>
+        
+
 
         {data.topics.length > 0 ? (
           <View style={styles.topicsContainer}>
-            {data.topics.map((topic, index) => (
-              <TopicCard
-                key={index}
-                title={topic}
-                icon="bookmarks"
-                color={TOPIC_COLORS[index % TOPIC_COLORS.length]}
-                onPress={() => handleTopicPress(topic)}
-              />
-            ))}
+            {data.topics.map((topic, index) => {
+              const resource = ALL_RESOURCES.find(r => r.title === topic);
+              const color = resource?.color || DEFAULT_COLOR;
+              const icon = resource?.icon || 'bookmarks';
+              return (
+                <TopicCard
+                  key={index}
+                  title={topic}
+                  icon={icon as keyof typeof Ionicons.glyphMap}
+                  color={color}
+                  resourceId={resource?.id || null}
+                  onPress={() => handleTopicPress(topic, (resource as any)?.route)}
+                />
+              );
+            })}
           </View>
         ) : (
           <View style={styles.emptyState}>
@@ -226,6 +258,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2D2D44',
     lineHeight: 28,
+  },
+  topicActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   emptyState: {
     alignItems: 'center',
