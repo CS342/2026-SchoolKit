@@ -1,14 +1,56 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { ALL_RESOURCES } from '../../constants/resources';
-import { COLORS } from '../../constants/onboarding-theme';
+import {
+  COLORS,
+  GRADIENTS,
+  SHADOWS,
+  ANIMATION,
+  TYPOGRAPHY,
+  SIZING,
+  SPACING,
+  RADII,
+  BORDERS,
+  SHARED_STYLES,
+  APP_STYLES,
+} from '../../constants/onboarding-theme';
 
 // Default color for topics not in resources
 const DEFAULT_COLOR = COLORS.primary;
+
+// Map resource colors to gradient pairs for icon circles
+function getGradientForColor(color: string): readonly [string, string] {
+  switch (color) {
+    case '#0EA5E9':
+      return GRADIENTS.roleStudentK8;
+    case '#7B68EE':
+      return GRADIENTS.roleStudentHS;
+    case '#EC4899':
+      return GRADIENTS.roleParent;
+    case '#66D9A6':
+      return GRADIENTS.roleStaff;
+    case '#EF4444':
+      return ['#EF4444', '#F87171'] as const;
+    case '#3B82F6':
+      return ['#3B82F6', '#60A5FA'] as const;
+    default:
+      return GRADIENTS.roleStudentHS;
+  }
+}
 
 interface TopicCardProps {
   title: string;
@@ -16,52 +58,75 @@ interface TopicCardProps {
   color: string;
   resourceId: string | null;
   onPress: () => void;
+  index: number;
 }
 
-function TopicCard({ title, icon, color, resourceId, onPress }: TopicCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+function TopicCard({ title, icon, color, resourceId, onPress, index }: TopicCardProps) {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withDelay(
+      index * ANIMATION.staggerDelay,
+      withSpring(0, ANIMATION.springBouncy),
+    );
+    opacity.value = withDelay(
+      index * ANIMATION.staggerDelay,
+      withTiming(1, { duration: 400 }),
+    );
+  }, []);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
+  }));
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy),
+    );
     onPress();
   };
 
+  const gradient = getGradientForColor(color);
+
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.topicCard,
-          { borderLeftColor: color, borderLeftWidth: 8, transform: [{ scale: scaleAnim }] },
-        ]}
-      >
-        <View style={[styles.topicIcon, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon} size={42} color={color} />
-        </View>
+    <Pressable onPress={handlePress}>
+      <Animated.View style={[styles.topicCard, SHADOWS.card, cardStyle]}>
+        <LinearGradient
+          colors={[...gradient] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.topicIconCircle}
+        >
+          <Ionicons name={icon} size={SIZING.iconRole} color={COLORS.white} />
+        </LinearGradient>
+
         <Text style={styles.topicTitle}>{title}</Text>
+
         <View style={styles.topicActions}>
-          {resourceId && <BookmarkButton resourceId={resourceId} color={color} size={26} />}
-          <Ionicons name="chevron-forward" size={30} color={color} />
+          {resourceId && <BookmarkButton resourceId={resourceId} color={color} size={22} />}
+          <Ionicons name="chevron-forward" size={22} color={COLORS.textLight} />
         </View>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
 export default function ForYouScreen() {
   const router = useRouter();
   const { data } = useOnboarding();
+  const headerOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    headerOpacity.value = withTiming(1, { duration: 400 });
+  }, []);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
 
   const getRoleDisplayName = () => {
     switch (data.role) {
@@ -88,25 +153,22 @@ export default function ForYouScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.name}>{data.name}!</Text>
+      <Animated.View style={[APP_STYLES.tabHeader, headerStyle]}>
+        <Text style={[APP_STYLES.tabHeaderSubtitle, { marginBottom: 4 }]}>Welcome back,</Text>
+        <Text style={[APP_STYLES.tabHeaderTitle, { marginBottom: 12 }]}>{data.name}!</Text>
+        <View style={[SHARED_STYLES.badge, styles.roleBadge]}>
+          <Ionicons name="person-circle-outline" size={16} color={COLORS.primary} />
+          <Text style={[SHARED_STYLES.badgeText, styles.roleBadgeText]}>
+            {getRoleDisplayName()}
+          </Text>
         </View>
-      </View>
+      </Animated.View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.roleBadge}>
-          <Ionicons name="person-circle-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.roleText}>{getRoleDisplayName()}</Text>
-        </View>
-
         <Text style={styles.sectionTitle}>Your Support Topics</Text>
-        
-
 
         {data.topics.length > 0 ? (
           <View style={styles.topicsContainer}>
@@ -122,23 +184,24 @@ export default function ForYouScreen() {
                   color={color}
                   resourceId={resource?.id || null}
                   onPress={() => handleTopicPress(topic, resource?.route)}
+                  index={index}
                 />
               );
             })}
           </View>
         ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="compass-outline" size={64} color={COLORS.indicatorInactive} />
-            <Text style={styles.emptyTitle}>No topics selected yet</Text>
-            <Text style={styles.emptyText}>
+          <View style={styles.emptyContainer}>
+            <View style={SHARED_STYLES.pageIconCircle}>
+              <Ionicons name="compass-outline" size={SIZING.iconPage} color={COLORS.primary} />
+            </View>
+            <Text style={SHARED_STYLES.pageTitle}>No topics selected yet</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 28 }]}>
               Visit your profile to update your interests and get personalized support.
             </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
+            <PrimaryButton
+              title="Update Profile"
               onPress={() => router.push('/(tabs)/profile')}
-            >
-              <Text style={styles.emptyButtonText}>Update Profile</Text>
-            </TouchableOpacity>
+            />
           </View>
         )}
       </ScrollView>
@@ -151,147 +214,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.appBackground,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 28,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  greeting: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    marginBottom: 6,
-  },
-  name: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 40,
-  },
   roleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.backgroundLighter,
-    borderRadius: 24,
-    marginBottom: 32,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: COLORS.borderPurple,
+    gap: 6,
   },
-  roleText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.primary,
-    marginLeft: 10,
+  roleBadgeText: {
+    marginLeft: 0,
+  },
+  scrollContent: {
+    paddingHorizontal: SPACING.screenPadding,
+    paddingTop: SPACING.sectionGap,
+    paddingBottom: 40,
   },
   sectionTitle: {
-    fontSize: 28,
-    fontWeight: '800',
+    ...TYPOGRAPHY.h2,
     color: COLORS.textDark,
-    marginBottom: 24,
+    marginBottom: SPACING.sectionGap,
   },
   topicsContainer: {
-    gap: 18,
+    gap: SPACING.itemGap,
   },
   topicCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.card,
+    padding: 16,
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
   },
-  topicIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  topicIconCircle: {
+    width: SIZING.circleRole,
+    height: SIZING.circleRole,
+    borderRadius: SIZING.circleRole / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 18,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginRight: 16,
   },
   topicTitle: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body,
     color: COLORS.textDark,
-    lineHeight: 28,
+    lineHeight: 24,
   },
   topicActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  emptyState: {
+  emptyContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
-    backgroundColor: COLORS.white,
-    borderRadius: 24,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  emptyTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginTop: 24,
-    marginBottom: 14,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 32,
-  },
-  emptyButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  emptyButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.white,
+    paddingHorizontal: 16,
   },
 });

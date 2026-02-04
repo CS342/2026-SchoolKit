@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: COLORS.primary,
   },

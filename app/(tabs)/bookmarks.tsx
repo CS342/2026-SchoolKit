@@ -1,13 +1,55 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
 import { DownloadIndicator } from '../../components/DownloadIndicator';
-import { useOffline } from '../../contexts/OfflineContext';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { ALL_RESOURCES } from '../../constants/resources';
-import { COLORS } from '../../constants/onboarding-theme';
+import {
+  COLORS,
+  GRADIENTS,
+  SHADOWS,
+  ANIMATION,
+  TYPOGRAPHY,
+  SIZING,
+  SPACING,
+  RADII,
+  BORDERS,
+  SHARED_STYLES,
+  APP_STYLES,
+  withOpacity,
+} from '../../constants/onboarding-theme';
+
+// Map resource colors to gradient pairs for icon circles
+function getGradientForColor(color: string): readonly [string, string] {
+  switch (color) {
+    case '#0EA5E9':
+      return GRADIENTS.roleStudentK8;
+    case '#7B68EE':
+      return GRADIENTS.roleStudentHS;
+    case '#EC4899':
+      return GRADIENTS.roleParent;
+    case '#66D9A6':
+      return GRADIENTS.roleStaff;
+    case '#EF4444':
+      return ['#EF4444', '#F87171'] as const;
+    case '#3B82F6':
+      return ['#3B82F6', '#60A5FA'] as const;
+    default:
+      return GRADIENTS.roleStudentHS;
+  }
+}
 
 interface ResourceCardProps {
   id: string;
@@ -16,61 +58,81 @@ interface ResourceCardProps {
   icon: string;
   color: string;
   onPress: () => void;
-  showBookmark?: boolean;
+  index: number;
 }
 
-function ResourceCard({ id, title, category, icon, color, onPress, showBookmark = true }: ResourceCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+function ResourceCard({ id, title, category, icon, color, onPress, index }: ResourceCardProps) {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withDelay(
+      index * ANIMATION.staggerDelay,
+      withSpring(0, ANIMATION.springBouncy),
+    );
+    opacity.value = withDelay(
+      index * ANIMATION.staggerDelay,
+      withTiming(1, { duration: 400 }),
+    );
+  }, []);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
+  }));
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.96, duration: 100, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy),
+    );
     onPress();
   };
 
+  const gradient = getGradientForColor(color);
+
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.resourceCard,
-          { borderLeftColor: color, borderLeftWidth: 8, transform: [{ scale: scaleAnim }] },
-        ]}
-      >
-        <View style={[styles.resourceIcon, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon as any} size={42} color={color} />
-        </View>
+    <Pressable onPress={handlePress}>
+      <Animated.View style={[styles.resourceCard, SHADOWS.card, cardStyle]}>
+        <LinearGradient
+          colors={[...gradient] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.resourceIconCircle}
+        >
+          <Ionicons name={icon as any} size={SIZING.iconRole} color={COLORS.white} />
+        </LinearGradient>
+
         <View style={styles.resourceContent}>
           <Text style={styles.resourceTitle}>{title}</Text>
-          <View style={[styles.categoryBadge, { backgroundColor: color + '15' }]}>
-            <Text style={[styles.resourceCategory, { color }]}>{category}</Text>
+          <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.082) }]}>
+            <Text style={[styles.categoryText, { color }]}>{category}</Text>
           </View>
         </View>
+
         <View style={styles.resourceActions}>
           <DownloadIndicator resourceId={id} />
-          {showBookmark && <BookmarkButton resourceId={id} color={color} />}
-          <Ionicons name="chevron-forward" size={30} color={color} />
+          <BookmarkButton resourceId={id} color={color} size={22} />
+          <Ionicons name="chevron-forward" size={22} color={COLORS.textLight} />
         </View>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
-type TabType = 'saved' | 'downloaded';
-
 export default function BookmarksScreen() {
   const router = useRouter();
-  const { bookmarksWithTimestamps, downloads } = useOnboarding();
-  const { isOnline } = useOffline();
-  const [activeTab, setActiveTab] = useState<TabType>('saved');
+  const { bookmarksWithTimestamps } = useOnboarding();
+  const headerOpacity = useSharedValue(0);
 
-  // When offline, force Downloaded tab
   useEffect(() => {
-    if (!isOnline) {
-      setActiveTab('downloaded');
-    }
-  }, [isOnline]);
+    headerOpacity.value = withTiming(1, { duration: 400 });
+  }, []);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
 
   // Get bookmarked resources sorted by most recently saved
   const bookmarkedResources = bookmarksWithTimestamps
@@ -80,11 +142,6 @@ export default function BookmarksScreen() {
     })
     .filter((r): r is typeof ALL_RESOURCES[0] & { savedAt: number } => r !== null);
 
-  // Get downloaded resources
-  const downloadedResources = downloads
-    .map(id => ALL_RESOURCES.find(r => r.id === id))
-    .filter((r): r is typeof ALL_RESOURCES[0] => r !== undefined);
-
   const handleResourcePress = (id: string, title: string, route?: string) => {
     if (route) {
       router.push(route as any);
@@ -93,61 +150,28 @@ export default function BookmarksScreen() {
     }
   };
 
-  const currentResources = activeTab === 'saved' ? bookmarkedResources : downloadedResources;
-  const emptyIcon = activeTab === 'saved' ? 'bookmark-outline' : 'cloud-download-outline';
-  const emptyTitle = activeTab === 'saved' ? 'No saved resources yet' : 'No downloaded resources';
-  const emptyText = activeTab === 'saved'
-    ? 'Tap the bookmark icon on any resource to save it here for quick access.'
-    : 'Download resources from topic pages to access them offline.';
-
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Resources</Text>
-        {!isOnline && (
-          <View style={styles.offlineBadge}>
-            <Ionicons name="cloud-offline" size={14} color={COLORS.accent} />
-            <Text style={styles.offlineBadgeText}>Offline</Text>
+      <Animated.View style={[APP_STYLES.tabHeader, headerStyle]}>
+        <View style={styles.headerTitleRow}>
+          <Text style={[APP_STYLES.tabHeaderTitle, { marginBottom: 0 }]}>Saved</Text>
+          <View style={[SHARED_STYLES.badge, styles.countBadge]}>
+            <Ionicons name="bookmark" size={14} color={COLORS.primary} />
+            <Text style={SHARED_STYLES.badgeText}>
+              {bookmarkedResources.length} saved
+            </Text>
           </View>
-        )}
-      </View>
-
-      {/* Tab Selector - hidden when offline */}
-      {isOnline && (
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
-            onPress={() => setActiveTab('saved')}
-          >
-            <Ionicons
-              name={activeTab === 'saved' ? 'bookmark' : 'bookmark-outline'}
-              size={20}
-              color={activeTab === 'saved' ? COLORS.primary : COLORS.textLight}
-            />
-            <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>
-              Saved ({bookmarkedResources.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'downloaded' && styles.tabActive]}
-            onPress={() => setActiveTab('downloaded')}
-          >
-            <Ionicons
-              name={activeTab === 'downloaded' ? 'cloud-done' : 'cloud-download-outline'}
-              size={20}
-              color={activeTab === 'downloaded' ? COLORS.primary : COLORS.textLight}
-            />
-            <Text style={[styles.tabText, activeTab === 'downloaded' && styles.tabTextActive]}>
-              Downloaded ({downloadedResources.length})
-            </Text>
-          </TouchableOpacity>
         </View>
-      )}
+        <Text style={APP_STYLES.tabHeaderSubtitle}>Your bookmarked resources</Text>
+      </Animated.View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {currentResources.length > 0 ? (
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {bookmarkedResources.length > 0 ? (
           <View style={styles.resourcesContainer}>
-            {currentResources.map((resource) => (
+            {bookmarkedResources.map((resource, index) => (
               <ResourceCard
                 key={resource.id}
                 id={resource.id}
@@ -156,25 +180,24 @@ export default function BookmarksScreen() {
                 icon={resource.icon}
                 color={resource.color}
                 onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                showBookmark={activeTab === 'saved'}
+                index={index}
               />
             ))}
           </View>
         ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name={emptyIcon as any} size={80} color={COLORS.indicatorInactive} />
-            <Text style={styles.emptyTitle}>{emptyTitle}</Text>
-            <Text style={styles.emptyText}>{emptyText}</Text>
-            {isOnline && (
-              <TouchableOpacity
-                style={styles.browseButton}
-                onPress={() => router.push('/(tabs)/search')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="search" size={20} color={COLORS.white} />
-                <Text style={styles.browseButtonText}>Browse Resources</Text>
-              </TouchableOpacity>
-            )}
+          <View style={styles.emptyContainer}>
+            <View style={SHARED_STYLES.pageIconCircle}>
+              <Ionicons name="bookmark-outline" size={SIZING.iconPage} color={COLORS.primary} />
+            </View>
+            <Text style={SHARED_STYLES.pageTitle}>No saved resources yet</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 28 }]}>
+              Tap the bookmark icon on any resource to save it here for quick access.
+            </Text>
+            <PrimaryButton
+              title="Browse Resources"
+              icon="search"
+              onPress={() => router.push('/(tabs)/search')}
+            />
           </View>
         )}
       </ScrollView>
@@ -187,169 +210,69 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.appBackground,
   },
-  header: {
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    marginBottom: 6,
   },
-  headerTitle: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  offlineBadge: {
+  countBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.warningBg,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
     gap: 6,
   },
-  offlineBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.warningText,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: COLORS.white,
-    gap: 12,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: COLORS.backgroundLighter,
-    gap: 8,
-  },
-  tabActive: {
-    backgroundColor: COLORS.tabActiveBg,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textLight,
-  },
-  tabTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: SPACING.screenPadding,
+    paddingTop: SPACING.sectionGap,
     paddingBottom: 40,
   },
   resourcesContainer: {
-    gap: 16,
+    gap: SPACING.itemGap,
   },
   resourceCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.card,
+    padding: 16,
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
   },
-  resourceIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  resourceIconCircle: {
+    width: SIZING.circleRole,
+    height: SIZING.circleRole,
+    borderRadius: SIZING.circleRole / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 18,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginRight: 16,
   },
   resourceContent: {
     flex: 1,
   },
   resourceTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...TYPOGRAPHY.body,
     color: COLORS.textDark,
-    marginBottom: 8,
-    lineHeight: 28,
+    lineHeight: 24,
+    marginBottom: 6,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 10,
+    borderRadius: RADII.badgeSmall,
   },
-  resourceCategory: {
+  categoryText: {
     fontSize: 12,
     fontWeight: '700',
   },
   resourceActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  emptyState: {
+  emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 32,
-  },
-  emptyTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginTop: 24,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 32,
-  },
-  browseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    borderRadius: 24,
-    gap: 10,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  browseButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.white,
+    paddingVertical: 60,
+    paddingHorizontal: 16,
   },
 });

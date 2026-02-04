@@ -1,24 +1,151 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TextInput,
-  TouchableOpacity,
-  Animated,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from "react-native-reanimated";
 import { BookmarkButton } from "../../components/BookmarkButton";
 import { DownloadIndicator } from "../../components/DownloadIndicator";
 import { ALL_RESOURCES, RESOURCE_CATEGORIES } from "../../constants/resources";
-import { COLORS } from "../../constants/onboarding-theme";
+import {
+  COLORS,
+  GRADIENTS,
+  SHADOWS,
+  ANIMATION,
+  TYPOGRAPHY,
+  SIZING,
+  SPACING,
+  RADII,
+  BORDERS,
+  DECORATIVE_SHAPES,
+  APP_STYLES,
+  withOpacity,
+} from "../../constants/onboarding-theme";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const CATEGORIES = ["All", ...RESOURCE_CATEGORIES];
 const RECENT_SEARCHES_KEY = "@schoolkit_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
+
+const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  All: "apps-outline",
+  Emotions: "heart-outline",
+  School: "school-outline",
+  Social: "people-outline",
+  Health: "medical-outline",
+  Family: "home-outline",
+};
+
+// Map resource colors to gradient pairs for icon circles
+function getGradientForColor(color: string): readonly [string, string] {
+  switch (color) {
+    case "#0EA5E9":
+      return GRADIENTS.roleStudentK8;
+    case "#7B68EE":
+      return GRADIENTS.roleStudentHS;
+    case "#EC4899":
+      return GRADIENTS.roleParent;
+    case "#66D9A6":
+      return GRADIENTS.roleStaff;
+    case "#EF4444":
+      return ["#EF4444", "#F87171"] as const;
+    case "#3B82F6":
+      return ["#3B82F6", "#60A5FA"] as const;
+    default:
+      return GRADIENTS.roleStudentHS;
+  }
+}
+
+// Animated decorative circle for background
+function AnimatedCircle({
+  shape,
+  index,
+}: {
+  shape: (typeof DECORATIVE_SHAPES)["welcome"][number];
+  index: number;
+}) {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.8);
+
+  useEffect(() => {
+    opacity.value = withDelay(
+      index * 150,
+      withSpring(1, { damping: 20, stiffness: 100 })
+    );
+    scale.value = withDelay(
+      index * 150,
+      withSpring(1, { damping: 20, stiffness: 100 })
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: "absolute",
+          width: shape.size,
+          height: shape.size,
+          borderRadius: shape.size / 2,
+          backgroundColor: shape.color,
+          top: shape.top,
+          bottom: shape.bottom,
+          left: shape.left,
+          right: shape.right,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
+// Animated section wrapper for staggered entrance
+function AnimatedSection({
+  children,
+  delay,
+}: {
+  children: React.ReactNode;
+  delay: number;
+}) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(24);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, ANIMATION.springSmooth)
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
 
 interface ResourceCardProps {
   id: string;
@@ -27,6 +154,7 @@ interface ResourceCardProps {
   icon: string;
   color: string;
   onPress: () => void;
+  index: number;
 }
 
 function ResourceCard({
@@ -36,56 +164,69 @@ function ResourceCard({
   icon,
   color,
   onPress,
+  index,
 }: ResourceCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    const delay = 300 + index * ANIMATION.fastStaggerDelay;
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, ANIMATION.springBouncy)
+    );
+    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+  }, []);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
+  }));
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.96,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy)
+    );
     onPress();
   };
 
+  const gradient = getGradientForColor(color);
+
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.resourceCard,
-          {
-            borderLeftColor: color,
-            borderLeftWidth: 8,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        <View style={[styles.resourceIcon, { backgroundColor: color + "20" }]}>
-          <Ionicons name={icon as any} size={42} color={color} />
-        </View>
+    <Pressable onPress={handlePress}>
+      <Animated.View style={[styles.resourceCard, SHADOWS.card, cardStyle]}>
+        <LinearGradient
+          colors={[...gradient] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.resourceIconCircle}
+        >
+          <Ionicons name={icon as any} size={SIZING.iconRole} color={COLORS.white} />
+        </LinearGradient>
+
         <View style={styles.resourceContent}>
           <Text style={styles.resourceTitle}>{title}</Text>
           <View
-            style={[styles.categoryBadge, { backgroundColor: color + "15" }]}
+            style={[
+              styles.categoryBadge,
+              { backgroundColor: withOpacity(color, 0.1) },
+            ]}
           >
-            <Text style={[styles.resourceCategory, { color }]}>{category}</Text>
+            <Text style={[styles.resourceCategory, { color }]}>
+              {category}
+            </Text>
           </View>
         </View>
+
         <View style={styles.resourceActions}>
           <DownloadIndicator resourceId={id} />
-          <BookmarkButton resourceId={id} color={color} />
-          <Ionicons name="chevron-forward" size={30} color={color} />
+          <BookmarkButton resourceId={id} color={color} size={22} />
+          <Ionicons name="chevron-forward" size={22} color={COLORS.textLight} />
         </View>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -95,6 +236,33 @@ export default function SearchScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Entrance animations
+  const headerOpacity = useSharedValue(0);
+  const searchBarScale = useSharedValue(0.97);
+  const searchBarOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    headerOpacity.value = withTiming(1, { duration: 400 });
+    searchBarScale.value = withDelay(
+      100,
+      withSpring(1, ANIMATION.springSmooth)
+    );
+    searchBarOpacity.value = withDelay(
+      100,
+      withTiming(1, { duration: 350 })
+    );
+  }, []);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
+
+  const searchBarEntrance = useAnimatedStyle(() => ({
+    transform: [{ scale: searchBarScale.value }],
+    opacity: searchBarOpacity.value,
+  }));
 
   useEffect(() => {
     loadRecentSearches();
@@ -111,10 +279,10 @@ export default function SearchScreen() {
 
   const addRecentSearch = async (query: string) => {
     if (!query.trim()) return;
-    const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(
-      0,
-      MAX_RECENT_SEARCHES
-    );
+    const updated = [
+      query,
+      ...recentSearches.filter((s) => s !== query),
+    ].slice(0, MAX_RECENT_SEARCHES);
     setRecentSearches(updated);
     await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   };
@@ -146,32 +314,72 @@ export default function SearchScreen() {
     return matchesSearch && matchesCategory;
   });
 
+  // Empty state animation
+  const emptyOpacity = useSharedValue(0);
+  const emptyScale = useSharedValue(0.9);
+
+  useEffect(() => {
+    if (filteredResources.length === 0) {
+      emptyOpacity.value = withDelay(
+        200,
+        withTiming(1, { duration: 400 })
+      );
+      emptyScale.value = withDelay(
+        200,
+        withSpring(1, ANIMATION.springSmooth)
+      );
+    } else {
+      emptyOpacity.value = 0;
+      emptyScale.value = 0.9;
+    }
+  }, [searchQuery, selectedCategory]);
+
+  const emptyStateEntrance = useAnimatedStyle(() => ({
+    opacity: emptyOpacity.value,
+    transform: [{ scale: emptyScale.value }],
+  }));
+
   const handleResourcePress = (id: string, title: string, route?: string) => {
     if (route) {
-        router.push(route as any);
+      router.push(route as any);
     } else {
-        router.push(
+      router.push(
         `/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any
-        );
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Search Resources</Text>
-        <Text style={styles.headerSubtitle}>Find support and information</Text>
-      </View>
+      {/* Decorative background shapes */}
+      {(DECORATIVE_SHAPES.search || []).map((shape, index) => (
+        <AnimatedCircle key={index} shape={shape} index={index} />
+      ))}
+
+      {/* Header */}
+      <Animated.View style={[APP_STYLES.tabHeader, SHADOWS.header, headerStyle]}>
+        <Text style={APP_STYLES.tabHeaderTitle}>Search</Text>
+        <Text style={APP_STYLES.tabHeaderSubtitle}>
+          Find support and information
+        </Text>
+      </Animated.View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.searchContainer}>
+        {/* Search Bar */}
+        <Animated.View
+          style={[
+            styles.searchContainer,
+            isFocused && styles.searchContainerFocused,
+            searchBarEntrance,
+          ]}
+        >
           <Ionicons
             name="search"
             size={22}
-            color={COLORS.textLight}
+            color={isFocused ? COLORS.primary : COLORS.textLight}
             style={styles.searchIcon}
           />
           <TextInput
@@ -180,88 +388,153 @@ export default function SearchScreen() {
             placeholderTextColor={COLORS.inputPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            onFocus={() => setShowRecentSearches(true)}
-            onBlur={() => setTimeout(() => setShowRecentSearches(false), 200)}
+            onFocus={() => {
+              setIsFocused(true);
+              setShowRecentSearches(true);
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              setTimeout(() => setShowRecentSearches(false), 200);
+            }}
             onSubmitEditing={handleSearchSubmit}
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity
+            <Pressable
               onPress={() => setSearchQuery("")}
               style={styles.clearButton}
             >
-              <Ionicons name="close-circle" size={22} color={COLORS.textLight} />
-            </TouchableOpacity>
+              <Ionicons
+                name="close-circle"
+                size={22}
+                color={COLORS.textLight}
+              />
+            </Pressable>
           )}
-        </View>
+        </Animated.View>
 
         {/* Recent Searches */}
         {showRecentSearches &&
           recentSearches.length > 0 &&
           searchQuery.length === 0 && (
-            <View style={styles.recentSearchesContainer}>
-              <View style={styles.recentSearchesHeader}>
-                <Text style={styles.recentSearchesTitle}>Recent Searches</Text>
-                <TouchableOpacity onPress={clearRecentSearches}>
-                  <Text style={styles.clearRecentText}>Clear</Text>
-                </TouchableOpacity>
+            <AnimatedSection delay={200}>
+              <View style={styles.recentSearchesContainer}>
+                <View style={styles.recentSearchesHeader}>
+                  <Text style={styles.recentSearchesTitle}>
+                    Recent Searches
+                  </Text>
+                  <Pressable onPress={clearRecentSearches}>
+                    <Text style={styles.clearRecentText}>Clear</Text>
+                  </Pressable>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.recentSearchesScroll}
+                >
+                  {recentSearches.map((query, index) => (
+                    <Pressable
+                      key={index}
+                      style={styles.recentSearchChip}
+                      onPress={() => handleRecentSearchPress(query)}
+                    >
+                      <Ionicons
+                        name="time-outline"
+                        size={16}
+                        color={COLORS.primary}
+                      />
+                      <Text style={styles.recentSearchText}>{query}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.recentSearchesScroll}
-              >
-                {recentSearches.map((query, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.recentSearchChip}
-                    onPress={() => handleRecentSearchPress(query)}
-                  >
-                    <Ionicons name="time-outline" size={16} color={COLORS.primary} />
-                    <Text style={styles.recentSearchText}>{query}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+            </AnimatedSection>
           )}
 
         {/* Category Filters */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {CATEGORIES.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.filterChip,
-                selectedCategory === category && styles.filterChipActive,
-              ]}
-              onPress={() => setSelectedCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedCategory === category && styles.filterChipTextActive,
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <AnimatedSection delay={200}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filtersContainer}
+            contentContainerStyle={styles.filtersContent}
+          >
+            {CATEGORIES.map((category) => {
+              const isActive = selectedCategory === category;
+              const iconName = CATEGORY_ICONS[category] || "ellipse";
 
+              const chipContent = (
+                <>
+                  <Ionicons
+                    name={iconName}
+                    size={16}
+                    color={isActive ? COLORS.white : COLORS.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      isActive && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {category}
+                  </Text>
+                </>
+              );
+
+              if (isActive) {
+                return (
+                  <Pressable
+                    key={category}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <LinearGradient
+                      colors={
+                        [...GRADIENTS.primaryButton] as [
+                          string,
+                          string,
+                          ...string[],
+                        ]
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.filterChip, styles.filterChipActive]}
+                    >
+                      {chipContent}
+                    </LinearGradient>
+                  </Pressable>
+                );
+              }
+
+              return (
+                <Pressable
+                  key={category}
+                  style={styles.filterChip}
+                  onPress={() => setSelectedCategory(category)}
+                >
+                  {chipContent}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </AnimatedSection>
+
+        {/* Results Count */}
         {searchQuery.length > 0 && (
-          <Text style={styles.resultsText}>
-            {filteredResources.length}{" "}
-            {filteredResources.length === 1 ? "result" : "results"}
-          </Text>
+          <AnimatedSection delay={300}>
+            <View style={styles.resultsContainer}>
+              <View style={styles.resultsBadge}>
+                <Text style={styles.resultsText}>
+                  {filteredResources.length}{" "}
+                  {filteredResources.length === 1 ? "result" : "results"}
+                </Text>
+              </View>
+            </View>
+          </AnimatedSection>
         )}
 
+        {/* Resource Cards */}
         <View style={styles.resourcesContainer}>
-          {filteredResources.map((resource) => (
+          {filteredResources.map((resource, index) => (
             <ResourceCard
               key={resource.id}
               id={resource.id}
@@ -269,19 +542,52 @@ export default function SearchScreen() {
               category={resource.category}
               icon={resource.icon}
               color={resource.color}
-              onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+              onPress={() =>
+                handleResourcePress(
+                  resource.id,
+                  resource.title,
+                  resource.route
+                )
+              }
+              index={index}
             />
           ))}
         </View>
 
+        {/* Empty State */}
         {filteredResources.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={72} color={COLORS.indicatorInactive} />
-            <Text style={styles.emptyTitle}>No results found</Text>
-            <Text style={styles.emptyText}>
-              Try searching with different keywords
+          <Animated.View style={[styles.emptyStateCard, emptyStateEntrance]}>
+            <LinearGradient
+              colors={
+                [...GRADIENTS.primaryButton] as [
+                  string,
+                  string,
+                  ...string[],
+                ]
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.emptyIconCircle}
+            >
+              <Ionicons
+                name={
+                  searchQuery.length > 0
+                    ? "search-outline"
+                    : "compass-outline"
+                }
+                size={SIZING.iconPage}
+                color={COLORS.white}
+              />
+            </LinearGradient>
+            <Text style={APP_STYLES.emptyTitle}>
+              {searchQuery.length > 0 ? "No results found" : "Start exploring"}
             </Text>
-          </View>
+            <Text style={APP_STYLES.emptyText}>
+              {searchQuery.length > 0
+                ? "Try searching with different keywords or adjust your filters"
+                : "Search for topics, resources, and support materials"}
+            </Text>
+          </Animated.View>
         )}
       </ScrollView>
     </View>
@@ -293,78 +599,57 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.appBackground,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 24,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  headerTitle: {
-    fontSize: 38,
-    fontWeight: "800",
-    color: COLORS.textDark,
-    marginBottom: 6,
-  },
-  headerSubtitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.textMuted,
-  },
+
+  // Search bar
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 24,
-    marginTop: 24,
-    marginBottom: 16,
-    paddingHorizontal: 20,
+    marginHorizontal: SPACING.screenPadding,
+    marginTop: SPACING.sectionGap,
+    marginBottom: SPACING.itemGap,
+    paddingHorizontal: SPACING.contentPadding,
     backgroundColor: COLORS.white,
-    borderRadius: 24,
-    borderWidth: 3,
+    borderRadius: RADII.cardLarge,
+    borderWidth: BORDERS.card,
     borderColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
+    ...SHADOWS.small,
+  },
+  searchContainerFocused: {
+    borderColor: COLORS.primary,
+    borderWidth: BORDERS.cardSelected,
+    ...SHADOWS.cardSelected,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: SPACING.smallGap,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 18,
-    fontSize: 18,
-    fontWeight: "500",
+    paddingVertical: 16,
+    ...TYPOGRAPHY.body,
     color: COLORS.textDark,
   },
   clearButton: {
-    padding: 4,
+    padding: SPACING.xs,
   },
+
+  // Recent searches
   recentSearchesContainer: {
-    marginHorizontal: 24,
-    marginBottom: 16,
+    marginHorizontal: SPACING.screenPadding,
+    marginBottom: SPACING.itemGap,
   },
   recentSearchesHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: SPACING.smallGap,
   },
   recentSearchesTitle: {
-    fontSize: 14,
+    ...TYPOGRAPHY.caption,
     fontWeight: "700",
     color: COLORS.textMuted,
   },
   clearRecentText: {
-    fontSize: 14,
-    fontWeight: "600",
+    ...TYPOGRAPHY.caption,
     color: COLORS.primary,
   },
   recentSearchesScroll: {
@@ -374,133 +659,146 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.backgroundLighter,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    marginRight: 10,
-    borderWidth: 1,
+    paddingHorizontal: SPACING.itemGap,
+    paddingVertical: SPACING.smallGap,
+    borderRadius: RADII.button,
+    marginRight: SPACING.smallGap,
+    borderWidth: BORDERS.input,
     borderColor: COLORS.borderPurple,
   },
   recentSearchText: {
-    fontSize: 14,
-    fontWeight: "600",
+    ...TYPOGRAPHY.caption,
     color: COLORS.primary,
     marginLeft: 6,
   },
+
+  // Category filters
   filtersContainer: {
-    marginBottom: 8,
+    marginBottom: SPACING.smallGap,
   },
   filtersContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 4,
+    paddingHorizontal: SPACING.screenPadding,
+    paddingVertical: SPACING.xs,
     flexDirection: "row",
     alignItems: "center",
   },
   filterChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: SPACING.itemGap,
+    paddingVertical: 10,
+    borderRadius: RADII.badge,
     backgroundColor: COLORS.white,
-    borderWidth: 2,
+    borderWidth: BORDERS.card,
     borderColor: COLORS.borderCard,
-    marginRight: 10,
+    marginRight: SPACING.smallGap,
+    ...SHADOWS.card,
   },
   filterChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    borderWidth: 0,
+    ...SHADOWS.button,
   },
   filterChipText: {
-    fontSize: 15,
+    ...TYPOGRAPHY.caption,
     fontWeight: "700",
     color: COLORS.textMuted,
   },
   filterChipTextActive: {
     color: COLORS.white,
   },
+
+  // Scroll content
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: SPACING.itemGap,
     paddingBottom: 40,
   },
+
+  // Results count
+  resultsContainer: {
+    marginHorizontal: SPACING.screenPadding,
+    marginBottom: SPACING.itemGap,
+  },
+  resultsBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.backgroundLight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADII.badge,
+  },
   resultsText: {
-    fontSize: 16,
+    ...TYPOGRAPHY.caption,
     fontWeight: "700",
     color: COLORS.primary,
-    marginBottom: 20,
-    marginHorizontal: 24,
   },
+
+  // Resource list
   resourcesContainer: {
-    gap: 16,
-    marginHorizontal: 24,
+    gap: SPACING.itemGap,
+    marginHorizontal: SPACING.screenPadding,
   },
+
+  // Resource card (matches ForYou topicCard pattern)
   resourceCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.card,
+    padding: 16,
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.white,
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
   },
-  resourceIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  resourceIconCircle: {
+    width: SIZING.circleRole,
+    height: SIZING.circleRole,
+    borderRadius: SIZING.circleRole / 2,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 18,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginRight: 16,
   },
   resourceContent: {
     flex: 1,
   },
   resourceTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    ...TYPOGRAPHY.body,
     color: COLORS.textDark,
-    marginBottom: 8,
-    lineHeight: 28,
+    marginBottom: SPACING.xs,
+    lineHeight: 24,
   },
   categoryBadge: {
     alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADII.badgeSmall,
   },
   resourceCategory: {
-    fontSize: 12,
-    fontWeight: "700",
+    ...TYPOGRAPHY.caption,
+    fontWeight: "600",
   },
   resourceActions: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
-  emptyState: {
+
+  // Empty state
+  emptyStateCard: {
     alignItems: "center",
-    paddingVertical: 80,
+    paddingVertical: 60,
     paddingHorizontal: 32,
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.cardLarge,
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
+    marginHorizontal: SPACING.screenPadding,
+    ...SHADOWS.cardLarge,
   },
-  emptyTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: COLORS.textDark,
-    marginTop: 24,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    color: COLORS.textMuted,
-    textAlign: "center",
-    lineHeight: 26,
+  emptyIconCircle: {
+    width: SIZING.circlePage,
+    height: SIZING.circlePage,
+    borderRadius: SIZING.circlePage / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: SPACING.sectionGap,
   },
 });

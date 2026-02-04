@@ -9,6 +9,7 @@ import {
   Dimensions,
   Modal,
   Pressable,
+  Share,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
@@ -662,6 +663,14 @@ export default function UnderstandingCancerScreen() {
     setSelectedCard(null);
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: 'Check out "Understanding What Cancer Is and Isn\'t" on SchoolKit — learn the facts and bust common myths about cancer.',
+      });
+    } catch {}
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -672,6 +681,9 @@ export default function UnderstandingCancerScreen() {
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
+            <Ionicons name="share-outline" size={28} color="#6B6B85" />
+          </TouchableOpacity>
           <DownloadButton resourceId="11" size={28} color="#3B82F6" />
           <BookmarkButton resourceId="11" size={28} color="#3B82F6" />
         </View>

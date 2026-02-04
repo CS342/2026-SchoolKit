@@ -139,7 +139,7 @@ export default function Step4Screen() {
               <Ionicons name="sparkles-outline" size={48} color={COLORS.primary} />
             </View>
 
-            <Text style={[SHARED_STYLES.pageTitle, { lineHeight: 34 }]}>What would you like support with?</Text>
+            <Text style={[SHARED_STYLES.pageTitle, { lineHeight: 36 }]}>What would you like support with?</Text>
             <Text style={[SHARED_STYLES.pageSubtitle, styles.subtitleOverride]}>
               Choose what feels right - you can always explore more later.
             </Text>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   subtitleOverride: {
     marginBottom: 12,
-    lineHeight: 24,
+    lineHeight: 26,
     paddingHorizontal: 8,
   },
   counterPill: {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
   },
   counterText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   counterTextActive: {

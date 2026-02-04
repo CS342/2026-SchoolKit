@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: COLORS.textLight,
   },

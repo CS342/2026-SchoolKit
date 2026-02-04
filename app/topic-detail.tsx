@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
-import { COLORS } from '../constants/onboarding-theme';
+import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
@@ -17,14 +17,25 @@ export default function TopicDetailScreen() {
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
   const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out "${title}" on SchoolKit — a resource to help students and families navigate school during cancer treatment.`,
+      });
+    } catch {}
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: color + '08' }]}>
+    <View style={[styles.container, { backgroundColor: withOpacity(color, 0.03) }]}>
       <View style={[styles.header, { borderBottomColor: color }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Topic Details</Text>
+        <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
+          <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+            <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
+          </TouchableOpacity>
           <DownloadButton resourceId={resourceId} size={24} />
           <BookmarkButton resourceId={resourceId} color={color} size={26} />
         </View>
@@ -32,7 +43,7 @@ export default function TopicDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
-          <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
             <Ionicons name="book" size={40} color={color} />
           </View>
           <Text style={styles.title}>{title}</Text>
@@ -49,7 +60,7 @@ export default function TopicDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Key Resources</Text>
           <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: color + '15' }]}>
+            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
               <Ionicons name="document-text" size={24} color={color} />
             </View>
             <View style={styles.resourceContent}>
@@ -58,7 +69,7 @@ export default function TopicDetailScreen() {
             </View>
           </View>
           <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: color + '15' }]}>
+            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
               <Ionicons name="people" size={24} color={color} />
             </View>
             <View style={styles.resourceContent}>
@@ -67,7 +78,7 @@ export default function TopicDetailScreen() {
             </View>
           </View>
           <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: color + '15' }]}>
+            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
               <Ionicons name="bulb" size={24} color={color} />
             </View>
             <View style={styles.resourceContent}>
@@ -109,12 +120,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    flex: 1,
-    textAlign: 'center',
+  shareButton: {
+    padding: 8,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -123,17 +130,13 @@ const styles = StyleSheet.create({
   },
   titleCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 24,
+    borderRadius: RADII.cardLarge,
     padding: 28,
     marginBottom: 24,
     borderWidth: 2,
     borderColor: COLORS.borderCard,
     alignItems: 'center',
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    ...SHADOWS.cardLarge,
   },
   iconContainer: {
     width: 80,
@@ -160,8 +163,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   description: {
-    fontSize: 17,
-    fontWeight: '500',
+    ...TYPOGRAPHY.bodyDescription,
     color: COLORS.textMuted,
     lineHeight: 26,
   },
@@ -174,11 +176,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 2,
     borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    ...SHADOWS.card,
   },
   resourceIcon: {
     width: 56,
@@ -198,8 +196,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   resourceSubtitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...TYPOGRAPHY.labelSmall,
     color: COLORS.textLight,
   },
 });

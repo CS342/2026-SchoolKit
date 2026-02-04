@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.h3,
     color: COLORS.white,
     textAlign: 'center',
-    lineHeight: 32,
+    lineHeight: 34,
     marginTop: 24,
   },
   dotsContainer: {

@@ -1,44 +1,160 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { ALL_RESOURCES } from "../../constants/resources";
-import { COLORS } from "../../constants/onboarding-theme";
+import {
+  COLORS,
+  SHADOWS,
+  RADII,
+  SIZING,
+  SPACING,
+  BORDERS,
+  ANIMATION,
+  APP_STYLES,
+} from "../../constants/onboarding-theme";
 
-function SettingItem({ icon, title, subtitle, onPress }: any) {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// A single row inside a grouped section
+function SettingRow({
+  icon,
+  label,
+  value,
+  onPress,
+  isLast = false,
+  tint,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value?: string;
+  onPress: () => void;
+  isLast?: boolean;
+  tint?: string;
+}) {
+  const scale = useSharedValue(1);
+
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <TouchableOpacity
-      style={styles.settingItem}
+    <AnimatedPressable
       onPress={onPress}
-      activeOpacity={0.7}
+      onPressIn={() => {
+        scale.value = withTiming(0.98, { duration: 80 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ANIMATION.springBouncy);
+      }}
+      style={[styles.row, pressStyle]}
     >
-      <View style={styles.settingIcon}>
-        <Ionicons name={icon} size={24} color={COLORS.primary} />
+      <View style={[styles.rowIconWrap, tint ? { backgroundColor: tint } : null]}>
+        <Ionicons
+          name={icon}
+          size={18}
+          color={tint ? COLORS.white : COLORS.primary}
+        />
       </View>
-      <View style={styles.settingContent}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+      <View style={[styles.rowBody, !isLast && styles.rowBorder]}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        <View style={styles.rowRight}>
+          {value ? (
+            <Text style={styles.rowValue} numberOfLines={1}>
+              {value}
+            </Text>
+          ) : null}
+          <Ionicons name="chevron-forward" size={18} color={COLORS.indicatorInactive} />
+        </View>
       </View>
-      <Ionicons name="chevron-forward" size={22} color={COLORS.indicatorInactive} />
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
+}
+
+// Animated group container
+function AnimatedSection({
+  children,
+  delay,
+}: {
+  children: React.ReactNode;
+  delay: number;
+}) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(24);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, ANIMATION.springSmooth)
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
-  const { data, resetOnboarding, updateProfilePicture, downloadAllResources, downloads } = useOnboarding();
+  const {
+    data,
+    resetOnboarding,
+    updateProfilePicture,
+    downloadAllResources,
+    downloads,
+  } = useOnboarding();
+
+  // Avatar entrance
+  const avatarScale = useSharedValue(0);
+  const avatarOpacity = useSharedValue(0);
+  // Identity text entrance
+  const nameOpacity = useSharedValue(0);
+  const nameTranslateY = useSharedValue(12);
+  // Footer
+  const footerOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    avatarOpacity.value = withDelay(80, withTiming(1, { duration: 300 }));
+    avatarScale.value = withDelay(80, withSpring(1, ANIMATION.springBouncy));
+    nameOpacity.value = withDelay(200, withTiming(1, { duration: 350 }));
+    nameTranslateY.value = withDelay(200, withSpring(0, ANIMATION.springSmooth));
+    footerOpacity.value = withDelay(700, withTiming(1, { duration: 500 }));
+  }, []);
+
+  const avatarStyle = useAnimatedStyle(() => ({
+    opacity: avatarOpacity.value,
+    transform: [{ scale: avatarScale.value }],
+  }));
+  const nameStyle = useAnimatedStyle(() => ({
+    opacity: nameOpacity.value,
+    transform: [{ translateY: nameTranslateY.value }],
+  }));
+  const footerStyle = useAnimatedStyle(() => ({
+    opacity: footerOpacity.value,
+  }));
 
   const getRoleDisplayName = () => {
     switch (data.role) {
@@ -60,51 +176,38 @@ export default function ProfileScreen() {
     return data.schoolStatuses.map((s) => s.replace(/-/g, " ")).join(", ");
   };
 
+  // Photo handlers
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Camera permission is required to take photos."
-      );
+      Alert.alert("Permission needed", "Camera permission is required to take photos.");
       return;
     }
-
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
-
     if (!result.canceled && result.assets[0]) {
-      console.log('📷 Uploading photo from camera...');
       await updateProfilePicture(result.assets[0].uri);
-      console.log('📷 Photo upload complete');
     }
   };
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Photo library permission is required to choose photos."
-      );
+      Alert.alert("Permission needed", "Photo library permission is required.");
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
-
     if (!result.canceled && result.assets[0]) {
-      console.log('📷 Uploading photo from library...');
       await updateProfilePicture(result.assets[0].uri);
-      console.log('📷 Photo upload complete');
     }
   };
 
@@ -117,312 +220,325 @@ export default function ProfileScreen() {
   };
 
   const handleRetakeSurvey = () => {
-    Alert.alert(
-      "Retake Survey",
-      "This will reset your profile. Are you sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Retake",
-          style: "destructive",
-          onPress: () => {
-            resetOnboarding();
-            router.replace("/onboarding/step1");
-          },
+    Alert.alert("Retake Survey", "This will reset your profile. Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Retake",
+        style: "destructive",
+        onPress: () => {
+          resetOnboarding();
+          router.replace("/onboarding/step1");
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDownloadAll = () => {
     const allDownloaded = downloads.length >= ALL_RESOURCES.length;
     if (allDownloaded) {
-      Alert.alert(
-        "Already Downloaded",
-        "All resources are already available offline."
-      );
+      Alert.alert("Already Downloaded", "All resources are already available offline.");
     } else {
-      Alert.alert(
-        "Download All Resources",
-        "This will save all resources for offline access.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Download All",
-            onPress: async () => {
-              await downloadAllResources();
-              Alert.alert("Success", "All resources are now available offline!");
-            },
+      Alert.alert("Download All Resources", "This will save all resources for offline access.", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Download All",
+          onPress: async () => {
+            await downloadAllResources();
+            Alert.alert("Success", "All resources are now available offline!");
           },
-        ]
-      );
+        },
+      ]);
     }
   };
 
   const handleSignOut = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: async () => {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
             await signOut();
             router.replace("/welcome");
-          },
+          } catch (err: any) {
+            Alert.alert("Sign Out Failed", err.message || "Something went wrong.");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <Text style={styles.headerSubtitle}>Manage your information</Text>
+      {/* Header */}
+      <View style={APP_STYLES.tabHeader}>
+        <Text style={APP_STYLES.tabHeaderTitle}>Profile</Text>
+        <Text style={APP_STYLES.tabHeaderSubtitle}>Manage your information</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.userCard}>
-          <TouchableOpacity onPress={handleProfilePicture} activeOpacity={0.8}>
-            <View style={styles.userAvatar}>
-              {data.profilePicture ? (
-                <Image
-                  source={{ uri: data.profilePicture }}
-                  style={styles.profileImage}
-                />
-              ) : (
-                <Text style={styles.userInitial}>
-                  {data.name.charAt(0).toUpperCase()}
-                </Text>
-              )}
+        {/* Identity */}
+        <View style={styles.identity}>
+          <Pressable onPress={handleProfilePicture}>
+            <Animated.View style={avatarStyle}>
+              <View style={styles.avatar}>
+                {data.profilePicture ? (
+                  <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarInitial}>
+                    {data.name.charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.cameraBadge}>
+                <Ionicons name="camera" size={14} color={COLORS.white} />
+              </View>
+            </Animated.View>
+          </Pressable>
+
+          <Animated.View style={[styles.identityText, nameStyle]}>
+            <Text style={styles.userName}>{data.name}</Text>
+            <View style={styles.rolePill}>
+              <Text style={styles.rolePillText}>{getRoleDisplayName()}</Text>
             </View>
-            <View style={styles.cameraIcon}>
-              <Ionicons name="camera" size={20} color={COLORS.white} />
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.userName}>{data.name}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleBadgeText}>{getRoleDisplayName()}</Text>
+          </Animated.View>
+        </View>
+
+        {/* Section: Profile */}
+        <AnimatedSection delay={320}>
+          <Text style={styles.sectionLabel}>PROFILE</Text>
+          <View style={styles.groupCard}>
+            <SettingRow
+              icon="person-outline"
+              label="Name"
+              value={data.name}
+              onPress={() => router.push("/edit-name")}
+            />
+            <SettingRow
+              icon="school-outline"
+              label="Role"
+              value={getRoleDisplayName()}
+              onPress={() => router.push("/edit-role")}
+            />
+            <SettingRow
+              icon="book-outline"
+              label="School Status"
+              value={getSchoolStatusText()}
+              onPress={() => router.push("/edit-school-status")}
+            />
+            <SettingRow
+              icon="list-outline"
+              label="Topics"
+              value={`${data.topics.length} selected`}
+              onPress={() => router.push("/edit-topics")}
+              isLast
+            />
           </View>
-        </View>
+        </AnimatedSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Information</Text>
-          <SettingItem
-            icon="person-outline"
-            title="Name"
-            subtitle={data.name}
-            onPress={() => router.push("/edit-name")}
-          />
-          <SettingItem
-            icon="school-outline"
-            title="Role"
-            subtitle={getRoleDisplayName()}
-            onPress={() => router.push("/edit-role")}
-          />
-          <SettingItem
-            icon="book-outline"
-            title="School Status"
-            subtitle={getSchoolStatusText()}
-            onPress={() => router.push("/edit-school-status")}
-          />
-          <SettingItem
-            icon="list-outline"
-            title="Topics"
-            subtitle={`${data.topics.length} selected`}
-            onPress={() => router.push("/edit-topics")}
-          />
-        </View>
+        {/* Section: General */}
+        <AnimatedSection delay={460}>
+          <Text style={styles.sectionLabel}>GENERAL</Text>
+          <View style={styles.groupCard}>
+            <SettingRow
+              icon="cloud-download-outline"
+              label="Download All"
+              value={
+                downloads.length >= ALL_RESOURCES.length
+                  ? "All saved"
+                  : `${downloads.length}/${ALL_RESOURCES.length}`
+              }
+              onPress={handleDownloadAll}
+            />
+            <SettingRow
+              icon="refresh-outline"
+              label="Retake Survey"
+              onPress={handleRetakeSurvey}
+            />
+            <SettingRow
+              icon="information-circle-outline"
+              label="About SchoolKit"
+              onPress={() => {}}
+            />
+            <SettingRow
+              icon="help-circle-outline"
+              label="Help & Support"
+              onPress={() => {}}
+              isLast
+            />
+          </View>
+        </AnimatedSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Actions</Text>
-          <SettingItem
-            icon="cloud-download-outline"
-            title="Download All Resources"
-            subtitle={downloads.length >= ALL_RESOURCES.length ? "All resources saved offline" : `${downloads.length}/${ALL_RESOURCES.length} resources saved`}
-            onPress={handleDownloadAll}
-          />
-          <SettingItem
-            icon="refresh-outline"
-            title="Retake Survey"
-            subtitle="Start over with a fresh profile"
-            onPress={handleRetakeSurvey}
-          />
-          <SettingItem
-            icon="information-circle-outline"
-            title="About SchoolKit"
-            subtitle="Learn more about this app"
-            onPress={() => {}}
-          />
-          <SettingItem
-            icon="help-circle-outline"
-            title="Help & Support"
-            subtitle="Get assistance"
-            onPress={() => {}}
-          />
-          <SettingItem
-            icon="log-out-outline"
-            title="Sign Out"
-            subtitle="Sign out of your account"
-            onPress={handleSignOut}
-          />
-        </View>
+        {/* Sign Out — standalone */}
+        <AnimatedSection delay={580}>
+          <View style={styles.groupCard}>
+            <SettingRow
+              icon="log-out-outline"
+              label="Sign Out"
+              onPress={handleSignOut}
+              tint={COLORS.error}
+              isLast
+            />
+          </View>
+        </AnimatedSection>
 
-        <Text style={styles.version}>SchoolKit v1.0.0</Text>
+        {/* Footer */}
+        <Animated.View style={[styles.footer, footerStyle]}>
+          <Text style={styles.footerText}>SchoolKit v1.0.0</Text>
+        </Animated.View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.appBackground },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 24,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.appBackground,
   },
-  headerTitle: {
-    fontSize: 38,
-    fontWeight: "800",
-    color: COLORS.textDark,
-    marginBottom: 6,
+  scroll: {
+    paddingBottom: 48,
   },
-  headerSubtitle: { fontSize: 18, fontWeight: "600", color: COLORS.textMuted },
-  scrollContent: { paddingTop: 28, paddingBottom: 40 },
-  userCard: {
+
+  // ── Identity ──────────────────────────────────
+  identity: {
     alignItems: "center",
-    backgroundColor: COLORS.white,
-    marginHorizontal: 24,
-    padding: 36,
-    borderRadius: 28,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    marginBottom: 32,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 6,
+    paddingTop: 32,
+    paddingBottom: 28,
   },
-  userAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  avatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
     overflow: "hidden",
-    position: "relative",
   },
-  profileImage: { width: 120, height: 120, borderRadius: 60 },
-  cameraIcon: {
+  avatarImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+  },
+  avatarInitial: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: COLORS.white,
+    letterSpacing: -0.5,
+  },
+  cameraBadge: {
     position: "absolute",
-    bottom: 20,
-    right: 0,
+    bottom: 0,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: COLORS.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
-    borderColor: COLORS.white,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 2.5,
+    borderColor: COLORS.appBackground,
   },
-  userInitial: { fontSize: 48, fontWeight: "800", color: COLORS.white },
+  identityText: {
+    alignItems: "center",
+    marginTop: 16,
+  },
   userName: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: COLORS.textDark,
-    marginBottom: 14,
-  },
-  roleBadge: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.backgroundLighter,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: COLORS.borderPurple,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  roleBadgeText: { fontSize: 16, fontWeight: "700", color: COLORS.primary },
-  section: { marginBottom: 32, paddingHorizontal: 24 },
-  sectionTitle: {
     fontSize: 24,
-    fontWeight: "800",
-    color: COLORS.textDark,
-    marginBottom: 20,
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    padding: 20,
-    borderRadius: 24,
-    marginBottom: 14,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  settingIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.backgroundLighter,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  settingContent: { flex: 1 },
-  settingTitle: {
-    fontSize: 18,
     fontWeight: "700",
     color: COLORS.textDark,
-    marginBottom: 4,
+    letterSpacing: -0.3,
+    marginBottom: 8,
   },
-  settingSubtitle: { fontSize: 15, fontWeight: "600", color: COLORS.textLight },
-  version: {
-    fontSize: 16,
+  rolePill: {
+    backgroundColor: COLORS.backgroundLight,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 100,
+  },
+  rolePillText: {
+    fontSize: 13,
     fontWeight: "600",
-    color: COLORS.inputPlaceholder,
-    textAlign: "center",
-    marginTop: 20,
+    color: COLORS.primary,
+  },
+
+  // ── Sections ──────────────────────────────────
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textLight,
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginLeft: SPACING.screenPadding + 4,
+  },
+  groupCard: {
+    backgroundColor: COLORS.white,
+    marginHorizontal: SPACING.screenPadding,
+    borderRadius: 16,
+    marginBottom: 24,
+    ...SHADOWS.card,
+  },
+
+  // ── Row ───────────────────────────────────────
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 14,
+    paddingRight: 16,
+    minHeight: 52,
+  },
+  rowIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: COLORS.backgroundLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rowBody: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginLeft: 12,
+    paddingVertical: 14,
+  },
+  rowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.borderCard,
+  },
+  rowLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: COLORS.textDark,
+    flexShrink: 0,
+  },
+  rowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 1,
+    marginLeft: 12,
+  },
+  rowValue: {
+    fontSize: 15,
+    fontWeight: "400",
+    color: COLORS.textLight,
+    maxWidth: 160,
+  },
+
+  // ── Footer ────────────────────────────────────
+  footer: {
+    alignItems: "center",
+    paddingTop: 8,
+  },
+  footerText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: COLORS.indicatorInactive,
   },
 });

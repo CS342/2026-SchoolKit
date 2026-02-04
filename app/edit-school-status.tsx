@@ -1,9 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useOnboarding, SchoolStatus } from '../contexts/OnboardingContext';
-import { COLORS } from '../constants/onboarding-theme';
+import { SelectableCard } from '../components/onboarding/SelectableCard';
+import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
   { value: 'current-treatment', label: 'Currently in school' },
@@ -12,57 +20,22 @@ const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
   { value: 'special-needs', label: 'Home/hospital school' },
 ];
 
-interface StatusCardProps {
-  option: { value: SchoolStatus; label: string };
-  isSelected: boolean;
-  onPress: () => void;
-}
+function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(16);
 
-function StatusCard({ option, isSelected, onPress }: StatusCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const color = COLORS.primary;
+  useEffect(() => {
+    const delay = 200 + index * ANIMATION.staggerDelay;
+    opacity.value = withDelay(delay, withTiming(1, { duration: 350 }));
+    translateY.value = withDelay(delay, withSpring(0, ANIMATION.springSmooth));
+  }, []);
 
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onPress();
-  };
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
-  return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.statusCard,
-          isSelected && {
-            borderColor: color,
-            borderLeftWidth: 6,
-            backgroundColor: color + '0D',
-          },
-          { transform: [{ scale: scaleAnim }] },
-        ]}
-      >
-        <Text style={[styles.statusText, isSelected && styles.statusTextSelected]}>
-          {option.label}
-        </Text>
-        {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={22} color={COLORS.white} />
-          </View>
-        )}
-      </Animated.View>
-    </TouchableOpacity>
-  );
+  return <Animated.View style={animStyle}>{children}</Animated.View>;
 }
 
 export default function EditSchoolStatusScreen() {
@@ -85,30 +58,32 @@ export default function EditSchoolStatusScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
+      <View style={APP_STYLES.editHeader}>
+        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton}>
+          <Ionicons name="chevron-back" size={22} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit School Status</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveText}>Save</Text>
+        <Text style={APP_STYLES.editHeaderTitle}>Edit School Status</Text>
+        <TouchableOpacity onPress={handleSave} style={APP_STYLES.editSaveButton}>
+          <Text style={APP_STYLES.editSaveText}>Save</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={APP_STYLES.editScrollContent}>
         <Text style={styles.subtitle}>Select all that apply</Text>
         <Text style={styles.selectedCount}>
           {selectedStatuses.length} status{selectedStatuses.length !== 1 ? 'es' : ''} selected
         </Text>
 
-        <View style={styles.statusContainer}>
-          {SCHOOL_STATUS_OPTIONS.map((option) => (
-            <StatusCard
-              key={option.value}
-              option={option}
-              isSelected={selectedStatuses.includes(option.value)}
-              onPress={() => toggleStatus(option.value)}
-            />
+        <View style={styles.cardsContainer}>
+          {SCHOOL_STATUS_OPTIONS.map((option, index) => (
+            <AnimatedCardWrapper key={option.value} index={index}>
+              <SelectableCard
+                title={option.label}
+                selected={selectedStatuses.includes(option.value)}
+                onPress={() => toggleStatus(option.value)}
+                multiSelect={true}
+              />
+            </AnimatedCardWrapper>
           ))}
         </View>
       </ScrollView>
@@ -121,46 +96,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.appBackground,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.textDark,
-  },
-  saveButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.primary,
-    borderRadius: 16,
-  },
-  saveText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
-  },
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -171,41 +106,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.primary,
-    marginBottom: 24,
+    marginBottom: SPACING.screenPadding,
   },
-  statusContainer: {
-    gap: 12,
-  },
-  statusCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: COLORS.borderCard,
-    padding: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  statusText: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.textDark,
-  },
-  statusTextSelected: {
-    fontWeight: '700',
-  },
-  checkmark: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+  cardsContainer: {
+    gap: 0,
   },
 });

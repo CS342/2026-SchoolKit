@@ -20,6 +20,7 @@ export const ALL_RESOURCES: Resource[] = [
   { id: '9', title: 'Collaborating with the school team', category: 'School', tags: ['school', 'collaboration'], icon: 'people-circle', color: '#7B68EE' },
   { id: '10', title: 'Working with healthcare providers', category: 'Health', tags: ['health', 'medical'], icon: 'medical', color: '#0EA5E9' },
   { id: '11', title: "Understanding What Cancer Is and Isn't", category: 'Health', tags: ['cancer', 'understanding', 'myths', 'facts'], icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
+  { id: '12', title: 'Encouraging Positive Peer Support', category: 'Social', tags: ['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion'], icon: 'people', color: '#0EA5E9', route: '/peer-support' },
 ];
 
 export const ALL_RESOURCE_IDS = ALL_RESOURCES.map(r => r.id);

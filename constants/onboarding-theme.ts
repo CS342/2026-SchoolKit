@@ -12,6 +12,9 @@ export const GRADIENTS = {
   roleStudentHS: ['#7B68EE', '#9B6EE8'] as const,
   roleParent: ['#EC4899', '#F472B6'] as const,
   roleStaff: ['#66D9A6', '#86EFAC'] as const,
+  infoBlue: ['#3B82F6', '#60A5FA'] as const,
+  accentAmber: ['#F59E0B', '#FBBF24'] as const,
+  errorRed: ['#EF4444', '#F87171'] as const,
 };
 
 export const SHADOWS = {
@@ -42,6 +45,27 @@ export const SHADOWS = {
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
+  },
+  header: {
+    shadowColor: '#7B68EE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  cardLarge: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  iconCircle: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 };
 
@@ -96,6 +120,9 @@ export const RADII = {
   grid: 16,
   formCard: 24,
   headerBottom: 32,
+  cardLarge: 24,
+  userCard: 28,
+  badgeSmall: 10,
 };
 
 export const BORDERS = {
@@ -104,6 +131,7 @@ export const BORDERS = {
   input: 1.5,
   innerGlow: 1,
   backButton: 1.5,
+  cardLarge: 3,
 };
 
 export const ANIMATION = {
@@ -115,17 +143,23 @@ export const ANIMATION = {
 };
 
 export const TYPOGRAPHY = {
-  display: { fontSize: 42, fontWeight: '800' as const, letterSpacing: -1 },
-  h1: { fontSize: 28, fontWeight: '800' as const },
-  h2: { fontSize: 22, fontWeight: '700' as const },
-  h3: { fontSize: 20, fontWeight: '700' as const },
-  bodyLarge: { fontSize: 16, fontWeight: '600' as const },
-  body: { fontSize: 16, fontWeight: '600' as const },
-  bodySmall: { fontSize: 14, fontWeight: '600' as const },
-  caption: { fontSize: 13, fontWeight: '600' as const },
-  button: { fontSize: 17, fontWeight: '800' as const },
-  buttonSmall: { fontSize: 16, fontWeight: '700' as const },
-  input: { fontSize: 20, fontWeight: '700' as const },
+  display: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -1 },
+  h1: { fontSize: 30, fontWeight: '800' as const },
+  h2: { fontSize: 24, fontWeight: '700' as const },
+  h3: { fontSize: 22, fontWeight: '700' as const },
+  bodyLarge: { fontSize: 18, fontWeight: '600' as const },
+  body: { fontSize: 18, fontWeight: '600' as const },
+  bodySmall: { fontSize: 16, fontWeight: '600' as const },
+  caption: { fontSize: 14, fontWeight: '600' as const },
+  button: { fontSize: 19, fontWeight: '800' as const },
+  buttonSmall: { fontSize: 18, fontWeight: '700' as const },
+  input: { fontSize: 22, fontWeight: '700' as const },
+  screenTitle: { fontSize: 38, fontWeight: '800' as const },
+  sectionTitle: { fontSize: 28, fontWeight: '800' as const },
+  emptyTitle: { fontSize: 26, fontWeight: '800' as const },
+  editTitle: { fontSize: 24, fontWeight: '800' as const },
+  bodyDescription: { fontSize: 17, fontWeight: '500' as const },
+  labelSmall: { fontSize: 15, fontWeight: '600' as const },
 };
 
 export const SIZING = {
@@ -139,6 +173,9 @@ export const SIZING = {
   circlePage: 80,
   circleRole: 52,
   circleCard: 44,
+  circleResource: 72,
+  circleSettings: 56,
+  circleAvatar: 120,
 };
 
 export const SPACING = {
@@ -161,14 +198,14 @@ export const SHARED_STYLES = StyleSheet.create({
     marginBottom: 20,
   },
   pageTitle: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '800',
     color: '#2D2D44',
     marginBottom: 8,
     textAlign: 'center',
   },
   pageSubtitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
@@ -185,7 +222,7 @@ export const SHARED_STYLES = StyleSheet.create({
     alignItems: 'center',
   },
   skipText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#7B68EE',
   },
@@ -199,9 +236,176 @@ export const SHARED_STYLES = StyleSheet.create({
     borderRadius: 20,
   },
   badgeText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: '#7B68EE',
+  },
+});
+
+export function withOpacity(color: string, opacity: number): string {
+  const hex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+  return color + hex;
+}
+
+export const APP_STYLES = StyleSheet.create({
+  // Tab screen headers
+  tabHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 24,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  tabHeaderTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: COLORS.textDark,
+    marginBottom: 6,
+  },
+  tabHeaderSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+  },
+  // Edit screen headers
+  editHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  editHeaderTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: COLORS.textDark,
+  },
+  editBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderCard,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  editSaveButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+  },
+  editSaveText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  editSaveButtonDisabled: {
+    backgroundColor: COLORS.disabledButton,
+  },
+  editSaveTextDisabled: {
+    color: COLORS.inputPlaceholder,
+  },
+  editScrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  // Resource cards (index, search, bookmarks)
+  resourceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  resourceIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 18,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  // Selectable cards (edit-role, edit-school-status, edit-grade-level, edit-topics)
+  selectableCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: COLORS.borderCard,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  // Empty states
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  emptyTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.textDark,
+    marginTop: 24,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+  // Checkmark circle for edit screens
+  checkmarkCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
 });
 
@@ -240,5 +444,15 @@ export const DECORATIVE_SHAPES: Record<string, DecorativeShape[]> = {
     { size: 180, color: 'rgba(123,104,238,0.04)', top: -50, right: -40 },
     { size: 130, color: 'rgba(123,104,238,0.03)', bottom: 140, left: -50 },
     { size: 90, color: 'rgba(196,92,214,0.03)', top: 300, right: -20 },
+  ],
+  profile: [
+    { size: 160, color: 'rgba(123,104,238,0.04)', top: -30, right: -50 },
+    { size: 120, color: 'rgba(123,104,238,0.03)', top: 100, left: -40 },
+    { size: 80, color: 'rgba(196,92,214,0.03)', top: 200, right: -10 },
+  ],
+  search: [
+    { size: 160, color: 'rgba(123,104,238,0.04)', top: 80, right: -50 },
+    { size: 120, color: 'rgba(123,104,238,0.03)', top: 400, left: -40 },
+    { size: 80, color: 'rgba(196,92,214,0.03)', top: 250, right: -10 },
   ],
 };

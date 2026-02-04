@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   gridCellLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.textDark,
     textAlign: 'center',

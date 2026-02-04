@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
   subtitleOverride: {
     marginBottom: 12,
-    lineHeight: 24,
+    lineHeight: 26,
   },
   options: {
     width: '100%',

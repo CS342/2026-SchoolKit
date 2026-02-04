@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   roleTitle: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: COLORS.textDark,
   },
