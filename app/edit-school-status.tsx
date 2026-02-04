@@ -119,7 +119,7 @@ export default function EditSchoolStatusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     flexDirection: 'row',
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: '#E8E8F0',
-    shadowColor: '#7B68EE',
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -143,18 +143,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   saveButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
     borderRadius: 16,
   },
   saveText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -164,28 +164,28 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
     marginBottom: 12,
   },
   selectedCount: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#7B68EE',
+    color: COLORS.primary,
     marginBottom: 24,
   },
   statusContainer: {
     gap: 12,
   },
   statusCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 3,
-    borderColor: '#E8E8F0',
+    borderColor: COLORS.borderCard,
     padding: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   statusTextSelected: {
     fontWeight: '700',

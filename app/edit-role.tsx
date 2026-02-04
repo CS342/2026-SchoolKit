@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   saveText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -164,21 +164,21 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
     marginBottom: 24,
   },
   rolesContainer: {
     gap: 14,
   },
   roleCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 3,
-    borderColor: '#E8E8F0',
+    borderColor: COLORS.borderCard,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   roleTextSelected: {
     fontWeight: '700',
