@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import { Session } from '@supabase/supabase-js';
+import { useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
@@ -23,7 +23,6 @@ export interface BookmarkWithTimestamp {
 
 interface OnboardingContextType {
   data: OnboardingData;
-  session: Session | null;
   loading: boolean;
   updateName: (name: string) => Promise<void>;
   updateRole: (role: UserRole) => Promise<void>;
@@ -33,8 +32,6 @@ interface OnboardingContextType {
   updateProfilePicture: (uri: string | null) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
-  signInAnonymously: () => Promise<void>;
-  signOut: () => Promise<void>;
   // Bookmarks
   bookmarks: string[];
   bookmarksWithTimestamps: BookmarkWithTimestamp[];
@@ -62,8 +59,8 @@ const initialData: OnboardingData = {
 };
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<OnboardingData>(initialData);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
@@ -83,29 +80,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Listen for auth state changes
+  // Watch auth user and fetch profile when it changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    if (authLoading) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-      } else {
-        setData(initialData);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      setLoading(true);
+      fetchProfile(user.id);
+    } else {
+      setData(initialData);
+      setBookmarks([]);
+      setBookmarksWithTimestamps([]);
+      setLoading(false);
+    }
+  }, [user?.id, authLoading]);
 
   // Fetch user profile from Supabase
   const fetchProfile = async (userId: string) => {
@@ -171,12 +159,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   // Update profile in Supabase
   const updateProfile = async (updates: Record<string, unknown>) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     const { error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', session.user.id);
+      .eq('id', user.id);
 
     if (error) {
       console.error('Error updating profile:', error);
@@ -210,22 +198,22 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfilePicture = async (uri: string | null) => {
-    console.log('🖼️ updateProfilePicture called with:', uri?.substring(0, 50));
-    console.log('🖼️ session user id:', session?.user?.id);
+    console.log('updateProfilePicture called with:', uri?.substring(0, 50));
+    console.log('user id:', user?.id);
 
     // If we have a new image, upload it to Supabase Storage
     let publicUrl = uri;
 
-    if (uri && session?.user?.id && !uri.startsWith('http')) {
+    if (uri && user?.id && !uri.startsWith('http')) {
       try {
         const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
-        const fileName = `${session.user.id}/avatar.${fileExt}`;
-        console.log('🖼️ Uploading to:', fileName);
+        const fileName = `${user.id}/avatar.${fileExt}`;
+        console.log('Uploading to:', fileName);
 
         // Fetch the image and convert to ArrayBuffer (works better in RN)
         const response = await fetch(uri);
         const arrayBuffer = await response.arrayBuffer();
-        console.log('🖼️ ArrayBuffer size:', arrayBuffer.byteLength);
+        console.log('ArrayBuffer size:', arrayBuffer.byteLength);
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -235,29 +223,26 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           });
 
         if (uploadError) {
-          console.error('🖼️ Upload error:', uploadError);
+          console.error('Upload error:', uploadError);
           throw uploadError;
         }
 
-        console.log('🖼️ Upload successful!');
+        console.log('Upload successful!');
 
         const { data: urlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(fileName);
 
         publicUrl = urlData.publicUrl;
-        console.log('🖼️ Public URL:', publicUrl);
+        console.log('Public URL:', publicUrl);
       } catch (error) {
         // Fall back to local URI if upload fails
         publicUrl = uri;
       }
-    } else {
-      console.log('🖼️ Skipping upload - uri:', !!uri, 'session:', !!session?.user?.id, 'isHttp:', uri?.startsWith('http'));
     }
 
     setData(prev => ({ ...prev, profilePicture: publicUrl }));
     await updateProfile({ profile_picture_url: publicUrl });
-    console.log('🖼️ Profile updated with picture URL');
   };
 
   const completeOnboarding = async () => {
@@ -278,26 +263,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const signInAnonymously = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.error('Error signing in:', error);
-      setLoading(false);
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
-    setData(initialData);
-    setBookmarks([]);
-  };
-
   // Bookmark methods
   const addBookmark = async (resourceId: string) => {
     const now = Date.now();
@@ -314,10 +279,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return updated;
     });
 
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
     const { error } = await supabase
       .from('user_bookmarks')
-      .insert({ user_id: session.user.id, resource_id: resourceId });
+      .insert({ user_id: user.id, resource_id: resourceId });
 
     if (error) {
       console.error('Error adding bookmark:', error);
@@ -348,11 +313,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return updated;
     });
 
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
     const { error } = await supabase
       .from('user_bookmarks')
       .delete()
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('resource_id', resourceId);
 
     if (error) {
@@ -404,7 +369,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     <OnboardingContext.Provider
       value={{
         data,
-        session,
         loading,
         updateName,
         updateRole,
@@ -414,8 +378,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         updateProfilePicture,
         completeOnboarding,
         resetOnboarding,
-        signInAnonymously,
-        signOut,
         bookmarks,
         bookmarksWithTimestamps,
         addBookmark,

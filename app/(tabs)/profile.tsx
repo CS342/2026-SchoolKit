@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useOnboarding } from "../../contexts/OnboardingContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 function SettingItem({ icon, title, subtitle, onPress }: any) {
   return (
@@ -34,6 +35,7 @@ function SettingItem({ icon, title, subtitle, onPress }: any) {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
   const { data, resetOnboarding, updateProfilePicture, downloadAllResources, downloads } = useOnboarding();
 
   const getRoleDisplayName = () => {
@@ -155,6 +157,24 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            await signOut();
+            router.replace("/welcome");
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -243,6 +263,12 @@ export default function ProfileScreen() {
             title="Help & Support"
             subtitle="Get assistance"
             onPress={() => {}}
+          />
+          <SettingItem
+            icon="log-out-outline"
+            title="Sign Out"
+            subtitle="Sign out of your account"
+            onPress={handleSignOut}
           />
         </View>
 

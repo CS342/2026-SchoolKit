@@ -23,9 +23,9 @@ export default function LoadingScreen() {
       }),
     ]).start();
 
-    // Navigate to tabs after 2.5 seconds
+    // Navigate back to index for auth-aware routing after 2.5 seconds
     const timer = setTimeout(() => {
-      router.replace('/(tabs)');
+      router.replace('/');
     }, 2500);
 
     return () => clearTimeout(timer);

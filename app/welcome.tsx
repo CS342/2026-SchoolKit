@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useOnboarding } from '../contexts/OnboardingContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { signInAnonymously } = useOnboarding();
+  const { signInAnonymously } = useAuth();
   const [showButton, setShowButton] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,13 +88,13 @@ export default function WelcomeScreen() {
                   onPress={async () => {
                     if (isLoading) return;
                     setIsLoading(true);
-                    console.log('🚀 Get Started pressed, signing in...');
+                    console.log('Get Started pressed, signing in...');
                     try {
                       await signInAnonymously();
-                      console.log('✅ Sign in complete, navigating...');
+                      console.log('Sign in complete, navigating...');
                       router.push('/onboarding/step1');
                     } catch (error) {
-                      console.error('❌ Login error:', error);
+                      console.error('Login error:', error);
                       setIsLoading(false);
                     }
                   }}
