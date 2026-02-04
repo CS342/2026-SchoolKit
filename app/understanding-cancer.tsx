@@ -9,6 +9,8 @@ import {
   Dimensions,
   Modal,
   Pressable,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -109,13 +111,45 @@ const BACK_HEIGHT = 580; // Taller for content
 function StackedCard({
   item,
   color,
+  index,
+  isVisible,
   onPress,
 }: {
   item: CardData;
   color: string;
+  index: number;
+  isVisible: boolean;
   onPress: () => void;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const hasAnimated = useRef(false);
+
+  React.useEffect(() => {
+    if (isVisible && !hasAnimated.current) {
+      hasAnimated.current = true;
+      const delay = index < 4 ? index * 100 : 0; // Stagger only initial set (0-3)
+
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [isVisible, index]);
+
   const isMyth = item.front.toLowerCase().startsWith("myth:");
   const displayTitle = isMyth ? item.front.substring(5).trim() : item.front;
 
@@ -144,15 +178,25 @@ function StackedCard({
   if (!item.canFlip) {
     // Last card - static, no flip - show full text
     return (
-      <View
+      <Animated.View
         style={[
-          styles.stackedCard,
-          styles.lastCard,
-          { backgroundColor: "#F0F0FF", borderColor: "#D0D0E0" },
+          styles.stackedCardShadow,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+          },
         ]}
       >
-        <Text style={styles.lastCardText}>{item.front}</Text>
-      </View>
+        <View
+          style={[
+            styles.stackedCard,
+            styles.lastCard,
+            { backgroundColor: "#F0F0FF", borderColor: "#D0D0E0" },
+          ]}
+        >
+          <Text style={styles.lastCardText}>{item.front}</Text>
+        </View>
+      </Animated.View>
     );
   }
 
@@ -160,37 +204,45 @@ function StackedCard({
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={handlePress}
-      style={{ flex: 1 }}
     >
       <Animated.View
         style={[
-          styles.stackedCard,
+          styles.stackedCardShadow,
           {
-            backgroundColor: color,
-            borderColor: color,
-            transform: [{ scale: scaleAnim }],
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
           },
         ]}
       >
-        {isMyth && <Text style={styles.stackedMythLabel}>MYTH</Text>}
-        <Text style={styles.stackedCardText} numberOfLines={2}>
-          {displayTitle}
-        </Text>
+        <View
+          style={[
+            styles.stackedCard,
+            {
+              backgroundColor: color,
+              borderColor: color,
+            },
+          ]}
+        >
+          {isMyth && <Text style={styles.stackedMythLabel}>MYTH</Text>}
+          <Text style={styles.stackedCardText} numberOfLines={2}>
+            {displayTitle}
+          </Text>
 
-        {/* Index card lines */}
-        <View style={styles.cardLinesBottom}>
-          <View
-            style={[
-              styles.cardLine,
-              { backgroundColor: "rgba(255,255,255,0.4)" },
-            ]}
-          />
-          <View
-            style={[
-              styles.cardLine,
-              { backgroundColor: "rgba(255,255,255,0.3)" },
-            ]}
-          />
+          {/* Index card lines */}
+          <View style={styles.cardLinesBottom}>
+            <View
+              style={[
+                styles.cardLine,
+                { backgroundColor: "rgba(255,255,255,0.4)" },
+              ]}
+            />
+            <View
+              style={[
+                styles.cardLine,
+                { backgroundColor: "rgba(255,255,255,0.3)" },
+              ]}
+            />
+          </View>
         </View>
       </Animated.View>
     </TouchableOpacity>
@@ -435,17 +487,25 @@ function ExpandedCardModal({
             {/* Front of card (Myth) */}
             <Animated.View
               style={[
-                styles.expandedCard,
-                styles.expandedCardFront,
+                styles.expandedCardShadow,
                 {
-                  height: cardHeight,
-                  backgroundColor: color,
-                  borderColor: color,
                   transform: [{ perspective: 1000 }, { rotateY: frontRotate }],
                   opacity: frontOpacity,
+                  height: cardHeight,
                 },
               ]}
             >
+              <View
+                style={[
+                  styles.expandedCard,
+                  styles.expandedCardFront,
+                  {
+                    height: "100%",
+                    backgroundColor: color,
+                    borderColor: color,
+                  },
+                ]}
+              >
               <View style={styles.expandedCardInnerFront}>
                 {isMyth && (
                   <View style={styles.mythBadgeContainer}>
@@ -488,22 +548,31 @@ function ExpandedCardModal({
                   ]}
                 />
               </View>
+              </View>
             </Animated.View>
 
             {/* Back of card (Fact) */}
             <Animated.View
               style={[
-                styles.expandedCard,
+                styles.expandedCardShadow,
                 styles.expandedCardBackSide,
                 {
-                  height: cardHeight,
-                  backgroundColor: "#FFFFFF",
-                  borderColor: color,
                   transform: [{ perspective: 1000 }, { rotateY: backRotate }],
                   opacity: backOpacity,
+                  height: cardHeight,
                 },
               ]}
             >
+              <View
+                style={[
+                  styles.expandedCard,
+                  {
+                    height: "100%",
+                    backgroundColor: "#FFFFFF",
+                    borderColor: color,
+                  },
+                ]}
+              >
               <View style={styles.expandedCardInner}>
                 {/* Fact badge & Speaking controls */}
                 <View style={styles.factHeader}>
@@ -552,6 +621,7 @@ function ExpandedCardModal({
                   style={[styles.cardLine, { backgroundColor: color + "20" }]}
                 />
               </View>
+              </View>
             </Animated.View>
           </Pressable>
         </Animated.View>
@@ -566,6 +636,21 @@ export default function UnderstandingCancerScreen() {
   const router = useRouter();
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [selectedColor, setSelectedColor] = useState("#FF9AA2");
+  const [visibleLimit, setVisibleLimit] = useState(4);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    // Calculate how many cards should be visible based on scroll position
+    const visibleHeight = scrollY + SCREEN_HEIGHT;
+    const buffer = 100; // Buffer to start animating before fully in view
+    
+    // Calculate index based on card position (top = index * overlap)
+    const newLimit = Math.floor((visibleHeight - buffer) / CARD_OVERLAP);
+    
+    if (newLimit > visibleLimit) {
+      setVisibleLimit(newLimit);
+    }
+  };
 
   const handleCardPress = (card: CardData, index: number) => {
     if (!card.canFlip) return;
@@ -595,6 +680,8 @@ export default function UnderstandingCancerScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         <Text style={styles.pageTitle}>
           Understanding{"\n"}
@@ -624,6 +711,8 @@ export default function UnderstandingCancerScreen() {
               <StackedCard
                 item={card}
                 color={CARD_COLORS[index % CARD_COLORS.length]}
+                index={index}
+                isVisible={index <= visibleLimit}
                 onPress={() => handleCardPress(card, index)}
               />
             </View>
@@ -705,18 +794,20 @@ const styles = StyleSheet.create({
   },
 
   // Stacked card (in the stack)
+  stackedCardShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 12,
+  },
   stackedCard: {
     height: CARD_HEIGHT,
     borderRadius: 20,
     borderWidth: 3,
     padding: 20,
     paddingTop: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
-    overflow: "hidden",
+    overflow: "hidden", // OK here now
     justifyContent: "center",
     alignItems: "center",
   },
@@ -798,16 +889,20 @@ const styles = StyleSheet.create({
   },
 
   // Expanded card
-  expandedCard: {
+  // Expanded card
+  expandedCardShadow: {
     width: "100%",
-    // Height is now animated via inline style
-    borderRadius: 40,
-    borderWidth: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 15,
+  },
+  expandedCard: {
+    width: "100%",
+    // Height is now animated via inline style
+    borderRadius: 40,
+    borderWidth: 4,
     overflow: "hidden",
     backfaceVisibility: "hidden",
   },
