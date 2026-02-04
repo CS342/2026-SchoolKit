@@ -127,7 +127,7 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: () => {
             resetOnboarding();
-            router.replace("/welcome");
+            router.replace("/onboarding/step1");
           },
         },
       ]
