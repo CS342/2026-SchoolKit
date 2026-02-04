@@ -12,7 +12,7 @@ import { DecorativeBackground } from '../../components/onboarding/DecorativeBack
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
-import { GRADIENTS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, RADII, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface TopicOption {
   label: string;
@@ -135,12 +135,12 @@ export default function Step4Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="sparkles-outline" size={56} color="#7B68EE" />
+            <View style={SHARED_STYLES.pageIconCircle}>
+              <Ionicons name="sparkles-outline" size={48} color={COLORS.primary} />
             </View>
 
-            <Text style={styles.title}>What would you like support with?</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[SHARED_STYLES.pageTitle, { lineHeight: 34 }]}>What would you like support with?</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, styles.subtitleOverride]}>
               Choose what feels right - you can always explore more later.
             </Text>
 
@@ -162,15 +162,15 @@ export default function Step4Screen() {
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Get Started"
             onPress={handleFinish}
             disabled={selectedTopics.length === 0}
             icon="arrow-forward"
           />
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Skip for now</Text>
+          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
       </View>
@@ -192,28 +192,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#F0EBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 8,
-    textAlign: 'center',
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#8E8EA8',
-    textAlign: 'center',
+  subtitleOverride: {
     marginBottom: 12,
     lineHeight: 24,
     paddingHorizontal: 8,
@@ -221,41 +200,26 @@ const styles = StyleSheet.create({
   counterPill: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: RADII.badge,
     marginBottom: 20,
   },
   counterPillActive: {
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
   },
   counterPillInactive: {
-    backgroundColor: '#E8E0F0',
+    backgroundColor: COLORS.border,
   },
   counterText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   counterTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   counterTextInactive: {
-    color: '#8E8EA8',
+    color: COLORS.textLight,
   },
   topicsContainer: {
     width: '100%',
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
-    gap: 4,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  skipText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
 });

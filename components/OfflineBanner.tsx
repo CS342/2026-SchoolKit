@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOffline } from '../contexts/OfflineContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 export function OfflineBanner() {
   const { isOnline, isLoading, hasPendingChanges } = useOffline();
@@ -15,7 +16,7 @@ export function OfflineBanner() {
   if (isOnline && hasPendingChanges) {
     return (
       <View style={[styles.container, styles.syncing]}>
-        <Ionicons name="sync-outline" size={18} color="#065F46" />
+        <Ionicons name="sync-outline" size={18} color={COLORS.successText} />
         <Text style={[styles.text, styles.syncingText]}>Syncing your changes...</Text>
       </View>
     );
@@ -24,7 +25,7 @@ export function OfflineBanner() {
   // Show offline message
   return (
     <View style={[styles.container, styles.offline]}>
-      <Ionicons name="cloud-offline-outline" size={18} color="#92400E" />
+      <Ionicons name="cloud-offline-outline" size={18} color={COLORS.offlineText} />
       <Text style={[styles.text, styles.offlineText]}>
         You're offline. Changes will sync when you reconnect.
       </Text>
@@ -42,19 +43,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   offline: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningBg,
   },
   syncing: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successBg,
   },
   text: {
     fontSize: 14,
     fontWeight: '600',
   },
   offlineText: {
-    color: '#92400E',
+    color: COLORS.offlineText,
   },
   syncingText: {
-    color: '#065F46',
+    color: COLORS.successText,
   },
 });

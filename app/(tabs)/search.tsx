@@ -13,100 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BookmarkButton } from "../../components/BookmarkButton";
 import { DownloadIndicator } from "../../components/DownloadIndicator";
+import { ALL_RESOURCES, RESOURCE_CATEGORIES } from "../../constants/resources";
+import { COLORS } from "../../constants/onboarding-theme";
 
-const ALL_RESOURCES = [
-  {
-    id: "1",
-    title: "What you might experience",
-    category: "Health",
-    tags: ["health", "treatment"],
-    icon: "medical",
-    color: "#7B68EE",
-  },
-  {
-    id: "2",
-    title: "Friends and social life",
-    category: "Social",
-    tags: ["social", "friends"],
-    icon: "people",
-    color: "#0EA5E9",
-  },
-  {
-    id: "3",
-    title: "Dealing with feelings",
-    category: "Emotions",
-    tags: ["emotions", "feelings"],
-    icon: "heart",
-    color: "#66D9A6",
-  },
-  {
-    id: "4",
-    title: "Keeping up with school during treatment",
-    category: "School",
-    tags: ["school", "academics"],
-    icon: "school",
-    color: "#EF4444",
-  },
-  {
-    id: "5",
-    title: "Getting back to school after treatment",
-    category: "School",
-    tags: ["school", "transition"],
-    icon: "return-down-back",
-    color: "#7B68EE",
-  },
-  {
-    id: "6",
-    title: "Coping with stress and emotions",
-    category: "Emotions",
-    tags: ["emotions", "stress"],
-    icon: "sunny",
-    color: "#0EA5E9",
-  },
-  {
-    id: "7",
-    title: "Supporting my child during treatment",
-    category: "Family",
-    tags: ["family", "support"],
-    icon: "heart-circle",
-    color: "#66D9A6",
-  },
-  {
-    id: "8",
-    title: "Becoming a strong advocate for my child",
-    category: "Family",
-    tags: ["advocacy", "family"],
-    icon: "megaphone",
-    color: "#EF4444",
-  },
-  {
-    id: "9",
-    title: "Collaborating with the school team",
-    category: "School",
-    tags: ["school", "collaboration"],
-    icon: "people-circle",
-    color: "#7B68EE",
-  },
-  {
-    id: "10",
-    title: "Working with healthcare providers",
-    category: "Health",
-    tags: ["health", "medical"],
-    icon: "medical",
-    color: "#0EA5E9",
-  },
-  {
-    id: "11",
-    title: "Understanding What Cancer Is and Isn't",
-    category: "Health",
-    tags: ["cancer", "understanding", "myths", "facts"],
-    icon: "information-circle",
-    color: "#3B82F6",
-    route: '/understanding-cancer',
-  },
-];
-
-const CATEGORIES = ["All", "Emotions", "School", "Social", "Health", "Family"];
+const CATEGORIES = ["All", ...RESOURCE_CATEGORIES];
 const RECENT_SEARCHES_KEY = "@schoolkit_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
@@ -261,13 +171,13 @@ export default function SearchScreen() {
           <Ionicons
             name="search"
             size={22}
-            color="#8E8EA8"
+            color={COLORS.textLight}
             style={styles.searchIcon}
           />
           <TextInput
             style={styles.searchInput}
             placeholder="Search topics..."
-            placeholderTextColor="#A8A8B8"
+            placeholderTextColor={COLORS.inputPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onFocus={() => setShowRecentSearches(true)}
@@ -280,7 +190,7 @@ export default function SearchScreen() {
               onPress={() => setSearchQuery("")}
               style={styles.clearButton}
             >
-              <Ionicons name="close-circle" size={22} color="#8E8EA8" />
+              <Ionicons name="close-circle" size={22} color={COLORS.textLight} />
             </TouchableOpacity>
           )}
         </View>
@@ -307,7 +217,7 @@ export default function SearchScreen() {
                     style={styles.recentSearchChip}
                     onPress={() => handleRecentSearchPress(query)}
                   >
-                    <Ionicons name="time-outline" size={16} color="#7B68EE" />
+                    <Ionicons name="time-outline" size={16} color={COLORS.primary} />
                     <Text style={styles.recentSearchText}>{query}</Text>
                   </TouchableOpacity>
                 ))}
@@ -359,14 +269,14 @@ export default function SearchScreen() {
               category={resource.category}
               icon={resource.icon}
               color={resource.color}
-              onPress={() => handleResourcePress(resource.id, resource.title, (resource as any).route)}
+              onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
             />
           ))}
         </View>
 
         {filteredResources.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={72} color="#C8C8D8" />
+            <Ionicons name="search-outline" size={72} color={COLORS.indicatorInactive} />
             <Text style={styles.emptyTitle}>No results found</Text>
             <Text style={styles.emptyText}>
               Try searching with different keywords
@@ -381,16 +291,16 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FBF9FF",
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: "#E8E8F0",
-    shadowColor: "#7B68EE",
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -399,13 +309,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 38,
     fontWeight: "800",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 6,
   },
   headerSubtitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#6B6B85",
+    color: COLORS.textMuted,
   },
   searchContainer: {
     flexDirection: "row",
@@ -414,11 +324,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 16,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     borderRadius: 24,
     borderWidth: 3,
-    borderColor: "#E8E8F0",
-    shadowColor: "#7B68EE",
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -432,7 +342,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     fontSize: 18,
     fontWeight: "500",
-    color: "#2D2D44",
+    color: COLORS.textDark,
   },
   clearButton: {
     padding: 4,
@@ -450,12 +360,12 @@ const styles = StyleSheet.create({
   recentSearchesTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#6B6B85",
+    color: COLORS.textMuted,
   },
   clearRecentText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7B68EE",
+    color: COLORS.primary,
   },
   recentSearchesScroll: {
     flexDirection: "row",
@@ -463,18 +373,18 @@ const styles = StyleSheet.create({
   recentSearchChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F3FF",
+    backgroundColor: COLORS.backgroundLighter,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: "#E8E0FF",
+    borderColor: COLORS.borderPurple,
   },
   recentSearchText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7B68EE",
+    color: COLORS.primary,
     marginLeft: 6,
   },
   filtersContainer: {
@@ -490,22 +400,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: "#E8E8F0",
+    borderColor: COLORS.borderCard,
     marginRight: 10,
   },
   filterChipActive: {
-    backgroundColor: "#7B68EE",
-    borderColor: "#7B68EE",
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   filterChipText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#6B6B85",
+    color: COLORS.textMuted,
   },
   filterChipTextActive: {
-    color: "#FFFFFF",
+    color: COLORS.white,
   },
   scrollContent: {
     paddingTop: 16,
@@ -514,7 +424,7 @@ const styles = StyleSheet.create({
   resultsText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#7B68EE",
+    color: COLORS.primary,
     marginBottom: 20,
     marginHorizontal: 24,
   },
@@ -525,12 +435,12 @@ const styles = StyleSheet.create({
   resourceCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     padding: 24,
     borderRadius: 24,
     borderWidth: 3,
-    borderColor: "#E8E8F0",
-    shadowColor: "#000",
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -543,7 +453,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 18,
-    shadowColor: "#000",
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -555,7 +465,7 @@ const styles = StyleSheet.create({
   resourceTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 8,
     lineHeight: 28,
   },
@@ -581,7 +491,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginTop: 24,
     marginBottom: 12,
     textAlign: "center",
@@ -589,7 +499,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "500",
-    color: "#6B6B85",
+    color: COLORS.textMuted,
     textAlign: "center",
     lineHeight: 26,
   },

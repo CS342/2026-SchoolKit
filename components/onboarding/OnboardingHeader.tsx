@@ -9,14 +9,16 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { ProgressBar } from './ProgressBar';
+import { COLORS, TYPOGRAPHY, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface OnboardingHeaderProps {
   currentStep: number;
   totalSteps: number;
   showHelper?: boolean;
+  onBack?: () => void;
 }
 
-export function OnboardingHeader({ currentStep, totalSteps, showHelper = false }: OnboardingHeaderProps) {
+export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack }: OnboardingHeaderProps) {
   const router = useRouter();
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(0);
@@ -34,16 +36,20 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false }
   return (
     <Animated.View style={[styles.container, entranceStyle]}>
       <View style={styles.topRow}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.backButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#6B6B85" />
-        </Pressable>
+        {currentStep === 1 ? (
+          <View style={styles.placeholder} />
+        ) : (
+          <Pressable
+            onPress={onBack ?? (() => router.back())}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="chevron-back" size={22} color={COLORS.textMuted} />
+          </Pressable>
+        )}
 
-        <View style={styles.stepBadge}>
-          <Text style={styles.stepText}>{currentStep} of {totalSteps}</Text>
+        <View style={SHARED_STYLES.badge}>
+          <Text style={SHARED_STYLES.badgeText}>{currentStep} of {totalSteps}</Text>
         </View>
 
         <View style={styles.placeholder} />
@@ -79,22 +85,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E8E0F0',
+    backgroundColor: COLORS.white,
+    borderWidth: BORDERS.backButton,
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stepBadge: {
-    backgroundColor: '#F0EBFF',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  stepText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
   placeholder: {
     width: 40,
@@ -104,8 +99,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   helperText: {
-    fontSize: 13,
-    color: '#8E8EA8',
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    color: COLORS.textLight,
     textAlign: 'center',
     marginTop: 12,
     paddingHorizontal: 40,

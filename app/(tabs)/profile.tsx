@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { ALL_RESOURCES } from "../../constants/resources";
+import { COLORS } from "../../constants/onboarding-theme";
 
 function SettingItem({ icon, title, subtitle, onPress }: any) {
   return (
@@ -22,13 +24,13 @@ function SettingItem({ icon, title, subtitle, onPress }: any) {
       activeOpacity={0.7}
     >
       <View style={styles.settingIcon}>
-        <Ionicons name={icon} size={24} color="#7B68EE" />
+        <Ionicons name={icon} size={24} color={COLORS.primary} />
       </View>
       <View style={styles.settingContent}>
         <Text style={styles.settingTitle}>{title}</Text>
         {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
       </View>
-      <Ionicons name="chevron-forward" size={22} color="#C8C8D8" />
+      <Ionicons name="chevron-forward" size={22} color={COLORS.indicatorInactive} />
     </TouchableOpacity>
   );
 }
@@ -133,7 +135,7 @@ export default function ProfileScreen() {
   };
 
   const handleDownloadAll = () => {
-    const allDownloaded = downloads.length === 10;
+    const allDownloaded = downloads.length >= ALL_RESOURCES.length;
     if (allDownloaded) {
       Alert.alert(
         "Already Downloaded",
@@ -201,7 +203,7 @@ export default function ProfileScreen() {
               )}
             </View>
             <View style={styles.cameraIcon}>
-              <Ionicons name="camera" size={20} color="#FFFFFF" />
+              <Ionicons name="camera" size={20} color={COLORS.white} />
             </View>
           </TouchableOpacity>
           <Text style={styles.userName}>{data.name}</Text>
@@ -243,7 +245,7 @@ export default function ProfileScreen() {
           <SettingItem
             icon="cloud-download-outline"
             title="Download All Resources"
-            subtitle={downloads.length === 10 ? "All resources saved offline" : `${downloads.length}/10 resources saved`}
+            subtitle={downloads.length >= ALL_RESOURCES.length ? "All resources saved offline" : `${downloads.length}/${ALL_RESOURCES.length} resources saved`}
             onPress={handleDownloadAll}
           />
           <SettingItem
@@ -279,15 +281,15 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FBF9FF" },
+  container: { flex: 1, backgroundColor: COLORS.appBackground },
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: "#E8E8F0",
-    shadowColor: "#7B68EE",
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -296,21 +298,21 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 38,
     fontWeight: "800",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 6,
   },
-  headerSubtitle: { fontSize: 18, fontWeight: "600", color: "#6B6B85" },
+  headerSubtitle: { fontSize: 18, fontWeight: "600", color: COLORS.textMuted },
   scrollContent: { paddingTop: 28, paddingBottom: 40 },
   userCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     marginHorizontal: 24,
     padding: 36,
     borderRadius: 28,
     borderWidth: 3,
-    borderColor: "#E8E8F0",
+    borderColor: COLORS.borderCard,
     marginBottom: 32,
-    shadowColor: "#7B68EE",
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -320,11 +322,11 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#7B68EE",
+    backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
-    shadowColor: "#7B68EE",
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -337,58 +339,58 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     right: 0,
-    backgroundColor: "#7B68EE",
+    backgroundColor: COLORS.primary,
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    borderColor: "#FFFFFF",
-    shadowColor: "#000",
+    borderColor: COLORS.white,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
   },
-  userInitial: { fontSize: 48, fontWeight: "800", color: "#FFFFFF" },
+  userInitial: { fontSize: 48, fontWeight: "800", color: COLORS.white },
   userName: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 14,
   },
   roleBadge: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#F5F3FF",
+    backgroundColor: COLORS.backgroundLighter,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: "#E8E0FF",
-    shadowColor: "#7B68EE",
+    borderColor: COLORS.borderPurple,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
   },
-  roleBadgeText: { fontSize: 16, fontWeight: "700", color: "#7B68EE" },
+  roleBadgeText: { fontSize: 16, fontWeight: "700", color: COLORS.primary },
   section: { marginBottom: 32, paddingHorizontal: 24 },
   sectionTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 20,
   },
   settingItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.white,
     padding: 20,
     borderRadius: 24,
     marginBottom: 14,
     borderWidth: 3,
-    borderColor: "#E8E8F0",
-    shadowColor: "#000",
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -398,11 +400,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#F5F3FF",
+    backgroundColor: COLORS.backgroundLighter,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
-    shadowColor: "#000",
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

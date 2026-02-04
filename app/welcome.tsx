@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -9,14 +9,11 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import { useAuth } from '../contexts/AuthContext';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
-import { GRADIENTS, ANIMATION } from '../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHADOWS, SHARED_STYLES } from '../constants/onboarding-theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { signInAnonymously } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
   const [animDone, setAnimDone] = useState(false);
 
   const iconScale = useSharedValue(0);
@@ -62,16 +59,8 @@ export default function WelcomeScreen() {
     transform: [{ translateY: buttonTranslateY.value }, { scale: buttonScale.value }],
   }));
 
-  const handleGetStarted = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      await signInAnonymously();
-      router.push('/onboarding/step1');
-    } catch (error) {
-      console.error('Login error:', error);
-      setIsLoading(false);
-    }
+  const handleGetStarted = () => {
+    router.push('/auth');
   };
 
   return (
@@ -81,7 +70,7 @@ export default function WelcomeScreen() {
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={iconStyle}>
-                <Ionicons name="school" size={80} color="#FFFFFF" />
+                <Ionicons name="school" size={56} color={COLORS.white} />
               </Animated.View>
 
               <View style={styles.gap20} />
@@ -96,24 +85,24 @@ export default function WelcomeScreen() {
                 Support for every school journey
               </Animated.Text>
             </View>
-
-            <Animated.View style={[styles.buttonContainer, buttonAnimStyle]}>
-              <Pressable
-                onPress={handleGetStarted}
-                onPressIn={() => {
-                  buttonScale.value = withSpring(0.96, ANIMATION.springBouncy);
-                }}
-                onPressOut={() => {
-                  buttonScale.value = withSpring(1, ANIMATION.springBouncy);
-                }}
-                disabled={isLoading}
-              >
-                <View style={styles.button}>
-                  <Text style={styles.buttonText}>Get Started</Text>
-                </View>
-              </Pressable>
-            </Animated.View>
           </View>
+
+          <Animated.View style={[SHARED_STYLES.buttonContainer, buttonAnimStyle]}>
+            <Pressable
+              onPress={handleGetStarted}
+              onPressIn={() => {
+                buttonScale.value = withSpring(0.96, ANIMATION.springBouncy);
+              }}
+              onPressOut={() => {
+                buttonScale.value = withSpring(1, ANIMATION.springBouncy);
+              }}
+            >
+              <View style={styles.button}>
+                <Text style={styles.buttonText}>Get Started</Text>
+              </View>
+            </Pressable>
+            <View style={SHARED_STYLES.skipPlaceholder} />
+          </Animated.View>
         </DecorativeBackground>
       </View>
     </TouchableWithoutFeedback>
@@ -131,8 +120,6 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     alignItems: 'center',
-    position: 'absolute',
-    top: '32%',
   },
   gap20: {
     height: 20,
@@ -141,39 +128,30 @@ const styles = StyleSheet.create({
     height: 8,
   },
   title: {
-    fontSize: 56,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.display,
+    color: COLORS.white,
     textAlign: 'center',
-    letterSpacing: -1.5,
   },
   tagline: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.75)',
+    ...TYPOGRAPHY.body,
+    color: COLORS.whiteOverlay75,
     textAlign: 'center',
   },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: '15%',
-    left: 32,
-    right: 32,
-  },
   button: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 32,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
   },
   buttonText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
-    color: '#7B68EE',
+    color: COLORS.primary,
   },
 });

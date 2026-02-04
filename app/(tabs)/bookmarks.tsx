@@ -6,21 +6,8 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
 import { DownloadIndicator } from '../../components/DownloadIndicator';
 import { useOffline } from '../../contexts/OfflineContext';
-
-// Resource data - same as search.tsx for consistency
-const ALL_RESOURCES = [
-  { id: '1', title: 'What you might experience', category: 'Health', icon: 'medical', color: '#7B68EE' },
-  { id: '2', title: 'Friends and social life', category: 'Social', icon: 'people', color: '#0EA5E9' },
-  { id: '3', title: 'Dealing with feelings', category: 'Emotions', icon: 'heart', color: '#66D9A6' },
-  { id: '4', title: 'Keeping up with school during treatment', category: 'School', icon: 'school', color: '#EF4444' },
-  { id: '5', title: 'Getting back to school after treatment', category: 'School', icon: 'return-down-back', color: '#7B68EE' },
-  { id: '6', title: 'Coping with stress and emotions', category: 'Emotions', icon: 'sunny', color: '#0EA5E9' },
-  { id: '7', title: 'Supporting my child during treatment', category: 'Family', icon: 'heart-circle', color: '#66D9A6' },
-  { id: '8', title: 'Becoming a strong advocate for my child', category: 'Family', icon: 'megaphone', color: '#EF4444' },
-  { id: '9', title: 'Collaborating with the school team', category: 'School', icon: 'people-circle', color: '#7B68EE' },
-  { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
-  { id: '11', title: 'Understanding What Cancer Is and Isn\'t', category: 'Health', icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
-];
+import { ALL_RESOURCES } from '../../constants/resources';
+import { COLORS } from '../../constants/onboarding-theme';
 
 interface ResourceCardProps {
   id: string;
@@ -119,7 +106,7 @@ export default function BookmarksScreen() {
         <Text style={styles.headerTitle}>My Resources</Text>
         {!isOnline && (
           <View style={styles.offlineBadge}>
-            <Ionicons name="cloud-offline" size={14} color="#F59E0B" />
+            <Ionicons name="cloud-offline" size={14} color={COLORS.accent} />
             <Text style={styles.offlineBadgeText}>Offline</Text>
           </View>
         )}
@@ -135,7 +122,7 @@ export default function BookmarksScreen() {
             <Ionicons
               name={activeTab === 'saved' ? 'bookmark' : 'bookmark-outline'}
               size={20}
-              color={activeTab === 'saved' ? '#7B68EE' : '#8E8EA8'}
+              color={activeTab === 'saved' ? COLORS.primary : COLORS.textLight}
             />
             <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>
               Saved ({bookmarkedResources.length})
@@ -148,7 +135,7 @@ export default function BookmarksScreen() {
             <Ionicons
               name={activeTab === 'downloaded' ? 'cloud-done' : 'cloud-download-outline'}
               size={20}
-              color={activeTab === 'downloaded' ? '#7B68EE' : '#8E8EA8'}
+              color={activeTab === 'downloaded' ? COLORS.primary : COLORS.textLight}
             />
             <Text style={[styles.tabText, activeTab === 'downloaded' && styles.tabTextActive]}>
               Downloaded ({downloadedResources.length})
@@ -168,14 +155,14 @@ export default function BookmarksScreen() {
                 category={resource.category}
                 icon={resource.icon}
                 color={resource.color}
-                onPress={() => handleResourcePress(resource.id, resource.title, (resource as any).route)}
+                onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
                 showBookmark={activeTab === 'saved'}
               />
             ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name={emptyIcon as any} size={80} color="#C8C8D8" />
+            <Ionicons name={emptyIcon as any} size={80} color={COLORS.indicatorInactive} />
             <Text style={styles.emptyTitle}>{emptyTitle}</Text>
             <Text style={styles.emptyText}>{emptyText}</Text>
             {isOnline && (
@@ -184,7 +171,7 @@ export default function BookmarksScreen() {
                 onPress={() => router.push('/(tabs)/search')}
                 activeOpacity={0.8}
               >
-                <Ionicons name="search" size={20} color="#FFFFFF" />
+                <Ionicons name="search" size={20} color={COLORS.white} />
                 <Text style={styles.browseButtonText}>Browse Resources</Text>
               </TouchableOpacity>
             )}
@@ -198,7 +185,7 @@ export default function BookmarksScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     flexDirection: 'row',
@@ -207,10 +194,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: '#E8E8F0',
-    shadowColor: '#7B68EE',
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -219,12 +206,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 38,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   offlineBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningBg,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -233,13 +220,13 @@ const styles = StyleSheet.create({
   offlineBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#D97706',
+    color: COLORS.warningText,
   },
   tabContainer: {
     flexDirection: 'row',
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     gap: 12,
   },
   tab: {
@@ -249,21 +236,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#F5F3FF',
+    backgroundColor: COLORS.backgroundLighter,
     gap: 8,
   },
   tabActive: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: COLORS.tabActiveBg,
     borderWidth: 2,
-    borderColor: '#7B68EE',
+    borderColor: COLORS.primary,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#8E8EA8',
+    color: COLORS.textLight,
   },
   tabTextActive: {
-    color: '#7B68EE',
+    color: COLORS.primary,
     fontWeight: '700',
   },
   scrollContent: {
@@ -277,12 +264,12 @@ const styles = StyleSheet.create({
   resourceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     padding: 24,
     borderRadius: 24,
     borderWidth: 3,
-    borderColor: '#E8E8F0',
-    shadowColor: '#000',
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -295,7 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 18,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -307,7 +294,7 @@ const styles = StyleSheet.create({
   resourceTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     marginBottom: 8,
     lineHeight: 28,
   },
@@ -333,7 +320,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     marginTop: 24,
     marginBottom: 12,
     textAlign: 'center',
@@ -341,7 +328,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 17,
     fontWeight: '500',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 32,
@@ -349,12 +336,12 @@ const styles = StyleSheet.create({
   browseButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
     paddingVertical: 16,
     paddingHorizontal: 28,
     borderRadius: 24,
     gap: 10,
-    shadowColor: '#7B68EE',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -363,6 +350,6 @@ const styles = StyleSheet.create({
   browseButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 });

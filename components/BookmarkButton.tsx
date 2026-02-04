@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 interface BookmarkButtonProps {
   resourceId: string;
@@ -9,7 +10,7 @@ interface BookmarkButtonProps {
   color?: string;
 }
 
-export function BookmarkButton({ resourceId, size = 24, color = '#7B68EE' }: BookmarkButtonProps) {
+export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }: BookmarkButtonProps) {
   const { isBookmarked, addBookmark, removeBookmark } = useOnboarding();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const bookmarked = isBookmarked(resourceId);
@@ -42,7 +43,7 @@ export function BookmarkButton({ resourceId, size = 24, color = '#7B68EE' }: Boo
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}
           size={size}
-          color={bookmarked ? color : '#8E8EA8'}
+          color={bookmarked ? color : COLORS.textLight}
         />
       </Animated.View>
     </TouchableOpacity>

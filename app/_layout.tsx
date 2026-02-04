@@ -8,8 +8,8 @@ import { OfflineBanner } from '../components/OfflineBanner';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <OnboardingProvider>
-        <OfflineProvider>
+      <OfflineProvider>
+        <OnboardingProvider>
           <View style={{ flex: 1 }}>
             <OfflineBanner />
             <Stack screenOptions={{ headerShown: false }}>
@@ -17,8 +17,8 @@ export default function RootLayout() {
               <Stack.Screen name="auth" />
             </Stack>
           </View>
-        </OfflineProvider>
-      </OnboardingProvider>
+        </OnboardingProvider>
+      </OfflineProvider>
     </AuthProvider>
   );
 }

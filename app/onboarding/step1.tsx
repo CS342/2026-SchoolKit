@@ -13,7 +13,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-import { GRADIENTS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 export default function Step1Screen() {
   const router = useRouter();
@@ -63,15 +63,15 @@ export default function Step1Screen() {
         <OnboardingHeader currentStep={1} totalSteps={4} />
 
         <View style={styles.content}>
-          <Animated.View style={[styles.iconCircle, iconStyle]}>
-            <Ionicons name="person-circle-outline" size={64} color="#7B68EE" />
+          <Animated.View style={[SHARED_STYLES.pageIconCircle, iconStyle]}>
+            <Ionicons name="person-circle-outline" size={48} color={COLORS.primary} />
           </Animated.View>
 
-          <Animated.Text style={[styles.title, titleStyle]}>
+          <Animated.Text style={[SHARED_STYLES.pageTitle, titleStyle]}>
             What's your name?
           </Animated.Text>
 
-          <Animated.Text style={[styles.subtitle, subtitleStyle]}>
+          <Animated.Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 32 }, subtitleStyle]}>
             Let's personalize your experience
           </Animated.Text>
 
@@ -81,7 +81,7 @@ export default function Step1Screen() {
               value={name}
               onChangeText={setName}
               placeholder="Enter your name"
-              placeholderTextColor="#A8A8B8"
+              placeholderTextColor={COLORS.inputPlaceholder}
               autoFocus
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
@@ -90,12 +90,13 @@ export default function Step1Screen() {
           </Animated.View>
         </View>
 
-        <Animated.View style={[styles.buttonContainer, buttonStyle]}>
+        <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!name.trim()}
           />
+          <View style={SHARED_STYLES.skipPlaceholder} />
         </Animated.View>
       </KeyboardAvoidingView>
     </DecorativeBackground>
@@ -112,49 +113,20 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F0EBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#8E8EA8',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
   inputContainer: {
     width: '100%',
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#E8E0F0',
+    borderColor: COLORS.border,
     padding: 20,
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2D2D44',
+    ...TYPOGRAPHY.input,
+    color: COLORS.textDark,
     textAlign: 'center',
   },
   inputFocused: {
-    borderColor: '#7B68EE',
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
+    borderColor: COLORS.primary,
   },
 });

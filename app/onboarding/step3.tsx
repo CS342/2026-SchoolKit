@@ -7,7 +7,7 @@ import { DecorativeBackground } from '../../components/onboarding/DecorativeBack
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
-import { GRADIENTS } from '../../constants/onboarding-theme';
+import { GRADIENTS, COLORS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: {
   value: SchoolStatus;
@@ -15,10 +15,10 @@ const SCHOOL_STATUS_OPTIONS: {
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }[] = [
-  { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: '#7B68EE' },
-  { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: '#0EA5E9' },
-  { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: '#66D9A6' },
-  { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: '#EC4899' },
+  { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: COLORS.primary },
+  { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: COLORS.studentK8 },
+  { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: COLORS.staff },
+  { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: COLORS.parent },
 ];
 
 export default function Step3Screen() {
@@ -62,17 +62,17 @@ export default function Step3Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="compass-outline" size={56} color="#7B68EE" />
+            <View style={SHARED_STYLES.pageIconCircle}>
+              <Ionicons name="compass-outline" size={48} color={COLORS.primary} />
             </View>
 
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>
+            <Text style={SHARED_STYLES.pageTitle}>{title}</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, styles.subtitleOverride]}>
               Every path is valid - we're here to support yours.
             </Text>
 
-            <View style={styles.selectBadge}>
-              <Text style={styles.selectBadgeText}>Select all that apply</Text>
+            <View style={[SHARED_STYLES.badge, { paddingHorizontal: 16, marginBottom: 24 }]}>
+              <Text style={SHARED_STYLES.badgeText}>Select all that apply</Text>
             </View>
 
             <View style={styles.options}>
@@ -91,14 +91,14 @@ export default function Step3Screen() {
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={selectedStatuses.length === 0}
           />
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Skip for now</Text>
+          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
       </View>
@@ -120,58 +120,11 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#F0EBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#8E8EA8',
-    textAlign: 'center',
+  subtitleOverride: {
     marginBottom: 12,
     lineHeight: 24,
   },
-  selectBadge: {
-    backgroundColor: '#F0EBFF',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 24,
-  },
-  selectBadgeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#7B68EE',
-  },
   options: {
     width: '100%',
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
-    gap: 4,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  skipText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
 });

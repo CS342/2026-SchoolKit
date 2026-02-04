@@ -13,11 +13,11 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
-import { GRADIENTS, SHADOWS } from '../constants/onboarding-theme';
+import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS } from '../constants/onboarding-theme';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 
 function isValidEmail(email: string) {
@@ -38,12 +38,11 @@ function getPasswordStrength(password: string) {
   return { score: normalized, label: labels[normalized] };
 }
 
-const STRENGTH_COLORS = ['#EF4444', '#F59E0B', '#EAB308', '#22C55E', '#16A34A'];
-
 export default function AuthScreen() {
   const router = useRouter();
-  const { signUp, signInWithPassword, linkEmailPassword, isAnonymous } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(true);
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { signUp, signInWithPassword, signInAnonymously } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(mode !== 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -116,59 +115,18 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       if (isSignUp) {
-        if (isAnonymous) {
-          const { error } = await linkEmailPassword(email.trim(), password);
-          if (error) {
-            const msg = error.message.toLowerCase();
-            if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')) {
-              Alert.alert(
-                'Email already in use',
-                'An account with this email already exists. Would you like to sign in instead?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Switch to Sign In', onPress: () => {
-                    setIsSignUp(false);
-                    setConfirmPassword('');
-                    setPasswordStrength({ score: 0, label: 'None' });
-                  }},
-                ],
-              );
-            } else {
-              Alert.alert('Sign up failed', error.message);
-            }
-          } else {
-            Alert.alert(
-              'Account created!',
-              'Your profile data has been saved.',
-              [{ text: 'Great', onPress: () => router.replace('/(tabs)') }],
-            );
-          }
+        const { error } = await signUp(email.trim(), password);
+        if (error) {
+          Alert.alert('Sign up failed', error.message);
         } else {
-          const { error } = await signUp(email.trim(), password);
-          if (error) {
-            Alert.alert('Sign up failed', error.message);
-          } else {
-            Alert.alert(
-              'Account created!',
-              'Check your email to verify your account, then sign in.',
-              [{ text: 'Got it', onPress: () => {
-                setIsSignUp(false);
-                setConfirmPassword('');
-                setPasswordStrength({ score: 0, label: 'None' });
-              }}],
-            );
-            setTimeout(() => {
-              setIsSignUp(false);
-              setConfirmPassword('');
-            }, 3000);
-          }
+          router.replace('/confirm-email');
         }
       } else {
         const { error } = await signInWithPassword(email.trim(), password);
         if (error) {
           Alert.alert('Sign in failed', error.message);
         } else {
-          router.replace('/(tabs)');
+          router.replace('/');
         }
       }
     } catch (err: any) {
@@ -178,8 +136,16 @@ export default function AuthScreen() {
     }
   };
 
-  const handleContinueAsGuest = () => {
-    router.replace('/(tabs)');
+  const handleContinueAsGuest = async () => {
+    setLoading(true);
+    try {
+      await signInAnonymously();
+      router.replace('/');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -201,12 +167,10 @@ export default function AuthScreen() {
             style={styles.headerBanner}
           >
             <View style={styles.headerDecorativeCircle} />
-            <Ionicons name="school-outline" size={40} color="#FFFFFF" />
+            <Ionicons name="school-outline" size={32} color={COLORS.white} />
             <Text style={styles.headerTitle}>SchoolKit</Text>
             <Text style={styles.headerSubtitle}>
-              {isSignUp
-                ? (isAnonymous ? 'Save your progress with an account' : 'Create your account')
-                : 'Welcome back'}
+              {isSignUp ? 'Create your account' : 'Welcome back'}
             </Text>
           </LinearGradient>
 
@@ -216,11 +180,11 @@ export default function AuthScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
-                <Ionicons name="mail-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor="#A8A8B8"
+                  placeholderTextColor={COLORS.inputPlaceholder}
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setEmailFocused(true)}
@@ -239,12 +203,12 @@ export default function AuthScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
               <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
-                <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   ref={passwordRef}
                   style={styles.input}
                   placeholder={isSignUp ? 'Min 8 chars, upper, lower, number' : 'Enter your password'}
-                  placeholderTextColor="#A8A8B8"
+                  placeholderTextColor={COLORS.inputPlaceholder}
                   value={password}
                   onChangeText={handlePasswordChange}
                   onFocus={() => setPasswordFocused(true)}
@@ -260,7 +224,7 @@ export default function AuthScreen() {
                   }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
+                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -274,12 +238,12 @@ export default function AuthScreen() {
                       key={i}
                       style={[
                         styles.strengthBarSegment,
-                        { backgroundColor: i < passwordStrength.score ? STRENGTH_COLORS[passwordStrength.score] : '#E8E8F0' },
+                        { backgroundColor: i < passwordStrength.score ? PASSWORD_STRENGTH_COLORS[passwordStrength.score] : COLORS.borderCard },
                       ]}
                     />
                   ))}
                 </View>
-                <Text style={[styles.strengthLabel, { color: STRENGTH_COLORS[passwordStrength.score] || '#A8A8B8' }]}>
+                <Text style={[styles.strengthLabel, { color: PASSWORD_STRENGTH_COLORS[passwordStrength.score] || COLORS.inputPlaceholder }]}>
                   {passwordStrength.label}
                 </Text>
               </View>
@@ -297,12 +261,12 @@ export default function AuthScreen() {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Confirm Password</Text>
                 <View style={[styles.inputWrapper, confirmFocused && styles.inputWrapperFocused]}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
                   <TextInput
                     ref={confirmPasswordRef}
                     style={styles.input}
                     placeholder="Re-enter your password"
-                    placeholderTextColor="#A8A8B8"
+                    placeholderTextColor={COLORS.inputPlaceholder}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     onFocus={() => setConfirmFocused(true)}
@@ -315,7 +279,7 @@ export default function AuthScreen() {
                     onSubmitEditing={handleSubmit}
                   />
                   <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton}>
-                    <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
+                    <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -330,7 +294,7 @@ export default function AuthScreen() {
               />
               {loading && (
                 <View style={styles.loadingOverlay}>
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORS.white} />
                 </View>
               )}
             </View>
@@ -364,7 +328,7 @@ export default function AuthScreen() {
             onPress={handleContinueAsGuest}
             activeOpacity={0.8}
           >
-            <Ionicons name="person-outline" size={20} color="#6B6B85" style={{ marginRight: 8 }} />
+            <Ionicons name="person-outline" size={20} color={COLORS.textMuted} style={{ marginRight: 8 }} />
             <Text style={styles.guestButtonText}>Continue as Guest</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -387,8 +351,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: RADII.headerBottom,
+    borderBottomRightRadius: RADII.headerBottom,
     overflow: 'hidden',
   },
   headerDecorativeCircle: {
@@ -401,20 +365,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   headerTitle: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.h1,
+    color: COLORS.white,
     marginTop: 8,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.whiteOverlay80,
     marginTop: 4,
   },
   formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.formCard,
     padding: 24,
     marginHorizontal: 24,
     marginTop: -20,
@@ -426,20 +389,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F5FF',
-    borderWidth: 1.5,
-    borderColor: '#E8E0F0',
-    borderRadius: 14,
+    backgroundColor: COLORS.inputBackground,
+    borderWidth: BORDERS.input,
+    borderColor: COLORS.border,
+    borderRadius: RADII.input,
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
-    borderColor: '#7B68EE',
+    borderColor: COLORS.primary,
   },
   inputIcon: {
     marginRight: 10,
@@ -448,7 +411,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   eyeButton: {
     padding: 4,
@@ -491,11 +454,11 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 15,
-    color: '#6B6B85',
+    color: COLORS.textMuted,
   },
   toggleTextBold: {
     fontWeight: '700',
-    color: '#7B68EE',
+    color: COLORS.primary,
   },
   divider: {
     flexDirection: 'row',
@@ -507,28 +470,28 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E8E8F0',
+    backgroundColor: COLORS.borderCard,
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 15,
     fontWeight: '600',
-    color: '#A8A8B8',
+    color: COLORS.inputPlaceholder,
   },
   guestButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: RADII.button,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     borderWidth: 2,
-    borderColor: '#E8E0F0',
+    borderColor: COLORS.border,
     marginHorizontal: 24,
   },
   guestButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
   },
 });

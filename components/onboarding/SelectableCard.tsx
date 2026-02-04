@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+import { SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
 
 interface SelectableCardProps {
   title: string;
@@ -26,7 +26,7 @@ export function SelectableCard({
   selected,
   onPress,
   multiSelect = false,
-  color = '#7B68EE',
+  color = COLORS.primary,
   icon,
 }: SelectableCardProps) {
   const scale = useSharedValue(1);
@@ -60,7 +60,7 @@ export function SelectableCard({
           selected && {
             backgroundColor: color + '08',
             borderColor: color,
-            borderWidth: 2.5,
+            borderWidth: BORDERS.cardSelected,
             ...SHADOWS.cardSelected,
           },
           !selected && SHADOWS.card,
@@ -69,15 +69,15 @@ export function SelectableCard({
       >
         {icon && (
           <View style={[styles.iconCircle, { backgroundColor: color + '15' }]}>
-            <Ionicons name={icon} size={24} color={color} />
+            <Ionicons name={icon} size={22} color={color} />
           </View>
         )}
         <View style={styles.textContainer}>
-          <Text style={[styles.title, selected && { color: '#2D2D44' }]}>
+          <Text style={[styles.title, selected && { color: COLORS.textDark }]}>
             {title}
           </Text>
           {subtitle && (
-            <Text style={[styles.subtitle, selected && { color: '#6B6B85' }]}>
+            <Text style={[styles.subtitle, selected && { color: COLORS.textMuted }]}>
               {subtitle}
             </Text>
           )}
@@ -91,7 +91,7 @@ export function SelectableCard({
             ]}
           >
             <Animated.View style={indicatorAnimStyle}>
-              {selected && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
+              {selected && <Ionicons name="checkmark" size={20} color={COLORS.white} />}
             </Animated.View>
           </View>
         ) : (
@@ -112,19 +112,19 @@ export function SelectableCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.card,
     padding: 18,
     marginBottom: 14,
-    borderWidth: 2,
-    borderColor: '#E8E8F0',
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: SIZING.circleCard,
+    height: SIZING.circleCard,
+    borderRadius: SIZING.circleCard / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -134,23 +134,22 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#2D2D44',
+    ...TYPOGRAPHY.body,
+    color: COLORS.textDark,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8EA8',
+    color: COLORS.textLight,
   },
   checkbox: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    borderWidth: 2.5,
-    borderColor: '#C8C8D8',
-    backgroundColor: '#FFFFFF',
+    borderWidth: BORDERS.cardSelected,
+    borderColor: COLORS.indicatorInactive,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -158,9 +157,9 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    borderWidth: 2.5,
-    borderColor: '#C8C8D8',
-    backgroundColor: '#FFFFFF',
+    borderWidth: BORDERS.cardSelected,
+    borderColor: COLORS.indicatorInactive,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
   },

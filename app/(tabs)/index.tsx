@@ -4,24 +4,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
-
-// Resource data with consistent colors
-const ALL_RESOURCES = [
-  { id: '1', title: 'What you might experience', category: 'Health', icon: 'medical', color: '#7B68EE' },
-  { id: '2', title: 'Friends and social life', category: 'Social', icon: 'people', color: '#0EA5E9' },
-  { id: '3', title: 'Dealing with feelings', category: 'Emotions', icon: 'heart', color: '#66D9A6' },
-  { id: '4', title: 'Keeping up with school during treatment', category: 'School', icon: 'school', color: '#EF4444' },
-  { id: '5', title: 'Getting back to school after treatment', category: 'School', icon: 'return-down-back', color: '#7B68EE' },
-  { id: '6', title: 'Coping with stress and emotions', category: 'Emotions', icon: 'sunny', color: '#0EA5E9' },
-  { id: '7', title: 'Supporting my child during treatment', category: 'Family', icon: 'heart-circle', color: '#66D9A6' },
-  { id: '8', title: 'Becoming a strong advocate for my child', category: 'Family', icon: 'megaphone', color: '#EF4444' },
-  { id: '9', title: 'Collaborating with the school team', category: 'School', icon: 'people-circle', color: '#7B68EE' },
-  { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
-  { id: '11', title: 'Understanding What Cancer Is and Isn\'t', category: 'Health', icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
-];
+import { ALL_RESOURCES } from '../../constants/resources';
+import { COLORS } from '../../constants/onboarding-theme';
 
 // Default color for topics not in resources
-const DEFAULT_COLOR = '#7B68EE';
+const DEFAULT_COLOR = COLORS.primary;
 
 interface TopicCardProps {
   title: string;
@@ -113,7 +100,7 @@ export default function ForYouScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.roleBadge}>
-          <Ionicons name="person-circle-outline" size={20} color="#7B68EE" />
+          <Ionicons name="person-circle-outline" size={20} color={COLORS.primary} />
           <Text style={styles.roleText}>{getRoleDisplayName()}</Text>
         </View>
 
@@ -134,14 +121,14 @@ export default function ForYouScreen() {
                   icon={icon as keyof typeof Ionicons.glyphMap}
                   color={color}
                   resourceId={resource?.id || null}
-                  onPress={() => handleTopicPress(topic, (resource as any)?.route)}
+                  onPress={() => handleTopicPress(topic, resource?.route)}
                 />
               );
             })}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="compass-outline" size={64} color="#C8C8D8" />
+            <Ionicons name="compass-outline" size={64} color={COLORS.indicatorInactive} />
             <Text style={styles.emptyTitle}>No topics selected yet</Text>
             <Text style={styles.emptyText}>
               Visit your profile to update your interests and get personalized support.
@@ -162,16 +149,16 @@ export default function ForYouScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: '#E8E8F0',
-    shadowColor: '#7B68EE',
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -180,13 +167,13 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
     marginBottom: 6,
   },
   name: {
     fontSize: 38,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -199,27 +186,27 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#F5F3FF',
+    backgroundColor: COLORS.backgroundLighter,
     borderRadius: 24,
     marginBottom: 32,
-    shadowColor: '#7B68EE',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
     borderWidth: 2,
-    borderColor: '#E8E0FF',
+    borderColor: COLORS.borderPurple,
   },
   roleText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#7B68EE',
+    color: COLORS.primary,
     marginLeft: 10,
   },
   sectionTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     marginBottom: 24,
   },
   topicsContainer: {
@@ -228,12 +215,12 @@ const styles = StyleSheet.create({
   topicCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     padding: 24,
     borderRadius: 24,
     borderWidth: 3,
-    borderColor: '#E8E8F0',
-    shadowColor: '#000',
+    borderColor: COLORS.borderCard,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -246,7 +233,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 18,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -256,7 +243,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     lineHeight: 28,
   },
   topicActions: {
@@ -267,9 +254,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 32,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 24,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -278,7 +265,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     marginTop: 24,
     marginBottom: 14,
     textAlign: 'center',
@@ -286,7 +273,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#6B6B85',
+    color: COLORS.textMuted,
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 32,
@@ -294,9 +281,9 @@ const styles = StyleSheet.create({
   emptyButton: {
     paddingVertical: 16,
     paddingHorizontal: 32,
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
     borderRadius: 20,
-    shadowColor: '#7B68EE',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -305,6 +292,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 });

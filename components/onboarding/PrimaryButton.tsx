@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { GRADIENTS, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, RADII, BORDERS } from '../../constants/onboarding-theme';
 
 interface PrimaryButtonProps {
   title: string;
@@ -54,7 +54,7 @@ export function PrimaryButton({ title, onPress, disabled = false, icon }: Primar
                 <Ionicons
                   name={icon}
                   size={20}
-                  color={disabled ? '#B0A8C8' : '#FFFFFF'}
+                  color={disabled ? COLORS.disabledText : COLORS.white}
                   style={styles.icon}
                 />
               )}
@@ -68,12 +68,12 @@ export function PrimaryButton({ title, onPress, disabled = false, icon }: Primar
 
 const styles = StyleSheet.create({
   gradient: {
-    borderRadius: 16,
+    borderRadius: RADII.button,
     overflow: 'hidden',
   },
   innerGlow: {
-    borderRadius: 15,
-    borderWidth: 1,
+    borderRadius: RADII.button - 1,
+    borderWidth: BORDERS.innerGlow,
     borderColor: 'rgba(255,255,255,0.25)',
     paddingVertical: 18,
     paddingHorizontal: 32,
@@ -84,12 +84,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+    color: COLORS.white,
+    ...TYPOGRAPHY.button,
   },
   textDisabled: {
-    color: '#B0A8C8',
+    color: COLORS.disabledText,
   },
   icon: {
     marginLeft: 8,

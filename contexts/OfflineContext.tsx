@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "../lib/supabase";
 
 interface OfflineContextType {
   isOnline: boolean;
@@ -83,15 +84,64 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       const changes: PendingChange[] = JSON.parse(stored);
       if (changes.length === 0) return;
 
-      // Process each pending change
-      // Note: In a real app, you'd process these and call the appropriate Supabase methods
-      // For now, we just clear them since the optimistic updates are already saved
+      const failedChanges: PendingChange[] = [];
 
-      // Clear pending changes after successful sync
-      await AsyncStorage.removeItem(PENDING_CHANGES_KEY);
-      setHasPendingChanges(false);
+      for (const change of changes) {
+        try {
+          switch (change.type) {
+            case "bookmark_add": {
+              const { error } = await supabase
+                .from("user_bookmarks")
+                .insert({
+                  user_id: change.payload.user_id,
+                  resource_id: change.payload.resource_id,
+                });
+              if (error) throw error;
+              break;
+            }
+            case "bookmark_remove": {
+              const { error } = await supabase
+                .from("user_bookmarks")
+                .delete()
+                .eq("user_id", change.payload.user_id as string)
+                .eq("resource_id", change.payload.resource_id as string);
+              if (error) throw error;
+              break;
+            }
+            case "profile_update": {
+              const { user_id, ...updates } = change.payload;
+              const { error } = await supabase
+                .from("profiles")
+                .update(updates)
+                .eq("id", user_id as string);
+              if (error) throw error;
+              break;
+            }
+            case "progress_update": {
+              console.warn("progress_update sync not yet implemented");
+              break;
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to sync change ${change.id}:`, err);
+          failedChanges.push(change);
+        }
+      }
 
-      console.log(`Synced ${changes.length} pending changes`);
+      if (failedChanges.length > 0) {
+        await AsyncStorage.setItem(
+          PENDING_CHANGES_KEY,
+          JSON.stringify(failedChanges)
+        );
+        setHasPendingChanges(true);
+      } else {
+        await AsyncStorage.removeItem(PENDING_CHANGES_KEY);
+        setHasPendingChanges(false);
+      }
+
+      console.log(
+        `Synced ${changes.length - failedChanges.length}/${changes.length} pending changes`
+      );
     } catch (error) {
       console.error("Error syncing pending changes:", error);
     }

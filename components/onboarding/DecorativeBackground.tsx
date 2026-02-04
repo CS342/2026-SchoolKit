@@ -10,7 +10,7 @@ import Animated, {
 import { DECORATIVE_SHAPES } from '../../constants/onboarding-theme';
 
 interface DecorativeBackgroundProps {
-  variant: 'welcome' | 'step' | 'loading' | 'auth';
+  variant: 'welcome' | 'step' | 'loading' | 'auth' | 'confirm';
   gradientColors?: readonly string[] | string[];
   children: React.ReactNode;
 }
@@ -45,10 +45,10 @@ function AnimatedCircle({
           height: shape.size,
           borderRadius: shape.size / 2,
           backgroundColor: shape.color,
-          top: shape.top as number | undefined,
-          bottom: shape.bottom as number | undefined,
-          left: shape.left as number | undefined,
-          right: shape.right as number | undefined,
+          top: shape.top,
+          bottom: shape.bottom,
+          left: shape.left,
+          right: shape.right,
         },
         animatedStyle,
       ]}

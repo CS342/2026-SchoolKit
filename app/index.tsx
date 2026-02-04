@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { COLORS } from '../constants/onboarding-theme';
 
 export default function Index() {
   const router = useRouter();
@@ -22,19 +23,12 @@ export default function Index() {
       return;
     }
 
-    // Onboarding completed — check if anonymous user should see auth screen
-    const isAnonymous = user.is_anonymous === true;
-    if (isAnonymous) {
-      router.replace('/auth');
-      return;
-    }
-
     router.replace('/(tabs)');
   }, [authLoading, onboardingLoading, user, data.isCompleted]);
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#7B68EE" />
+      <ActivityIndicator size="large" color={COLORS.primary} />
     </View>
   );
 }
@@ -42,7 +36,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F7FF',
+    backgroundColor: COLORS.appBackgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },

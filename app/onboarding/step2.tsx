@@ -15,7 +15,7 @@ import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-import { GRADIENTS, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface RoleOption {
   role: UserRole;
@@ -26,10 +26,10 @@ interface RoleOption {
 }
 
 const ROLES: RoleOption[] = [
-  { role: 'student-k8', iconName: 'school', title: 'Student (K-8)', color: '#0EA5E9', gradient: GRADIENTS.roleStudentK8 },
-  { role: 'student-hs', iconName: 'book', title: 'Student (High School+)', color: '#7B68EE', gradient: GRADIENTS.roleStudentHS },
-  { role: 'parent', iconName: 'people', title: 'Parent / Caregiver', color: '#EC4899', gradient: GRADIENTS.roleParent },
-  { role: 'staff', iconName: 'briefcase', title: 'School Staff', color: '#66D9A6', gradient: GRADIENTS.roleStaff },
+  { role: 'student-k8', iconName: 'school', title: 'Student (K-8)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
+  { role: 'student-hs', iconName: 'book', title: 'Student (High School+)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
+  { role: 'parent', iconName: 'people', title: 'Parent / Caregiver', color: COLORS.parent, gradient: GRADIENTS.roleParent },
+  { role: 'staff', iconName: 'briefcase', title: 'School Staff', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
 ];
 
 function RoleCard({
@@ -94,7 +94,7 @@ function RoleCard({
           end={{ x: 1, y: 1 }}
           style={styles.roleIconCircle}
         >
-          <Ionicons name={option.iconName} size={28} color="#FFFFFF" />
+          <Ionicons name={option.iconName} size={24} color={COLORS.white} />
         </LinearGradient>
 
         <Text style={styles.roleTitle}>{option.title}</Text>
@@ -136,8 +136,8 @@ export default function Step2Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <Text style={styles.title}>Tell us about yourself</Text>
-            <Text style={styles.subtitle}>Choose the option that best describes you</Text>
+            <Text style={SHARED_STYLES.pageTitle}>Tell us about yourself</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 28 }]}>Choose the option that best describes you</Text>
 
             <View style={styles.options}>
               {ROLES.map((option, index) => (
@@ -153,12 +153,13 @@ export default function Step2Screen() {
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!selectedRole}
           />
+          <View style={SHARED_STYLES.skipPlaceholder} />
         </View>
       </View>
     </DecorativeBackground>
@@ -178,52 +179,38 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#8E8EA8',
-    textAlign: 'center',
-    marginBottom: 28,
-  },
   options: {
     gap: 14,
   },
   roleCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.card,
     padding: 16,
-    borderWidth: 2,
-    borderColor: '#E8E8F0',
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
   },
   roleIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: SIZING.circleRole,
+    height: SIZING.circleRole,
+    borderRadius: SIZING.circleRole / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
   roleTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   radioOuter: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    borderWidth: 2.5,
-    borderColor: '#C8C8D8',
+    borderWidth: BORDERS.cardSelected,
+    borderColor: COLORS.indicatorInactive,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -231,10 +218,5 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
   },
 });

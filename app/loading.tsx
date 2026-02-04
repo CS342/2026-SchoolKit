@@ -13,7 +13,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
-import { GRADIENTS, ANIMATION } from '../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY } from '../constants/onboarding-theme';
 
 function BouncingDot({ delay }: { delay: number }) {
   const translateY = useSharedValue(0);
@@ -75,7 +75,7 @@ export default function LoadingScreen() {
       <View style={styles.container}>
         <Animated.View style={[styles.content, contentStyle]}>
           <Animated.View style={spinStyle}>
-            <Ionicons name="sparkles" size={72} color="#FFFFFF" />
+            <Ionicons name="sparkles" size={48} color={COLORS.white} />
           </Animated.View>
 
           <Text style={styles.text}>Finding support that fits you...</Text>
@@ -102,9 +102,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...TYPOGRAPHY.h3,
+    color: COLORS.white,
     textAlign: 'center',
     lineHeight: 32,
     marginTop: 24,
@@ -118,6 +117,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
 });

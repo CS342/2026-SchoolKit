@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { GRADIENTS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS } from '../../constants/onboarding-theme';
 
 interface ProgressBarProps {
   currentStep: number;
@@ -43,7 +43,7 @@ function Pill({ state }: { state: 'completed' | 'active' | 'inactive' }) {
         styles.pill,
         animatedStyle,
         {
-          backgroundColor: state === 'completed' ? '#7B68EE' : '#E8E0F0',
+          backgroundColor: state === 'completed' ? COLORS.primary : COLORS.border,
         },
       ]}
     />

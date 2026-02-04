@@ -15,7 +15,7 @@ import { DecorativeBackground } from '../../components/onboarding/DecorativeBack
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
-import { GRADIENTS, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+import { GRADIENTS, SHADOWS, ANIMATION, COLORS, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface GradeOption {
   value: string;
@@ -89,7 +89,7 @@ function K8GradeCell({
           cellStyle,
         ]}
       >
-        <Ionicons name={grade.icon} size={24} color={grade.color} />
+        <Ionicons name={grade.icon} size={22} color={grade.color} />
         <Text style={[styles.gridCellLabel, isSelected && { color: grade.color, fontWeight: '700' }]}>
           {grade.label}
         </Text>
@@ -128,12 +128,12 @@ export default function Step2bScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="ribbon-outline" size={56} color="#7B68EE" />
+            <View style={SHARED_STYLES.pageIconCircle}>
+              <Ionicons name="ribbon-outline" size={48} color={COLORS.primary} />
             </View>
 
-            <Text style={styles.title}>What grade are you in?</Text>
-            <Text style={styles.subtitle}>
+            <Text style={SHARED_STYLES.pageTitle}>What grade are you in?</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
               We'll tailor resources to fit where you are.
             </Text>
 
@@ -166,14 +166,14 @@ export default function Step2bScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.buttonContainer}>
+        <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!selectedGrade}
           />
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Skip for now</Text>
+          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
       </View>
@@ -195,29 +195,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#F0EBFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#2D2D44',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#8E8EA8',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -229,10 +206,10 @@ const styles = StyleSheet.create({
     width: '30%',
   },
   gridCell: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E8E8F0',
+    backgroundColor: COLORS.white,
+    borderRadius: RADII.grid,
+    borderWidth: BORDERS.card,
+    borderColor: COLORS.borderCard,
     height: 90,
     alignItems: 'center',
     justifyContent: 'center',
@@ -241,26 +218,11 @@ const styles = StyleSheet.create({
   gridCellLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2D2D44',
+    color: COLORS.textDark,
     textAlign: 'center',
     marginTop: 6,
   },
   listContainer: {
     width: '100%',
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
-    gap: 4,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  skipText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
 });

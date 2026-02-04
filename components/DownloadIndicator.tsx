@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 interface DownloadIndicatorProps {
   resourceId: string;
@@ -16,7 +17,7 @@ export function DownloadIndicator({ resourceId, size = 20 }: DownloadIndicatorPr
 
   return (
     <View style={styles.indicator}>
-      <Ionicons name="checkmark-circle" size={size} color="#66D9A6" />
+      <Ionicons name="checkmark-circle" size={size} color={COLORS.staff} />
     </View>
   );
 }

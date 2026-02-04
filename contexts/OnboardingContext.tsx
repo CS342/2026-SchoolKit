@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ALL_RESOURCE_IDS } from '../constants/resources';
+import { useOffline, queueOfflineChange } from './OfflineContext';
 
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
@@ -60,6 +62,7 @@ const initialData: OnboardingData = {
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
+  const { isOnline } = useOffline();
   const [data, setData] = useState<OnboardingData>(initialData);
   const [loading, setLoading] = useState(true);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
@@ -161,14 +164,23 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (updates: Record<string, unknown>) => {
     if (!user?.id) return;
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error('Error updating profile:', error);
-      throw error;
+      if (!isOnline) {
+        await queueOfflineChange({
+          type: 'profile_update',
+          payload: { user_id: user.id, ...updates },
+        });
+      } else {
+        throw error;
+      }
     }
   };
 
@@ -280,6 +292,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     });
 
     if (!user?.id) return;
+
+    if (!isOnline) {
+      await queueOfflineChange({
+        type: 'bookmark_add',
+        payload: { user_id: user.id, resource_id: resourceId },
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_bookmarks')
       .insert({ user_id: user.id, resource_id: resourceId });
@@ -314,6 +335,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     });
 
     if (!user?.id) return;
+
+    if (!isOnline) {
+      await queueOfflineChange({
+        type: 'bookmark_remove',
+        payload: { user_id: user.id, resource_id: resourceId },
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('user_bookmarks')
       .delete()
@@ -360,9 +390,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const isDownloaded = (resourceId: string) => downloads.includes(resourceId);
 
   const downloadAllResources = async () => {
-    const allResourceIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
-    setDownloads(allResourceIds);
-    await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(allResourceIds));
+    setDownloads([...ALL_RESOURCE_IDS]);
+    await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(ALL_RESOURCE_IDS));
   };
 
   return (

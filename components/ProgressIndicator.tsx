@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressStatus } from '../contexts/OnboardingContext';
+import { COLORS } from '../constants/onboarding-theme';
 
 interface ProgressIndicatorProps {
   status: ProgressStatus | null;
@@ -30,7 +31,7 @@ export function ProgressIndicator({ status, size = 'small' }: ProgressIndicatorP
       <Ionicons
         name={status === 'completed' ? 'checkmark' : 'time-outline'}
         size={iconSize}
-        color={status === 'completed' ? '#FFFFFF' : '#7B68EE'}
+        color={status === 'completed' ? COLORS.white : COLORS.primary}
       />
     </View>
   );
@@ -42,11 +43,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   completed: {
-    backgroundColor: '#66D9A6',
+    backgroundColor: COLORS.staff,
   },
   started: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: COLORS.backgroundLighter,
     borderWidth: 2,
-    borderColor: '#7B68EE',
+    borderColor: COLORS.primary,
   },
 });
