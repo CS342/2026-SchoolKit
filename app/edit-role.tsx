@@ -119,7 +119,7 @@ export default function EditRoleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     flexDirection: 'row',
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 2,
-    borderBottomColor: '#E8E8F0',
-    shadowColor: '#7B68EE',
+    borderBottomColor: COLORS.borderCard,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -143,12 +143,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#2D2D44',
+    color: COLORS.textDark,
   },
   saveButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#7B68EE',
+    backgroundColor: COLORS.primary,
     borderRadius: 16,
   },
   saveText: {
