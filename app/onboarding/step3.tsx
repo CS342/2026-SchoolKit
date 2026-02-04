@@ -13,7 +13,7 @@ const SCHOOL_STATUS_OPTIONS: {
   { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: '#7B68EE' },
   { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: '#0EA5E9' },
   { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: '#66D9A6' },
-  { value: 'special-needs', label: 'Home/hospital school', icon: 'laptop-outline', color: '#EC4899' },
+  { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: '#EC4899' },
 ];
 
 interface OptionCardProps {
@@ -77,7 +77,8 @@ export default function Step3Screen() {
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
-  const title = isStudent ? 'Your school journey' : "Your child's school journey";
+  const isSchoolStaff = data.role === 'staff';
+  const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
   const stepText = isStudent ? 'Step 4 of 5' : 'Step 3 of 4';
 
   const toggleStatus = (status: SchoolStatus) => {
