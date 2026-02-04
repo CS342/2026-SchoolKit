@@ -414,14 +414,14 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2D2D44",
+    color: COLORS.textDark,
     marginBottom: 4,
   },
-  settingSubtitle: { fontSize: 15, fontWeight: "600", color: "#8E8EA8" },
+  settingSubtitle: { fontSize: 15, fontWeight: "600", color: COLORS.textLight },
   version: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#A8A8B8",
+    color: COLORS.inputPlaceholder,
     textAlign: "center",
     marginTop: 20,
   },
