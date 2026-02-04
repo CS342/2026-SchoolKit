@@ -395,7 +395,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const isDownloaded = (resourceId: string) => downloads.includes(resourceId);
 
   const downloadAllResources = async () => {
-    const allResourceIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+    const allResourceIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'];
     setDownloads(allResourceIds);
     await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(allResourceIds));
   };

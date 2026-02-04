@@ -17,6 +17,7 @@ const ALL_RESOURCES = [
   { id: '8', title: 'Becoming a strong advocate for my child', category: 'Family', icon: 'megaphone', color: '#EF4444' },
   { id: '9', title: 'Collaborating with the school team', category: 'School', icon: 'people-circle', color: '#7B68EE' },
   { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
+  { id: '11', title: 'Understanding What Cancer Is and Isn\'t', category: 'Health', icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
 ];
 
 // Default color for topics not in resources
@@ -90,8 +91,12 @@ export default function ForYouScreen() {
     }
   };
 
-  const handleTopicPress = (topic: string) => {
-    router.push(`/topic-detail?title=${encodeURIComponent(topic)}`);
+  const handleTopicPress = (topic: string, route?: string) => {
+    if (route) {
+      router.push(route as any);
+    } else {
+      router.push(`/topic-detail?title=${encodeURIComponent(topic)}`);
+    }
   };
 
   return (
@@ -113,6 +118,8 @@ export default function ForYouScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Your Support Topics</Text>
+        
+
 
         {data.topics.length > 0 ? (
           <View style={styles.topicsContainer}>
@@ -127,7 +134,7 @@ export default function ForYouScreen() {
                   icon={icon as keyof typeof Ionicons.glyphMap}
                   color={color}
                   resourceId={resource?.id || null}
-                  onPress={() => handleTopicPress(topic)}
+                  onPress={() => handleTopicPress(topic, (resource as any)?.route)}
                 />
               );
             })}

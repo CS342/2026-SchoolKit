@@ -19,6 +19,7 @@ const ALL_RESOURCES = [
   { id: '8', title: 'Becoming a strong advocate for my child', category: 'Family', icon: 'megaphone', color: '#EF4444' },
   { id: '9', title: 'Collaborating with the school team', category: 'School', icon: 'people-circle', color: '#7B68EE' },
   { id: '10', title: 'Working with healthcare providers', category: 'Health', icon: 'medical', color: '#0EA5E9' },
+  { id: '11', title: 'Understanding What Cancer Is and Isn\'t', category: 'Health', icon: 'information-circle', color: '#3B82F6', route: '/understanding-cancer' },
 ];
 
 interface ResourceCardProps {
@@ -97,8 +98,12 @@ export default function BookmarksScreen() {
     .map(id => ALL_RESOURCES.find(r => r.id === id))
     .filter((r): r is typeof ALL_RESOURCES[0] => r !== undefined);
 
-  const handleResourcePress = (id: string, title: string) => {
-    router.push(`/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any);
+  const handleResourcePress = (id: string, title: string, route?: string) => {
+    if (route) {
+      router.push(route as any);
+    } else {
+      router.push(`/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any);
+    }
   };
 
   const currentResources = activeTab === 'saved' ? bookmarkedResources : downloadedResources;
@@ -163,7 +168,7 @@ export default function BookmarksScreen() {
                 category={resource.category}
                 icon={resource.icon}
                 color={resource.color}
-                onPress={() => handleResourcePress(resource.id, resource.title)}
+                onPress={() => handleResourcePress(resource.id, resource.title, (resource as any).route)}
                 showBookmark={activeTab === 'saved'}
               />
             ))}

@@ -95,6 +95,15 @@ const ALL_RESOURCES = [
     icon: "medical",
     color: "#0EA5E9",
   },
+  {
+    id: "11",
+    title: "Understanding What Cancer Is and Isn't",
+    category: "Health",
+    tags: ["cancer", "understanding", "myths", "facts"],
+    icon: "information-circle",
+    color: "#3B82F6",
+    route: '/understanding-cancer',
+  },
 ];
 
 const CATEGORIES = ["All", "Emotions", "School", "Social", "Health", "Family"];
@@ -227,10 +236,14 @@ export default function SearchScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleResourcePress = (id: string, title: string) => {
-    router.push(
-      `/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any
-    );
+  const handleResourcePress = (id: string, title: string, route?: string) => {
+    if (route) {
+        router.push(route as any);
+    } else {
+        router.push(
+        `/topic-detail?title=${encodeURIComponent(title)}&id=${id}` as any
+        );
+    }
   };
 
   return (
@@ -346,7 +359,7 @@ export default function SearchScreen() {
               category={resource.category}
               icon={resource.icon}
               color={resource.color}
-              onPress={() => handleResourcePress(resource.id, resource.title)}
+              onPress={() => handleResourcePress(resource.id, resource.title, (resource as any).route)}
             />
           ))}
         </View>

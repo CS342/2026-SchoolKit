@@ -17,6 +17,7 @@ const STUDENT_TOPICS: TopicOption[] = [
   { label: 'Keeping up with school during treatment', icon: 'book-outline', color: '#66D9A6' },
   { label: 'Getting back to school after treatment', icon: 'arrow-forward-circle-outline', color: '#F59E0B' },
   { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#7B68EE' },
+  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
 ];
 
 const PARENT_TOPICS: TopicOption[] = [
@@ -28,6 +29,7 @@ const PARENT_TOPICS: TopicOption[] = [
   { label: 'Caregiving through cultural or language barriers', icon: 'globe-outline', color: '#7B68EE' },
   { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#EC4899' },
   { label: 'Helping my child with friendships', icon: 'chatbubbles-outline', color: '#0EA5E9' },
+  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
 ];
 
 const STAFF_TOPICS: TopicOption[] = [
@@ -37,6 +39,7 @@ const STAFF_TOPICS: TopicOption[] = [
   { label: 'Working with families and medical teams', icon: 'people-outline', color: '#0EA5E9' },
   { label: 'Collaborating with healthcare providers', icon: 'medical-outline', color: '#F59E0B' },
   { label: 'Understanding treatment side effects', icon: 'information-circle-outline', color: '#7B68EE' },
+  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
 ];
 
 interface TopicCardProps {

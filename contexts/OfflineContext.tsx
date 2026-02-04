@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface OfflineContextType {
   isOnline: boolean;
@@ -11,11 +17,15 @@ interface OfflineContextType {
 
 const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
 
-const PENDING_CHANGES_KEY = '@schoolkit_pending_changes';
+const PENDING_CHANGES_KEY = "@schoolkit_pending_changes";
 
 interface PendingChange {
   id: string;
-  type: 'profile_update' | 'bookmark_add' | 'bookmark_remove' | 'progress_update';
+  type:
+    | "profile_update"
+    | "bookmark_add"
+    | "bookmark_remove"
+    | "progress_update";
   payload: Record<string, unknown>;
   timestamp: number;
 }
@@ -59,7 +69,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
         setHasPendingChanges(changes.length > 0);
       }
     } catch (error) {
-      console.error('Error checking pending changes:', error);
+      console.error("Error checking pending changes:", error);
     }
   };
 
@@ -83,7 +93,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
       console.log(`Synced ${changes.length} pending changes`);
     } catch (error) {
-      console.error('Error syncing pending changes:', error);
+      console.error("Error syncing pending changes:", error);
     }
   };
 
@@ -104,13 +114,15 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 export function useOffline() {
   const context = useContext(OfflineContext);
   if (context === undefined) {
-    throw new Error('useOffline must be used within an OfflineProvider');
+    throw new Error("useOffline must be used within an OfflineProvider");
   }
   return context;
 }
 
 // Helper to queue changes when offline
-export async function queueOfflineChange(change: Omit<PendingChange, 'id' | 'timestamp'>) {
+export async function queueOfflineChange(
+  change: Omit<PendingChange, "id" | "timestamp">
+) {
   try {
     const stored = await AsyncStorage.getItem(PENDING_CHANGES_KEY);
     const changes: PendingChange[] = stored ? JSON.parse(stored) : [];
@@ -123,6 +135,6 @@ export async function queueOfflineChange(change: Omit<PendingChange, 'id' | 'tim
 
     await AsyncStorage.setItem(PENDING_CHANGES_KEY, JSON.stringify(changes));
   } catch (error) {
-    console.error('Error queueing offline change:', error);
+    console.error("Error queueing offline change:", error);
   }
 }
