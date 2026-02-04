@@ -1,6 +1,14 @@
-import React, { useRef } from 'react';
-import { TouchableOpacity, Text, StyleSheet, View, Animated } from 'react-native';
+import React from 'react';
+import { Text, StyleSheet, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
 
 interface SelectableCardProps {
   title: string;
@@ -9,6 +17,7 @@ interface SelectableCardProps {
   onPress: () => void;
   multiSelect?: boolean;
   color?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 export function SelectableCard({
@@ -17,77 +26,87 @@ export function SelectableCard({
   selected,
   onPress,
   multiSelect = false,
-  color = '#7B68EE'
+  color = '#7B68EE',
+  icon,
 }: SelectableCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
+  const indicatorScale = useSharedValue(selected ? 1 : 0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const indicatorAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: indicatorScale.value }],
+  }));
+
+  React.useEffect(() => {
+    indicatorScale.value = withSpring(selected ? 1 : 0, ANIMATION.springBouncy);
+  }, [selected]);
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.96,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy)
+    );
     onPress();
   };
 
-  const getColorWithOpacity = (color: string, opacity: number) => {
-    return color + Math.round(opacity * 255).toString(16).padStart(2, '0');
-  };
-
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <Pressable onPress={handlePress}>
       <Animated.View
         style={[
           styles.card,
           selected && {
+            backgroundColor: color + '08',
             borderColor: color,
-            borderLeftWidth: 6,
-            backgroundColor: getColorWithOpacity(color, 0.08),
+            borderWidth: 2.5,
+            ...SHADOWS.cardSelected,
           },
-          { transform: [{ scale: scaleAnim }] },
+          !selected && SHADOWS.card,
+          animatedStyle,
         ]}
       >
-        <View style={styles.content}>
-          <View style={styles.textContainer}>
-            <Text style={[styles.title, selected && { color: '#2D2D44' }]}>
-              {title}
-            </Text>
-            {subtitle && (
-              <Text style={[styles.subtitle, selected && { color: '#6B6B85' }]}>
-                {subtitle}
-              </Text>
-            )}
+        {icon && (
+          <View style={[styles.iconCircle, { backgroundColor: color + '15' }]}>
+            <Ionicons name={icon} size={24} color={color} />
           </View>
-
-          {multiSelect ? (
-            <View style={[
-              styles.checkbox,
-              selected && { backgroundColor: color, borderColor: color }
-            ]}>
-              {selected && <Ionicons name="checkmark" size={22} color="#FFFFFF" />}
-            </View>
-          ) : (
-            <View style={[
-              styles.radio,
-              selected && { borderColor: color }
-            ]}>
-              {selected && <View style={[styles.radioDot, { backgroundColor: color }]} />}
-            </View>
+        )}
+        <View style={styles.textContainer}>
+          <Text style={[styles.title, selected && { color: '#2D2D44' }]}>
+            {title}
+          </Text>
+          {subtitle && (
+            <Text style={[styles.subtitle, selected && { color: '#6B6B85' }]}>
+              {subtitle}
+            </Text>
           )}
         </View>
+
+        {multiSelect ? (
+          <View
+            style={[
+              styles.checkbox,
+              selected && { backgroundColor: color, borderColor: color },
+            ]}
+          >
+            <Animated.View style={indicatorAnimStyle}>
+              {selected && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
+            </Animated.View>
+          </View>
+        ) : (
+          <View style={[styles.radio, selected && { borderColor: color }]}>
+            <Animated.View
+              style={[
+                styles.radioDot,
+                { backgroundColor: color },
+                indicatorAnimStyle,
+              ]}
+            />
+          </View>
+        )}
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -95,60 +114,59 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 22,
+    padding: 18,
     marginBottom: 14,
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#E8E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  content: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   textContainer: {
     flex: 1,
     marginRight: 12,
   },
   title: {
-    fontSize: 19,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#2D2D44',
-    marginBottom: 6,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#6B6B85',
-    lineHeight: 22,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8EA8',
   },
   checkbox: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    borderWidth: 3,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
     borderColor: '#C8C8D8',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   radio: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 3,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
     borderColor: '#C8C8D8',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
 });

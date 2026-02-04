@@ -12,11 +12,13 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-
-// --- Validation helpers ---
+import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
+import { GRADIENTS, SHADOWS } from '../constants/onboarding-theme';
+import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,8 +40,6 @@ function getPasswordStrength(password: string) {
 
 const STRENGTH_COLORS = ['#EF4444', '#F59E0B', '#EAB308', '#22C55E', '#16A34A'];
 
-// --- Component ---
-
 export default function AuthScreen() {
   const router = useRouter();
   const { signUp, signInWithPassword, linkEmailPassword, isAnonymous } = useAuth();
@@ -51,10 +51,13 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: 'None' });
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmFocused, setConfirmFocused] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
-  const confirmAnim = useRef(new Animated.Value(1)).current; // start as sign-up
+  const confirmAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(confirmAnim, {
@@ -154,7 +157,6 @@ export default function AuthScreen() {
                 setPasswordStrength({ score: 0, label: 'None' });
               }}],
             );
-            // Auto-switch to sign-in after 3 seconds
             setTimeout(() => {
               setIsSignUp(false);
               setConfirmPassword('');
@@ -181,212 +183,242 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <DecorativeBackground variant="auth" gradientColors={GRADIENTS.screenBackground}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>SchoolKit</Text>
-          <Text style={styles.subtitle}>
-            {isSignUp
-              ? (isAnonymous ? 'Save your progress with an account' : 'Create your account')
-              : 'Welcome back'}
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="you@example.com"
-                placeholderTextColor="#A8A8B8"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="emailAddress"
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
-              <TextInput
-                ref={passwordRef}
-                style={styles.input}
-                placeholder={isSignUp ? 'Min 8 chars, upper, lower, number' : 'Enter your password'}
-                placeholderTextColor="#A8A8B8"
-                value={password}
-                onChangeText={handlePasswordChange}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType={isSignUp ? 'newPassword' : 'password'}
-                returnKeyType={isSignUp ? 'next' : 'go'}
-                onSubmitEditing={() => {
-                  if (isSignUp) confirmPasswordRef.current?.focus();
-                  else handleSubmit();
-                }}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Password Strength (sign-up only) */}
-          {isSignUp && password.length > 0 && (
-            <View style={styles.strengthContainer}>
-              <View style={styles.strengthBarBackground}>
-                {[0, 1, 2, 3].map(i => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.strengthBarSegment,
-                      { backgroundColor: i < passwordStrength.score ? STRENGTH_COLORS[passwordStrength.score] : '#E8E8F0' },
-                    ]}
-                  />
-                ))}
-              </View>
-              <Text style={[styles.strengthLabel, { color: STRENGTH_COLORS[passwordStrength.score] || '#A8A8B8' }]}>
-                {passwordStrength.label}
-              </Text>
-            </View>
-          )}
-
-          {/* Confirm Password (sign-up only) */}
-          <Animated.View
-            style={{
-              opacity: confirmAnim,
-              maxHeight: confirmAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 120] }),
-              overflow: 'hidden',
-            }}
-            pointerEvents={isSignUp ? 'auto' : 'none'}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Gradient Header Banner */}
+          <LinearGradient
+            colors={[...GRADIENTS.authHeader]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerBanner}
           >
+            <View style={styles.headerDecorativeCircle} />
+            <Ionicons name="school-outline" size={40} color="#FFFFFF" />
+            <Text style={styles.headerTitle}>SchoolKit</Text>
+            <Text style={styles.headerSubtitle}>
+              {isSignUp
+                ? (isAnonymous ? 'Save your progress with an account' : 'Create your account')
+                : 'Welcome back'}
+            </Text>
+          </LinearGradient>
+
+          {/* Form Card */}
+          <View style={styles.formCard}>
+            {/* Email */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+              <Text style={styles.label}>Email</Text>
+              <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
+                <Ionicons name="mail-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
                 <TextInput
-                  ref={confirmPasswordRef}
                   style={styles.input}
-                  placeholder="Re-enter your password"
+                  placeholder="you@example.com"
                   placeholderTextColor="#A8A8B8"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
+                  value={email}
+                  onChangeText={setEmail}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  textContentType="newPassword"
-                  returnKeyType="go"
-                  onSubmitEditing={handleSubmit}
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
                 />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton}>
-                  <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
+                <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+                <TextInput
+                  ref={passwordRef}
+                  style={styles.input}
+                  placeholder={isSignUp ? 'Min 8 chars, upper, lower, number' : 'Enter your password'}
+                  placeholderTextColor="#A8A8B8"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType={isSignUp ? 'newPassword' : 'password'}
+                  returnKeyType={isSignUp ? 'next' : 'go'}
+                  onSubmitEditing={() => {
+                    if (isSignUp) confirmPasswordRef.current?.focus();
+                    else handleSubmit();
+                  }}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
                 </TouchableOpacity>
               </View>
             </View>
-          </Animated.View>
 
-          {/* Submit */}
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                {isSignUp ? 'Create Account' : 'Sign In'}
-              </Text>
+            {/* Password Strength */}
+            {isSignUp && password.length > 0 && (
+              <View style={styles.strengthContainer}>
+                <View style={styles.strengthBarBackground}>
+                  {[0, 1, 2, 3].map(i => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.strengthBarSegment,
+                        { backgroundColor: i < passwordStrength.score ? STRENGTH_COLORS[passwordStrength.score] : '#E8E8F0' },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.strengthLabel, { color: STRENGTH_COLORS[passwordStrength.score] || '#A8A8B8' }]}>
+                  {passwordStrength.label}
+                </Text>
+              </View>
             )}
-          </TouchableOpacity>
 
-          {/* Toggle */}
-          <TouchableOpacity
-            onPress={() => {
-              setIsSignUp(!isSignUp);
-              setConfirmPassword('');
-              setPasswordStrength({ score: 0, label: 'None' });
-            }}
-            style={styles.toggleButton}
-          >
-            <Text style={styles.toggleText}>
-              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-              <Text style={styles.toggleTextBold}>
-                {isSignUp ? 'Sign In' : 'Sign Up'}
-              </Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Confirm Password */}
+            <Animated.View
+              style={{
+                opacity: confirmAnim,
+                maxHeight: confirmAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 120] }),
+                overflow: 'hidden',
+              }}
+              pointerEvents={isSignUp ? 'auto' : 'none'}
+            >
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <View style={[styles.inputWrapper, confirmFocused && styles.inputWrapperFocused]}>
+                  <Ionicons name="lock-closed-outline" size={20} color="#A8A8B8" style={styles.inputIcon} />
+                  <TextInput
+                    ref={confirmPasswordRef}
+                    style={styles.input}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor="#A8A8B8"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    onFocus={() => setConfirmFocused(true)}
+                    onBlur={() => setConfirmFocused(false)}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="newPassword"
+                    returnKeyType="go"
+                    onSubmitEditing={handleSubmit}
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton}>
+                    <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#A8A8B8" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Animated.View>
 
-        {!isAnonymous && (
-          <>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+            {/* Submit */}
+            <View style={styles.submitContainer}>
+              <PrimaryButton
+                title={loading ? '' : (isSignUp ? 'Create Account' : 'Sign In')}
+                onPress={handleSubmit}
+                disabled={loading}
+              />
+              {loading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator color="#FFFFFF" />
+                </View>
+              )}
             </View>
 
+            {/* Toggle */}
             <TouchableOpacity
-              style={styles.guestButton}
-              onPress={handleContinueAsGuest}
-              activeOpacity={0.8}
+              onPress={() => {
+                setIsSignUp(!isSignUp);
+                setConfirmPassword('');
+                setPasswordStrength({ score: 0, label: 'None' });
+              }}
+              style={styles.toggleButton}
             >
-              <Text style={styles.guestButtonText}>Continue as Guest</Text>
+              <Text style={styles.toggleText}>
+                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                <Text style={styles.toggleTextBold}>
+                  {isSignUp ? 'Sign In' : 'Sign Up'}
+                </Text>
+              </Text>
             </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={styles.guestButton}
+            onPress={handleContinueAsGuest}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="person-outline" size={20} color="#6B6B85" style={{ marginRight: 8 }} />
+            <Text style={styles.guestButtonText}>Continue as Guest</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </DecorativeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F7FF',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 60,
+    paddingBottom: 40,
   },
-  header: {
+  headerBanner: {
+    height: 240,
+    paddingTop: 52,
+    paddingBottom: 32,
     alignItems: 'center',
-    marginBottom: 40,
+    justifyContent: 'center',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
   },
-  title: {
-    fontSize: 42,
+  headerDecorativeCircle: {
+    position: 'absolute',
+    top: -20,
+    right: -20,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  headerTitle: {
+    fontSize: 36,
     fontWeight: '800',
-    color: '#7B68EE',
-    letterSpacing: -1,
-    marginBottom: 8,
+    color: '#FFFFFF',
+    marginTop: 8,
   },
-  subtitle: {
-    fontSize: 20,
+  headerSubtitle: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#6B6B85',
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
   },
-  form: {
-    marginBottom: 24,
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    marginHorizontal: 24,
+    marginTop: -20,
+    ...SHADOWS.card,
   },
   inputContainer: {
     marginBottom: 16,
@@ -400,11 +432,14 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#E8E8F0',
-    borderRadius: 16,
+    backgroundColor: '#F8F5FF',
+    borderWidth: 1.5,
+    borderColor: '#E8E0F0',
+    borderRadius: 14,
     paddingHorizontal: 16,
+  },
+  inputWrapperFocused: {
+    borderColor: '#7B68EE',
   },
   inputIcon: {
     marginRight: 10,
@@ -441,25 +476,14 @@ const styles = StyleSheet.create({
     width: 80,
     textAlign: 'right',
   },
-  submitButton: {
-    backgroundColor: '#7B68EE',
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
+  submitContainer: {
     marginTop: 8,
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    position: 'relative',
   },
-  submitButtonDisabled: {
-    opacity: 0.7,
-  },
-  submitButtonText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   toggleButton: {
     alignItems: 'center',
@@ -476,7 +500,9 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 20,
+    marginBottom: 20,
+    marginHorizontal: 24,
   },
   dividerLine: {
     flex: 1,
@@ -491,11 +517,14 @@ const styles = StyleSheet.create({
   },
   guestButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     borderWidth: 2,
-    borderColor: '#E8E8F0',
+    borderColor: '#E8E0F0',
+    marginHorizontal: 24,
   },
   guestButtonText: {
     fontSize: 18,

@@ -1,8 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
+import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+import { SelectableCard } from '../../components/onboarding/SelectableCard';
+import { GRADIENTS } from '../../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: {
   value: SchoolStatus;
@@ -16,61 +21,6 @@ const SCHOOL_STATUS_OPTIONS: {
   { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: '#EC4899' },
 ];
 
-interface OptionCardProps {
-  option: { value: SchoolStatus; label: string; icon: keyof typeof Ionicons.glyphMap; color: string };
-  isSelected: boolean;
-  onPress: () => void;
-}
-
-function OptionCard({ option, isSelected, onPress }: OptionCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onPress();
-  };
-
-  return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.optionCard,
-          isSelected && {
-            borderColor: option.color,
-            borderLeftWidth: 6,
-            backgroundColor: option.color + '0D',
-          },
-          { transform: [{ scale: scaleAnim }] },
-        ]}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: option.color + '20' }]}>
-          <Ionicons name={option.icon} size={28} color={option.color} />
-        </View>
-        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-          {option.label}
-        </Text>
-        {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: option.color }]}>
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-          </View>
-        )}
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
 export default function Step3Screen() {
   const router = useRouter();
   const { data, updateSchoolStatuses } = useOnboarding();
@@ -79,7 +29,6 @@ export default function Step3Screen() {
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
   const isSchoolStaff = data.role === 'staff';
   const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
-  const stepText = isStudent ? 'Step 4 of 5' : 'Step 3 of 4';
 
   const toggleStatus = (status: SchoolStatus) => {
     setSelectedStatuses(prev =>
@@ -100,98 +49,66 @@ export default function Step3Screen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
-        </TouchableOpacity>
-        <Text style={styles.stepText}>{stepText}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <View style={styles.container}>
+        <OnboardingHeader
+          currentStep={isStudent ? 4 : 3}
+          totalSteps={isStudent ? 5 : 4}
+          showHelper
+        />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, isStudent && styles.progressDotActive]} />
-            {isStudent && <View style={styles.progressDot} />}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="compass-outline" size={56} color="#7B68EE" />
+            </View>
+
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>
+              Every path is valid - we're here to support yours.
+            </Text>
+
+            <View style={styles.selectBadge}>
+              <Text style={styles.selectBadgeText}>Select all that apply</Text>
+            </View>
+
+            <View style={styles.options}>
+              {SCHOOL_STATUS_OPTIONS.map((option) => (
+                <SelectableCard
+                  key={option.value}
+                  title={option.label}
+                  selected={selectedStatuses.includes(option.value)}
+                  onPress={() => toggleStatus(option.value)}
+                  multiSelect
+                  color={option.color}
+                  icon={option.icon}
+                />
+              ))}
+            </View>
           </View>
+        </ScrollView>
 
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>
-            Every path is valid - we're here to support yours.
-          </Text>
-          <Text style={styles.selectHint}>
-            Select all that apply
-          </Text>
-
-          <View style={styles.options}>
-            {SCHOOL_STATUS_OPTIONS.map((option) => (
-              <OptionCard
-                key={option.value}
-                option={option}
-                isSelected={selectedStatuses.includes(option.value)}
-                onPress={() => toggleStatus(option.value)}
-              />
-            ))}
-          </View>
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Continue"
+            onPress={handleContinue}
+            disabled={selectedStatuses.length === 0}
+          />
+          <Pressable style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipText}>Skip for now</Text>
+          </Pressable>
         </View>
-      </ScrollView>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, selectedStatuses.length === 0 && styles.buttonDisabled]}
-          onPress={handleContinue}
-          disabled={selectedStatuses.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text
-            style={[
-              styles.buttonText,
-              selectedStatuses.length === 0 && styles.buttonTextDisabled,
-            ]}
-          >
-            Continue
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </DecorativeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 4,
-  },
-  stepText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
   scrollContent: {
     flexGrow: 1,
@@ -199,125 +116,62 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 40,
+    alignItems: 'center',
   },
-  progressContainer: {
-    flexDirection: 'row',
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#F0EBFF',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 48,
-  },
-  progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#E8E8F0',
-  },
-  progressDotActive: {
-    backgroundColor: '#7B68EE',
-    width: 32,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 22,
+    marginBottom: 12,
+    lineHeight: 24,
   },
-  selectHint: {
+  selectBadge: {
+    backgroundColor: '#F0EBFF',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 24,
+  },
+  selectBadgeText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#7B68EE',
-    textAlign: 'center',
-    marginBottom: 28,
   },
   options: {
-    gap: 14,
-  },
-  optionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#E8E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  iconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2D2D44',
-    lineHeight: 28,
-  },
-  optionTextSelected: {
-    fontWeight: '700',
-  },
-  checkmark: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+    width: '100%',
   },
   buttonContainer: {
-    padding: 24,
-    paddingBottom: 40,
-    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
+    gap: 4,
   },
   skipButton: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   skipText: {
     fontSize: 17,
     fontWeight: '700',
     color: '#7B68EE',
-  },
-  button: {
-    backgroundColor: '#7B68EE',
-    borderRadius: 24,
-    paddingVertical: 20,
-    alignItems: 'center',
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#D8D8E8',
-    shadowOpacity: 0,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  buttonTextDisabled: {
-    color: '#A8A8B8',
   },
 });

@@ -1,8 +1,18 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+import { SelectableCard } from '../../components/onboarding/SelectableCard';
+import { GRADIENTS, ANIMATION } from '../../constants/onboarding-theme';
 
 interface TopicOption {
   label: string;
@@ -42,58 +52,32 @@ const STAFF_TOPICS: TopicOption[] = [
   { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
 ];
 
-interface TopicCardProps {
-  topic: TopicOption;
-  isSelected: boolean;
-  onPress: () => void;
-}
+function CounterPill({ count }: { count: number }) {
+  const scale = useSharedValue(1);
 
-function TopicCard({ topic, isSelected, onPress }: TopicCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  React.useEffect(() => {
+    scale.value = withSpring(1.05, ANIMATION.springBouncy);
+    setTimeout(() => {
+      scale.value = withSpring(1, ANIMATION.springBouncy);
+    }, 120);
+  }, [count]);
 
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onPress();
-  };
+  const pillStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
-      <Animated.View
-        style={[
-          styles.topicCard,
-          isSelected && {
-            borderColor: topic.color,
-            borderLeftWidth: 6,
-            backgroundColor: topic.color + '0D',
-          },
-          { transform: [{ scale: scaleAnim }] },
-        ]}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: topic.color + '20' }]}>
-          <Ionicons name={topic.icon} size={26} color={topic.color} />
-        </View>
-        <Text style={[styles.topicText, isSelected && styles.topicTextSelected]}>
-          {topic.label}
-        </Text>
-        {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: topic.color }]}>
-            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-          </View>
-        )}
-      </Animated.View>
-    </TouchableOpacity>
+    <Animated.View
+      style={[
+        styles.counterPill,
+        count > 0 ? styles.counterPillActive : styles.counterPillInactive,
+        pillStyle,
+      ]}
+    >
+      <Text style={[styles.counterText, count > 0 ? styles.counterTextActive : styles.counterTextInactive]}>
+        {count} topic{count !== 1 ? 's' : ''} selected
+      </Text>
+    </Animated.View>
   );
 }
 
@@ -103,7 +87,6 @@ export default function Step4Screen() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
-  const stepText = isStudent ? 'Step 5 of 5' : 'Step 4 of 4';
 
   const availableTopics = useMemo(() => {
     switch (data.role) {
@@ -140,93 +123,64 @@ export default function Step4Screen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
-        </TouchableOpacity>
-        <Text style={styles.stepText}>{stepText}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <View style={styles.container}>
+        <OnboardingHeader
+          currentStep={isStudent ? 5 : 4}
+          totalSteps={isStudent ? 5 : 4}
+        />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            {isStudent && <View style={[styles.progressDot, styles.progressDotActive]} />}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="sparkles-outline" size={56} color="#7B68EE" />
+            </View>
+
+            <Text style={styles.title}>What would you like support with?</Text>
+            <Text style={styles.subtitle}>
+              Choose what feels right - you can always explore more later.
+            </Text>
+
+            <CounterPill count={selectedTopics.length} />
+
+            <View style={styles.topicsContainer}>
+              {availableTopics.map((topic) => (
+                <SelectableCard
+                  key={topic.label}
+                  title={topic.label}
+                  selected={selectedTopics.includes(topic.label)}
+                  onPress={() => toggleTopic(topic.label)}
+                  multiSelect
+                  color={topic.color}
+                  icon={topic.icon}
+                />
+              ))}
+            </View>
           </View>
+        </ScrollView>
 
-          <Text style={styles.title}>What would you like support with?</Text>
-          <Text style={styles.subtitle}>
-            Choose what feels right - you can always explore more later.
-          </Text>
-          <Text style={styles.count}>
-            {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
-          </Text>
-
-          <View style={styles.topicsContainer}>
-            {availableTopics.map((topic) => (
-              <TopicCard
-                key={topic.label}
-                topic={topic}
-                isSelected={selectedTopics.includes(topic.label)}
-                onPress={() => toggleTopic(topic.label)}
-              />
-            ))}
-          </View>
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Get Started"
+            onPress={handleFinish}
+            disabled={selectedTopics.length === 0}
+            icon="arrow-forward"
+          />
+          <Pressable style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipText}>Skip for now</Text>
+          </Pressable>
         </View>
-      </ScrollView>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, selectedTopics.length === 0 && styles.buttonDisabled]}
-          onPress={handleFinish}
-          disabled={selectedTopics.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.buttonText, selectedTopics.length === 0 && styles.buttonTextDisabled]}>
-            Get Started
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </DecorativeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 4,
-  },
-  stepText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
   scrollContent: {
     flexGrow: 1,
@@ -235,126 +189,73 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
+    alignItems: 'center',
   },
-  progressContainer: {
-    flexDirection: 'row',
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#F0EBFF',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 48,
-  },
-  progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#E8E8F0',
-  },
-  progressDotActive: {
-    backgroundColor: '#7B68EE',
-    width: 32,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
-    lineHeight: 44,
+    lineHeight: 38,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 10,
-    lineHeight: 22,
+    marginBottom: 12,
+    lineHeight: 24,
     paddingHorizontal: 8,
   },
-  count: {
+  counterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  counterPillActive: {
+    backgroundColor: '#7B68EE',
+  },
+  counterPillInactive: {
+    backgroundColor: '#E8E0F0',
+  },
+  counterText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#7B68EE',
-    textAlign: 'center',
-    marginBottom: 24,
+  },
+  counterTextActive: {
+    color: '#FFFFFF',
+  },
+  counterTextInactive: {
+    color: '#8E8EA8',
   },
   topicsContainer: {
-    gap: 12,
-  },
-  topicCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: '#E8E8F0',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  topicText: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2D2D44',
-    lineHeight: 28,
-  },
-  topicTextSelected: {
-    fontWeight: '700',
-  },
-  checkmark: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+    width: '100%',
   },
   buttonContainer: {
-    padding: 24,
-    paddingBottom: 40,
-    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
+    gap: 4,
   },
   skipButton: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   skipText: {
     fontSize: 17,
     fontWeight: '700',
     color: '#7B68EE',
-  },
-  button: {
-    backgroundColor: '#7B68EE',
-    borderRadius: 24,
-    paddingVertical: 20,
-    alignItems: 'center',
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#D8D8E8',
-    shadowOpacity: 0,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  buttonTextDisabled: {
-    color: '#A8A8B8',
   },
 });

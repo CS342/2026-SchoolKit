@@ -1,8 +1,21 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+import { SelectableCard } from '../../components/onboarding/SelectableCard';
+import { GRADIENTS, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
 
 interface GradeOption {
   value: string;
@@ -31,58 +44,57 @@ const HS_GRADES: GradeOption[] = [
   { value: 'college', label: 'College / University', icon: 'school-outline', color: '#EC4899' },
 ];
 
-interface GradeCardProps {
+function K8GradeCell({
+  grade,
+  isSelected,
+  onPress,
+  index,
+}: {
   grade: GradeOption;
   isSelected: boolean;
   onPress: () => void;
-}
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0);
 
-function GradeCard({ grade, isSelected, onPress }: GradeCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    opacity.value = withDelay(index * 50, withTiming(1, { duration: 300 }));
+  }, []);
+
+  const cellStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.93, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy)
+    );
     onPress();
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
+    <Pressable onPress={handlePress} style={styles.gridCellWrapper}>
       <Animated.View
         style={[
-          styles.gradeCard,
+          styles.gridCell,
           isSelected && {
             borderColor: grade.color,
-            borderLeftWidth: 6,
-            backgroundColor: grade.color + '0D',
+            backgroundColor: grade.color + '10',
+            ...SHADOWS.cardSelected,
           },
-          { transform: [{ scale: scaleAnim }] },
+          !isSelected && SHADOWS.card,
+          cellStyle,
         ]}
       >
-        <View style={[styles.iconContainer, { backgroundColor: grade.color + '20' }]}>
-          <Ionicons name={grade.icon} size={24} color={grade.color} />
-        </View>
-        <Text style={[styles.gradeText, isSelected && styles.gradeTextSelected]}>
+        <Ionicons name={grade.icon} size={24} color={grade.color} />
+        <Text style={[styles.gridCellLabel, isSelected && { color: grade.color, fontWeight: '700' }]}>
           {grade.label}
         </Text>
-        {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: grade.color }]}>
-            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-          </View>
-        )}
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -91,7 +103,8 @@ export default function Step2bScreen() {
   const { data, updateGradeLevel } = useOnboarding();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
-  const grades = data.role === 'student-k8' ? K8_GRADES : HS_GRADES;
+  const isK8 = data.role === 'student-k8';
+  const grades = isK8 ? K8_GRADES : HS_GRADES;
 
   const handleContinue = () => {
     if (selectedGrade) {
@@ -106,90 +119,71 @@ export default function Step2bScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
-        </TouchableOpacity>
-        <Text style={styles.stepText}>Step 3 of 5</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <View style={styles.container}>
+        <OnboardingHeader currentStep={3} totalSteps={5} />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={styles.progressDot} />
-            <View style={styles.progressDot} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="ribbon-outline" size={56} color="#7B68EE" />
+            </View>
+
+            <Text style={styles.title}>What grade are you in?</Text>
+            <Text style={styles.subtitle}>
+              We'll tailor resources to fit where you are.
+            </Text>
+
+            {isK8 ? (
+              <View style={styles.grid}>
+                {grades.map((grade, index) => (
+                  <K8GradeCell
+                    key={grade.value}
+                    grade={grade}
+                    isSelected={selectedGrade === grade.value}
+                    onPress={() => setSelectedGrade(grade.value)}
+                    index={index}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View style={styles.listContainer}>
+                {grades.map((grade) => (
+                  <SelectableCard
+                    key={grade.value}
+                    title={grade.label}
+                    selected={selectedGrade === grade.value}
+                    onPress={() => setSelectedGrade(grade.value)}
+                    color={grade.color}
+                    icon={grade.icon}
+                  />
+                ))}
+              </View>
+            )}
           </View>
+        </ScrollView>
 
-          <Text style={styles.title}>What grade are you in?</Text>
-          <Text style={styles.subtitle}>
-            We'll tailor resources to fit where you are.
-          </Text>
-
-          <View style={styles.gradesContainer}>
-            {grades.map((grade) => (
-              <GradeCard
-                key={grade.value}
-                grade={grade}
-                isSelected={selectedGrade === grade.value}
-                onPress={() => setSelectedGrade(grade.value)}
-              />
-            ))}
-          </View>
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Continue"
+            onPress={handleContinue}
+            disabled={!selectedGrade}
+          />
+          <Pressable style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipText}>Skip for now</Text>
+          </Pressable>
         </View>
-      </ScrollView>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, !selectedGrade && styles.buttonDisabled]}
-          onPress={handleContinue}
-          disabled={!selectedGrade}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.buttonText, !selectedGrade && styles.buttonTextDisabled]}>
-            Continue
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </DecorativeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 4,
-  },
-  stepText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
   scrollContent: {
     flexGrow: 1,
@@ -198,115 +192,75 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
+    alignItems: 'center',
   },
-  progressContainer: {
-    flexDirection: 'row',
+  iconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#F0EBFF',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 48,
-  },
-  progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#E8E8F0',
-  },
-  progressDotActive: {
-    backgroundColor: '#7B68EE',
-    width: 32,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
-  gradesContainer: {
-    gap: 10,
-  },
-  gradeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 3,
-    borderColor: '#E8E8F0',
-    padding: 14,
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+    width: '100%',
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  gridCellWrapper: {
+    width: '30%',
+  },
+  gridCell: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E8E8F0',
+    height: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    padding: 8,
   },
-  gradeText: {
-    flex: 1,
-    fontSize: 17,
+  gridCellLabel: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#2D2D44',
+    textAlign: 'center',
+    marginTop: 6,
   },
-  gradeTextSelected: {
-    fontWeight: '700',
-  },
-  checkmark: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+  listContainer: {
+    width: '100%',
   },
   buttonContainer: {
-    padding: 24,
-    paddingBottom: 40,
-    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
+    gap: 4,
   },
   skipButton: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   skipText: {
     fontSize: 17,
     fontWeight: '700',
     color: '#7B68EE',
-  },
-  button: {
-    backgroundColor: '#7B68EE',
-    borderRadius: 24,
-    paddingVertical: 20,
-    alignItems: 'center',
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#D8D8E8',
-    shadowOpacity: 0,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  buttonTextDisabled: {
-    color: '#A8A8B8',
   },
 });

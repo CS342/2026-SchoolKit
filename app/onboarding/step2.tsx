@@ -1,59 +1,111 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from 'react-native-reanimated';
 import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
+import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
+import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+import { GRADIENTS, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
 
-interface RoleCardProps {
+interface RoleOption {
   role: UserRole;
   iconName: keyof typeof Ionicons.glyphMap;
   title: string;
   color: string;
-  selectedRole: UserRole | null;
-  onPress: () => void;
+  gradient: readonly string[];
 }
 
-function RoleCard({ role, iconName, title, color, selectedRole, onPress }: RoleCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const isSelected = selectedRole === role;
+const ROLES: RoleOption[] = [
+  { role: 'student-k8', iconName: 'school', title: 'Student (K-8)', color: '#0EA5E9', gradient: GRADIENTS.roleStudentK8 },
+  { role: 'student-hs', iconName: 'book', title: 'Student (High School+)', color: '#7B68EE', gradient: GRADIENTS.roleStudentHS },
+  { role: 'parent', iconName: 'people', title: 'Parent / Caregiver', color: '#EC4899', gradient: GRADIENTS.roleParent },
+  { role: 'staff', iconName: 'briefcase', title: 'School Staff', color: '#66D9A6', gradient: GRADIENTS.roleStaff },
+];
+
+function RoleCard({
+  option,
+  isSelected,
+  onPress,
+  index,
+}: {
+  option: RoleOption;
+  isSelected: boolean;
+  onPress: () => void;
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+  const badgeScale = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withDelay(index * ANIMATION.staggerDelay, withSpring(0, ANIMATION.springBouncy));
+    opacity.value = withDelay(index * ANIMATION.staggerDelay, withTiming(1, { duration: 400 }));
+  }, []);
+
+  useEffect(() => {
+    badgeScale.value = withSpring(isSelected ? 1 : 0, ANIMATION.springBouncy);
+  }, [isSelected]);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+  }));
 
   const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy)
+    );
     onPress();
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
+    <Pressable onPress={handlePress}>
       <Animated.View
         style={[
           styles.roleCard,
-          isSelected && { borderColor: color, borderLeftWidth: 6 },
-          { transform: [{ scale: scaleAnim }] },
+          isSelected && {
+            borderColor: option.color,
+            backgroundColor: option.color + '08',
+            ...SHADOWS.cardSelected,
+          },
+          !isSelected && SHADOWS.card,
+          cardStyle,
         ]}
       >
-        <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <Ionicons name={iconName} size={56} color="#FFFFFF" />
+        <LinearGradient
+          colors={[...option.gradient] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.roleIconCircle}
+        >
+          <Ionicons name={option.iconName} size={28} color="#FFFFFF" />
+        </LinearGradient>
+
+        <Text style={styles.roleTitle}>{option.title}</Text>
+
+        <View style={[styles.radioOuter, isSelected && { borderColor: option.color }]}>
+          {isSelected && (
+            <Animated.View style={[styles.radioInner, { backgroundColor: option.color }, badgeStyle]} />
+          )}
         </View>
-        <Text style={styles.roleTitle}>{title}</Text>
-        {isSelected && (
-          <View style={[styles.checkmark, { backgroundColor: color }]}>
-            <Ionicons name="checkmark" size={24} color="#FFFFFF" />
-          </View>
-        )}
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -65,111 +117,57 @@ export default function Step2Screen() {
   const handleContinue = () => {
     if (selectedRole) {
       updateRole(selectedRole);
-      router.push('/onboarding/step3');
+      // Fix: navigate to step2b for students, step3 for others
+      if (selectedRole === 'student-k8' || selectedRole === 'student-hs') {
+        router.push('/onboarding/step2b');
+      } else {
+        router.push('/onboarding/step3');
+      }
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#2D2D44" />
-        </TouchableOpacity>
-        <Text style={styles.stepText}>Step 2 of 4</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <View style={styles.container}>
+        <OnboardingHeader currentStep={2} totalSteps={4} />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={[styles.progressDot, styles.progressDotActive]} />
-            <View style={styles.progressDot} />
-            <View style={styles.progressDot} />
-          </View>
-
-          <Text style={styles.title}>Tell us about yourself</Text>
-          <Text style={styles.subtitle}>Choose the option that best describes you</Text>
-
-          <View style={styles.options}>
-            <RoleCard
-              role="student-k8"
-              iconName="school"
-              title="Student (K-8)"
-              color="#0EA5E9"
-              selectedRole={selectedRole}
-              onPress={() => setSelectedRole('student-k8')}
-            />
-
-            <RoleCard
-              role="student-hs"
-              iconName="book"
-              title="Student (High School+)"
-              color="#7B68EE"
-              selectedRole={selectedRole}
-              onPress={() => setSelectedRole('student-hs')}
-            />
-
-            <RoleCard
-              role="parent"
-              iconName="people"
-              title="Parent / Caregiver"
-              color="#EC4899"
-              selectedRole={selectedRole}
-              onPress={() => setSelectedRole('parent')}
-            />
-
-            <RoleCard
-              role="staff"
-              iconName="briefcase"
-              title="School Staff"
-              color="#66D9A6"
-              selectedRole={selectedRole}
-              onPress={() => setSelectedRole('staff')}
-            />
-          </View>
-        </View>
-      </ScrollView>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, !selectedRole && styles.buttonDisabled]}
-          onPress={handleContinue}
-          disabled={!selectedRole}
-          activeOpacity={0.8}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={[styles.buttonText, !selectedRole && styles.buttonTextDisabled]}>
-            Continue
-          </Text>
-        </TouchableOpacity>
+          <View style={styles.content}>
+            <Text style={styles.title}>Tell us about yourself</Text>
+            <Text style={styles.subtitle}>Choose the option that best describes you</Text>
+
+            <View style={styles.options}>
+              {ROLES.map((option, index) => (
+                <RoleCard
+                  key={option.role}
+                  option={option}
+                  isSelected={selectedRole === option.role}
+                  onPress={() => setSelectedRole(option.role)}
+                  index={index}
+                />
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Continue"
+            onPress={handleContinue}
+            disabled={!selectedRole}
+          />
+        </View>
       </View>
-    </View>
+    </DecorativeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF9FF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 4,
-  },
-  stepText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7B68EE',
   },
   scrollContent: {
     flexGrow: 1,
@@ -180,113 +178,63 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 48,
-  },
-  progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#E8E8F0',
-  },
-  progressDotActive: {
-    backgroundColor: '#7B68EE',
-    width: 32,
-  },
   title: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '800',
     color: '#2D2D44',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#8E8EA8',
     textAlign: 'center',
-    marginBottom: 36,
+    marginBottom: 28,
   },
   options: {
-    gap: 18,
+    gap: 14,
   },
   roleCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 28,
-    alignItems: 'center',
-    borderWidth: 3,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 2,
     borderColor: '#E8E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  roleIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    marginRight: 16,
   },
   roleTitle: {
-    fontSize: 22,
+    flex: 1,
+    fontSize: 18,
     fontWeight: '700',
     color: '#2D2D44',
-    textAlign: 'center',
   },
-  checkmark: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  radioOuter: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2.5,
+    borderColor: '#C8C8D8',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
+  },
+  radioInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
   buttonContainer: {
-    padding: 24,
-    paddingBottom: 40,
-    backgroundColor: '#F8F7FF',
-  },
-  button: {
-    backgroundColor: '#7B68EE',
-    borderRadius: 24,
-    paddingVertical: 20,
-    alignItems: 'center',
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#D8D8E8',
-    shadowOpacity: 0,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  buttonTextDisabled: {
-    color: '#A8A8B8',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
   },
 });
