@@ -14,7 +14,6 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-import { SelectableCard } from '../../components/onboarding/SelectableCard';
 import { GRADIENTS, SHADOWS, ANIMATION, COLORS, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface GradeOption {
@@ -37,14 +36,14 @@ const K8_GRADES: GradeOption[] = [
 ];
 
 const HS_GRADES: GradeOption[] = [
-  { value: '9', label: '9th Grade (Freshman)', icon: 'leaf-outline', color: '#66D9A6' },
-  { value: '10', label: '10th Grade (Sophomore)', icon: 'flash-outline', color: '#0EA5E9' },
-  { value: '11', label: '11th Grade (Junior)', icon: 'ribbon-outline', color: '#7B68EE' },
-  { value: '12', label: '12th Grade (Senior)', icon: 'trophy-outline', color: '#F59E0B' },
-  { value: 'college', label: 'College / University', icon: 'school-outline', color: '#EC4899' },
+  { value: '9', label: '9th Grade\n(Freshman)', icon: 'leaf-outline', color: '#66D9A6' },
+  { value: '10', label: '10th Grade\n(Sophomore)', icon: 'flash-outline', color: '#0EA5E9' },
+  { value: '11', label: '11th Grade\n(Junior)', icon: 'ribbon-outline', color: '#7B68EE' },
+  { value: '12', label: '12th Grade\n(Senior)', icon: 'trophy-outline', color: '#F59E0B' },
+  { value: 'college', label: 'College /\nUniversity', icon: 'school-outline', color: '#EC4899' },
 ];
 
-function K8GradeCell({
+function GradeCell({
   grade,
   isSelected,
   onPress,
@@ -137,32 +136,17 @@ export default function Step2bScreen() {
               We'll tailor resources to fit where you are.
             </Text>
 
-            {isK8 ? (
-              <View style={styles.grid}>
-                {grades.map((grade, index) => (
-                  <K8GradeCell
-                    key={grade.value}
-                    grade={grade}
-                    isSelected={selectedGrade === grade.value}
-                    onPress={() => setSelectedGrade(grade.value)}
-                    index={index}
-                  />
-                ))}
-              </View>
-            ) : (
-              <View style={styles.listContainer}>
-                {grades.map((grade) => (
-                  <SelectableCard
-                    key={grade.value}
-                    title={grade.label}
-                    selected={selectedGrade === grade.value}
-                    onPress={() => setSelectedGrade(grade.value)}
-                    color={grade.color}
-                    icon={grade.icon}
-                  />
-                ))}
-              </View>
-            )}
+            <View style={styles.grid}>
+              {grades.map((grade, index) => (
+                <GradeCell
+                  key={grade.value}
+                  grade={grade}
+                  isSelected={selectedGrade === grade.value}
+                  onPress={() => setSelectedGrade(grade.value)}
+                  index={index}
+                />
+              ))}
+            </View>
           </View>
         </ScrollView>
 
@@ -222,7 +206,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
   },
-  listContainer: {
-    width: '100%',
+  gridCellLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    textAlign: 'center',
+    marginTop: 6,
   },
 });

@@ -28,6 +28,7 @@ const STUDENT_TOPICS: TopicOption[] = [
   { label: 'Getting back to school after treatment', icon: 'arrow-forward-circle-outline', color: '#F59E0B' },
   { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#7B68EE' },
   { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
+  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
 ];
 
 const PARENT_TOPICS: TopicOption[] = [
@@ -40,6 +41,7 @@ const PARENT_TOPICS: TopicOption[] = [
   { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#EC4899' },
   { label: 'Helping my child with friendships', icon: 'chatbubbles-outline', color: '#0EA5E9' },
   { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
+  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
 ];
 
 const STAFF_TOPICS: TopicOption[] = [
@@ -50,6 +52,7 @@ const STAFF_TOPICS: TopicOption[] = [
   { label: 'Collaborating with healthcare providers', icon: 'medical-outline', color: '#F59E0B' },
   { label: 'Understanding treatment side effects', icon: 'information-circle-outline', color: '#7B68EE' },
   { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
+  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
 ];
 
 function CounterPill({ count }: { count: number }) {

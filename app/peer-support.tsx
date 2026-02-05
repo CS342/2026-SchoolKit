@@ -55,7 +55,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Kindness &\nRespect",
     fullTitle: "Set Clear Expectations for Kindness and Respect",
     icon: "heart-outline",
-    color: "#F4978E",
+    color: "#E07A70", // Darker from #F4978E
     intro:
       "Children often want to be supportive but need clear guidance on what that looks like.",
     points: [
@@ -72,7 +72,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "School\nCommunity",
     fullTitle: "Involve the Whole School Community",
     icon: "people-outline",
-    color: "#90E0EF",
+    color: "#7AC5D8", // Darker from #90E0EF
     intro: "Peer support extends beyond the classroom.",
     points: [
       "Collaborate with recess monitors, coaches, and specialty teachers.",
@@ -87,7 +87,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Address\nChallenges",
     fullTitle: "Address Challenges Early",
     icon: "alert-circle-outline",
-    color: "#FFDAC1",
+    color: "#E0BFA0", // Darker from #FFDAC1
     intro: "Social challenges may surface gradually.",
     points: [
       "Watch for signs of exclusion, withdrawal, or subtle bullying.",
@@ -103,7 +103,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "What to\nSay",
     fullTitle: "Help Students Know What to Say (and What Not to Say)",
     icon: "chatbubble-ellipses-outline",
-    color: "#E2F0CB",
+    color: "#C2D5A8", // Darker from #E2F0CB
     intro:
       "Peers may worry about asking the wrong question\u2014or may ask very direct ones.",
     points: [
@@ -120,7 +120,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Structured\nConnection",
     fullTitle: "Use Structured Opportunities for Connection",
     icon: "link-outline",
-    color: "#B5EAD7",
+    color: "#95D1BB", // Darker from #B5EAD7
     intro:
       "Intentional structure can reduce social pressure for both the returning student and their peers.",
     points: [
@@ -136,7 +136,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Empathy\nNot Pity",
     fullTitle: "Encourage Empathy Without Pity",
     icon: "hand-left-outline",
-    color: "#C7CEEA",
+    color: "#AAB3D6", // Darker from #C7CEEA
     intro: "Support should feel empowering\u2014not isolating.",
     points: [
       "Discourage overhelping or excessive attention.",
@@ -151,7 +151,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Normalize\nDifferences",
     fullTitle: "Normalize Differences and Fluctuating Abilities",
     icon: "sparkles-outline",
-    color: "#CDB4DB",
+    color: "#B29AC3", // Darker from #CDB4DB
     intro:
       "Cancer survivors may have visible or invisible changes, including fatigue, hair loss, mobility differences, or cognitive effects.",
     points: [
