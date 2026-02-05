@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,12 +9,16 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../contexts/OnboardingContext';
-import { COLORS, SHADOWS, RADII, BORDERS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
+import { RADII, BORDERS, SPACING, ANIMATION } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function EditNameScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, updateName } = useOnboarding();
+  const { colors, shadows, appStyles } = useTheme();
   const [name, setName] = useState(data.name);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,19 +42,21 @@ export default function EditNameScreen() {
     }
   };
 
+  const styles = useMemo(() => makeStyles(colors, shadows), [colors, shadows]);
+
   return (
     <View style={styles.container}>
-      <View style={APP_STYLES.editHeader}>
-        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton}>
-          <Ionicons name="chevron-back" size={22} color={COLORS.textDark} />
+      <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+          <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={APP_STYLES.editHeaderTitle}>Edit Name</Text>
+        <Text style={appStyles.editHeaderTitle}>Edit Name</Text>
         <TouchableOpacity
           onPress={handleSave}
-          style={[APP_STYLES.editSaveButton, !name.trim() && APP_STYLES.editSaveButtonDisabled]}
+          style={[appStyles.editSaveButton, !name.trim() && appStyles.editSaveButtonDisabled]}
           disabled={!name.trim()}
         >
-          <Text style={[APP_STYLES.editSaveText, !name.trim() && APP_STYLES.editSaveTextDisabled]}>Save</Text>
+          <Text style={[appStyles.editSaveText, !name.trim() && appStyles.editSaveTextDisabled]}>Save</Text>
         </TouchableOpacity>
       </View>
 
@@ -59,12 +65,12 @@ export default function EditNameScreen() {
         <TextInput
           style={[
             styles.input,
-            isFocused && { borderColor: COLORS.primary },
+            isFocused && { borderColor: colors.primary },
           ]}
           value={name}
           onChangeText={setName}
           placeholder="Enter your name"
-          placeholderTextColor={COLORS.inputPlaceholder}
+          placeholderTextColor={colors.inputPlaceholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           autoFocus
@@ -74,29 +80,33 @@ export default function EditNameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.appBackground,
-  },
-  content: {
-    padding: SPACING.screenPadding,
-  },
-  label: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginBottom: 12,
-  },
-  input: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADII.card,
-    borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
-    padding: 20,
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.textDark,
-    ...SHADOWS.card,
-  },
-});
+const makeStyles = (
+  c: typeof import('../constants/theme').COLORS_LIGHT,
+  s: typeof import('../constants/theme').SHADOWS_LIGHT,
+) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.appBackground,
+    },
+    content: {
+      padding: SPACING.screenPadding,
+    },
+    label: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.textDark,
+      marginBottom: 12,
+    },
+    input: {
+      backgroundColor: c.white,
+      borderRadius: RADII.card,
+      borderWidth: BORDERS.card,
+      borderColor: c.borderCard,
+      padding: 20,
+      fontSize: 18,
+      fontWeight: '600',
+      color: c.textDark,
+      ...s.card,
+    },
+  });

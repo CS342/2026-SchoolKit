@@ -38,7 +38,13 @@ export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.button} activeOpacity={0.7}>
+    <TouchableOpacity
+      onPress={handlePress}
+      style={styles.button}
+      activeOpacity={0.7}
+      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
+    >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}

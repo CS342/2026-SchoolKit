@@ -9,6 +9,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { ProgressBar } from './ProgressBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, TYPOGRAPHY, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface OnboardingHeaderProps {
@@ -20,6 +21,7 @@ interface OnboardingHeaderProps {
 
 export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack }: OnboardingHeaderProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(0);
 
@@ -34,7 +36,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
   }));
 
   return (
-    <Animated.View style={[styles.container, entranceStyle]}>
+    <Animated.View style={[styles.container, { paddingTop: insets.top + 10 }, entranceStyle]}>
       <View style={styles.topRow}>
         {currentStep === 1 ? (
           <View style={styles.placeholder} />
@@ -43,6 +45,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
             onPress={onBack ?? (() => router.back())}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Go back"
           >
             <Ionicons name="chevron-back" size={22} color={COLORS.textMuted} />
           </Pressable>

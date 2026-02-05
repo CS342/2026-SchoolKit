@@ -33,6 +33,7 @@ import {
   BORDERS,
   withOpacity,
 } from "../constants/onboarding-theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -444,7 +445,7 @@ function BottomSheet({
           </View>
 
           {/* Close button */}
-          <TouchableOpacity style={styles.sheetCloseButton} onPress={handleDismiss}>
+          <TouchableOpacity style={styles.sheetCloseButton} onPress={handleDismiss} accessibilityLabel="Close">
             <Ionicons name="close" size={24} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -532,6 +533,7 @@ function BottomSheet({
 // --- Main Screen ---
 export default function PeerSupportScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedTopic, setSelectedTopic] = useState<PeerTopic | null>(null);
 
   // Entrance animations
@@ -585,12 +587,12 @@ export default function PeerSupportScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
+          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={28} color={COLORS.textMuted} />
           </TouchableOpacity>
           <DownloadButton resourceId="12" size={28} color={COLORS.studentK8} />

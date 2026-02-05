@@ -9,6 +9,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
@@ -47,6 +48,7 @@ function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; i
 
 export default function EditRoleScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, updateRole } = useOnboarding();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(data.role);
 
@@ -59,8 +61,8 @@ export default function EditRoleScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={APP_STYLES.editHeader}>
-        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton}>
+      <View style={[APP_STYLES.editHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton} accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={22} color={COLORS.textDark} />
         </TouchableOpacity>
         <Text style={APP_STYLES.editHeaderTitle}>Edit Role</Text>

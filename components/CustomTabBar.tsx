@@ -10,7 +10,8 @@ import { type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { CommonActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { COLORS, SHADOWS, ANIMATION } from '../constants/onboarding-theme';
+import { ANIMATION } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const TAB_ICONS: Record<string, {
   active: keyof typeof Ionicons.glyphMap;
@@ -31,10 +32,11 @@ interface TabBarItemProps {
 }
 
 function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBarItemProps) {
+  const { colors } = useTheme();
   const scale = useSharedValue(isFocused ? 1.15 : 1);
   const icons = TAB_ICONS[routeName] ?? { active: 'ellipse', inactive: 'ellipse-outline' };
   const iconName = isFocused ? icons.active : icons.inactive;
-  const iconColor = isFocused ? COLORS.primary : COLORS.textLight;
+  const iconColor = isFocused ? colors.primary : colors.textLight;
 
   useEffect(() => {
     scale.value = withSpring(isFocused ? 1.15 : 1, ANIMATION.springBouncy);
@@ -59,7 +61,7 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
       <Text
         style={[
           styles.tabLabel,
-          { color: isFocused ? COLORS.primary : COLORS.textLight },
+          { color: isFocused ? colors.primary : colors.textLight },
           isFocused && styles.tabLabelActive,
         ]}
       >
@@ -70,6 +72,7 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
 }
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { colors, shadows, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [containerWidth, setContainerWidth] = useState(0);
   const indicatorX = useSharedValue(0);
@@ -102,12 +105,17 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     <View
       style={[
         styles.container,
-        { paddingBottom: Math.max(insets.bottom, 12) },
+        {
+          paddingBottom: Math.max(insets.bottom, 12),
+          backgroundColor: isDark ? 'rgba(28,28,46,0.95)' : 'rgba(255, 255, 255, 0.92)',
+          borderTopColor: colors.border,
+          ...shadows.card,
+        },
       ]}
     >
       <View style={styles.tabRow} onLayout={handleLayout}>
         {containerWidth > 0 && (
-          <Animated.View style={[styles.indicator, indicatorStyle]} />
+          <Animated.View style={[styles.indicator, { backgroundColor: colors.tabActiveBg }, indicatorStyle]} />
         )}
 
         {state.routes.map((route, index) => {
@@ -158,14 +166,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
     paddingHorizontal: 8,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    ...SHADOWS.card,
   },
   tabRow: {
     flexDirection: 'row',
@@ -176,7 +181,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 8,
     height: 52,
-    backgroundColor: COLORS.tabActiveBg,
     borderRadius: 16,
   },
   tabItem: {

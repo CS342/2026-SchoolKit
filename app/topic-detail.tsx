@@ -4,12 +4,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
 export default function TopicDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
 
   const resourceId = id || title || '';
@@ -27,13 +29,13 @@ export default function TopicDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: withOpacity(color, 0.03) }]}>
-      <View style={[styles.header, { borderBottomColor: color }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <View style={[styles.header, { borderBottomColor: color, paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+          <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
           <DownloadButton resourceId={resourceId} size={24} />

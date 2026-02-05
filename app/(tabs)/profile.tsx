@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,23 +18,22 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { ALL_RESOURCES } from "../../constants/resources";
 import {
-  COLORS,
-  SHADOWS,
   RADII,
   SIZING,
   SPACING,
   BORDERS,
   ANIMATION,
-  APP_STYLES,
 } from "../../constants/onboarding-theme";
+import { useTheme } from "../../contexts/ThemeContext";
+import type { AppTheme } from "../../constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// A single row inside a grouped section
 function SettingRow({
   icon,
   label,
@@ -42,6 +41,7 @@ function SettingRow({
   onPress,
   isLast = false,
   tint,
+  theme,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -49,8 +49,10 @@ function SettingRow({
   onPress: () => void;
   isLast?: boolean;
   tint?: string;
+  theme: AppTheme;
 }) {
   const scale = useSharedValue(1);
+  const { colors } = theme;
 
   const pressStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -67,29 +69,28 @@ function SettingRow({
       }}
       style={[styles.row, pressStyle]}
     >
-      <View style={[styles.rowIconWrap, tint ? { backgroundColor: tint } : null]}>
+      <View style={[styles.rowIconWrap, { backgroundColor: tint || colors.backgroundLight }]}>
         <Ionicons
           name={icon}
           size={18}
-          color={tint ? COLORS.white : COLORS.primary}
+          color={tint ? '#FFFFFF' : colors.primary}
         />
       </View>
-      <View style={[styles.rowBody, !isLast && styles.rowBorder]}>
-        <Text style={styles.rowLabel}>{label}</Text>
+      <View style={[styles.rowBody, !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderCard }]}>
+        <Text style={[styles.rowLabel, { color: colors.textDark }]}>{label}</Text>
         <View style={styles.rowRight}>
           {value ? (
-            <Text style={styles.rowValue} numberOfLines={1}>
+            <Text style={[styles.rowValue, { color: colors.textLight }]} numberOfLines={1}>
               {value}
             </Text>
           ) : null}
-          <Ionicons name="chevron-forward" size={18} color={COLORS.indicatorInactive} />
+          <Ionicons name="chevron-forward" size={18} color={colors.indicatorInactive} />
         </View>
       </View>
     </AnimatedPressable>
   );
 }
 
-// Animated group container
 function AnimatedSection({
   children,
   delay,
@@ -118,7 +119,10 @@ function AnimatedSection({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
+  const theme = useTheme();
+  const { colors, shadows, appStyles, isDark, themePreference, setThemePreference } = theme;
   const {
     data,
     resetOnboarding,
@@ -127,13 +131,10 @@ export default function ProfileScreen() {
     downloads,
   } = useOnboarding();
 
-  // Avatar entrance
   const avatarScale = useSharedValue(0);
   const avatarOpacity = useSharedValue(0);
-  // Identity text entrance
   const nameOpacity = useSharedValue(0);
   const nameTranslateY = useSharedValue(12);
-  // Footer
   const footerOpacity = useSharedValue(0);
 
   useEffect(() => {
@@ -176,7 +177,6 @@ export default function ProfileScreen() {
     return data.schoolStatuses.map((s) => s.replace(/-/g, " ")).join(", ");
   };
 
-  // Photo handlers
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -251,6 +251,16 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleAppearance = () => {
+    const currentLabel = themePreference === 'system' ? 'System' : themePreference === 'light' ? 'Light' : 'Dark';
+    Alert.alert("Appearance", `Current: ${currentLabel}`, [
+      { text: "System", onPress: () => setThemePreference('system') },
+      { text: "Light", onPress: () => setThemePreference('light') },
+      { text: "Dark", onPress: () => setThemePreference('dark') },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
@@ -269,23 +279,23 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const appearanceLabel = themePreference === 'system' ? 'System' : themePreference === 'light' ? 'Light' : 'Dark';
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={APP_STYLES.tabHeader}>
-        <Text style={APP_STYLES.tabHeaderTitle}>Profile</Text>
-        <Text style={APP_STYLES.tabHeaderSubtitle}>Manage your information</Text>
+    <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
+      <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
+        <Text style={appStyles.tabHeaderTitle}>Profile</Text>
+        <Text style={appStyles.tabHeaderSubtitle}>Manage your information</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Identity */}
         <View style={styles.identity}>
           <Pressable onPress={handleProfilePicture}>
             <Animated.View style={avatarStyle}>
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                 {data.profilePicture ? (
                   <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
                 ) : (
@@ -294,56 +304,40 @@ export default function ProfileScreen() {
                   </Text>
                 )}
               </View>
-              <View style={styles.cameraBadge}>
-                <Ionicons name="camera" size={14} color={COLORS.white} />
+              <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
               </View>
             </Animated.View>
           </Pressable>
 
           <Animated.View style={[styles.identityText, nameStyle]}>
-            <Text style={styles.userName}>{data.name}</Text>
-            <View style={styles.rolePill}>
-              <Text style={styles.rolePillText}>{getRoleDisplayName()}</Text>
+            <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
+            <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+              <Text style={[styles.rolePillText, { color: colors.primary }]}>{getRoleDisplayName()}</Text>
             </View>
           </Animated.View>
         </View>
 
-        {/* Section: Profile */}
         <AnimatedSection delay={320}>
-          <Text style={styles.sectionLabel}>PROFILE</Text>
-          <View style={styles.groupCard}>
-            <SettingRow
-              icon="person-outline"
-              label="Name"
-              value={data.name}
-              onPress={() => router.push("/edit-name")}
-            />
-            <SettingRow
-              icon="school-outline"
-              label="Role"
-              value={getRoleDisplayName()}
-              onPress={() => router.push("/edit-role")}
-            />
-            <SettingRow
-              icon="book-outline"
-              label="School Status"
-              value={getSchoolStatusText()}
-              onPress={() => router.push("/edit-school-status")}
-            />
-            <SettingRow
-              icon="list-outline"
-              label="Topics"
-              value={`${data.topics.length} selected`}
-              onPress={() => router.push("/edit-topics")}
-              isLast
-            />
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>PROFILE</Text>
+          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
+            <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => router.push("/edit-name")} theme={theme} />
+            <SettingRow icon="school-outline" label="Role" value={getRoleDisplayName()} onPress={() => router.push("/edit-role")} theme={theme} />
+            <SettingRow icon="book-outline" label="School Status" value={getSchoolStatusText()} onPress={() => router.push("/edit-school-status")} theme={theme} />
+            <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => router.push("/edit-topics")} isLast theme={theme} />
           </View>
         </AnimatedSection>
 
-        {/* Section: General */}
         <AnimatedSection delay={460}>
-          <Text style={styles.sectionLabel}>GENERAL</Text>
-          <View style={styles.groupCard}>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>GENERAL</Text>
+          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
+            <SettingRow
+              icon="moon-outline"
+              label="Appearance"
+              value={appearanceLabel}
+              onPress={handleAppearance}
+              theme={theme}
+            />
             <SettingRow
               icon="cloud-download-outline"
               label="Download All"
@@ -353,42 +347,22 @@ export default function ProfileScreen() {
                   : `${downloads.length}/${ALL_RESOURCES.length}`
               }
               onPress={handleDownloadAll}
+              theme={theme}
             />
-            <SettingRow
-              icon="refresh-outline"
-              label="Retake Survey"
-              onPress={handleRetakeSurvey}
-            />
-            <SettingRow
-              icon="information-circle-outline"
-              label="About SchoolKit"
-              onPress={() => {}}
-            />
-            <SettingRow
-              icon="help-circle-outline"
-              label="Help & Support"
-              onPress={() => {}}
-              isLast
-            />
+            <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
+            <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => {}} theme={theme} />
+            <SettingRow icon="help-circle-outline" label="Help & Support" onPress={() => {}} isLast theme={theme} />
           </View>
         </AnimatedSection>
 
-        {/* Sign Out — standalone */}
         <AnimatedSection delay={580}>
-          <View style={styles.groupCard}>
-            <SettingRow
-              icon="log-out-outline"
-              label="Sign Out"
-              onPress={handleSignOut}
-              tint={COLORS.error}
-              isLast
-            />
+          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
+            <SettingRow icon="log-out-outline" label="Sign Out" onPress={handleSignOut} tint={colors.error} isLast theme={theme} />
           </View>
         </AnimatedSection>
 
-        {/* Footer */}
         <Animated.View style={[styles.footer, footerStyle]}>
-          <Text style={styles.footerText}>SchoolKit v1.0.0</Text>
+          <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
     </View>
@@ -398,13 +372,10 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.appBackground,
   },
   scroll: {
     paddingBottom: 48,
   },
-
-  // ── Identity ──────────────────────────────────
   identity: {
     alignItems: "center",
     paddingTop: 32,
@@ -414,7 +385,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -427,7 +397,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 36,
     fontWeight: "700",
-    color: COLORS.white,
+    color: "#FFFFFF",
     letterSpacing: -0.5,
   },
   cameraBadge: {
@@ -437,11 +407,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2.5,
-    borderColor: COLORS.appBackground,
   },
   identityText: {
     alignItems: "center",
@@ -450,12 +418,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: "700",
-    color: COLORS.textDark,
     letterSpacing: -0.3,
     marginBottom: 8,
   },
   rolePill: {
-    backgroundColor: COLORS.backgroundLight,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 100,
@@ -463,27 +429,19 @@ const styles = StyleSheet.create({
   rolePillText: {
     fontSize: 13,
     fontWeight: "600",
-    color: COLORS.primary,
   },
-
-  // ── Sections ──────────────────────────────────
   sectionLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: COLORS.textLight,
     letterSpacing: 0.8,
     marginBottom: 8,
     marginLeft: SPACING.screenPadding + 4,
   },
   groupCard: {
-    backgroundColor: COLORS.white,
     marginHorizontal: SPACING.screenPadding,
     borderRadius: 16,
     marginBottom: 24,
-    ...SHADOWS.card,
   },
-
-  // ── Row ───────────────────────────────────────
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -495,7 +453,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: COLORS.backgroundLight,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -507,14 +464,9 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     paddingVertical: 14,
   },
-  rowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.borderCard,
-  },
   rowLabel: {
     fontSize: 16,
     fontWeight: "500",
-    color: COLORS.textDark,
     flexShrink: 0,
   },
   rowRight: {
@@ -527,11 +479,8 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: 15,
     fontWeight: "400",
-    color: COLORS.textLight,
     maxWidth: 160,
   },
-
-  // ── Footer ────────────────────────────────────
   footer: {
     alignItems: "center",
     paddingTop: 8,
@@ -539,6 +488,5 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 13,
     fontWeight: "500",
-    color: COLORS.indicatorInactive,
   },
 });

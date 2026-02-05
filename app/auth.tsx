@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS } from '../constants/onboarding-theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 
 function isValidEmail(email: string) {
@@ -40,6 +41,7 @@ function getPasswordStrength(password: string) {
 
 export default function AuthScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { signUp, signInWithPassword, signInAnonymously } = useAuth();
   const [isSignUp, setIsSignUp] = useState(mode !== 'signin');
@@ -164,7 +166,7 @@ export default function AuthScreen() {
             colors={[...GRADIENTS.authHeader]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.headerBanner}
+            style={[styles.headerBanner, { paddingTop: insets.top + 2 }]}
           >
             <View style={styles.headerDecorativeCircle} />
             <Ionicons name="school-outline" size={32} color={COLORS.white} />
@@ -223,7 +225,7 @@ export default function AuthScreen() {
                     else handleSubmit();
                   }}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                   <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
                 </TouchableOpacity>
               </View>
@@ -278,7 +280,7 @@ export default function AuthScreen() {
                     returnKeyType="go"
                     onSubmitEditing={handleSubmit}
                   />
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton}>
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
                     <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
                   </TouchableOpacity>
                 </View>

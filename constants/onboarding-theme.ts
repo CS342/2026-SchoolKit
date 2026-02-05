@@ -242,9 +242,85 @@ export const SHARED_STYLES = StyleSheet.create({
   },
 });
 
+export function makeSharedStyles(c: typeof COLORS) {
+  return StyleSheet.create({
+    pageIconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: c.backgroundLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 20,
+    },
+    pageTitle: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: c.textDark,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    pageSubtitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: c.textLight,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    buttonContainer: {
+      paddingHorizontal: 24,
+      paddingTop: 16,
+      paddingBottom: 28,
+      gap: 4,
+    },
+    skipButton: {
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    skipText: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.primary,
+    },
+    skipPlaceholder: {
+      height: 41,
+    },
+    badge: {
+      backgroundColor: c.backgroundLight,
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 20,
+    },
+    badgeText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: c.primary,
+    },
+  });
+}
+
 export function withOpacity(color: string, opacity: number): string {
   const hex = Math.round(opacity * 255).toString(16).padStart(2, '0');
   return color + hex;
+}
+
+export function getGradientForColor(color: string): readonly [string, string] {
+  switch (color) {
+    case '#0EA5E9':
+      return GRADIENTS.roleStudentK8;
+    case '#7B68EE':
+      return GRADIENTS.roleStudentHS;
+    case '#EC4899':
+      return GRADIENTS.roleParent;
+    case '#66D9A6':
+      return GRADIENTS.roleStaff;
+    case '#EF4444':
+      return GRADIENTS.errorRed;
+    case '#3B82F6':
+      return GRADIENTS.infoBlue;
+    default:
+      return GRADIENTS.roleStudentHS;
+  }
 }
 
 export const APP_STYLES = StyleSheet.create({
@@ -408,6 +484,164 @@ export const APP_STYLES = StyleSheet.create({
     marginLeft: 12,
   },
 });
+
+export function makeAppStyles(c: typeof COLORS) {
+  return StyleSheet.create({
+    tabHeader: {
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 24,
+      backgroundColor: c.white,
+      borderBottomWidth: 2,
+      borderBottomColor: c.borderCard,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    tabHeaderTitle: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: c.textDark,
+      marginBottom: 6,
+    },
+    tabHeaderSubtitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: c.textMuted,
+    },
+    editHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 20,
+      backgroundColor: c.white,
+      borderBottomWidth: 2,
+      borderBottomColor: c.borderCard,
+      shadowColor: c.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    editHeaderTitle: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: c.textDark,
+    },
+    editBackButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.white,
+      borderWidth: 1.5,
+      borderColor: c.borderCard,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+    },
+    editSaveButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      backgroundColor: c.primary,
+      borderRadius: 16,
+    },
+    editSaveText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    editSaveButtonDisabled: {
+      backgroundColor: c.disabledButton,
+    },
+    editSaveTextDisabled: {
+      color: c.inputPlaceholder,
+    },
+    editScrollContent: {
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 40,
+    },
+    resourceCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.white,
+      padding: 24,
+      borderRadius: 24,
+      borderWidth: 3,
+      borderColor: c.borderCard,
+      shadowColor: c.shadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      elevation: 6,
+    },
+    resourceIconCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 18,
+      shadowColor: c.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    selectableCard: {
+      backgroundColor: c.white,
+      borderRadius: 20,
+      borderWidth: 3,
+      borderColor: c.borderCard,
+      padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      shadowColor: c.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 60,
+      paddingHorizontal: 32,
+      backgroundColor: c.white,
+      borderRadius: 24,
+      shadowColor: c.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    emptyTitle: {
+      fontSize: 26,
+      fontWeight: '800',
+      color: c.textDark,
+      marginTop: 24,
+      marginBottom: 14,
+      textAlign: 'center',
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: '500',
+      color: c.textMuted,
+      textAlign: 'center',
+      lineHeight: 26,
+    },
+    checkmarkCircle: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 12,
+    },
+  });
+}
 
 interface DecorativeShape {
   size: number;

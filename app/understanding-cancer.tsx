@@ -16,6 +16,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
 
@@ -635,6 +636,7 @@ function ExpandedCardModal({
 
 export default function UnderstandingCancerScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [selectedColor, setSelectedColor] = useState("#FF9AA2");
   const [visibleLimit, setVisibleLimit] = useState(4);
@@ -673,15 +675,16 @@ export default function UnderstandingCancerScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={28} color="#2D2D44" />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
+          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={28} color="#6B6B85" />
           </TouchableOpacity>
           <DownloadButton resourceId="11" size={28} color="#3B82F6" />
