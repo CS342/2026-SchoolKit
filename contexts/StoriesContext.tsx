@@ -351,12 +351,18 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       .insert({ user_id: user.id, story_id: storyId });
 
     if (error) {
-      console.error('Error adding story bookmark:', error);
-      setStoryBookmarks(prev => {
-        const updated = prev.filter(id => id !== storyId);
-        AsyncStorage.setItem(STORY_BOOKMARKS_KEY, JSON.stringify(updated));
-        return updated;
-      });
+      // If the error is a unique constraint violation (23505), it means the bookmark
+      // already exists. We can treat this as a success and keep the optimistic update.
+      if (error.code === '23505') {
+        console.warn('Story already bookmarked (duplicate key ignored).');
+      } else {
+        console.error('Error adding story bookmark:', error);
+        setStoryBookmarks(prev => {
+          const updated = prev.filter(id => id !== storyId);
+          AsyncStorage.setItem(STORY_BOOKMARKS_KEY, JSON.stringify(updated));
+          return updated;
+        });
+      }
     }
   };
 
