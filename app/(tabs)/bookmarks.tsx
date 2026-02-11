@@ -9,7 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useStories } from '../../contexts/StoriesContext';
 import { ResourceCard } from '../../components/ResourceCard';
+import { StoryCard } from '../../components/StoryCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { ALL_RESOURCES } from '../../constants/resources';
 import {
@@ -22,6 +24,7 @@ export default function BookmarksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { bookmarksWithTimestamps } = useOnboarding();
+  const { stories, storyBookmarks } = useStories();
   const { colors, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
 
@@ -41,6 +44,11 @@ export default function BookmarksScreen() {
     })
     .filter((r): r is typeof ALL_RESOURCES[0] & { savedAt: number } => r !== null);
 
+  // Get bookmarked stories
+  const bookmarkedStories = stories.filter(s => storyBookmarks.includes(s.id));
+
+  const totalSaved = bookmarkedResources.length + bookmarkedStories.length;
+
   const handleResourcePress = (id: string, title: string, route?: string) => {
     if (route) {
       router.push(route as any);
@@ -59,7 +67,7 @@ export default function BookmarksScreen() {
           <View style={[sharedStyles.badge, styles.countBadge]}>
             <Ionicons name="bookmark" size={14} color={colors.primary} />
             <Text style={sharedStyles.badgeText}>
-              {bookmarkedResources.length} saved
+              {totalSaved} saved
             </Text>
           </View>
         </View>
@@ -70,30 +78,49 @@ export default function BookmarksScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {bookmarkedResources.length > 0 ? (
-          <View style={styles.resourcesContainer}>
-            {bookmarkedResources.map((resource, index) => (
-              <ResourceCard
-                key={resource.id}
-                id={resource.id}
-                title={resource.title}
-                category={resource.category}
-                icon={resource.icon}
-                color={resource.color}
-                onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                index={index}
-                showDownloadIndicator
-              />
-            ))}
-          </View>
+        {totalSaved > 0 ? (
+          <>
+            {bookmarkedStories.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Stories</Text>
+                <View style={styles.resourcesContainer}>
+                  {bookmarkedStories.map((story, index) => (
+                    <StoryCard key={story.id} story={story} index={index} />
+                  ))}
+                </View>
+              </View>
+            )}
+            {bookmarkedResources.length > 0 && (
+              <View style={styles.sectionContainer}>
+                {bookmarkedStories.length > 0 && (
+                  <Text style={styles.sectionTitle}>Resources</Text>
+                )}
+                <View style={styles.resourcesContainer}>
+                  {bookmarkedResources.map((resource, index) => (
+                    <ResourceCard
+                      key={resource.id}
+                      id={resource.id}
+                      title={resource.title}
+                      category={resource.category}
+                      icon={resource.icon}
+                      color={resource.color}
+                      onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                      index={index}
+                      showDownloadIndicator
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+          </>
         ) : (
           <View style={styles.emptyContainer}>
             <View style={sharedStyles.pageIconCircle}>
               <Ionicons name="bookmark-outline" size={SIZING.iconPage} color={colors.primary} />
             </View>
-            <Text style={sharedStyles.pageTitle}>No saved resources yet</Text>
+            <Text style={sharedStyles.pageTitle}>Nothing saved yet</Text>
             <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-              Tap the bookmark icon on any resource to save it here for quick access.
+              Bookmark resources and stories to save them here for quick access.
             </Text>
             <PrimaryButton
               title="Browse Resources"
@@ -128,6 +155,15 @@ const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT) =>
       paddingHorizontal: SPACING.screenPadding,
       paddingTop: SPACING.sectionGap,
       paddingBottom: 40,
+    },
+    sectionContainer: {
+      marginBottom: SPACING.sectionGap,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.textDark,
+      marginBottom: 12,
     },
     resourcesContainer: {
       gap: SPACING.itemGap,

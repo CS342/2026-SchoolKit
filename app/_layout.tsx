@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { OfflineProvider } from '../contexts/OfflineContext';
+import { StoriesProvider } from '../contexts/StoriesContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 
@@ -28,7 +29,9 @@ export default function RootLayout() {
       <AuthProvider>
         <OfflineProvider>
           <OnboardingProvider>
-            <InnerLayout />
+            <StoriesProvider>
+              <InnerLayout />
+            </StoriesProvider>
           </OnboardingProvider>
         </OfflineProvider>
       </AuthProvider>

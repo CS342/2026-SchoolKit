@@ -17,10 +17,11 @@ const TAB_ICONS: Record<string, {
   active: keyof typeof Ionicons.glyphMap;
   inactive: keyof typeof Ionicons.glyphMap;
 }> = {
-  index:     { active: 'home',     inactive: 'home-outline' },
-  search:    { active: 'search',   inactive: 'search-outline' },
-  bookmarks: { active: 'bookmark', inactive: 'bookmark-outline' },
-  profile:   { active: 'person',   inactive: 'person-outline' },
+  index:     { active: 'home',         inactive: 'home-outline' },
+  search:    { active: 'search',       inactive: 'search-outline' },
+  stories:   { active: 'chatbubbles', inactive: 'chatbubbles-outline' },
+  bookmarks: { active: 'bookmark',    inactive: 'bookmark-outline' },
+  profile:   { active: 'person',      inactive: 'person-outline' },
 };
 
 interface TabBarItemProps {

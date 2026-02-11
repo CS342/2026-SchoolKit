@@ -26,7 +26,9 @@ interface PendingChange {
     | "profile_update"
     | "bookmark_add"
     | "bookmark_remove"
-    | "progress_update";
+    | "progress_update"
+    | "story_bookmark_add"
+    | "story_bookmark_remove";
   payload: Record<string, unknown>;
   timestamp: number;
 }
@@ -119,6 +121,25 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
             }
             case "progress_update": {
               console.warn("progress_update sync not yet implemented");
+              break;
+            }
+            case "story_bookmark_add": {
+              const { error } = await supabase
+                .from("story_bookmarks")
+                .insert({
+                  user_id: change.payload.user_id,
+                  story_id: change.payload.story_id,
+                });
+              if (error) throw error;
+              break;
+            }
+            case "story_bookmark_remove": {
+              const { error } = await supabase
+                .from("story_bookmarks")
+                .delete()
+                .eq("user_id", change.payload.user_id as string)
+                .eq("story_id", change.payload.story_id as string);
+              if (error) throw error;
               break;
             }
           }
