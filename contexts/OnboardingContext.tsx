@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALL_RESOURCE_IDS } from '../constants/resources';
 import { useOffline, queueOfflineChange } from './OfflineContext';
+import { VOICES } from '../services/elevenLabs';
 
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
@@ -46,6 +47,9 @@ interface OnboardingContextType {
   removeDownload: (resourceId: string) => Promise<void>;
   isDownloaded: (resourceId: string) => boolean;
   downloadAllResources: () => Promise<void>;
+  // Voice
+  selectedVoice: string;
+  updateVoice: (voiceId: string) => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -68,11 +72,22 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
   const [downloads, setDownloads] = useState<string[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string>(VOICES.ANTONI);
 
-  // Load downloads from AsyncStorage on mount
+  // Load downloads and voice from AsyncStorage on mount
   useEffect(() => {
     loadDownloads();
+    loadVoice();
   }, []);
+
+  const loadVoice = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('@schoolkit_selected_voice');
+      if (stored) setSelectedVoice(stored);
+    } catch (error) {
+       console.error('Error loading voice:', error);
+    }
+  };
 
   const loadDownloads = async () => {
     try {
@@ -119,6 +134,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           profilePicture: profile.profile_picture_url,
           isCompleted: profile.is_completed || false,
         });
+        
+        // Set voice from profile if available
+        if (profile.voice_id) {
+          setSelectedVoice(profile.voice_id);
+          AsyncStorage.setItem('@schoolkit_selected_voice', profile.voice_id);
+        }
+        
         // Fetch bookmarks
         fetchBookmarks(userId);
       }
@@ -394,6 +416,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(ALL_RESOURCE_IDS));
   };
 
+  const updateVoice = async (voiceId: string) => {
+      setSelectedVoice(voiceId);
+      await AsyncStorage.setItem('@schoolkit_selected_voice', voiceId);
+      try {
+        await updateProfile({ voice_id: voiceId });
+      } catch (e) {
+        console.warn('Failed to sync voice preference to Supabase (likely missing column):', e);
+        // Do not throw, keep local state
+      }
+  };
+
   return (
     <OnboardingContext.Provider
       value={{
@@ -417,6 +450,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         removeDownload,
         isDownloaded,
         downloadAllResources,
+        selectedVoice,
+        updateVoice,
       }}
     >
       {children}

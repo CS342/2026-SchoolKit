@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,14 @@ import {
   Share,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Image,
+  TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useOnboarding } from "../contexts/OnboardingContext";
+import { Audio } from "expo-av";
+import { generateSpeech, VOICES } from "../services/elevenLabs";
 import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +33,7 @@ type CardData = {
   id: string;
   front: string;
   back?: string;
+  backHeadline?: string; // New headline for the back
   canFlip: boolean;
 };
 
@@ -35,56 +42,66 @@ const CARDS: CardData[] = [
   {
     id: "1",
     front: "What is this page about?",
-    back: "Different people have different ideas about what cancer is, how it affects kids, and what it means when a child is told they have cancer. Sometimes people believe things about cancer that **aren't true**. These misunderstandings aren't meant to hurt anyone, but they can sometimes make things harder for kids who have had cancer. Take a look at this list of **common myths about cancer** to learn the facts and understand what a cancer diagnosis really means for you or a student you care about!",
+    backHeadline: "Clearing Up Confusion",
+    back: "Different people have different ideas about what cancer is. Sometimes people believe things that **aren't true**. These misunderstandings aren't meant to hurt anyone, but they can make things harder for kids.\n\nTake a look at this list of **common myths** to learn the facts!",
     canFlip: true,
   },
   {
     id: "2",
     front: "Myth: Cancer Can Spread Between People",
-    back: "**Cancer is not contagious!** You can't catch cancer from someone else. Kids who are getting treatment for cancer have **weaker immune systems**, which means it's easier for them to get sick from germs. That's why they might wear masks or stay away from crowds - to **protect themselves**, not because they could make others sick. Kids with cancer are not a danger to anyone's health.",
+    backHeadline: "Cancer Is Not Contagious",
+    back: "You **can't catch cancer** from someone else. Kids getting treatment have **weaker immune systems**, making it easier for them to get sick from germs.\n\nThey wear masks to **protect themselves**, not because they are a danger to others.",
     canFlip: true,
   },
   {
     id: "3",
     front: "Myth: Childhood Cancer is the Same as Adult Cancer",
-    back: "**Childhood cancers are different** from cancers that happen in adults. They can have different causes, types, and treatments. Kids don't usually get cancer because of things like diet, exercise, or the environment. Doctors use **special treatments** that are made to work safely for children's growing bodies.",
+    backHeadline: "Kids Are Not Mini Adults",
+    back: "**Childhood cancers are different** from adult cancers. They have different causes and treatments.\n\nKids don't usually get cancer from diet or lifestyle. Doctors use **special treatments** made safely for growing bodies.",
     canFlip: true,
   },
   {
     id: "4",
     front: "Myth: Cancer Always Happens Because of Something Someone Did",
-    back: "Most of the time, cancer happens by **random chance**, not because of something one did. Only a small number of childhood cancers are passed down in families.",
+    backHeadline: "It's Usually Random Chance",
+    back: "Most of the time, cancer happens by **random chance**, not because of something someone did or didn't do.\n\nOnly a small number of childhood cancers are passed down in families.",
     canFlip: true,
   },
   {
     id: "5",
     front: "Myth: Cancer looks the same for everyone",
-    back: "**Not all cancers are the same.** The changes to one's body such as hair loss, weakness, pain, can be very different. Each person has a **different journey** with cancer.",
+    backHeadline: "Every Journey Is Different",
+    back: "**Not all cancers are the same.** The changes to one's body—like hair loss, weakness, or pain—can be very different.\n\nEach person has a **different journey** with cancer.",
     canFlip: true,
   },
   {
     id: "6",
     front: "Myth: All Children With Cancer Get Chemotherapy",
-    back: "Chemotherapy is a common treatment for cancer, but treatment plans **depend on the type of cancer**. Treatment options include surgery, radiation, and newer non-chemotherapy options that offer more **targeted therapy**.",
+    backHeadline: "Treatment Is Individualized",
+    back: "Chemotherapy is common, but treatment **depends on the type of cancer**.\n\nOptions include surgery, radiation, and newer **targeted therapies** that don't always involve chemo.",
     canFlip: true,
   },
   {
     id: "7",
     front: "Myth: The Cancer Experience is Over After Treatment Ends",
-    back: "No, this is a **common misconception**! Survivors may face various late effects from treatment or relapse, and are at higher risk for secondary health issues. Thus, **long-term follow-up care** is recommended to reduce health risks.",
+    backHeadline: "Care Continues After Treatment",
+    back: "Survivors may face late effects from treatment. **Long-term follow-up care** is important to stay healthy.\n\nThe experience doesn't just end when treatment stops.",
     canFlip: true,
   },
   {
     id: "8",
     front: "Myth: Cancer is a Death Sentence for Kids",
-    back: "The average 5-year survival rate for childhood cancer is **86%** - a huge improvement compared to what it once was. With the support of family and their school team, **many children can lead relatively normal lives** after treatment.",
+    backHeadline: "Survival Rates Are Rising",
+    back: "The average 5-year survival rate is **86%**—a huge improvement.\n\nWith support, **many children lead distinct, full lives** after treatment.",
     canFlip: true,
   },
   {
     id: "9",
     front:
-      "These myths don't cover everything people get wrong about childhood cancer, but we hope they help you think more carefully about what you hear or believe. **Learning the facts can help you feel more comfortable** and better understand what childhood cancer really is.",
-    canFlip: false,
+      "These myths don't cover everything, but we hope they help you think more carefully about what you hear. **Learning the facts helps everyone feel more comfortable.**",
+    backHeadline: "Knowledge is Power", 
+    back: "Understanding the truth about childhood cancer helps create a supportive environment for everyone.",
+    canFlip: false, // Wait, this card has canFlip: false in original.
   },
 ];
 
@@ -257,77 +274,44 @@ function ExpandedCardModal({
   item,
   color,
   onClose,
+  isSpeaking,
+  isLoadingAudio,
+  onToggleSpeak,
+  selectedVoice,
 }: {
   visible: boolean;
   item: CardData | null;
   color: string;
   onClose: () => void;
+  isSpeaking: boolean;
+  isLoadingAudio: boolean;
+  onToggleSpeak: () => void;
+  selectedVoice: string;
 }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const flipAnim = useRef(new Animated.Value(0)).current;
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState<Speech.Voice | null>(null);
+  // Myth stamp animations
+  const mythScaleAnim = useRef(new Animated.Value(2.5)).current;
+  const mythOpacityAnim = useRef(new Animated.Value(0)).current;
+  const factUnderlineAnim = useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
-    // Find a better voice on mount
-    const loadVoices = async () => {
-      try {
-        const availableVoices = await Speech.getAvailableVoicesAsync();
-        if (availableVoices.length > 0) {
-          // Priority list for "friendly/gentle" female voices
-          // "Ava" is often a premium quality voice on iOS
-          // "Samantha" is the classic friendly Siri voice
-          // "Victoria" and "Susan" are also good options
-          const preferredNames = [
-            "Ava", 
-            "Samantha", 
-            "Victoria", 
-            "Susan", 
-            "Karen", 
-            "Google US English Female", 
-            "en-us-x-sfg#female_1-local" // Android example
-          ];
-          
-          let voice = availableVoices.find(v => 
-            preferredNames.includes(v.name) && v.language.startsWith("en")
-          );
+  // State for dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-          // If no specific name found, try to find an "enhanced" quality voice
-          // And try to guess female if possible (though API doesn't always say gender)
-          if (!voice) {
-            voice = availableVoices.find(v => 
-              v.quality === "Enhanced" && v.language.startsWith("en") && !v.name.includes("Fred") && !v.name.includes("Daniel")
-            );
-          }
-
-          // Fallback to any English voice logic...
-          if (!voice) {
-             // Try to filter out known male voices if possible by name to find a female default? 
-             // Hard to guarantee without checking all names, but default is usually female.
-            voice = availableVoices.find(v => v.language.startsWith("en"));
-          }
-
-          if (voice) {
-            setSelectedVoice(voice);
-          }
-        }
-      } catch (e) {
-        console.log("Error loading voices:", e);
-      }
-    };
-    
-    loadVoices();
-    
-    return () => {
-        Speech.stop();
-    }
-  }, []);
+  // Timers
+  let stampTimer: NodeJS.Timeout;
+  let flipTimer: NodeJS.Timeout;
 
   React.useEffect(() => {
     if (visible) {
       // Reset flip state
       flipAnim.setValue(0);
+      mythScaleAnim.setValue(2.5); // Start large
+      mythOpacityAnim.setValue(0); // Start invisible
+      factUnderlineAnim.setValue(0); // Start underline at 0
+
+      const isMythCard = item?.front.toLowerCase().startsWith("myth:");
 
       // Animate card appearance
       Animated.parallel([
@@ -335,46 +319,95 @@ function ExpandedCardModal({
           toValue: 1,
           friction: 8,
           tension: 40,
-          useNativeDriver: false, // Changed for height animation
+          useNativeDriver: true, // Use native driver for transform/opacity
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
           duration: 200,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ]).start();
 
-      // Auto-flip after 1.5 seconds
-      const flipTimer = setTimeout(() => {
-        Animated.spring(flipAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 10,
-          useNativeDriver: false, // Changed for height animation
-        }).start();
-      }, 800);
+      if (isMythCard) {
+        // 1. Wait for card to be read (e.g., 1.5s)
+        stampTimer = setTimeout(() => {
+          // 2. Animate Stamp
+          Animated.parallel([
+            Animated.timing(mythScaleAnim, {
+              toValue: 1,
+              duration: 150, // Fast stamp, no bounce
+              useNativeDriver: true,
+            }),
+            Animated.timing(mythOpacityAnim, {
+              toValue: 1,
+              duration: 100,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            // 3. Wait after stamp (e.g., 0.8s) before flipping
+             flipTimer = setTimeout(() => {
+              Animated.spring(flipAnim, {
+                toValue: 1,
+                friction: 8,
+                tension: 10,
+                useNativeDriver: false, // Must be false for height animation
+              }).start(() => {
+                  // Animate underline after flip
+                  Animated.timing(factUnderlineAnim, {
+                      toValue: 1,
+                      duration: 400,
+                      useNativeDriver: false,
+                  }).start();
+              });
+            }, 800);
+          });
+        }, 1500);
+      } else {
+        // Normal card behavior (faster flip)
+        flipTimer = setTimeout(() => {
+          Animated.spring(flipAnim, {
+            toValue: 1,
+            friction: 8,
+            tension: 10,
+            useNativeDriver: false, // Must be false for height animation
+          }).start(() => {
+              // Animate underline after flip
+              Animated.timing(factUnderlineAnim, {
+                  toValue: 1,
+                  duration: 400,
+                  useNativeDriver: false,
+              }).start();
+          });
+        }, 1200);
+      }
 
-      return () => clearTimeout(flipTimer);
+      return () => {
+        clearTimeout(stampTimer);
+        clearTimeout(flipTimer);
+      };
     } else {
+      // Reset when closed
       scaleAnim.setValue(0.8);
       opacityAnim.setValue(0);
       flipAnim.setValue(0);
+      mythScaleAnim.setValue(2.5);
+      mythOpacityAnim.setValue(0);
+      factUnderlineAnim.setValue(0);
     }
-  }, [visible]);
+  }, [visible, item]);
 
   const handleClose = () => {
-    Speech.stop();
-    setIsSpeaking(false);
+    // Stop audio handled by parent via onClose -> closeExpandedCard
     Animated.parallel([
       Animated.timing(scaleAnim, {
         toValue: 0.8,
         duration: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.timing(opacityAnim, {
         toValue: 0,
         duration: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start(() => {
       onClose();
@@ -382,27 +415,7 @@ function ExpandedCardModal({
   };
 
   const handleSpeak = () => {
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-    } else if (item?.back) {
-      setIsSpeaking(true);
-      // Strip markdown for speech
-      const textToSpeak = item.back.replace(/\*\*/g, "");
-      
-      const options: Speech.SpeechOptions = {
-        onDone: () => setIsSpeaking(false),
-        onStopped: () => setIsSpeaking(false),
-        rate: 0.95, // Slower for a calmer, gentler pace
-        pitch: 0.95, // Slightly lower pitch can sound warmer
-      };
-
-      if (selectedVoice) {
-        options.voice = selectedVoice.identifier;
-      }
-
-      Speech.speak(textToSpeak, options);
-    }
+    onToggleSpeak();
   };
 
   // Helper to render text with bold markers
@@ -413,7 +426,7 @@ function ExpandedCardModal({
         {parts.map((part, index) => {
           if (part.startsWith("**") && part.endsWith("**")) {
             return (
-              <Text key={index} style={{ fontWeight: "800", color: "#2D2D44" }}>
+              <Text key={index} style={{ fontWeight: "800", color: "#1A1A2E" }}>
                 {part.slice(2, -2)}
               </Text>
             );
@@ -447,10 +460,26 @@ function ExpandedCardModal({
     outputRange: [0, 0, 1],
   });
 
-  // Height interpolation
+  // Height interpolation - NOT supported by native driver, removing height anim or using layout anim?
+  // The original code used useNativeDriver: false for height animation.
+  // I changed logic above to useNativeDriver: true for performance, but height is not supported.
+  // I need to check if I can keep height animation.
+  // The height was interpolating flipAnim.
+  // If I use useNativeDriver: true for flipAnim, I cannot interpolate height on the View style directly if it's not a transform.
+  // However, I can just use `useNativeDriver: false` for the flip animation to keep the height animation working.
+  // Ideally, distinct animations for transform (native) and layout (js) would be better, but simpler to revert to false for flip.
+  
+  // Re-evaluating: The user wants "Show animation...".
+  // I will revert useNativeDriver for flipAnim to false in my head (and in the code below) to preserve the height animation which is crucial for the card size change.
+
   const cardHeight = flipAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [FRONT_HEIGHT, BACK_HEIGHT],
+  });
+
+  const underlineWidth = factUnderlineAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ["0%", "100%"]
   });
 
   // Dynamic font size based on text length
@@ -459,8 +488,7 @@ function ExpandedCardModal({
     if (len < 120) return 28;
     if (len < 200) return 26;
     if (len < 300) return 24;
-    if (len < 400) return 22;
-    return 20;
+    return 22; // Minimum size 22
   };
 
   const backTextFontSize = item ? getFontSize(item.back || "") : 20;
@@ -472,10 +500,13 @@ function ExpandedCardModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      <Pressable style={styles.modalOverlay} onPress={handleClose}>
-        <Animated.View
-          style={[styles.modalBackdrop, { opacity: opacityAnim }]}
-        />
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+          <Animated.View
+            style={[styles.modalBackdrop, { opacity: opacityAnim }]}
+          />
+        </Pressable>
+        
         <Animated.View
           style={[
             styles.expandedCardContainer,
@@ -485,7 +516,7 @@ function ExpandedCardModal({
             },
           ]}
         >
-          <Pressable onPress={handleClose}>
+          <View>
             {/* Front of card (Myth) */}
             <Animated.View
               style={[
@@ -510,16 +541,33 @@ function ExpandedCardModal({
               >
               <View style={styles.expandedCardInnerFront}>
                 {isMyth && (
-                  <View style={styles.mythBadgeContainer}>
-                    <View
-                      style={[
-                        styles.mythBadge,
-                        { backgroundColor: "rgba(255,255,255,0.3)" },
-                      ]}
-                    >
-                      <Text style={styles.mythBadgeText}>MYTH</Text>
+                  <>
+                    <View style={styles.mythBadgeContainer}>
+                      <View
+                        style={[
+                          styles.mythBadge,
+                          { backgroundColor: "rgba(255,255,255,0.3)" },
+                        ]}
+                      >
+                        <Text style={styles.mythBadgeText}>MYTH</Text>
+                      </View>
                     </View>
-                  </View>
+                    {/* Animated Myth Image */}
+                    <Animated.Image
+                      source={require("../assets/images/myth.png")}
+                      style={[
+                        styles.mythImage, 
+                        {
+                          transform: [
+                            { rotate: "45deg" },
+                            { scale: mythScaleAnim }
+                          ],
+                          opacity: mythOpacityAnim
+                        }
+                      ]}
+                      resizeMode="contain"
+                    />
+                  </>
                 )}
                 
                 <View style={styles.expandedFrontContent}>
@@ -571,28 +619,58 @@ function ExpandedCardModal({
                   {
                     height: "100%",
                     backgroundColor: "#FFFFFF",
-                    borderColor: color,
+                    borderColor: "#10B981",
                   },
                 ]}
               >
               <View style={styles.expandedCardInner}>
                 {/* Fact badge & Speaking controls */}
                 <View style={styles.factHeader}>
-                    <View style={[styles.factBadge, { backgroundColor: color }]}>
-                    <Text style={styles.factBadgeText}>FACT</Text>
-                    </View>
-                    <TouchableOpacity 
-                        onPress={handleSpeak}
-                        style={styles.speakerButton}
-                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                    >
-                        <Ionicons 
-                            name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} 
-                            size={28} 
-                            color={isSpeaking ? "#FF6B6B" : "#2D2D44"} 
+                    {/* FACT Label & Underline */}
+                    <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <Text style={[styles.factBigText, { color: "#10B981" }]}>Fact</Text>
+                        <Animated.View 
+                            style={{
+                                height: 4,
+                                backgroundColor: "#10B981",
+                                width: underlineWidth,
+                                borderRadius: 2,
+                                marginTop: 2,
+                            }}
                         />
-                    </TouchableOpacity>
+                    </View>
+                    
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {/* Voice Selector Removed - managed in Profile */}
+
+                      <TouchableOpacity 
+                          onPress={onToggleSpeak}
+                          style={styles.speakerButton}
+                          disabled={isLoadingAudio}
+                          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                      >
+                          {isLoadingAudio ? (
+                             <ActivityIndicator size="small" color="#10B981" />
+                          ) : (
+                             <Ionicons 
+                                name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} 
+                                size={28} 
+                                color={isSpeaking ? "#FF6B6B" : "#2D2D44"} 
+                             />
+                          )}
+                      </TouchableOpacity>
+                    </View>
                 </View>
+
+                {/* Back Headline - Fixed at top */}
+                {item.backHeadline && (
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={styles.backHeadline}>
+                      {item.backHeadline}
+                    </Text>
+                    <View style={[styles.backDivider, { backgroundColor: "#10B981" + "40", marginTop: 8 }]} />
+                  </View>
+                )}
 
                 {/* Answer content */}
                 <ScrollView
@@ -600,13 +678,13 @@ function ExpandedCardModal({
                   showsVerticalScrollIndicator={true}
                   contentContainerStyle={{ 
                     flexGrow: 1, 
-                    justifyContent: 'center',
-                    paddingBottom: 20 
+                    paddingBottom: 40,
+                    paddingHorizontal: 4,
                   }}
                 >
                   {item.back && renderTextWithBold(item.back, [
                     styles.expandedAnswerText,
-                    { fontSize: backTextFontSize, lineHeight: backTextFontSize * 1.4 }
+                    { fontSize: backTextFontSize, lineHeight: backTextFontSize * 1.5 }
                   ])}
                 </ScrollView>
               </View>
@@ -614,20 +692,20 @@ function ExpandedCardModal({
               {/* Index card lines */}
               <View style={styles.expandedCardLines}>
                 <View
-                  style={[styles.cardLine, { backgroundColor: color + "40" }]}
+                  style={[styles.cardLine, { backgroundColor: "#10B981" + "40" }]}
                 />
                 <View
-                  style={[styles.cardLine, { backgroundColor: color + "30" }]}
+                  style={[styles.cardLine, { backgroundColor: "#10B981" + "30" }]}
                 />
                 <View
-                  style={[styles.cardLine, { backgroundColor: color + "20" }]}
+                  style={[styles.cardLine, { backgroundColor: "#10B981" + "20" }]}
                 />
               </View>
               </View>
             </Animated.View>
-          </Pressable>
+          </View>
         </Animated.View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
@@ -635,11 +713,33 @@ function ExpandedCardModal({
 
 
 export default function UnderstandingCancerScreen() {
+  const { selectedVoice } = useOnboarding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
+  const [expandedCard, setExpandedCard] = useState<CardData | null>(null);
   const [selectedColor, setSelectedColor] = useState("#FF9AA2");
   const [visibleLimit, setVisibleLimit] = useState(4);
+
+  // Audio state
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+
+  // Cleanup sound on unmount/change
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
+
+  // Helper for card colors
+  const getCardColor = (id: string) => {
+    const index = CARDS.findIndex(c => c.id === id);
+    return CARD_COLORS[index % CARD_COLORS.length] || "#FFFFFF";
+  };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const scrollY = event.nativeEvent.contentOffset.y;
@@ -655,14 +755,83 @@ export default function UnderstandingCancerScreen() {
     }
   };
 
-  const handleCardPress = (card: CardData, index: number) => {
-    if (!card.canFlip) return;
-    setSelectedCard(card);
-    setSelectedColor(CARD_COLORS[index % CARD_COLORS.length]);
+  const closeExpandedCard = async () => {
+    if (sound) {
+      try {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      } catch (e) {
+        // Ignore errors if sound is already unloaded
+      }
+      setSound(null);
+    }
+    setIsSpeaking(false);
+    setExpandedCard(null);
   };
 
-  const handleCloseCard = () => {
-    setSelectedCard(null);
+  const handleSpeak = async () => {
+    if (isSpeaking) {
+      if (sound) {
+        await sound.pauseAsync();
+      }
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      if (sound) {
+        await sound.playAsync();
+      } else if (expandedCard?.back) {
+        try {
+          setIsLoadingAudio(true);
+          // Construct full text: "Fact. [Headline]. [Body]"
+          let textToSpeak = "Fact. ";
+          if (expandedCard.backHeadline) {
+            textToSpeak += expandedCard.backHeadline + ". ";
+          }
+          textToSpeak += expandedCard.back.replace(/\*\*/g, ""); // Clean markdown
+          
+          const audioUri = await generateSpeech(textToSpeak, selectedVoice);
+          
+          if (audioUri) {
+            const { sound: newSound } = await Audio.Sound.createAsync(
+              { uri: audioUri },
+              { shouldPlay: true }
+            );
+            setSound(newSound);
+            
+            // Reset state when playback finishes
+            newSound.setOnPlaybackStatusUpdate((status) => {
+                if (status.isLoaded && status.didJustFinish) {
+                    setIsSpeaking(false);
+                    newSound.setPositionAsync(0);
+                }
+            });
+          }
+        } catch (error) {
+          console.error("Audio playback error:", error);
+          setIsSpeaking(false);
+        } finally {
+          setIsLoadingAudio(false);
+        }
+      }
+    }
+  };
+
+  const handleVoiceChange = async (voiceId: string) => {
+      if (selectedVoice === voiceId) return;
+      
+      // Stop current audio
+      if (sound) {
+          await sound.stopAsync();
+          await sound.unloadAsync();
+          setSound(null);
+      }
+      setIsSpeaking(false);
+  };
+
+  const handleCardPress = (card: CardData) => {
+    if (!card.canFlip) return;
+    setExpandedCard(card);
+    // Auto-select color based on ID is handled in render
   };
 
   const handleShare = async () => {
@@ -728,7 +897,7 @@ export default function UnderstandingCancerScreen() {
                 color={CARD_COLORS[index % CARD_COLORS.length]}
                 index={index}
                 isVisible={index <= visibleLimit}
-                onPress={() => handleCardPress(card, index)}
+                onPress={() => handleCardPress(card)}
               />
             </View>
           ))}
@@ -737,10 +906,14 @@ export default function UnderstandingCancerScreen() {
 
       {/* Expanded card modal */}
       <ExpandedCardModal
-        visible={selectedCard !== null}
-        item={selectedCard}
-        color={selectedColor}
-        onClose={handleCloseCard}
+        visible={expandedCard !== null}
+        item={expandedCard}
+        color={expandedCard ? getCardColor(expandedCard.id) : "#FFFFFF"}
+        onClose={closeExpandedCard}
+        isSpeaking={isSpeaking}
+        isLoadingAudio={isLoadingAudio}
+        onToggleSpeak={handleSpeak}
+        selectedVoice={selectedVoice}
       />
     </View>
   );
@@ -970,8 +1143,8 @@ const styles = StyleSheet.create({
   },
   expandedCardInner: {
     padding: 28,
-    alignItems: "center",
     flex: 1, // Added flex: 1 to fill parent height
+    overflow: 'hidden',
   },
   expandedMythLabel: {
     fontSize: 16,
@@ -1015,7 +1188,7 @@ const styles = StyleSheet.create({
   factHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     width: '100%',
     marginBottom: 16,
     position: 'relative',
@@ -1027,14 +1200,18 @@ const styles = StyleSheet.create({
   },
   speakerButton: {
     padding: 8,
-    position: 'absolute',
-    right: 0,
   },
   factBadgeText: {
     fontSize: 20,
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: 2,
+  },
+  factBigText: {
+    fontSize: 34,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   mythBadge: {
     paddingHorizontal: 16,
@@ -1056,18 +1233,44 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     marginBottom: 20,
   },
+  mythImage: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -120, // Half of height
+    marginLeft: -120, // Half of width
+    width: 240,
+    height: 240,
+    zIndex: 20,
+    // transform is handled inline
+  },
   divider: {
     width: "80%",
     height: 2,
     borderRadius: 1,
     marginBottom: 20,
   },
+  backHeadline: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#2D2D44",
+    textAlign: "left",
+    marginBottom: 12,
+    letterSpacing: -0.5,
+    lineHeight: 34,
+  },
+  backDivider: {
+    height: 2,
+    width: "40%",
+    borderRadius: 1,
+    marginBottom: 20,
+  },
   expandedAnswerText: {
     fontSize: 20,
     fontWeight: "500",
-    color: "#444455",
-    textAlign: "center",
-    lineHeight: 28,
+    color: "#2D2D44", // Darker for better contrast
+    textAlign: "left", // Left align for readability
+    lineHeight: 32, // Increased line height
   },
   backContentScroll: {
     flex: 1, // Let scrollview fill space

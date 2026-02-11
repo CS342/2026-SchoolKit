@@ -7,6 +7,8 @@ import {
   Pressable,
   Alert,
   Image,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,9 +21,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { ALL_RESOURCES } from "../../constants/resources";
+import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
   RADII,
   SIZING,
@@ -117,6 +121,144 @@ function AnimatedSection({
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
+function VoiceSelectorModal({
+  visible,
+  onClose,
+  selectedVoice,
+  onSelectVoice,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  selectedVoice: string;
+  onSelectVoice: (voiceId: string) => void;
+}) {
+  const [sound, setSound] = React.useState<Audio.Sound | null>(null);
+  const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { colors, shadows } = useTheme();
+
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
+
+  const handlePlaySample = async (voiceId: string, name: string) => {
+    try {
+      if (playingVoiceId === voiceId) {
+        // Stop if currently playing this voice
+        if (sound) {
+          await sound.stopAsync();
+          await sound.unloadAsync();
+          setSound(null);
+          setPlayingVoiceId(null);
+        }
+        return;
+      }
+
+      // Stop previous
+      if (sound) {
+        await sound.unloadAsync();
+        setSound(null);
+        setPlayingVoiceId(null);
+      }
+
+      setIsLoading(true);
+      setPlayingVoiceId(voiceId);
+
+      const text = `The quick brown fox jumps over the lazy dog.`;
+      const uri = await generateSpeech(text, voiceId);
+
+      if (uri) {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+            { uri },
+            { shouldPlay: true }
+        );
+        setSound(newSound);
+        newSound.setOnPlaybackStatusUpdate((status) => {
+            if (status.isLoaded && status.didJustFinish) {
+                setPlayingVoiceId(null);
+            }
+        });
+      } else {
+          setPlayingVoiceId(null);
+      }
+    } catch (e) {
+      console.error("Error playing sample", e);
+      setPlayingVoiceId(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+            <View style={styles.modalBackdrop} />
+         </Pressable>
+         <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
+            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Choose a Voice</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Select a companion for your journey</Text>
+            
+            <View style={styles.voiceList}>
+                {Object.values(VOICE_META).map((voice) => {
+                    const isSelected = selectedVoice === voice.id;
+                    const isPlaying = playingVoiceId === voice.id;
+                    
+                    return (
+                        <Pressable 
+                            key={voice.id} 
+                            style={[
+                                styles.voiceCard, 
+                                { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
+                                shadows.card,
+                                isSelected && { backgroundColor: colors.backgroundLight }
+                            ]}
+                            onPress={() => onSelectVoice(voice.id)}
+                        >
+                            <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
+                            <View style={styles.voiceInfo}>
+                                <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
+                                <Text style={[styles.voiceDesc, { color: isSelected ? colors.primary : colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voice.description}</Text>
+                            </View>
+                            
+                            <Pressable 
+                                style={[
+                                    styles.playButton, 
+                                    { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }
+                                ]}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    handlePlaySample(voice.id, voice.name);
+                                }}
+                            >
+                                {isLoading && isPlaying ? (
+                                    <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
+                                ) : (
+                                    <Ionicons 
+                                        name={isPlaying ? "stop" : "play"} 
+                                        size={16} 
+                                        color={isPlaying ? '#FFFFFF' : colors.primary} 
+                                    />
+                                )}
+                            </Pressable>
+                        </Pressable>
+                    );
+                })}
+            </View>
+
+            <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={onClose}>
+                <Text style={styles.closeButtonText}>Done</Text>
+            </Pressable>
+         </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -129,8 +271,15 @@ export default function ProfileScreen() {
     updateProfilePicture,
     downloadAllResources,
     downloads,
+    selectedVoice,
+    updateVoice,
   } = useOnboarding();
 
+
+  // Voice Modal State
+  const [isVoiceModalVisible, setIsVoiceModalVisible] = React.useState(false);
+
+  // Avatar entrance
   const avatarScale = useSharedValue(0);
   const avatarOpacity = useSharedValue(0);
   const nameOpacity = useSharedValue(0);
@@ -188,9 +337,12 @@ export default function ProfileScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      base64: true,
     });
-    if (!result.canceled && result.assets[0]) {
-      await updateProfilePicture(result.assets[0].uri);
+    if (!result.canceled && result.assets[0].base64) {
+      // Create data URI for profile picture
+      const dataUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      await updateProfilePicture(dataUri);
     }
   };
 
@@ -205,9 +357,12 @@ export default function ProfileScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      base64: true,
     });
-    if (!result.canceled && result.assets[0]) {
-      await updateProfilePicture(result.assets[0].uri);
+    if (!result.canceled && result.assets[0].base64) {
+      // Create data URI for profile picture
+      const dataUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      await updateProfilePicture(dataUri);
     }
   };
 
@@ -339,6 +494,13 @@ export default function ProfileScreen() {
               theme={theme}
             />
             <SettingRow
+              icon="mic-outline"
+              label="Voice"
+              value={Object.values(VOICE_META).find((meta) => meta.id === selectedVoice)?.name || 'Antoni'}
+              onPress={() => setIsVoiceModalVisible(true)}
+              theme={theme}
+            />
+            <SettingRow
               icon="cloud-download-outline"
               label="Download All"
               value={
@@ -365,6 +527,17 @@ export default function ProfileScreen() {
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
+
+      {/* Voice Selection Modal */}
+      <VoiceSelectorModal
+        visible={isVoiceModalVisible}
+        onClose={() => setIsVoiceModalVisible(false)}
+        selectedVoice={selectedVoice}
+        onSelectVoice={(voiceId) => {
+            updateVoice(voiceId);
+            setIsVoiceModalVisible(false);
+        }}
+      />
     </View>
   );
 }
@@ -397,7 +570,6 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 36,
     fontWeight: "700",
-    color: "#FFFFFF",
     letterSpacing: -0.5,
   },
   cameraBadge: {
@@ -488,5 +660,78 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 13,
     fontWeight: "500",
+  },
+
+  // ── Modal ─────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    flex: 1,
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: SPACING.screenPadding,
+    paddingBottom: 40,
+    maxHeight: "80%",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  voiceList: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  voiceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  voiceAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  voiceInfo: {
+    flex: 1,
+  },
+  voiceName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  voiceDesc: {
+    fontSize: 13,
+  },
+  playButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeButton: {
+    paddingVertical: 14,
+    borderRadius: 100,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
