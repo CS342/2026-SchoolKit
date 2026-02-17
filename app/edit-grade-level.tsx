@@ -14,13 +14,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
 
-const K8_GRADES = [
-  { value: 'K', label: 'Kindergarten' },
-  { value: '1', label: '1st Grade' },
-  { value: '2', label: '2nd Grade' },
-  { value: '3', label: '3rd Grade' },
-  { value: '4', label: '4th Grade' },
-  { value: '5', label: '5th Grade' },
+const MIDDLE_SCHOOL_GRADES = [
   { value: '6', label: '6th Grade' },
   { value: '7', label: '7th Grade' },
   { value: '8', label: '8th Grade' },
@@ -32,6 +26,14 @@ const HS_GRADES = [
   { value: '11', label: '11th Grade (Junior)' },
   { value: '12', label: '12th Grade (Senior)' },
   { value: 'college', label: 'College / University' },
+];
+
+const PARENT_GRADES = [
+  { value: 'pre-k', label: 'Pre-K' },
+  { value: 'elementary', label: 'Elementary School (K-5)' },
+  { value: 'middle-school', label: 'Middle School (6-8)' },
+  { value: 'high-school', label: 'High School (9-12)' },
+  { value: 'high-school-up', label: 'High School and up' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
@@ -58,7 +60,7 @@ export default function EditGradeLevelScreen() {
   const { data, updateGradeLevel } = useOnboarding();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
-  const grades = data.role === 'student-k8' ? K8_GRADES : HS_GRADES;
+  const grades = (data.role === 'parent' || data.role === 'staff') ? PARENT_GRADES : data.role === 'student-k8' ? MIDDLE_SCHOOL_GRADES : HS_GRADES;
 
   const handleSave = () => {
     updateGradeLevel(selectedGrade || '');
@@ -78,7 +80,7 @@ export default function EditGradeLevelScreen() {
       </View>
 
       <ScrollView contentContainerStyle={APP_STYLES.editScrollContent}>
-        <Text style={styles.subtitle}>Select your grade level</Text>
+        <Text style={styles.subtitle}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
 
         <View style={styles.cardsContainer}>
           {grades.map((grade, index) => (

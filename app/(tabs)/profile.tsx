@@ -309,9 +309,9 @@ export default function ProfileScreen() {
   const getRoleDisplayName = () => {
     switch (data.role) {
       case "student-k8":
-        return "Student (K-8)";
+        return "Student (Middle School)";
       case "student-hs":
-        return "Student (High School+)";
+        return "Student (High School and up)";
       case "parent":
         return "Parent/Caregiver";
       case "staff":

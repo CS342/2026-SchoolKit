@@ -26,8 +26,8 @@ interface RoleOption {
 }
 
 const ROLES: RoleOption[] = [
-  { role: 'student-k8', iconName: 'school', title: 'Student (K-8)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
-  { role: 'student-hs', iconName: 'book', title: 'Student (High School+)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
+  { role: 'student-k8', iconName: 'school', title: 'Student (Middle School)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
+  { role: 'student-hs', iconName: 'book', title: 'Student (High School and up)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
   { role: 'parent', iconName: 'people', title: 'Parent / Caregiver', color: COLORS.parent, gradient: GRADIENTS.roleParent },
   { role: 'staff', iconName: 'briefcase', title: 'School Staff', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
 ];
@@ -117,12 +117,8 @@ export default function Step2Screen() {
   const handleContinue = () => {
     if (selectedRole) {
       updateRole(selectedRole);
-      // Fix: navigate to step2b for students, step3 for others
-      if (selectedRole === 'student-k8' || selectedRole === 'student-hs') {
-        router.push('/onboarding/step2b');
-      } else {
-        router.push('/onboarding/step3');
-      }
+      // Navigate to step2b for grade selection (all roles except none)
+      router.push('/onboarding/step2b');
     }
   };
 

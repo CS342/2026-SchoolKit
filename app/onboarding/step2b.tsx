@@ -23,13 +23,7 @@ interface GradeOption {
   color: string;
 }
 
-const K8_GRADES: GradeOption[] = [
-  { value: 'K', label: 'Kindergarten', icon: 'flower-outline', color: '#EC4899' },
-  { value: '1', label: '1st Grade', icon: 'star-outline', color: '#7B68EE' },
-  { value: '2', label: '2nd Grade', icon: 'star-outline', color: '#0EA5E9' },
-  { value: '3', label: '3rd Grade', icon: 'rocket-outline', color: '#66D9A6' },
-  { value: '4', label: '4th Grade', icon: 'rocket-outline', color: '#F59E0B' },
-  { value: '5', label: '5th Grade', icon: 'planet-outline', color: '#7B68EE' },
+const MIDDLE_SCHOOL_GRADES: GradeOption[] = [
   { value: '6', label: '6th Grade', icon: 'planet-outline', color: '#EC4899' },
   { value: '7', label: '7th Grade', icon: 'compass-outline', color: '#0EA5E9' },
   { value: '8', label: '8th Grade', icon: 'compass-outline', color: '#66D9A6' },
@@ -41,6 +35,14 @@ const HS_GRADES: GradeOption[] = [
   { value: '11', label: '11th Grade\n(Junior)', icon: 'ribbon-outline', color: '#7B68EE' },
   { value: '12', label: '12th Grade\n(Senior)', icon: 'trophy-outline', color: '#F59E0B' },
   { value: 'college', label: 'College /\nUniversity', icon: 'school-outline', color: '#EC4899' },
+];
+
+const PARENT_GRADES: GradeOption[] = [
+  { value: 'pre-k', label: 'Pre-K', icon: 'flower-outline', color: '#EC4899' },
+  { value: 'elementary', label: 'Elementary\nSchool (K-5)', icon: 'star-outline', color: '#7B68EE' },
+  { value: 'middle-school', label: 'Middle\nSchool (6-8)', icon: 'rocket-outline', color: '#0EA5E9' },
+  { value: 'high-school', label: 'High\nSchool (9-12)', icon: 'planet-outline', color: '#66D9A6' },
+  { value: 'high-school-up', label: 'High School\nand up', icon: 'school-outline', color: '#F59E0B' },
 ];
 
 function GradeCell({
@@ -102,8 +104,9 @@ export default function Step2bScreen() {
   const { data, updateGradeLevel } = useOnboarding();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
-  const isK8 = data.role === 'student-k8';
-  const grades = isK8 ? K8_GRADES : HS_GRADES;
+  const isParentOrStaff = data.role === 'parent' || data.role === 'staff';
+  const isMiddleSchool = data.role === 'student-k8';
+  const grades = isParentOrStaff ? PARENT_GRADES : isMiddleSchool ? MIDDLE_SCHOOL_GRADES : HS_GRADES;
 
   const handleContinue = () => {
     if (selectedGrade) {
@@ -131,9 +134,9 @@ export default function Step2bScreen() {
               <Ionicons name="ribbon-outline" size={48} color={COLORS.primary} />
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>What grade are you in?</Text>
+            <Text style={SHARED_STYLES.pageTitle}>{isParentOrStaff ? "Select child's grade" : 'What grade are you in?'}</Text>
             <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
-              We'll tailor resources to fit where you are.
+              We'll tailor resources to fit {isParentOrStaff ? "the child's needs." : 'where you are.'}
             </Text>
 
             <View style={styles.grid}>

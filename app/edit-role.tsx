@@ -22,8 +22,8 @@ interface RoleOption {
 }
 
 const ROLE_OPTIONS: RoleOption[] = [
-  { value: 'student-k8', label: 'Student (K-8)', icon: 'school', color: '#0EA5E9' },
-  { value: 'student-hs', label: 'Student (High School+)', icon: 'book', color: '#7B68EE' },
+  { value: 'student-k8', label: 'Student (Middle School)', icon: 'school', color: '#0EA5E9' },
+  { value: 'student-hs', label: 'Student (High School and up)', icon: 'book', color: '#7B68EE' },
   { value: 'parent', label: 'Parent / Caregiver', icon: 'people', color: '#EC4899' },
   { value: 'staff', label: 'School Staff', icon: 'briefcase', color: '#66D9A6' },
 ];
