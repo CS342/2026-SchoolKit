@@ -56,11 +56,26 @@ The application is built with a client-server architecture.
     npm install
     ```
 
-2.  **Start the development server:**
+2.  **Start the mobile development server:**
     ```bash
     npx expo start
     ```
     This will provide you with a QR code to run the app on your device using the Expo Go app or to run it in an iOS/Android simulator.
+
+3.  **Start the web version:**
+    ```bash
+    npm run web
+    ```
+    This launches the app in your browser at `http://localhost:8081`. The web version features responsive design that adapts to both desktop and mobile screen sizes.
+
+## 🌐 Web Platform
+
+SchoolKit also runs as a web application via Expo Web, sharing the same codebase as the mobile app.
+
+*   **Responsive Design:** Adaptive layouts for desktop and mobile browsers using a `WebContainer` component.
+*   **Cross-Platform Storage:** A unified storage adapter that uses `AsyncStorage` on mobile and `localStorage` on web.
+*   **Web Authentication:** OAuth login flow configured for browser environments.
+*   **Environment Variables:** Loaded via `.env` using `dotenv` for the web build process.
 
 ## 👥 The Team
 
