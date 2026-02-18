@@ -95,6 +95,24 @@ INSERT INTO resources (title, description, category, icon, target_roles) VALUES
   ('Creating Inclusive Classrooms', 'Best practices for supporting students with health conditions', 'Teaching', 'school-outline', '{staff}');
 
 -- ============================================
+-- User Questions / Feedback (collected for future content direction)
+-- ============================================
+CREATE TABLE user_questions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  question TEXT NOT NULL,
+  role user_role,
+  submitted_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE user_questions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own questions"
+  ON user_questions FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- ============================================
 -- Storage: Avatar bucket (run separately or create manually in Dashboard)
 -- ============================================
 -- Note: Create bucket manually in Dashboard → Storage → New bucket → "avatars" (public)

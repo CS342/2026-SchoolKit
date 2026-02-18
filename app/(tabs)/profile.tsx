@@ -84,7 +84,7 @@ function SettingRow({
         <Text style={[styles.rowLabel, { color: colors.textDark }]}>{label}</Text>
         <View style={styles.rowRight}>
           {value ? (
-            <Text style={[styles.rowValue, { color: colors.textLight }]} numberOfLines={1}>
+            <Text style={[styles.rowValue, { color: colors.textLight }]}>
               {value}
             </Text>
           ) : null}
@@ -323,7 +323,13 @@ export default function ProfileScreen() {
 
   const getSchoolStatusText = () => {
     if (data.schoolStatuses.length === 0) return "Not set";
-    return data.schoolStatuses.map((s) => s.replace(/-/g, " ")).join(", ");
+    const labels: Record<string, string> = {
+      'current-treatment': 'Currently in school',
+      'returning-after-treatment': 'Taking a break from school',
+      'supporting-student': 'Planning to return to school soon',
+      'special-needs': 'Home/hospital school',
+    };
+    return data.schoolStatuses.map((s) => labels[s] ?? s.replace(/-/g, " ")).join(", ");
   };
 
   const handleTakePhoto = async () => {
@@ -513,7 +519,7 @@ export default function ProfileScreen() {
             />
             <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
             <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => {}} theme={theme} />
-            <SettingRow icon="help-circle-outline" label="Help & Support" onPress={() => {}} isLast theme={theme} />
+            <SettingRow icon="help-circle-outline" label="Questions & Feedback" onPress={() => router.push('/help-support')} isLast theme={theme} />
           </View>
         </AnimatedSection>
 
@@ -651,7 +657,8 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: 15,
     fontWeight: "400",
-    maxWidth: 160,
+    flexShrink: 1,
+    textAlign: "right",
   },
   footer: {
     alignItems: "center",
