@@ -518,7 +518,7 @@ export default function ProfileScreen() {
               theme={theme}
             />
             <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
-            <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => {}} theme={theme} />
+            <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => router.push('/about')} theme={theme} />
             <SettingRow icon="help-circle-outline" label="Questions & Feedback" onPress={() => router.push('/help-support')} isLast theme={theme} />
           </View>
         </AnimatedSection>
