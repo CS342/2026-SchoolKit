@@ -21,6 +21,7 @@ import {
 } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Exporting StoriesScreen as default component
 export default function StoriesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();

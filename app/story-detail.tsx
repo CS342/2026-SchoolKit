@@ -172,6 +172,7 @@ const commentStyles = StyleSheet.create({
   },
 });
 
+// Exporting StoryDetailScreen as default component
 export default function StoryDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();

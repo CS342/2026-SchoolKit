@@ -23,6 +23,7 @@ function InnerLayout() {
   );
 }
 
+// Exporting RootLayout as default component
 export default function RootLayout() {
   return (
     <ThemeProvider>

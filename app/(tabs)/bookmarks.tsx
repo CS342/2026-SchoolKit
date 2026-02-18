@@ -20,6 +20,7 @@ import {
 } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Exporting BookmarksScreen as default component
 export default function BookmarksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();

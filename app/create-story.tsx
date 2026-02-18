@@ -26,6 +26,7 @@ import {
   BORDERS,
 } from '../constants/onboarding-theme';
 
+// Exporting CreateStoryScreen as default component
 export default function CreateStoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
