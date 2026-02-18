@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -306,8 +307,9 @@ export default function ProfileScreen() {
   } = useOnboarding();
 
 
-  // Voice Modal State
+  // Modal State
   const [isVoiceModalVisible, setIsVoiceModalVisible] = React.useState(false);
+  const [isAppearanceModalVisible, setIsAppearanceModalVisible] = React.useState(false);
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -443,13 +445,7 @@ export default function ProfileScreen() {
   };
 
   const handleAppearance = () => {
-    const currentLabel = themePreference === 'system' ? 'System' : themePreference === 'light' ? 'Light' : 'Dark';
-    Alert.alert("Appearance", `Current: ${currentLabel}`, [
-      { text: "System", onPress: () => setThemePreference('system') },
-      { text: "Light", onPress: () => setThemePreference('light') },
-      { text: "Dark", onPress: () => setThemePreference('dark') },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    setIsAppearanceModalVisible(true);
   };
 
   const handleSignOut = () => {
@@ -536,6 +532,15 @@ export default function ProfileScreen() {
               onPress={() => setIsVoiceModalVisible(true)}
               theme={theme}
             />
+            {Platform.OS === 'web' && (
+              <SettingRow
+                icon="color-palette-outline"
+                label="Design Editor"
+                value="Create visuals"
+                onPress={() => router.push('/(editor)/designs')}
+                theme={theme}
+              />
+            )}
             <SettingRow
               icon="cloud-download-outline"
               label="Download All"
@@ -563,6 +568,57 @@ export default function ProfileScreen() {
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
+
+      {/* Appearance Modal */}
+      <Modal visible={isAppearanceModalVisible} transparent animationType="fade" onRequestClose={() => setIsAppearanceModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAppearanceModalVisible(false)}>
+            <View style={styles.modalBackdrop} />
+          </Pressable>
+          <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
+            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Appearance</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Choose your preferred theme</Text>
+            <View style={{ gap: 10, marginBottom: 20 }}>
+              {([
+                { key: 'system' as const, label: 'System', icon: 'phone-portrait-outline' as const, desc: 'Match device settings' },
+                { key: 'light' as const, label: 'Light', icon: 'sunny-outline' as const, desc: 'Always use light mode' },
+                { key: 'dark' as const, label: 'Dark', icon: 'moon-outline' as const, desc: 'Always use dark mode' },
+              ]).map((option) => {
+                const isSelected = themePreference === option.key;
+                return (
+                  <Pressable
+                    key={option.key}
+                    style={[
+                      styles.voiceCard,
+                      { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
+                      shadows.card,
+                      isSelected && { backgroundColor: colors.backgroundLight },
+                    ]}
+                    onPress={() => {
+                      setThemePreference(option.key);
+                      setIsAppearanceModalVisible(false);
+                    }}
+                  >
+                    <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 20 }]}>
+                      <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
+                    </View>
+                    <View style={styles.voiceInfo}>
+                      <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{option.label}</Text>
+                      <Text style={[styles.voiceDesc, { color: colors.textLight }]}>{option.desc}</Text>
+                    </View>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={() => setIsAppearanceModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Voice Selection Modal */}
       <VoiceSelectorModal

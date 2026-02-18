@@ -12,7 +12,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
-import { ALL_RESOURCES } from '../../constants/resources';
+import { useResources } from '../../hooks/useResources';
 import {
   TYPOGRAPHY,
   SIZING,
@@ -25,6 +25,7 @@ export default function ForYouScreen() {
   const { data } = useOnboarding();
   const insets = useSafeAreaInsets();
 
+  const { resources } = useResources();
   const { colors, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
 
@@ -89,7 +90,7 @@ export default function ForYouScreen() {
         {data.topics.length > 0 ? (
           <View style={styles.topicsContainer}>
             {data.topics.map((topic, index) => {
-              const resource = ALL_RESOURCES.find(r => r.title === topic);
+              const resource = resources.find(r => r.title === topic);
               const color = resource?.color || colors.primary;
               const icon = resource?.icon || 'bookmarks';
               return (

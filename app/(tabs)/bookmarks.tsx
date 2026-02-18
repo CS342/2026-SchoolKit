@@ -13,7 +13,8 @@ import { useStories } from '../../contexts/StoriesContext';
 import { ResourceCard } from '../../components/ResourceCard';
 import { StoryCard } from '../../components/StoryCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-import { ALL_RESOURCES } from '../../constants/resources';
+import { useResources } from '../../hooks/useResources';
+import type { Resource } from '../../constants/resources';
 import {
   SIZING,
   SPACING,
@@ -26,6 +27,7 @@ export default function BookmarksScreen() {
   const insets = useSafeAreaInsets();
   const { bookmarksWithTimestamps } = useOnboarding();
   const { stories, storyBookmarks } = useStories();
+  const { resources } = useResources();
   const { colors, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
 
@@ -40,10 +42,10 @@ export default function BookmarksScreen() {
   // Get bookmarked resources sorted by most recently saved
   const bookmarkedResources = bookmarksWithTimestamps
     .map(b => {
-      const resource = ALL_RESOURCES.find(r => r.id === b.resourceId);
+      const resource = resources.find(r => r.id === b.resourceId);
       return resource ? { ...resource, savedAt: b.savedAt } : null;
     })
-    .filter((r): r is typeof ALL_RESOURCES[0] & { savedAt: number } => r !== null);
+    .filter((r): r is Resource & { savedAt: number } => r !== null);
 
   // Get bookmarked stories
   const bookmarkedStories = stories.filter(s => storyBookmarks.includes(s.id));

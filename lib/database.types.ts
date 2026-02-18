@@ -28,6 +28,32 @@ export type Resource = {
   created_at: string;
 };
 
+import type { DesignDocument } from '../features/design-editor/types/document';
+
+export type Design = {
+  id: string;
+  owner_id: string;
+  title: string;
+  doc: DesignDocument;
+  thumbnail_url: string | null;
+  is_shared: boolean;
+  share_token: string | null;
+  published_resource_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DesignAsset = {
+  id: string;
+  design_id: string;
+  owner_id: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size: number | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -40,6 +66,16 @@ export type Database = {
         Row: Resource;
         Insert: Omit<Resource, 'id' | 'created_at'> & { id?: string };
         Update: Partial<Omit<Resource, 'id' | 'created_at'>>;
+      };
+      designs: {
+        Row: Design;
+        Insert: Partial<Design> & { owner_id: string };
+        Update: Partial<Omit<Design, 'id' | 'created_at'>>;
+      };
+      design_assets: {
+        Row: DesignAsset;
+        Insert: Omit<DesignAsset, 'id' | 'created_at'>;
+        Update: Partial<Omit<DesignAsset, 'id' | 'created_at'>>;
       };
     };
   };

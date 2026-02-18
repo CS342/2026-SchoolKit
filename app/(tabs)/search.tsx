@@ -20,7 +20,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ResourceCard } from "../../components/ResourceCard";
-import { ALL_RESOURCES, RESOURCE_CATEGORIES } from "../../constants/resources";
+import { RESOURCE_CATEGORIES } from "../../constants/resources";
+import { useResources } from "../../hooks/useResources";
 import {
   GRADIENTS,
   ANIMATION,
@@ -130,6 +131,7 @@ export default function SearchScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const { resources } = useResources();
   const [isFocused, setIsFocused] = useState(false);
 
   // Entrance animations
@@ -199,7 +201,7 @@ export default function SearchScreen() {
     addRecentSearch(query);
   };
 
-  const filteredResources = ALL_RESOURCES.filter((resource) => {
+  const filteredResources = resources.filter((resource) => {
     const matchesSearch =
       resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       resource.category.toLowerCase().includes(searchQuery.toLowerCase());
