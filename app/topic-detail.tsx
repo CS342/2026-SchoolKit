@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
+import { TTSButton } from '../components/TTSButton';
+import { useTTS } from '../hooks/useTTS';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
 
@@ -13,11 +15,18 @@ export default function TopicDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
+  const { isSpeaking, isLoading, speak } = useTTS();
 
   const resourceId = id || title || '';
 
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
   const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
+
+  const handleSpeak = () => {
+    const description = `This is a comprehensive resource about "${title}". Here you'll find helpful information, strategies, and support for navigating this aspect of your school journey.`;
+    const textToSpeak = `${title}. About this topic. ${description} Key Resources. Getting Started Guide. Learn the basics. Community Support. Connect with others. Tips and Strategies. Practical advice.`;
+    speak(textToSpeak);
+  };
 
   const handleShare = async () => {
     try {
@@ -35,6 +44,7 @@ export default function TopicDetailScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
+          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={24} activeColor={color} />
           <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>

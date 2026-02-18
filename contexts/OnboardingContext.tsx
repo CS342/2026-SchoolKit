@@ -72,7 +72,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
   const [downloads, setDownloads] = useState<string[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<string>(VOICES.ANTONI);
+  const [selectedVoice, setSelectedVoice] = useState<string>(VOICES.PETER);
 
   // Load downloads and voice from AsyncStorage on mount
   useEffect(() => {

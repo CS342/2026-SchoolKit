@@ -7,6 +7,7 @@ import { DecorativeBackground } from '../../components/onboarding/DecorativeBack
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
+
 import { GRADIENTS, COLORS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: {
@@ -24,11 +25,14 @@ const SCHOOL_STATUS_OPTIONS: {
 export default function Step3Screen() {
   const router = useRouter();
   const { data, updateSchoolStatuses } = useOnboarding();
+
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
   const isSchoolStaff = data.role === 'staff';
   const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
+
+
 
   const toggleStatus = (status: SchoolStatus) => {
     setSelectedStatuses(prev =>
@@ -53,8 +57,9 @@ export default function Step3Screen() {
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 4 : 3}
-          totalSteps={isStudent ? 5 : 4}
+          totalSteps={isStudent ? 6 : 5}
           showHelper
+          rightAction={null}
         />
 
         <ScrollView

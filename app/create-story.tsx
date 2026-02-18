@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useStories } from '../contexts/StoriesContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { TTSButton } from '../components/TTSButton';
+import { useTTS } from '../hooks/useTTS';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -30,6 +32,7 @@ export default function CreateStoryScreen() {
   const { isAnonymous } = useAuth();
   const { createStory } = useStories();
   const { colors, appStyles } = useTheme();
+  const { isSpeaking, isLoading, speak } = useTTS();
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -66,6 +69,13 @@ export default function CreateStoryScreen() {
           <Ionicons name="close" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={appStyles.editHeaderTitle}>Share Your Story</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <TTSButton
+          isSpeaking={isSpeaking}
+          isLoading={isLoading}
+          onPress={() => speak('Share your story. Add a title and share your experience navigating cancer and school. You can choose to post anonymously if you prefer.')}
+          size={22}
+        />
         <Pressable
           style={[appStyles.editSaveButton, !canSubmit && appStyles.editSaveButtonDisabled]}
           onPress={handleSubmit}
@@ -79,6 +89,7 @@ export default function CreateStoryScreen() {
             </Text>
           )}
         </Pressable>
+        </View>
       </View>
 
       <ScrollView

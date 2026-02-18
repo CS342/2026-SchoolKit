@@ -15,6 +15,7 @@ import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+
 import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface RoleOption {
@@ -112,6 +113,7 @@ function RoleCard({
 export default function Step2Screen() {
   const router = useRouter();
   const { updateRole } = useOnboarding();
+
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
   const handleContinue = () => {
@@ -125,7 +127,7 @@ export default function Step2Screen() {
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
       <View style={styles.container}>
-        <OnboardingHeader currentStep={2} totalSteps={4} />
+        <OnboardingHeader currentStep={2} totalSteps={5} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}

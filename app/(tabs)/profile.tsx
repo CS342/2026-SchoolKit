@@ -193,6 +193,19 @@ function VoiceSelectorModal({
     }
   };
 
+  // Group voices by accent
+  const voicesByAccent = React.useMemo(() => {
+    const groups: Record<string, typeof VOICE_META[string][]> = {};
+    Object.values(VOICE_META).forEach((voice) => {
+      const accent = voice.accent || 'Other';
+      if (!groups[accent]) groups[accent] = [];
+      groups[accent].push(voice);
+    });
+    return groups;
+  }, []);
+
+  const accentOrder = ['American', 'British', 'Australian'];
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
@@ -202,53 +215,70 @@ function VoiceSelectorModal({
          <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
             <Text style={[styles.modalTitle, { color: colors.textDark }]}>Choose a Voice</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Select a companion for your journey</Text>
-            
-            <View style={styles.voiceList}>
-                {Object.values(VOICE_META).map((voice) => {
-                    const isSelected = selectedVoice === voice.id;
-                    const isPlaying = playingVoiceId === voice.id;
-                    
-                    return (
-                        <Pressable 
-                            key={voice.id} 
-                            style={[
-                                styles.voiceCard, 
-                                { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
-                                shadows.card,
-                                isSelected && { backgroundColor: colors.backgroundLight }
-                            ]}
-                            onPress={() => onSelectVoice(voice.id)}
-                        >
-                            <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
-                            <View style={styles.voiceInfo}>
-                                <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
-                                <Text style={[styles.voiceDesc, { color: isSelected ? colors.primary : colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voice.description}</Text>
-                            </View>
-                            
-                            <Pressable 
-                                style={[
-                                    styles.playButton, 
-                                    { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }
-                                ]}
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    handlePlaySample(voice.id, voice.name);
-                                }}
-                            >
-                                {isLoading && isPlaying ? (
-                                    <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
-                                ) : (
-                                    <Ionicons 
-                                        name={isPlaying ? "stop" : "play"} 
-                                        size={16} 
-                                        color={isPlaying ? '#FFFFFF' : colors.primary} 
-                                    />
-                                )}
-                            </Pressable>
-                        </Pressable>
-                    );
-                })}
-            </View>
+
+            <ScrollView style={styles.voiceScroll} showsVerticalScrollIndicator={false}>
+              {accentOrder.map((accent) => {
+                const voices = voicesByAccent[accent];
+                if (!voices || voices.length === 0) return null;
+                return (
+                  <View key={accent}>
+                    <Text style={[styles.accentLabel, { color: colors.textLight }]}>{accent}</Text>
+                    <View style={styles.voiceList}>
+                      {voices.map((voice) => {
+                        const isSelected = selectedVoice === voice.id;
+                        const isPlaying = playingVoiceId === voice.id;
+
+                        return (
+                          <Pressable
+                              key={voice.id}
+                              style={[
+                                  styles.voiceCard,
+                                  { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
+                                  shadows.card,
+                                  isSelected && { backgroundColor: colors.backgroundLight }
+                              ]}
+                              onPress={() => onSelectVoice(voice.id)}
+                          >
+                              {voice.image ? (
+                                <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
+                              ) : (
+                                <View style={[styles.voiceAvatar, { backgroundColor: voice.color, alignItems: 'center', justifyContent: 'center' }]}>
+                                  <Text style={styles.voiceInitial}>{voice.initial}</Text>
+                                </View>
+                              )}
+                              <View style={styles.voiceInfo}>
+                                  <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
+                                  <Text style={[styles.voiceDesc, { color: isSelected ? colors.primary : colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voice.description}</Text>
+                              </View>
+
+                              <Pressable
+                                  style={[
+                                      styles.playButton,
+                                      { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }
+                                  ]}
+                                  onPress={(e) => {
+                                      e.stopPropagation();
+                                      handlePlaySample(voice.id, voice.name);
+                                  }}
+                              >
+                                  {isLoading && isPlaying ? (
+                                      <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
+                                  ) : (
+                                      <Ionicons
+                                          name={isPlaying ? "stop" : "play"}
+                                          size={16}
+                                          color={isPlaying ? '#FFFFFF' : colors.primary}
+                                      />
+                                  )}
+                              </Pressable>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
 
             <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={onClose}>
                 <Text style={styles.closeButtonText}>Done</Text>
@@ -502,7 +532,7 @@ export default function ProfileScreen() {
             <SettingRow
               icon="mic-outline"
               label="Voice"
-              value={Object.values(VOICE_META).find((meta) => meta.id === selectedVoice)?.name || 'Antoni'}
+              value={Object.values(VOICE_META).find((meta) => meta.id === selectedVoice)?.name || 'Peter'}
               onPress={() => setIsVoiceModalVisible(true)}
               theme={theme}
             />
@@ -683,7 +713,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: SPACING.screenPadding,
     paddingBottom: 40,
-    maxHeight: "80%",
+    maxHeight: "85%",
   },
   modalTitle: {
     fontSize: 20,
@@ -696,9 +726,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
   },
+  voiceScroll: {
+    marginBottom: 16,
+  },
+  accentLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 16,
+    marginLeft: 4,
+  },
   voiceList: {
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 8,
   },
   voiceCard: {
     flexDirection: "row",
@@ -708,10 +750,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   voiceAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: 12,
+  },
+  voiceInitial: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   voiceInfo: {
     flex: 1,

@@ -17,9 +17,10 @@ interface OnboardingHeaderProps {
   totalSteps: number;
   showHelper?: boolean;
   onBack?: () => void;
+  rightAction?: React.ReactNode;
 }
 
-export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack }: OnboardingHeaderProps) {
+export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack, rightAction }: OnboardingHeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-20);
@@ -55,7 +56,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
           <Text style={SHARED_STYLES.badgeText}>{currentStep} of {totalSteps}</Text>
         </View>
 
-        <View style={styles.placeholder} />
+        <View style={styles.placeholder}>{rightAction}</View>
       </View>
 
       <View style={styles.progressContainer}>

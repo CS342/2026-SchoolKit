@@ -11,9 +11,12 @@ import {
   Pressable,
   PanResponder,
   Share,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Audio } from "expo-av";
+import { generateSpeech } from "../services/elevenLabs";
 import RNAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,6 +26,8 @@ import RNAnimated, {
 } from "react-native-reanimated";
 import { BookmarkButton } from "../components/BookmarkButton";
 import { DownloadButton } from "../components/DownloadButton";
+import { TTSButton } from "../components/TTSButton";
+import { useTTS } from "../hooks/useTTS";
 import {
   COLORS,
   SHADOWS,
@@ -34,6 +39,7 @@ import {
   withOpacity,
 } from "../constants/onboarding-theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useOnboarding } from "../contexts/OnboardingContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -322,15 +328,22 @@ function BottomSheet({
   visible,
   topic,
   onClose,
+  selectedVoice,
 }: {
   visible: boolean;
   topic: PeerTopic | null;
   onClose: () => void;
+  selectedVoice: string;
 }) {
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
+
+  // TTS state for bottom sheet
+  const [sheetSound, setSheetSound] = useState<Audio.Sound | null>(null);
+  const [isSheetSpeaking, setIsSheetSpeaking] = useState(false);
+  const [isSheetLoadingAudio, setIsSheetLoadingAudio] = useState(false);
 
   const maxBullets = 8;
   while (bulletAnims.length < maxBullets) {
@@ -400,6 +413,13 @@ function BottomSheet({
   }, [visible, topic]);
 
   const handleDismiss = useCallback(() => {
+    // Stop audio on dismiss
+    if (sheetSound) {
+      sheetSound.unloadAsync();
+      setSheetSound(null);
+      setIsSheetSpeaking(false);
+    }
+
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SHEET_HEIGHT,
@@ -415,7 +435,61 @@ function BottomSheet({
       setInternalVisible(false);
       onClose();
     });
-  }, [onClose]);
+  }, [onClose, sheetSound]);
+
+  const handleSheetSpeak = async () => {
+    if (!topic) return;
+
+    if (isSheetSpeaking) {
+      if (sheetSound) await sheetSound.pauseAsync();
+      setIsSheetSpeaking(false);
+      return;
+    }
+
+    setIsSheetSpeaking(true);
+
+    if (sheetSound) {
+      await sheetSound.playAsync();
+      return;
+    }
+
+    try {
+      setIsSheetLoadingAudio(true);
+      const pointsText = topic.points.join(". ");
+      const textToSpeak = `${topic.fullTitle}. ${topic.intro}. ${pointsText}. ${topic.summary}`;
+      const audioUri = await generateSpeech(textToSpeak, selectedVoice);
+
+      if (audioUri) {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUri },
+          { shouldPlay: true }
+        );
+        setSheetSound(newSound);
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsSheetSpeaking(false);
+            newSound.setPositionAsync(0);
+          }
+        });
+      } else {
+        setIsSheetSpeaking(false);
+      }
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      setIsSheetSpeaking(false);
+    } finally {
+      setIsSheetLoadingAudio(false);
+    }
+  };
+
+  // Reset audio when topic changes
+  useEffect(() => {
+    if (sheetSound) {
+      sheetSound.unloadAsync();
+      setSheetSound(null);
+      setIsSheetSpeaking(false);
+    }
+  }, [topic?.id]);
 
   if (!internalVisible || !topic) return null;
 
@@ -444,10 +518,19 @@ function BottomSheet({
             <View style={styles.sheetHandle} />
           </View>
 
-          {/* Close button */}
-          <TouchableOpacity style={styles.sheetCloseButton} onPress={handleDismiss} accessibilityLabel="Close">
-            <Ionicons name="close" size={24} color={COLORS.textLight} />
-          </TouchableOpacity>
+          {/* Sheet actions */}
+          <View style={styles.sheetActions}>
+            <TouchableOpacity onPress={handleSheetSpeak} style={styles.sheetActionButton} accessibilityLabel={isSheetSpeaking ? "Pause reading" : "Read aloud"}>
+              {isSheetLoadingAudio ? (
+                <ActivityIndicator size="small" color={topic.color} />
+              ) : (
+                <Ionicons name={isSheetSpeaking ? "pause-circle" : "volume-high"} size={22} color={isSheetSpeaking ? topic.color : COLORS.textLight} />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sheetActionButton} onPress={handleDismiss} accessibilityLabel="Close">
+              <Ionicons name="close" size={24} color={COLORS.textLight} />
+            </TouchableOpacity>
+          </View>
 
           {/* Title */}
           <View style={[styles.sheetTitleBadge, { backgroundColor: withOpacity(topic.color, 0.15) }]}>
@@ -534,7 +617,61 @@ function BottomSheet({
 export default function PeerSupportScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { selectedVoice } = useOnboarding();
   const [selectedTopic, setSelectedTopic] = useState<PeerTopic | null>(null);
+
+  // TTS state for main page
+  const [pageSound, setPageSound] = useState<Audio.Sound | null>(null);
+  const [isPageSpeaking, setIsPageSpeaking] = useState(false);
+  const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (pageSound) pageSound.unloadAsync();
+    };
+  }, [pageSound]);
+
+  const handlePageSpeak = async () => {
+    if (isPageSpeaking) {
+      if (pageSound) await pageSound.pauseAsync();
+      setIsPageSpeaking(false);
+      return;
+    }
+
+    setIsPageSpeaking(true);
+
+    if (pageSound) {
+      await pageSound.playAsync();
+      return;
+    }
+
+    try {
+      setIsPageLoadingAudio(true);
+      const textToSpeak = `Encouraging Positive Peer Support. "Alone we can do so little; together we can do so much." Helen Keller. Why is peer support important? After a prolonged absence, a returning student may worry about being different, falling behind socially, or being treated differently by classmates. Positive peer support helps create a welcoming environment where every student feels they belong.`;
+      const audioUri = await generateSpeech(textToSpeak, selectedVoice);
+
+      if (audioUri) {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUri },
+          { shouldPlay: true }
+        );
+        setPageSound(newSound);
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsPageSpeaking(false);
+            newSound.setPositionAsync(0);
+          }
+        });
+      } else {
+        setIsPageSpeaking(false);
+      }
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      setIsPageSpeaking(false);
+    } finally {
+      setIsPageLoadingAudio(false);
+    }
+  };
 
   // Entrance animations
   const titleOpacity = useSharedValue(0);
@@ -592,6 +729,13 @@ export default function PeerSupportScreen() {
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
+            {isPageLoadingAudio ? (
+              <ActivityIndicator size="small" color={COLORS.studentK8} />
+            ) : (
+              <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted} />
+            )}
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={28} color={COLORS.textMuted} />
           </TouchableOpacity>
@@ -652,6 +796,7 @@ export default function PeerSupportScreen() {
         visible={selectedTopic !== null}
         topic={selectedTopic}
         onClose={handleCloseSheet}
+        selectedVoice={selectedVoice}
       />
     </View>
   );
@@ -821,12 +966,17 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: COLORS.indicatorInactive,
   },
-  sheetCloseButton: {
+  sheetActions: {
     position: "absolute",
     top: 14,
-    right: 18,
-    padding: 6,
+    right: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     zIndex: 10,
+  },
+  sheetActionButton: {
+    padding: 6,
   },
   sheetTitleBadge: {
     flexDirection: "row",

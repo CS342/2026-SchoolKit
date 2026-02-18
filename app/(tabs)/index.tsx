@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+
 import { ALL_RESOURCES } from '../../constants/resources';
 import {
   TYPOGRAPHY,
@@ -23,6 +24,7 @@ export default function ForYouScreen() {
   const router = useRouter();
   const { data } = useOnboarding();
   const insets = useSafeAreaInsets();
+
   const { colors, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
 
@@ -49,6 +51,8 @@ export default function ForYouScreen() {
     }
   };
 
+
+
   const handleTopicPress = (topic: string, route?: string) => {
     if (route) {
       router.push(route as any);
@@ -62,8 +66,12 @@ export default function ForYouScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }, headerStyle]}>
-        <Text style={[appStyles.tabHeaderSubtitle, { marginBottom: 4 }]}>Welcome back,</Text>
-        <Text style={[appStyles.tabHeaderTitle, { marginBottom: 12 }]}>{data.name}!</Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[appStyles.tabHeaderSubtitle, { marginBottom: 4 }]}>Welcome back,</Text>
+            <Text style={[appStyles.tabHeaderTitle, { marginBottom: 12 }]}>{data.name}!</Text>
+          </View>
+        </View>
         <View style={[sharedStyles.badge, styles.roleBadge]}>
           <Ionicons name="person-circle-outline" size={16} color={colors.primary} />
           <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>
@@ -122,6 +130,11 @@ const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT) =>
     container: {
       flex: 1,
       backgroundColor: c.appBackground,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
     },
     roleBadge: {
       flexDirection: 'row',

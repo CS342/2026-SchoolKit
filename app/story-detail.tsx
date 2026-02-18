@@ -242,12 +242,20 @@ export default function StoryDetailScreen() {
   const handleSubmitComment = async () => {
     if (!commentText.trim() || !id || submitting) return;
     setSubmitting(true);
-    const newComment = await addComment(id, commentText.trim());
-    if (newComment) {
-      setComments(prev => [...prev, newComment]);
-      setCommentText('');
+    try {
+      const newComment = await addComment(id, commentText.trim());
+      if (newComment) {
+        setComments(prev => [...prev, newComment]);
+        setCommentText('');
+      } else {
+        // Fallback generic error if addComment returns null without throwing
+        Alert.alert('Error', 'Failed to post comment. Please try again.');
+      }
+    } catch (error: any) {
+      Alert.alert('Comment Rejected', error.message || 'Failed to post comment.');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const handleDeleteComment = (commentId: string) => {

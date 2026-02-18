@@ -12,6 +12,7 @@ import { DecorativeBackground } from '../../components/onboarding/DecorativeBack
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
+
 import { GRADIENTS, ANIMATION, COLORS, RADII, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface TopicOption {
@@ -87,6 +88,7 @@ function CounterPill({ count }: { count: number }) {
 export default function Step4Screen() {
   const router = useRouter();
   const { data, updateTopics, completeOnboarding } = useOnboarding();
+
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
@@ -115,22 +117,21 @@ export default function Step4Screen() {
 
   const handleFinish = () => {
     updateTopics(selectedTopics);
-    completeOnboarding();
-    router.replace('/loading');
+    router.push('/onboarding/voice-selection');
   };
 
   const handleSkip = () => {
     updateTopics([]);
-    completeOnboarding();
-    router.replace('/loading');
+    router.push('/onboarding/voice-selection');
   };
+
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 5 : 4}
-          totalSteps={isStudent ? 5 : 4}
+          totalSteps={isStudent ? 6 : 5}
         />
 
         <ScrollView

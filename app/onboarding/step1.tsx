@@ -13,11 +13,13 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 export default function Step1Screen() {
   const router = useRouter();
   const { updateName } = useOnboarding();
+
   const [name, setName] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
 
@@ -60,7 +62,7 @@ export default function Step1Screen() {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <OnboardingHeader currentStep={1} totalSteps={4} />
+        <OnboardingHeader currentStep={1} totalSteps={5} />
 
         <View style={styles.content}>
           <Animated.View style={[SHARED_STYLES.pageIconCircle, iconStyle]}>

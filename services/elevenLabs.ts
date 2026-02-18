@@ -4,36 +4,184 @@ const API_KEY = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
 
 // Voice IDs
 export const VOICES = {
+  // User favourites
+  PETER: "ZthjuvLPty3kTMaNKVKb",
+  MIRA: "ZqvIIuD5aI9JFejebHiH",
+  HOPE: "OYTbf65OHHFELVut7v2H",
+  // Default / premade
   RACHEL: "21m00Tcm4TlvDq8ikWAM",
-  ADAM: "pNInz6obpgDQGcFmaJgB",
-  ANTONI: "ErXwobaYiN019PkySvjV",
+  SARAH: "EXAVITQu4vr4xnSDxMaL",
+  EMILY: "LcfcDJNUP1GQjkzn1xUU",
+  LILY: "pFZP5JQG7iQjIQuC4Bku",
+  ALICE: "Xb7hH8MSUJpSbSDYk0k2",
+  MATILDA: "XrExE9yKIg1WjnnlVkGX",
+  THOMAS: "GBv7mTt0atIp3Br8iCZE",
+  BILL: "pqHfZKP75CvOlQylNhV4",
+  CHRIS: "iP95p4xoKVk53GoZ742B",
+  JAMES: "ZQe5CZNOzWyzPSCn5a3c",
+  GEORGE: "JBFqnCBsd6RMkjVDRZzb",
+  BRIAN: "nPczCjzI2devNBz1zQrb",
+  DANIEL: "onwK4e9ZLuTAKqWW03F9",
 };
 
 export type VoiceData = {
   id: string;
   name: string;
   description: string;
-  image: any; // require() returns number or object
+  accent: string;
+  image?: any; // require() returns number or object
+  initial: string; // fallback initial letter for avatar
+  color: string;   // fallback avatar background colour
 };
 
 export const VOICE_META: Record<string, VoiceData> = {
+  // ── User favourites ───────────────────────────
+  [VOICES.PETER]: {
+    id: VOICES.PETER,
+    name: "Peter",
+    description: "Confident & Reliable",
+    accent: "American",
+    image: require("../assets/images/voice_peter.png"),
+    initial: "P",
+    color: "#5B8DEF",
+  },
+  [VOICES.MIRA]: {
+    id: VOICES.MIRA,
+    name: "Mira",
+    description: "Soothing & Calming",
+    accent: "American",
+    image: require("../assets/images/voice_mira.png"),
+    initial: "M",
+    color: "#A78BFA",
+  },
+  [VOICES.HOPE]: {
+    id: VOICES.HOPE,
+    name: "Hope",
+    description: "Bright & Uplifting",
+    accent: "American",
+    image: require("../assets/images/voice_hope.png"),
+    initial: "H",
+    color: "#F59E0B",
+  },
+  // ── American ──────────────────────────────────
   [VOICES.RACHEL]: {
     id: VOICES.RACHEL,
     name: "Rachel",
     description: "Calm & Young",
-    image: require("../assets/images/voice_rachel.png"), 
+    accent: "American",
+    image: require("../assets/images/voice_rachel.png"),
+    initial: "R",
+    color: "#EC4899",
   },
-  [VOICES.ADAM]: {
-    id: VOICES.ADAM,
-    name: "Adam",
-    description: "Deep & Narration",
-    image: require("../assets/images/voice_adam.png"),
+  [VOICES.SARAH]: {
+    id: VOICES.SARAH,
+    name: "Sarah",
+    description: "Warm & Professional",
+    accent: "American",
+    image: require("../assets/images/voice_sarah.png"),
+    initial: "S",
+    color: "#F472B6",
   },
-  [VOICES.ANTONI]: {
-    id: VOICES.ANTONI,
-    name: "Antoni",
-    description: "Friendly & Well-rounded",
-    image: require("../assets/images/voice_antoni.png"),
+  [VOICES.EMILY]: {
+    id: VOICES.EMILY,
+    name: "Emily",
+    description: "Calm & Gentle",
+    accent: "American",
+    image: require("../assets/images/voice_emily.png"),
+    initial: "E",
+    color: "#818CF8",
+  },
+  [VOICES.THOMAS]: {
+    id: VOICES.THOMAS,
+    name: "Thomas",
+    description: "Calm & Warm",
+    accent: "American",
+    image: require("../assets/images/voice_thomas.png"),
+    initial: "T",
+    color: "#6366F1",
+  },
+  [VOICES.BILL]: {
+    id: VOICES.BILL,
+    name: "Bill",
+    description: "Friendly & Comforting",
+    accent: "American",
+    image: require("../assets/images/voice_bill.png"),
+    initial: "B",
+    color: "#10B981",
+  },
+  [VOICES.CHRIS]: {
+    id: VOICES.CHRIS,
+    name: "Chris",
+    description: "Natural & Down-to-earth",
+    accent: "American",
+    image: require("../assets/images/voice_chris.png"),
+    initial: "C",
+    color: "#14B8A6",
+  },
+  // ── British ───────────────────────────────────
+  [VOICES.LILY]: {
+    id: VOICES.LILY,
+    name: "Lily",
+    description: "Soft & Velvety",
+    accent: "British",
+    image: require("../assets/images/voice_lily.png"),
+    initial: "L",
+    color: "#C084FC",
+  },
+  [VOICES.ALICE]: {
+    id: VOICES.ALICE,
+    name: "Alice",
+    description: "Clear & Engaging",
+    accent: "British",
+    image: require("../assets/images/voice_alice.png"),
+    initial: "A",
+    color: "#FB923C",
+  },
+  [VOICES.GEORGE]: {
+    id: VOICES.GEORGE,
+    name: "George",
+    description: "Warm & Authoritative",
+    accent: "British",
+    image: require("../assets/images/voice_george.png"),
+    initial: "G",
+    color: "#0EA5E9",
+  },
+  [VOICES.BRIAN]: {
+    id: VOICES.BRIAN,
+    name: "Brian",
+    description: "Deep & Trustworthy",
+    accent: "British",
+    image: require("../assets/images/voice_brian.png"),
+    initial: "B",
+    color: "#64748B",
+  },
+  [VOICES.DANIEL]: {
+    id: VOICES.DANIEL,
+    name: "Daniel",
+    description: "Refined & Articulate",
+    accent: "British",
+    image: require("../assets/images/voice_daniel.png"),
+    initial: "D",
+    color: "#334155",
+  },
+  // ── Australian ────────────────────────────────
+  [VOICES.MATILDA]: {
+    id: VOICES.MATILDA,
+    name: "Matilda",
+    description: "Warm & Friendly",
+    accent: "Australian",
+    image: require("../assets/images/voice_matilda.png"),
+    initial: "M",
+    color: "#F97316",
+  },
+  [VOICES.JAMES]: {
+    id: VOICES.JAMES,
+    name: "James",
+    description: "Calm & Gentle",
+    accent: "Australian",
+    image: require("../assets/images/voice_james.png"),
+    initial: "J",
+    color: "#22C55E",
   },
 };
 

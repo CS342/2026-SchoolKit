@@ -14,6 +14,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
+
 import { GRADIENTS, SHADOWS, ANIMATION, COLORS, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface GradeOption {
@@ -102,11 +103,14 @@ function GradeCell({
 export default function Step2bScreen() {
   const router = useRouter();
   const { data, updateGradeLevel } = useOnboarding();
+
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
   const isParentOrStaff = data.role === 'parent' || data.role === 'staff';
   const isMiddleSchool = data.role === 'student-k8';
   const grades = isParentOrStaff ? PARENT_GRADES : isMiddleSchool ? MIDDLE_SCHOOL_GRADES : HS_GRADES;
+
+
 
   const handleContinue = () => {
     if (selectedGrade) {
@@ -123,7 +127,7 @@ export default function Step2bScreen() {
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
       <View style={styles.container}>
-        <OnboardingHeader currentStep={3} totalSteps={5} />
+        <OnboardingHeader currentStep={3} totalSteps={6} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -209,11 +213,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
   },
-  gridCellLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textDark,
-    textAlign: 'center',
-    marginTop: 6,
-  },
+
 });

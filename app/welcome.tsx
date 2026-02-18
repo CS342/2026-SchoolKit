@@ -10,10 +10,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
+
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHADOWS, SHARED_STYLES } from '../constants/onboarding-theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+
   const [animDone, setAnimDone] = useState(false);
 
   const iconScale = useSharedValue(0);
@@ -84,6 +86,8 @@ export default function WelcomeScreen() {
               <Animated.Text style={[styles.tagline, taglineStyle]}>
                 Support for every school journey
               </Animated.Text>
+
+
             </View>
           </View>
 

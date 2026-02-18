@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useOnboarding, UserRole } from './OnboardingContext';
 import { useOffline, queueOfflineChange } from './OfflineContext';
+import { moderateContent } from '../services/moderation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Story {
@@ -267,6 +268,12 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     if (!user?.id || isAnonymous) return null;
 
     try {
+      // Moderate content before posting
+      const moderationResult = await moderateContent(body);
+      if (!moderationResult.safe) {
+        throw new Error(moderationResult.reason || "Content flagged as inappropriate.");
+      }
+
       const { data, error } = await supabase
         .from('story_comments')
         .insert({
@@ -301,7 +308,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error('Error adding comment:', error);
-      return null;
+      throw error;
     }
   };
 
