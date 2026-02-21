@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useResponsive } from '../hooks/useResponsive';
 
 const TAB_ICONS: Record<string, {
   active: keyof typeof Ionicons.glyphMap;
@@ -23,6 +24,40 @@ const TAB_ICONS: Record<string, {
   bookmarks: { active: 'bookmark',    inactive: 'bookmark-outline' },
   profile:   { active: 'person',      inactive: 'person-outline' },
 };
+
+// ─── Shared navigation helpers ──────────────────────────────────
+
+function useTabNavigation(state: BottomTabBarProps['state'], navigation: BottomTabBarProps['navigation']) {
+  const handlePress = (route: typeof state.routes[number], isFocused: boolean) => {
+    if (process.env.EXPO_OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      navigation.dispatch({
+        ...CommonActions.navigate(route.name, route.params),
+        target: state.key,
+      });
+    }
+  };
+
+  const handleLongPress = (route: typeof state.routes[number]) => {
+    navigation.emit({
+      type: 'tabLongPress',
+      target: route.key,
+    });
+  };
+
+  return { handlePress, handleLongPress };
+}
+
+// ─── Mobile Bottom Tab Bar ──────────────────────────────────────
 
 interface TabBarItemProps {
   routeName: string;
@@ -51,7 +86,7 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={styles.tabItem}
+      style={mobileStyles.tabItem}
       accessibilityRole="button"
       accessibilityState={isFocused ? { selected: true } : {}}
       accessibilityLabel={label}
@@ -61,9 +96,9 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
       </Animated.View>
       <Text
         style={[
-          styles.tabLabel,
+          mobileStyles.tabLabel,
           { color: isFocused ? colors.primary : colors.textLight },
-          isFocused && styles.tabLabelActive,
+          isFocused && mobileStyles.tabLabelActive,
         ]}
       >
         {label}
@@ -72,11 +107,12 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
   );
 }
 
-export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, shadows, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [containerWidth, setContainerWidth] = useState(0);
   const indicatorX = useSharedValue(0);
+  const { handlePress, handleLongPress } = useTabNavigation(state, navigation);
 
   const tabCount = state.routes.length;
   const tabWidth = containerWidth / tabCount;
@@ -105,7 +141,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   return (
     <View
       style={[
-        styles.container,
+        mobileStyles.container,
         {
           paddingBottom: Math.max(insets.bottom, 12),
           backgroundColor: isDark ? 'rgba(28,28,46,0.95)' : 'rgba(255, 255, 255, 0.92)',
@@ -114,40 +150,14 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         },
       ]}
     >
-      <View style={styles.tabRow} onLayout={handleLayout}>
+      <View style={mobileStyles.tabRow} onLayout={handleLayout}>
         {containerWidth > 0 && (
-          <Animated.View style={[styles.indicator, { backgroundColor: colors.tabActiveBg }, indicatorStyle]} />
+          <Animated.View style={[mobileStyles.indicator, { backgroundColor: colors.tabActiveBg }, indicatorStyle]} />
         )}
 
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const label = descriptors[route.key].options.title ?? route.name;
-
-          const onPress = () => {
-            if (process.env.EXPO_OS === 'ios') {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }
-
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.dispatch({
-                ...CommonActions.navigate(route.name, route.params),
-                target: state.key,
-              });
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
 
           return (
             <TabBarItem
@@ -155,8 +165,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               routeName={route.name}
               label={label}
               isFocused={isFocused}
-              onPress={onPress}
-              onLongPress={onLongPress}
+              onPress={() => handlePress(route, isFocused)}
+              onLongPress={() => handleLongPress(route)}
             />
           );
         })}
@@ -165,7 +175,114 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   );
 }
 
-const styles = StyleSheet.create({
+// ─── Web Sidebar Navigation ────────────────────────────────────
+
+function SidebarNavItem({ routeName, label, isFocused, onPress }: {
+  routeName: string;
+  label: string;
+  isFocused: boolean;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  const [hovered, setHovered] = useState(false);
+  const icons = TAB_ICONS[routeName] ?? { active: 'ellipse', inactive: 'ellipse-outline' };
+  const iconName = isFocused ? icons.active : icons.inactive;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={[
+        sidebarStyles.navItem,
+        isFocused && { backgroundColor: colors.tabActiveBg },
+        !isFocused && hovered && { backgroundColor: colors.backgroundLight },
+      ]}
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      accessibilityLabel={label}
+    >
+      <Ionicons
+        name={iconName}
+        size={20}
+        color={isFocused ? colors.primary : colors.textLight}
+      />
+      <Text
+        style={[
+          sidebarStyles.navLabel,
+          { color: isFocused ? colors.primary : colors.textMuted },
+          isFocused && sidebarStyles.navLabelActive,
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function SidebarNav({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { colors, isDark } = useTheme();
+  const { handlePress } = useTabNavigation(state, navigation);
+
+  return (
+    <View
+      style={[
+        sidebarStyles.container,
+        {
+          backgroundColor: isDark ? '#1C1C2E' : '#FFFFFF',
+          borderRightColor: colors.border,
+        },
+      ]}
+    >
+      {/* App brand */}
+      <View style={sidebarStyles.brand}>
+        <View style={[sidebarStyles.brandIcon, { backgroundColor: colors.primary }]}>
+          <Ionicons name="school" size={20} color="#FFFFFF" />
+        </View>
+        <Text style={[sidebarStyles.brandText, { color: colors.textDark }]}>
+          SchoolKit
+        </Text>
+      </View>
+
+      {/* Nav items */}
+      <View style={sidebarStyles.navList}>
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
+          const label = descriptors[route.key].options.title ?? route.name;
+
+          return (
+            <SidebarNavItem
+              key={route.key}
+              routeName={route.name}
+              label={label}
+              isFocused={isFocused}
+              onPress={() => handlePress(route, isFocused)}
+            />
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Export (platform-adaptive) ────────────────────────────
+
+export function CustomTabBar(props: BottomTabBarProps) {
+  const { isWeb, isDesktop, isTablet } = useResponsive();
+
+  // Web desktop & tablet: sidebar navigation
+  if (isWeb && (isDesktop || isTablet)) {
+    return <SidebarNav {...props} />;
+  }
+
+  // Mobile (and web at mobile width): bottom tab bar
+  return <BottomTabBar {...props} />;
+}
+
+// ─── Mobile Styles ──────────────────────────────────────────────
+
+const mobileStyles = StyleSheet.create({
   container: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -199,3 +316,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+// ─── Sidebar Styles ─────────────────────────────────────────────
+
+const sidebarStyles = {
+  container: {
+    width: 220,
+    borderRightWidth: 1,
+    paddingTop: 24,
+    paddingHorizontal: 12,
+  },
+  brand: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 24,
+    marginBottom: 8,
+  },
+  brandIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  brandText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+  },
+  navList: {
+    gap: 4,
+  },
+  navItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  navLabel: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
+  navLabelActive: {
+    fontWeight: '600' as const,
+  },
+};
