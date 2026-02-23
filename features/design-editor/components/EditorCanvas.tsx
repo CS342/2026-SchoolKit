@@ -30,6 +30,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
   const addChildObject = useEditorStore((s) => s.addChildObject);
   const updateChildObject = useEditorStore((s) => s.updateChildObject);
   const setSelection = useEditorStore((s) => s.setSelection);
+  const extendCanvas = useEditorStore((s) => s.extendCanvas);
 
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,14 +126,11 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
     setZoom(newZoom);
   }, [zoom]);
 
-  // Compute canvas position centered in container
+  // Container allows scrolling so tall canvases can be navigated
   const containerStyle: React.CSSProperties = {
     flex: 1,
-    overflow: 'hidden',
+    overflow: 'auto',
     backgroundColor: '#E8E8E8',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
     cursor:
       activeTool === 'select'
@@ -145,78 +143,98 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
       {/* Zoom indicator */}
       <div
         style={{
-          position: 'absolute',
-          bottom: 12,
-          right: 12,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          color: '#fff',
-          padding: '4px 10px',
-          borderRadius: 6,
-          fontSize: 12,
-          fontWeight: 500,
+          position: 'sticky',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: 0,
           zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
         }}
       >
-        <button
-          onClick={() => setZoom(Math.max(0.25, zoom - 0.1))}
+        <div
           style={{
-            background: 'none',
-            border: 'none',
+            position: 'absolute',
+            bottom: 'auto',
+            top: 12,
+            right: 12,
+            backgroundColor: 'rgba(0,0,0,0.6)',
             color: '#fff',
-            cursor: 'pointer',
-            fontSize: 14,
-            padding: '0 4px',
+            padding: '4px 10px',
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          -
-        </button>
-        <span>{Math.round(zoom * 100)}%</span>
-        <button
-          onClick={() => setZoom(Math.min(3, zoom + 0.1))}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            fontSize: 14,
-            padding: '0 4px',
-          }}
-        >
-          +
-        </button>
-        <button
-          onClick={() => setZoom(1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            fontSize: 11,
-            padding: '0 4px',
-            opacity: 0.7,
-          }}
-        >
-          Reset
-        </button>
+          <button
+            onClick={() => setZoom(Math.max(0.25, zoom - 0.1))}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: '0 4px',
+            }}
+          >
+            -
+          </button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: '0 4px',
+            }}
+          >
+            +
+          </button>
+          <button
+            onClick={() => setZoom(1)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 11,
+              padding: '0 4px',
+              opacity: 0.7,
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
-      <Stage
-        ref={stageRef}
-        width={canvas.width * zoom}
-        height={canvas.height * zoom}
-        scaleX={zoom}
-        scaleY={zoom}
-        onClick={handleStageClick}
-        onTap={handleStageClick}
-        onWheel={handleWheel}
+      <div
         style={{
-          boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
-          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '40px 0',
+          minHeight: '100%',
         }}
       >
+        <Stage
+          ref={stageRef}
+          width={canvas.width * zoom}
+          height={canvas.height * zoom}
+          scaleX={zoom}
+          scaleY={zoom}
+          onClick={handleStageClick}
+          onTap={handleStageClick}
+          onWheel={handleWheel}
+          style={{
+            boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
+            borderRadius: 2,
+          }}
+        >
         <Layer>
           {/* Canvas background */}
           <Rect
@@ -282,7 +300,51 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
             </>
           )}
         </Layer>
-      </Stage>
+        </Stage>
+
+        {/* Extend Canvas button */}
+        {!editingComponentId && (
+          <button
+            onClick={extendCanvas}
+            style={{
+              marginTop: 12,
+              padding: '8px 20px',
+              borderRadius: 8,
+              border: '2px dashed #999',
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#666',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#666';
+              e.currentTarget.style.color = '#333';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#999';
+              e.currentTarget.style.color = '#666';
+            }}
+            title={`Add ${CANVAS_EXTEND_INCREMENT}px to canvas height`}
+          >
+            + Extend Canvas
+          </button>
+        )}
+
+        {/* Canvas dimensions label */}
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 11,
+            color: '#999',
+          }}
+        >
+          {canvas.width} x {canvas.height}
+        </div>
+      </div>
     </div>
   );
 }
