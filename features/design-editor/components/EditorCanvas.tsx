@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Stage, Layer, Rect, Group, Text, Ellipse, Image as KonvaImage, Line } from 'react-konva';
 import Konva from 'konva';
 import { useEditorStore } from '../store/editor-store';
@@ -10,8 +10,9 @@ import {
   createText,
   createLine,
 } from '../utils/defaults';
+import { snapToGrid, magneticSnap } from '../utils/snap';
+import type { GuideLine, ObjectBounds } from '../utils/snap';
 import type { StaticDesignObject } from '../types/document';
-import { CANVAS_EXTEND_INCREMENT } from '../types/document';
 
 interface EditorCanvasProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -30,9 +31,17 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
   const addChildObject = useEditorStore((s) => s.addChildObject);
   const updateChildObject = useEditorStore((s) => s.updateChildObject);
   const setSelection = useEditorStore((s) => s.setSelection);
-  const extendCanvas = useEditorStore((s) => s.extendCanvas);
+  const setCanvasSize = useEditorStore((s) => s.setCanvasSize);
+  const showGrid = useEditorStore((s) => s.showGrid);
+  const gridSize = useEditorStore((s) => s.gridSize);
+  const snapToGridEnabled = useEditorStore((s) => s.snapToGrid);
+  const snapToObjectsEnabled = useEditorStore((s) => s.snapToObjects);
 
   const [zoom, setZoom] = useState(1);
+  const [snapGuides, setSnapGuides] = useState<GuideLine[]>([]);
+  const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  const dragStartY = useRef(0);
+  const dragStartHeight = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Get the editing component and active group's children
@@ -117,18 +126,117 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
     [activeTool, clearSelection, addObject, setActiveTool, zoom, editingComponentId, activeGroupRole, addChildObject, objects],
   );
 
-  const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-    const scaleBy = 1.05;
-    const newZoom = e.evt.deltaY > 0
-      ? Math.max(0.25, zoom / scaleBy)
-      : Math.min(3, zoom * scaleBy);
-    setZoom(newZoom);
-  }, [zoom]);
+  // ── Wheel: scroll the container or zoom ──
+  // Konva registers its own wheel listener with { passive: false } on its
+  // content div which blocks native scroll. We intercept in the capture phase,
+  // kill Konva's handler, and manually scroll the container for normal wheel
+  // events or zoom for Cmd/Ctrl + wheel.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const content = (stage as any).content as HTMLDivElement;
+    if (!content) return;
+    const container = containerRef.current;
 
-  // Container allows scrolling so tall canvases can be navigated
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      if (e.metaKey || e.ctrlKey) {
+        // Cmd/Ctrl + wheel → zoom
+        const scaleBy = 1.05;
+        setZoom((prev) =>
+          e.deltaY > 0
+            ? Math.max(0.25, prev / scaleBy)
+            : Math.min(3, prev * scaleBy),
+        );
+      } else if (container) {
+        // Normal wheel → scroll the container
+        container.scrollTop += e.deltaY;
+        container.scrollLeft += e.deltaX;
+      }
+    };
+
+    content.addEventListener('wheel', handler, { capture: true, passive: false });
+    return () => content.removeEventListener('wheel', handler, { capture: true });
+  }, []);
+
+  // ── Zoom via Cmd+/- keyboard shortcuts ──
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      // Cmd + "=" / "+" → zoom in
+      if (e.key === '=' || e.key === '+') {
+        e.preventDefault();
+        setZoom((prev) => Math.min(3, prev + 0.1));
+        return;
+      }
+      // Cmd + "-" → zoom out
+      if (e.key === '-') {
+        e.preventDefault();
+        setZoom((prev) => Math.max(0.25, prev - 0.1));
+        return;
+      }
+      // Cmd + "0" → reset zoom
+      if (e.key === '0') {
+        e.preventDefault();
+        setZoom(1);
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // ── Drag handle for extending canvas height ──
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingHandle(true);
+    dragStartY.current = e.clientY;
+    dragStartHeight.current = canvas.height;
+  }, [canvas.height]);
+
+  useEffect(() => {
+    if (!isDraggingHandle) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = (e.clientY - dragStartY.current) / zoom;
+      const newHeight = Math.max(200, Math.round(dragStartHeight.current + deltaY));
+      setCanvasSize(canvas.width, newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingHandle(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingHandle, zoom, canvas.width, setCanvasSize]);
+
+  // Clear snap guides when snap mode toggles change
+  useEffect(() => {
+    setSnapGuides([]);
+  }, [snapToGridEnabled, snapToObjectsEnabled]);
+
+  const handleSnapGuidesChange = useCallback((guides: GuideLine[]) => {
+    setSnapGuides(guides);
+  }, []);
+
+  const handleSnapGuidesEnd = useCallback(() => {
+    setSnapGuides([]);
+  }, []);
+
+  // Container allows scrolling so tall canvases can be navigated.
+  // min-height: 0 is critical — without it a flex child defaults to
+  // min-height: auto which prevents overflow from activating.
   const containerStyle: React.CSSProperties = {
     flex: 1,
+    minHeight: 0,
     overflow: 'auto',
     backgroundColor: '#E8E8E8',
     position: 'relative',
@@ -229,7 +337,6 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
           scaleY={zoom}
           onClick={handleStageClick}
           onTap={handleStageClick}
-          onWheel={handleWheel}
           style={{
             boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
             borderRadius: 2,
@@ -245,6 +352,15 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
             height={canvas.height}
             fill={canvas.background}
           />
+
+          {/* Grid overlay */}
+          {showGrid && (
+            <GridOverlay
+              width={canvas.width}
+              height={canvas.height}
+              gridSize={gridSize}
+            />
+          )}
 
           {editingComponentId && editingComponent ? (
             <>
@@ -281,6 +397,9 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
               ))}
 
               <SelectionTransformer stageRef={stageRef} />
+
+              {/* Snap guides */}
+              <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
             </>
           ) : (
             <>
@@ -292,54 +411,65 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
                     key={obj.id}
                     object={obj}
                     isSelected={selectedIds.includes(obj.id)}
+                    onSnapGuidesChange={handleSnapGuidesChange}
+                    onSnapGuidesEnd={handleSnapGuidesEnd}
                   />
                 ))}
 
               {/* Transformer for selected objects */}
               <SelectionTransformer stageRef={stageRef} />
+
+              {/* Snap guides */}
+              <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
             </>
           )}
         </Layer>
         </Stage>
 
-        {/* Extend Canvas button */}
+        {/* Drag handle to extend canvas height */}
         {!editingComponentId && (
-          <button
-            onClick={extendCanvas}
+          <div
+            onMouseDown={handleDragStart}
             style={{
-              marginTop: 12,
-              padding: '8px 20px',
-              borderRadius: 8,
-              border: '2px dashed #999',
-              backgroundColor: 'transparent',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              color: '#666',
+              width: canvas.width * zoom,
+              height: 18,
+              cursor: 'ns-resize',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              justifyContent: 'center',
+              backgroundColor: isDraggingHandle ? 'rgba(99,102,241,0.15)' : 'transparent',
+              borderBottomLeftRadius: 6,
+              borderBottomRightRadius: 6,
+              transition: isDraggingHandle ? 'none' : 'background-color 0.15s',
+              userSelect: 'none',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#666';
-              e.currentTarget.style.color = '#333';
+              if (!isDraggingHandle) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.06)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#999';
-              e.currentTarget.style.color = '#666';
+              if (!isDraggingHandle) e.currentTarget.style.backgroundColor = 'transparent';
             }}
-            title={`Add ${CANVAS_EXTEND_INCREMENT}px to canvas height`}
           >
-            + Extend Canvas
-          </button>
+            {/* Grip dots */}
+            <div
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: isDraggingHandle ? '#6366F1' : '#AAA',
+                transition: isDraggingHandle ? 'none' : 'background-color 0.15s',
+              }}
+            />
+          </div>
         )}
 
         {/* Canvas dimensions label */}
         <div
           style={{
-            marginTop: 8,
+            marginTop: 6,
             fontSize: 11,
             color: '#999',
+            userSelect: 'none',
           }}
         >
           {canvas.width} x {canvas.height}
@@ -365,6 +495,8 @@ function EditableChildObject({
   const setSelection = useEditorStore((s) => s.setSelection);
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const activeTool = useEditorStore((s) => s.activeTool);
+  const snapToGridEnabled = useEditorStore((s) => s.snapToGrid);
+  const gridSize = useEditorStore((s) => s.gridSize);
 
   const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (activeTool !== 'select') return;
@@ -381,6 +513,15 @@ function EditableChildObject({
     }
   };
 
+  const handleDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+    if (snapToGridEnabled) {
+      const node = e.target;
+      const snapped = snapToGrid(node.x() - parentX, node.y() - parentY, gridSize);
+      node.x(snapped.x + parentX);
+      node.y(snapped.y + parentY);
+    }
+  }, [snapToGridEnabled, gridSize, parentX, parentY]);
+
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     updateChildObject(object.id, {
       x: Math.round(e.target.x() - parentX),
@@ -395,20 +536,28 @@ function EditableChildObject({
     node.scaleX(1);
     node.scaleY(1);
 
+    let newX = Math.round(node.x() - parentX);
+    let newY = Math.round(node.y() - parentY);
+    if (snapToGridEnabled) {
+      const snapped = snapToGrid(newX, newY, gridSize);
+      newX = snapped.x;
+      newY = snapped.y;
+    }
+
     if (object.type === 'line') {
       const scaledPoints = object.points.map((val, i) =>
         Math.round(val * (i % 2 === 0 ? scaleX : scaleY)),
       );
       updateChildObject(object.id, {
-        x: Math.round(node.x() - parentX),
-        y: Math.round(node.y() - parentY),
+        x: newX,
+        y: newY,
         points: scaledPoints,
         rotation: Math.round(node.rotation() * 10) / 10,
       } as Partial<StaticDesignObject>);
     } else {
       updateChildObject(object.id, {
-        x: Math.round(node.x() - parentX),
-        y: Math.round(node.y() - parentY),
+        x: newX,
+        y: newY,
         width: Math.max(5, Math.round(node.width() * scaleX)),
         height: Math.max(5, Math.round(node.height() * scaleY)),
         rotation: Math.round(node.rotation() * 10) / 10,
@@ -425,6 +574,7 @@ function EditableChildObject({
     draggable: !object.locked && activeTool === 'select',
     onClick: handleClick,
     onTap: handleClick,
+    onDragMove: handleDragMove,
     onDragEnd: handleDragEnd,
     onTransformEnd: handleTransformEnd,
   };
@@ -524,5 +674,89 @@ function EditableChildImage({
       width={object.width}
       height={object.height}
     />
+  );
+}
+
+// ─── Grid Overlay ─────────────────────────────────────────────
+
+function GridOverlay({
+  width,
+  height,
+  gridSize,
+}: {
+  width: number;
+  height: number;
+  gridSize: number;
+}) {
+  const lines = useMemo(() => {
+    const result: React.ReactElement[] = [];
+    // Vertical lines
+    for (let x = gridSize; x < width; x += gridSize) {
+      const isMajor = x % (gridSize * 5) === 0;
+      result.push(
+        <Line
+          key={`v-${x}`}
+          points={[x, 0, x, height]}
+          stroke={isMajor ? '#BBBBBB' : '#DDDDDD'}
+          strokeWidth={isMajor ? 0.5 : 0.25}
+          listening={false}
+        />,
+      );
+    }
+    // Horizontal lines
+    for (let y = gridSize; y < height; y += gridSize) {
+      const isMajor = y % (gridSize * 5) === 0;
+      result.push(
+        <Line
+          key={`h-${y}`}
+          points={[0, y, width, y]}
+          stroke={isMajor ? '#BBBBBB' : '#DDDDDD'}
+          strokeWidth={isMajor ? 0.5 : 0.25}
+          listening={false}
+        />,
+      );
+    }
+    return result;
+  }, [width, height, gridSize]);
+
+  return <>{lines}</>;
+}
+
+// ─── Snap Guide Lines ─────────────────────────────────────────
+
+function SnapGuides({
+  guides,
+  canvasWidth,
+  canvasHeight,
+}: {
+  guides: GuideLine[];
+  canvasWidth: number;
+  canvasHeight: number;
+}) {
+  if (guides.length === 0) return null;
+  return (
+    <>
+      {guides.map((guide, i) =>
+        guide.orientation === 'vertical' ? (
+          <Line
+            key={`sg-v-${i}`}
+            points={[guide.position, 0, guide.position, canvasHeight]}
+            stroke="#7B68EE"
+            strokeWidth={1}
+            dash={[4, 4]}
+            listening={false}
+          />
+        ) : (
+          <Line
+            key={`sg-h-${i}`}
+            points={[0, guide.position, canvasWidth, guide.position]}
+            stroke="#7B68EE"
+            strokeWidth={1}
+            dash={[4, 4]}
+            listening={false}
+          />
+        ),
+      )}
+    </>
   );
 }

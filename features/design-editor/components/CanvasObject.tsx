@@ -1,20 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Rect, Ellipse, Text, Image as KonvaImage, Line, Group } from 'react-konva';
 import Konva from 'konva';
 import type { DesignObject, InteractiveComponentObject, StaticDesignObject } from '../types/document';
 import { useEditorStore } from '../store/editor-store';
+import { snapToGrid, magneticSnap } from '../utils/snap';
+import type { GuideLine, ObjectBounds } from '../utils/snap';
 
 interface CanvasObjectProps {
   object: DesignObject;
   isSelected: boolean;
+  onSnapGuidesChange?: (guides: GuideLine[]) => void;
+  onSnapGuidesEnd?: () => void;
 }
 
-export function CanvasObject({ object, isSelected }: CanvasObjectProps) {
+export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGuidesEnd }: CanvasObjectProps) {
   const updateObject = useEditorStore((s) => s.updateObject);
   const setSelection = useEditorStore((s) => s.setSelection);
   const activeTool = useEditorStore((s) => s.activeTool);
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const enterComponent = useEditorStore((s) => s.enterComponent);
+  const snapToGridEnabled = useEditorStore((s) => s.snapToGrid);
+  const gridSize = useEditorStore((s) => s.gridSize);
+  const snapToObjectsEnabled = useEditorStore((s) => s.snapToObjects);
+  const objects = useEditorStore((s) => s.objects);
+  const canvas = useEditorStore((s) => s.canvas);
 
   const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (activeTool !== 'select') return;
@@ -42,7 +51,32 @@ export function CanvasObject({ object, isSelected }: CanvasObjectProps) {
     }
   };
 
+  const handleDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
+    const node = e.target;
+    if (snapToGridEnabled) {
+      const snapped = snapToGrid(node.x(), node.y(), gridSize);
+      node.x(snapped.x);
+      node.y(snapped.y);
+      onSnapGuidesChange?.([]);
+    } else if (snapToObjectsEnabled) {
+      const dragged: ObjectBounds = {
+        x: node.x(),
+        y: node.y(),
+        width: object.width,
+        height: object.height,
+      };
+      const others: ObjectBounds[] = objects
+        .filter((o) => o.id !== object.id && o.visible)
+        .map((o) => ({ x: o.x, y: o.y, width: o.width, height: o.height }));
+      const result = magneticSnap(dragged, others, canvas.width, canvas.height);
+      node.x(result.x);
+      node.y(result.y);
+      onSnapGuidesChange?.(result.guides);
+    }
+  }, [snapToGridEnabled, gridSize, snapToObjectsEnabled, objects, canvas, object.id, object.width, object.height, onSnapGuidesChange]);
+
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    onSnapGuidesEnd?.();
     updateObject(object.id, {
       x: Math.round(e.target.x()),
       y: Math.round(e.target.y()),
@@ -56,21 +90,28 @@ export function CanvasObject({ object, isSelected }: CanvasObjectProps) {
     node.scaleX(1);
     node.scaleY(1);
 
+    let newX = Math.round(node.x());
+    let newY = Math.round(node.y());
+    if (snapToGridEnabled) {
+      const snapped = snapToGrid(newX, newY, gridSize);
+      newX = snapped.x;
+      newY = snapped.y;
+    }
+
     if (object.type === 'line') {
-      // Scale the points array instead of width/height for lines
       const scaledPoints = object.points.map((val, i) =>
         Math.round(val * (i % 2 === 0 ? scaleX : scaleY)),
       );
       updateObject(object.id, {
-        x: Math.round(node.x()),
-        y: Math.round(node.y()),
+        x: newX,
+        y: newY,
         points: scaledPoints,
         rotation: Math.round(node.rotation() * 10) / 10,
       } as Partial<DesignObject>);
     } else {
       updateObject(object.id, {
-        x: Math.round(node.x()),
-        y: Math.round(node.y()),
+        x: newX,
+        y: newY,
         width: Math.max(5, Math.round(node.width() * scaleX)),
         height: Math.max(5, Math.round(node.height() * scaleY)),
         rotation: Math.round(node.rotation() * 10) / 10,
@@ -87,6 +128,7 @@ export function CanvasObject({ object, isSelected }: CanvasObjectProps) {
     draggable: !object.locked && activeTool === 'select',
     onClick: handleClick,
     onTap: handleClick,
+    onDragMove: handleDragMove,
     onDragEnd: handleDragEnd,
     onTransformEnd: handleTransformEnd,
   };

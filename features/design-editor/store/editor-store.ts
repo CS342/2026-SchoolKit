@@ -32,6 +32,12 @@ interface EditorState {
   activeGroupRole: string | null;
   isPreviewMode: boolean;
 
+  // ── Grid & Snap (UI prefs, not document data) ──
+  showGrid: boolean;
+  snapToGrid: boolean;
+  gridSize: number;
+  snapToObjects: boolean;
+
   // ── Persistence state ─────────────────────
   isDirty: boolean;
   isSaving: boolean;
@@ -61,8 +67,17 @@ interface EditorState {
   markSaved: () => void;
   setSaving: (saving: boolean) => void;
 
+  setShowGrid: (on: boolean) => void;
+  setSnapToGrid: (on: boolean) => void;
+  setGridSize: (size: number) => void;
+  setSnapToObjects: (on: boolean) => void;
+
   addAsset: (assetId: string, url: string, name: string) => void;
   removeAsset: (assetId: string) => void;
+
+  pasteObjects: (objects: DesignObject[]) => void;
+  alignObjects: (ids: string[], alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
+  distributeObjects: (ids: string[], direction: 'horizontal' | 'vertical') => void;
 
   getDocument: () => DesignDocument;
   getSelectedObjects: () => DesignObject[];
@@ -91,6 +106,10 @@ const initialState = {
   editingComponentId: null as string | null,
   activeGroupRole: null as string | null,
   isPreviewMode: false,
+  showGrid: false,
+  snapToGrid: false,
+  gridSize: 20,
+  snapToObjects: true,
   isDirty: false,
   isSaving: false,
   lastSavedAt: null as number | null,
@@ -217,6 +236,11 @@ export const useEditorStore = create<EditorState>()(
       markSaved: () => set({ isDirty: false, lastSavedAt: Date.now() }),
       setSaving: (saving) => set({ isSaving: saving }),
 
+      setShowGrid: (on) => set({ showGrid: on }),
+      setSnapToGrid: (on) => set({ snapToGrid: on }),
+      setGridSize: (size) => set({ gridSize: size }),
+      setSnapToObjects: (on) => set({ snapToObjects: on }),
+
       addAsset: (assetId, url, name) =>
         set(
           produce((state: EditorState) => {
@@ -228,6 +252,117 @@ export const useEditorStore = create<EditorState>()(
         set(
           produce((state: EditorState) => {
             delete state.assets[assetId];
+          }),
+        ),
+
+      pasteObjects: (objs) =>
+        set(
+          produce((state: EditorState) => {
+            const newObjs = objs.map((o) => ({
+              ...JSON.parse(JSON.stringify(o)),
+              id: `obj_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            }));
+            state.objects.push(...newObjs);
+            state.selectedIds = newObjs.map((o: DesignObject) => o.id);
+            state.isDirty = true;
+          }),
+        ),
+
+      alignObjects: (ids, alignment) =>
+        set(
+          produce((state: EditorState) => {
+            const targets = state.objects.filter((o) => ids.includes(o.id));
+            if (targets.length === 0) return;
+
+            if (targets.length === 1) {
+              // Align to canvas
+              const obj = targets[0];
+              switch (alignment) {
+                case 'left':
+                  obj.x = 0;
+                  break;
+                case 'center':
+                  obj.x = Math.round((state.canvas.width - obj.width) / 2);
+                  break;
+                case 'right':
+                  obj.x = state.canvas.width - obj.width;
+                  break;
+                case 'top':
+                  obj.y = 0;
+                  break;
+                case 'middle':
+                  obj.y = Math.round((state.canvas.height - obj.height) / 2);
+                  break;
+                case 'bottom':
+                  obj.y = state.canvas.height - obj.height;
+                  break;
+              }
+            } else {
+              // Align to selection bounding box
+              const minX = Math.min(...targets.map((o) => o.x));
+              const maxX = Math.max(...targets.map((o) => o.x + o.width));
+              const minY = Math.min(...targets.map((o) => o.y));
+              const maxY = Math.max(...targets.map((o) => o.y + o.height));
+
+              for (const obj of targets) {
+                switch (alignment) {
+                  case 'left':
+                    obj.x = minX;
+                    break;
+                  case 'center':
+                    obj.x = Math.round((minX + maxX) / 2 - obj.width / 2);
+                    break;
+                  case 'right':
+                    obj.x = maxX - obj.width;
+                    break;
+                  case 'top':
+                    obj.y = minY;
+                    break;
+                  case 'middle':
+                    obj.y = Math.round((minY + maxY) / 2 - obj.height / 2);
+                    break;
+                  case 'bottom':
+                    obj.y = maxY - obj.height;
+                    break;
+                }
+              }
+            }
+            state.isDirty = true;
+          }),
+        ),
+
+      distributeObjects: (ids, direction) =>
+        set(
+          produce((state: EditorState) => {
+            const targets = state.objects.filter((o) => ids.includes(o.id));
+            if (targets.length < 3) return;
+
+            if (direction === 'horizontal') {
+              targets.sort((a, b) => a.x - b.x);
+              const first = targets[0];
+              const last = targets[targets.length - 1];
+              const totalWidth = targets.reduce((sum, o) => sum + o.width, 0);
+              const totalSpan = last.x + last.width - first.x;
+              const gap = (totalSpan - totalWidth) / (targets.length - 1);
+              let currentX = first.x + first.width + gap;
+              for (let i = 1; i < targets.length - 1; i++) {
+                targets[i].x = currentX;
+                currentX += targets[i].width + gap;
+              }
+            } else {
+              targets.sort((a, b) => a.y - b.y);
+              const first = targets[0];
+              const last = targets[targets.length - 1];
+              const totalHeight = targets.reduce((sum, o) => sum + o.height, 0);
+              const totalSpan = last.y + last.height - first.y;
+              const gap = (totalSpan - totalHeight) / (targets.length - 1);
+              let currentY = first.y + first.height + gap;
+              for (let i = 1; i < targets.length - 1; i++) {
+                targets[i].y = currentY;
+                currentY += targets[i].height + gap;
+              }
+            }
+            state.isDirty = true;
           }),
         ),
 

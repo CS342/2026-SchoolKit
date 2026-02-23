@@ -1,11 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../lib/supabase';
 import { useEditorStore } from '../../../features/design-editor/store/editor-store';
-import { EditorShell } from '../../../features/design-editor/components/EditorShell';
 import type { DesignDocument } from '../../../features/design-editor/types/document';
 import { useTheme } from '../../../contexts/ThemeContext';
+
+// Lazy-load EditorShell so that konva/react-konva (web-only) are never
+// evaluated at module-parse time on native platforms.
+const EditorShell = lazy(() =>
+  import('../../../features/design-editor/components/EditorShell').then((m) => ({
+    default: m.EditorShell,
+  })),
+);
 
 export default function DesignEditorPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -112,10 +119,25 @@ export default function DesignEditorPage() {
   }
 
   return (
-    <EditorShell
-      isShared={isShared}
-      shareToken={shareToken}
-      onShareChange={handleShareChange}
-    />
+    <Suspense
+      fallback={
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: colors.appBackground,
+          }}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      }
+    >
+      <EditorShell
+        isShared={isShared}
+        shareToken={shareToken}
+        onShareChange={handleShareChange}
+      />
+    </Suspense>
   );
 }

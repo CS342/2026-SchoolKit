@@ -16,6 +16,12 @@ import { useAutoSave } from '../hooks/useAutoSave';
 import { useDesignAssets } from '../hooks/useDesignAssets';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { DesignDocument } from '../types/document';
+import {
+  copyToClipboard,
+  getClipboard,
+  incrementPasteCount,
+  hasClipboardContent,
+} from '../utils/clipboard';
 
 interface EditorShellProps {
   isShared: boolean;
@@ -49,6 +55,7 @@ export function EditorShell({
   const exitComponent = useEditorStore((s) => s.exitComponent);
   const enterComponent = useEditorStore((s) => s.enterComponent);
   const deleteChildObjects = useEditorStore((s) => s.deleteChildObjects);
+  const pasteObjects = useEditorStore((s) => s.pasteObjects);
   const isPreviewMode = useEditorStore((s) => s.isPreviewMode);
   const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
   const canvas = useEditorStore((s) => s.canvas);
@@ -125,6 +132,49 @@ export function EditorShell({
         return;
       }
 
+      // Copy
+      if (isMeta && (e.key === 'c' || e.key === 'C') && !e.shiftKey) {
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
+          copyToClipboard(selectedObjs);
+        }
+        return;
+      }
+
+      // Cut
+      if (isMeta && (e.key === 'x' || e.key === 'X')) {
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
+          copyToClipboard(selectedObjs);
+          if (editingComponentId) {
+            deleteChildObjects(selectedIds);
+          } else {
+            deleteObjects(selectedIds);
+          }
+        }
+        return;
+      }
+
+      // Paste
+      if (isMeta && (e.key === 'v' || e.key === 'V') && !e.shiftKey) {
+        if (hasClipboardContent()) {
+          e.preventDefault();
+          const { objects: clipObjs, pasteCount } = getClipboard();
+          const offset = (pasteCount + 1) * 20;
+          const offsetObjs = clipObjs.map((o) => ({
+            ...o,
+            x: o.x + offset,
+            y: o.y + offset,
+            name: pasteCount === 0 ? `${o.name} copy` : `${o.name} copy ${pasteCount + 1}`,
+          }));
+          incrementPasteCount();
+          pasteObjects(offsetObjs);
+        }
+        return;
+      }
+
       // Escape — exit component or clear selection
       if (e.key === 'Escape') {
         if (editingComponentId) {
@@ -186,6 +236,7 @@ export function EditorShell({
     exitComponent,
     enterComponent,
     deleteChildObjects,
+    pasteObjects,
     isPreviewMode,
     setPreviewMode,
   ]);
@@ -220,7 +271,7 @@ export function EditorShell({
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         <ToolPanel onImageUpload={handleImageUpload} />
 
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <EditorCanvas stageRef={stageRef} />
           <GroupTabBar />
         </div>

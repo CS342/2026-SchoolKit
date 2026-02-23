@@ -3,6 +3,7 @@ import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { DesignObject, InteractiveComponentObject } from '../types/document';
 import { InteractiveProperties } from './InteractiveProperties';
+import { AlignmentToolbar } from './AlignmentToolbar';
 
 function NumberInput({
   label,
@@ -289,19 +290,25 @@ export function PropertiesPanel() {
           displayObject.type === 'interactive' ? (
             <InteractiveProperties object={displayObject as InteractiveComponentObject} />
           ) : (
-            <ObjectProperties object={displayObject} onUpdate={update} />
+            <>
+              <AlignmentToolbar />
+              <ObjectProperties object={displayObject} onUpdate={update} />
+            </>
           )
         ) : selectedIds.length > 1 ? (
-          <div
-            style={{
-              color: colors.textLight,
-              fontSize: 13,
-              textAlign: 'center',
-              paddingTop: 40,
-            }}
-          >
-            {selectedIds.length} objects selected
-          </div>
+          <>
+            <AlignmentToolbar />
+            <div
+              style={{
+                color: colors.textLight,
+                fontSize: 13,
+                textAlign: 'center',
+                paddingTop: 20,
+              }}
+            >
+              {selectedIds.length} objects selected
+            </div>
+          </>
         ) : (
           <div
             style={{

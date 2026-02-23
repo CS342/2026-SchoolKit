@@ -36,6 +36,12 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
   const addInteractiveComponent = useEditorStore((s) => s.addInteractiveComponent);
   const canvas = useEditorStore((s) => s.canvas);
   const editingComponentId = useEditorStore((s) => s.editingComponentId);
+  const showGrid = useEditorStore((s) => s.showGrid);
+  const setShowGrid = useEditorStore((s) => s.setShowGrid);
+  const snapToGrid = useEditorStore((s) => s.snapToGrid);
+  const setSnapToGrid = useEditorStore((s) => s.setSnapToGrid);
+  const snapToObjects = useEditorStore((s) => s.snapToObjects);
+  const setSnapToObjects = useEditorStore((s) => s.setSnapToObjects);
   const { colors } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -159,6 +165,83 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
           ))}
         </>
       )}
+
+      {/* Divider before view/snap toggles */}
+      <div
+        style={{
+          width: 28,
+          height: 1,
+          backgroundColor: colors.borderCard,
+          margin: '6px 0',
+        }}
+      />
+
+      {/* Grid toggle */}
+      <button
+        onClick={() => setShowGrid(!showGrid)}
+        title={showGrid ? 'Hide Grid' : 'Show Grid'}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          border: 'none',
+          backgroundColor: showGrid ? colors.primary : 'transparent',
+          color: showGrid ? '#fff' : colors.textDark,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          transition: 'background-color 0.1s',
+        }}
+      >
+        #
+      </button>
+
+      {/* Grid snap toggle */}
+      <button
+        onClick={() => setSnapToGrid(!snapToGrid)}
+        title={snapToGrid ? 'Disable Grid Snap' : 'Enable Grid Snap'}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          border: 'none',
+          backgroundColor: snapToGrid ? '#6366F1' : 'transparent',
+          color: snapToGrid ? '#fff' : colors.textDark,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 13,
+          fontWeight: 600,
+          transition: 'background-color 0.1s',
+        }}
+      >
+        ⊞
+      </button>
+
+      {/* Magnetic snap toggle */}
+      <button
+        onClick={() => setSnapToObjects(!snapToObjects)}
+        title={snapToObjects ? 'Disable Magnetic Snap' : 'Enable Magnetic Snap'}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          border: 'none',
+          backgroundColor: snapToObjects ? '#7B68EE' : 'transparent',
+          color: snapToObjects ? '#fff' : colors.textDark,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          transition: 'background-color 0.1s',
+        }}
+      >
+        🧲
+      </button>
 
       <input
         ref={fileInputRef}
