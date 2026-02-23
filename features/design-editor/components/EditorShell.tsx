@@ -9,9 +9,13 @@ import { LayersPanel } from './LayersPanel';
 import { ShareModal } from './ShareModal';
 import { ExportModal } from './ExportModal';
 import { PublishModal } from './PublishModal';
+import { GroupTabBar } from './GroupTabBar';
+import { PreviewOverlay } from './PreviewOverlay';
+import { AIGenerateModal } from './AIGenerateModal';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useDesignAssets } from '../hooks/useDesignAssets';
 import { useTheme } from '../../../contexts/ThemeContext';
+import type { DesignDocument } from '../types/document';
 
 interface EditorShellProps {
   isShared: boolean;
@@ -29,6 +33,7 @@ export function EditorShell({
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
+  const [showAIGenerate, setShowAIGenerate] = useState(false);
   const [rightPanel, setRightPanel] = useState<'properties' | 'layers'>(
     'properties',
   );
@@ -40,6 +45,17 @@ export function EditorShell({
   const setSelection = useEditorStore((s) => s.setSelection);
   const objects = useEditorStore((s) => s.objects);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
+  const editingComponentId = useEditorStore((s) => s.editingComponentId);
+  const exitComponent = useEditorStore((s) => s.exitComponent);
+  const enterComponent = useEditorStore((s) => s.enterComponent);
+  const deleteChildObjects = useEditorStore((s) => s.deleteChildObjects);
+  const isPreviewMode = useEditorStore((s) => s.isPreviewMode);
+  const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
+  const canvas = useEditorStore((s) => s.canvas);
+  const designId = useEditorStore((s) => s.designId);
+  const loadDocument = useEditorStore((s) => s.loadDocument);
+  const markDirty = useEditorStore((s) => s.markDirty);
+  const titleState = useEditorStore((s) => s.title);
 
   const { saveNow } = useAutoSave(stageRef);
   const { uploadImage } = useDesignAssets();
@@ -53,13 +69,24 @@ export function EditorShell({
 
       const isMeta = e.metaKey || e.ctrlKey;
 
-      // Delete
+      // Preview toggle
+      if (e.key === 'Escape' && isPreviewMode) {
+        e.preventDefault();
+        setPreviewMode(false);
+        return;
+      }
+
+      // Delete — route to child or top-level
       if (
         (e.key === 'Delete' || e.key === 'Backspace') &&
         selectedIds.length > 0
       ) {
         e.preventDefault();
-        deleteObjects(selectedIds);
+        if (editingComponentId) {
+          deleteChildObjects(selectedIds);
+        } else {
+          deleteObjects(selectedIds);
+        }
         return;
       }
 
@@ -98,11 +125,25 @@ export function EditorShell({
         return;
       }
 
-      // Escape
+      // Escape — exit component or clear selection
       if (e.key === 'Escape') {
-        clearSelection();
-        setActiveTool('select');
+        if (editingComponentId) {
+          exitComponent();
+        } else {
+          clearSelection();
+          setActiveTool('select');
+        }
         return;
+      }
+
+      // Enter — enter selected component
+      if (e.key === 'Enter' && !editingComponentId && selectedIds.length === 1) {
+        const sel = objects.find((o) => o.id === selectedIds[0]);
+        if (sel && sel.type === 'interactive') {
+          e.preventDefault();
+          enterComponent(sel.id, sel.groups[0]?.role || '');
+          return;
+        }
       }
 
       // Tool shortcuts
@@ -123,6 +164,9 @@ export function EditorShell({
           case 'l':
             setActiveTool('line');
             break;
+          case 'p':
+            setPreviewMode(!isPreviewMode);
+            break;
         }
       }
     };
@@ -138,6 +182,12 @@ export function EditorShell({
     setActiveTool,
     objects,
     saveNow,
+    editingComponentId,
+    exitComponent,
+    enterComponent,
+    deleteChildObjects,
+    isPreviewMode,
+    setPreviewMode,
   ]);
 
   const handleImageUpload = useCallback(
@@ -163,12 +213,17 @@ export function EditorShell({
         onShare={() => setShowShare(true)}
         onExport={() => setShowExport(true)}
         onPublish={() => setShowPublish(true)}
+        onPreview={() => setPreviewMode(true)}
+        onAIGenerate={() => setShowAIGenerate(true)}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         <ToolPanel onImageUpload={handleImageUpload} />
 
-        <EditorCanvas stageRef={stageRef} />
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          <EditorCanvas stageRef={stageRef} />
+          <GroupTabBar />
+        </div>
 
         {/* Right panel tabs */}
         <div
@@ -239,6 +294,31 @@ export function EditorShell({
         visible={showPublish}
         onClose={() => setShowPublish(false)}
       />
+
+      <AIGenerateModal
+        visible={showAIGenerate}
+        onClose={() => setShowAIGenerate(false)}
+        canvasSize={{ width: canvas.width, height: canvas.height }}
+        onDesignGenerated={(doc: DesignDocument, genTitle: string) => {
+          if (objects.length > 0) {
+            const ok = window.confirm(
+              'This will replace your current design. Continue?',
+            );
+            if (!ok) return;
+          }
+          if (designId) {
+            loadDocument(designId, genTitle || titleState, {
+              ...doc,
+              canvas: { ...doc.canvas, width: canvas.width, height: canvas.height },
+            });
+            markDirty();
+          }
+        }}
+      />
+
+      {isPreviewMode && (
+        <PreviewOverlay onClose={() => setPreviewMode(false)} />
+      )}
 
       {/* CSS for spinner animation */}
       <style>{`

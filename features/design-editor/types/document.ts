@@ -62,13 +62,71 @@ export interface LineObject extends BaseObject {
   lineJoin: 'miter' | 'round' | 'bevel';
 }
 
+// ─── Interactive Component Types ──────────────────────────────
+export type InteractionType = 'flip-card' | 'bottom-sheet' | 'expandable' | 'entrance';
+
+export interface ObjectGroup {
+  role: string;
+  label: string;
+  objectIds: string[];
+}
+
+export interface FlipCardConfig {
+  flipDuration: number;
+  flipDirection: 'horizontal' | 'vertical';
+  defaultSide: 'front' | 'back';
+}
+
+export interface BottomSheetConfig {
+  sheetHeightPercent: number;
+  backdropOpacity: number;
+  slideDuration: number;
+  dismissOnBackdropTap: boolean;
+}
+
+export interface ExpandableConfig {
+  defaultExpanded: boolean;
+  expandDuration: number;
+  easing: 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'linear';
+}
+
+export interface EntranceConfig {
+  animation: 'fade-in' | 'slide-up' | 'scale-up' | 'bounce';
+  duration: number;
+  staggerDelay: number;
+  trigger: 'on-load' | 'on-scroll';
+}
+
+export type InteractionConfig =
+  | FlipCardConfig
+  | BottomSheetConfig
+  | ExpandableConfig
+  | EntranceConfig;
+
+export type StaticDesignObject =
+  | RectObject
+  | EllipseObject
+  | TextObject
+  | ImageObject
+  | LineObject;
+
+export interface InteractiveComponentObject extends BaseObject {
+  type: 'interactive';
+  interactionType: InteractionType;
+  interactionConfig: InteractionConfig;
+  groups: ObjectGroup[];
+  childIds: string[];
+  children: StaticDesignObject[];
+}
+
 // Union type
 export type DesignObject =
   | RectObject
   | EllipseObject
   | TextObject
   | ImageObject
-  | LineObject;
+  | LineObject
+  | InteractiveComponentObject;
 
 export type DesignObjectType = DesignObject['type'];
 
@@ -80,19 +138,16 @@ export interface DesignDocument {
   assets: Record<string, { url: string; name: string }>;
 }
 
-// ─── Canvas Presets ────────────────────────────────────────────
-export const CANVAS_PRESETS = [
-  { label: 'Presentation (16:9)', width: 1280, height: 720 },
-  { label: 'Social Post (Square)', width: 1080, height: 1080 },
-  { label: 'Story (9:16)', width: 1080, height: 1920 },
-  { label: 'Poster (A4)', width: 794, height: 1123 },
-  { label: 'Letter', width: 816, height: 1056 },
-  { label: 'Widescreen (1920x1080)', width: 1920, height: 1080 },
-] as const;
+// ─── Mobile-First Canvas ──────────────────────────────────────
+// Authoring canvas is 390px wide (iPhone 14 logical width).
+// Width adapts to any device at view time via scaling.
+// Height starts at one phone screen and can be manually extended.
+export const MOBILE_CANVAS = { width: 390, height: 844 } as const;
+export const CANVAS_EXTEND_INCREMENT = 400;
 
 export const DEFAULT_DOCUMENT: DesignDocument = {
   version: 1,
-  canvas: { width: 1280, height: 720, background: '#FFFFFF' },
+  canvas: { width: MOBILE_CANVAS.width, height: MOBILE_CANVAS.height, background: '#FFFFFF' },
   objects: [],
   assets: {},
 };

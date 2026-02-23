@@ -1,6 +1,12 @@
 import React, { useRef } from 'react';
 import { useEditorStore } from '../store/editor-store';
 import { createImage } from '../utils/defaults';
+import {
+  createFlipCard,
+  createBottomSheet,
+  createExpandable,
+  createEntrance,
+} from '../utils/interactive-templates';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 interface ToolPanelProps {
@@ -16,10 +22,20 @@ const TOOLS = [
   { id: 'image' as const, icon: '🖼', label: 'Image (I)', shortcut: 'I' },
 ] as const;
 
+const INTERACTIVE_PRESETS = [
+  { id: 'flip-card' as const, icon: '🔄', label: 'Flip Card' },
+  { id: 'bottom-sheet' as const, icon: '📋', label: 'Bottom Sheet' },
+  { id: 'expandable' as const, icon: '📐', label: 'Expandable' },
+  { id: 'entrance' as const, icon: '✨', label: 'Entrance' },
+] as const;
+
 export function ToolPanel({ onImageUpload }: ToolPanelProps) {
   const activeTool = useEditorStore((s) => s.activeTool);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const addObject = useEditorStore((s) => s.addObject);
+  const addInteractiveComponent = useEditorStore((s) => s.addInteractiveComponent);
+  const canvas = useEditorStore((s) => s.canvas);
+  const editingComponentId = useEditorStore((s) => s.editingComponentId);
   const { colors } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +59,26 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
     }
     // Reset input so same file can be selected again
     e.target.value = '';
+  };
+
+  const handleAddPreset = (presetId: typeof INTERACTIVE_PRESETS[number]['id']) => {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    switch (presetId) {
+      case 'flip-card':
+        addInteractiveComponent(createFlipCard(cx, cy));
+        break;
+      case 'bottom-sheet':
+        addInteractiveComponent(createBottomSheet(cx, cy));
+        break;
+      case 'expandable':
+        addInteractiveComponent(createExpandable(cx, cy));
+        break;
+      case 'entrance':
+        addInteractiveComponent(createEntrance(cx, cy));
+        break;
+    }
   };
 
   return (
@@ -84,6 +120,45 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
           </button>
         );
       })}
+
+      {/* Divider */}
+      {!editingComponentId && (
+        <>
+          <div
+            style={{
+              width: 28,
+              height: 1,
+              backgroundColor: colors.borderCard,
+              margin: '6px 0',
+            }}
+          />
+
+          {/* Interactive presets */}
+          {INTERACTIVE_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => handleAddPreset(preset.id)}
+              title={preset.label}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: colors.textDark,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 16,
+                transition: 'background-color 0.1s',
+              }}
+            >
+              {preset.icon}
+            </button>
+          ))}
+        </>
+      )}
 
       <input
         ref={fileInputRef}

@@ -3,6 +3,15 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useEditorStore } from '../store/editor-store';
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function useDesignAssets() {
   const { user } = useAuth();
   const designId = useEditorStore((s) => s.designId);
@@ -15,13 +24,15 @@ export function useDesignAssets() {
     ): Promise<{ assetId: string; url: string }> => {
       const assetId = crypto.randomUUID();
 
-      // Create a local blob URL so the image appears on canvas immediately
-      const localUrl = URL.createObjectURL(file);
+      // Convert to a data URL so the image persists across page reloads
+      // (blob: URLs are session-scoped and break after reload)
+      const dataUrl = await fileToDataUrl(file);
 
       // Add to store assets map right away
-      addAsset(assetId, localUrl, file.name);
+      addAsset(assetId, dataUrl, file.name);
 
       // Upload to Supabase in the background (non-blocking)
+      // Once complete, swap the data URL for a remote URL to save space
       if (user && designId) {
         const ext = file.name.split('.').pop() || 'png';
         const storagePath = `${user.id}/assets/${designId}/${assetId}.${ext}`;
@@ -34,7 +45,7 @@ export function useDesignAssets() {
           })
           .then(({ error: uploadError }) => {
             if (uploadError) {
-              console.warn('Supabase upload failed, using local URL:', uploadError.message);
+              console.warn('Supabase upload failed, using data URL:', uploadError.message);
               return;
             }
 
@@ -44,7 +55,7 @@ export function useDesignAssets() {
 
             const remoteUrl = urlData.publicUrl;
 
-            // Swap local URL for persistent remote URL
+            // Swap data URL for persistent remote URL (saves DB space)
             addAsset(assetId, remoteUrl, file.name);
             const currentObjects = useEditorStore.getState().objects;
             for (const obj of currentObjects) {
@@ -64,12 +75,11 @@ export function useDesignAssets() {
             });
           })
           .catch((err) => {
-            console.warn('Supabase upload failed, using local URL:', err);
+            console.warn('Supabase upload failed, using data URL:', err);
           });
       }
 
-      // Return immediately with local URL
-      return { assetId, url: localUrl };
+      return { assetId, url: dataUrl };
     },
     [user, designId, addAsset, updateObject],
   );

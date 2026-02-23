@@ -8,7 +8,7 @@ import type {
 
 let counter = 0;
 
-function generateId(): string {
+export function generateId(): string {
   counter += 1;
   return `obj_${Date.now()}_${counter}`;
 }

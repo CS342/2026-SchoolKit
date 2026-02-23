@@ -8,9 +8,11 @@ interface EditorToolbarProps {
   onShare: () => void;
   onExport: () => void;
   onPublish: () => void;
+  onPreview: () => void;
+  onAIGenerate: () => void;
 }
 
-export function EditorToolbar({ onSave, onShare, onExport, onPublish }: EditorToolbarProps) {
+export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview, onAIGenerate }: EditorToolbarProps) {
   const router = useRouter();
   const { colors } = useTheme();
   const title = useEditorStore((s) => s.title);
@@ -18,6 +20,18 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish }: EditorTo
   const isDirty = useEditorStore((s) => s.isDirty);
   const isSaving = useEditorStore((s) => s.isSaving);
   const lastSavedAt = useEditorStore((s) => s.lastSavedAt);
+  const editingComponentId = useEditorStore((s) => s.editingComponentId);
+  const activeGroupRole = useEditorStore((s) => s.activeGroupRole);
+  const exitComponent = useEditorStore((s) => s.exitComponent);
+  const objects = useEditorStore((s) => s.objects);
+
+  const editingComponent = editingComponentId
+    ? objects.find((o) => o.id === editingComponentId)
+    : null;
+  const editingName = editingComponent ? editingComponent.name : '';
+  const groupLabel = editingComponent && editingComponent.type === 'interactive' && activeGroupRole
+    ? editingComponent.groups.find((g) => g.role === activeGroupRole)?.label || ''
+    : '';
 
   // Undo/redo from temporal store
   const temporalStore = useEditorStore.temporal;
@@ -94,6 +108,44 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish }: EditorTo
           (e.target as HTMLInputElement).style.backgroundColor = 'transparent';
         }}
       />
+
+      {/* Breadcrumb when editing component */}
+      {editingComponentId && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 12,
+            color: colors.textLight,
+          }}
+        >
+          <button
+            onClick={exitComponent}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12,
+              color: colors.primary,
+              fontWeight: 500,
+              padding: 0,
+            }}
+          >
+            Canvas
+          </button>
+          <span>/</span>
+          <span style={{ fontWeight: 600, color: colors.textDark }}>
+            {editingName}
+          </span>
+          {groupLabel && (
+            <>
+              <span>/</span>
+              <span style={{ fontWeight: 500 }}>{groupLabel}</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Save status */}
       <div
@@ -181,6 +233,28 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish }: EditorTo
         }}
       />
 
+      {/* AI Generate */}
+      <button
+        onClick={onAIGenerate}
+        title="Generate with AI"
+        style={{
+          padding: '6px 14px',
+          borderRadius: 8,
+          border: 'none',
+          background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 500,
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+        }}
+      >
+        <span style={{ fontSize: 14 }}>&#9733;</span>
+        AI Generate
+      </button>
+
       {/* Save */}
       <button
         onClick={onSave}
@@ -231,6 +305,24 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish }: EditorTo
         }}
       >
         Publish
+      </button>
+
+      {/* Preview */}
+      <button
+        onClick={onPreview}
+        title="Preview (P)"
+        style={{
+          padding: '6px 14px',
+          borderRadius: 8,
+          border: `1px solid ${colors.borderCard}`,
+          backgroundColor: 'transparent',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 500,
+          color: colors.textDark,
+        }}
+      >
+        Preview
       </button>
 
       {/* Export */}

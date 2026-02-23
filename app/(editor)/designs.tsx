@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDesignCRUD } from '../../features/design-editor/hooks/useDesignCRUD';
 import { DesignCard } from '../../features/design-editor/components/DesignCard';
-import { CANVAS_PRESETS } from '../../features/design-editor/types/document';
+import { AIGenerateModal } from '../../features/design-editor/components/AIGenerateModal';
+import { MOBILE_CANVAS } from '../../features/design-editor/types/document';
 import type { DesignDocument } from '../../features/design-editor/types/document';
 
 export default function DesignsDashboard() {
@@ -11,18 +12,18 @@ export default function DesignsDashboard() {
   const { colors } = useTheme();
   const { designs, loading, fetchDesigns, createDesign, deleteDesign, duplicateDesign } =
     useDesignCRUD();
-  const [showNewModal, setShowNewModal] = useState(false);
+  const [showAIGenerate, setShowAIGenerate] = useState(false);
 
   useEffect(() => {
     fetchDesigns();
   }, [fetchDesigns]);
 
-  const handleCreate = async (preset?: (typeof CANVAS_PRESETS)[number]) => {
+  const handleCreate = async () => {
     const doc: DesignDocument = {
       version: 1,
       canvas: {
-        width: preset?.width ?? 1280,
-        height: preset?.height ?? 720,
+        width: MOBILE_CANVAS.width,
+        height: MOBILE_CANVAS.height,
         background: '#FFFFFF',
       },
       objects: [],
@@ -32,7 +33,6 @@ export default function DesignsDashboard() {
     if (id) {
       router.push(`/(editor)/design/${id}`);
     }
-    setShowNewModal(false);
   };
 
   return (
@@ -93,24 +93,45 @@ export default function DesignsDashboard() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          style={{
-            backgroundColor: colors.primary,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 12,
-            padding: '12px 24px',
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          + New Design
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setShowAIGenerate(true)}
+            style={{
+              background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 24px',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 16 }}>&#9733;</span>
+            Generate with AI
+          </button>
+          <button
+            onClick={handleCreate}
+            style={{
+              backgroundColor: colors.primary,
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 24px',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            + New Design
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -151,7 +172,7 @@ export default function DesignsDashboard() {
               Create your first design to get started
             </div>
             <button
-              onClick={() => setShowNewModal(true)}
+              onClick={handleCreate}
               style={{
                 backgroundColor: colors.primary,
                 color: '#fff',
@@ -188,130 +209,17 @@ export default function DesignsDashboard() {
         )}
       </div>
 
-      {/* New Design Modal */}
-      {showNewModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowNewModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: colors.white,
-              borderRadius: 20,
-              padding: 32,
-              width: 420,
-              maxWidth: '90vw',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: colors.textDark,
-                margin: '0 0 4px',
-              }}
-            >
-              New Design
-            </h2>
-            <p
-              style={{
-                fontSize: 14,
-                color: colors.textLight,
-                margin: '0 0 24px',
-              }}
-            >
-              Choose a canvas size
-            </p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 10,
-              }}
-            >
-              {CANVAS_PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  onClick={() => handleCreate(preset)}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: 12,
-                    border: `1px solid ${colors.borderCard}`,
-                    backgroundColor: colors.appBackground,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      colors.primary;
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      colors.backgroundLight;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      colors.borderCard;
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      colors.appBackground;
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: colors.textDark,
-                      marginBottom: 2,
-                    }}
-                  >
-                    {preset.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: colors.textLight,
-                    }}
-                  >
-                    {preset.width} x {preset.height}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginTop: 20,
-                gap: 10,
-              }}
-            >
-              <button
-                onClick={() => setShowNewModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 10,
-                  border: `1px solid ${colors.borderCard}`,
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  color: colors.textDark,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* AI Generate Modal */}
+      <AIGenerateModal
+        visible={showAIGenerate}
+        onClose={() => setShowAIGenerate(false)}
+        onDesignGenerated={async (doc: DesignDocument, title: string) => {
+          const id = await createDesign(title || 'AI Generated Design', doc);
+          if (id) {
+            router.push(`/(editor)/design/${id}`);
+          }
+        }}
+      />
     </div>
   );
 }

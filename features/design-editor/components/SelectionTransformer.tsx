@@ -10,7 +10,6 @@ interface SelectionTransformerProps {
 export function SelectionTransformer({ stageRef }: SelectionTransformerProps) {
   const transformerRef = useRef<Konva.Transformer>(null);
   const selectedIds = useEditorStore((s) => s.selectedIds);
-  const updateObject = useEditorStore((s) => s.updateObject);
 
   useEffect(() => {
     if (!transformerRef.current || !stageRef.current) return;
@@ -47,23 +46,6 @@ export function SelectionTransformer({ stageRef }: SelectionTransformerProps) {
       boundBoxFunc={(oldBox, newBox) => {
         if (newBox.width < 5 || newBox.height < 5) return oldBox;
         return newBox;
-      }}
-      onTransformEnd={() => {
-        const nodes = transformerRef.current?.nodes() || [];
-        nodes.forEach((node) => {
-          const scaleX = node.scaleX();
-          const scaleY = node.scaleY();
-          node.scaleX(1);
-          node.scaleY(1);
-
-          updateObject(node.id(), {
-            x: Math.round(node.x()),
-            y: Math.round(node.y()),
-            width: Math.max(5, Math.round(node.width() * scaleX)),
-            height: Math.max(5, Math.round(node.height() * scaleY)),
-            rotation: Math.round(node.rotation() * 10) / 10,
-          });
-        });
       }}
     />
   );

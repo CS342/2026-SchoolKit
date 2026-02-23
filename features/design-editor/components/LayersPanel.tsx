@@ -8,6 +8,7 @@ const TYPE_ICONS: Record<string, string> = {
   text: 'T',
   image: '🖼',
   line: '╱',
+  interactive: '⚡',
 };
 
 export function LayersPanel() {

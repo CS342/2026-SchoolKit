@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
-import type { DesignObject } from '../types/document';
+import type { DesignObject, InteractiveComponentObject } from '../types/document';
+import { InteractiveProperties } from './InteractiveProperties';
 
 function NumberInput({
   label,
@@ -207,14 +208,32 @@ export function PropertiesPanel() {
     'properties',
   );
 
+  const editingComponentId = useEditorStore((s) => s.editingComponentId);
+  const updateChildObject = useEditorStore((s) => s.updateChildObject);
+
   const selected =
     selectedIds.length === 1
       ? objects.find((o) => o.id === selectedIds[0])
       : null;
 
+  // In component editing mode, find child from the editing component
+  const editingComponent = editingComponentId
+    ? objects.find((o) => o.id === editingComponentId)
+    : null;
+  const selectedChild =
+    editingComponentId && editingComponent && editingComponent.type === 'interactive' && selectedIds.length === 1
+      ? editingComponent.children.find((c) => c.id === selectedIds[0])
+      : null;
+
   const update = (changes: Partial<DesignObject>) => {
-    if (selected) updateObject(selected.id, changes);
+    if (editingComponentId && selectedChild) {
+      updateChildObject(selectedChild.id, changes as any);
+    } else if (selected) {
+      updateObject(selected.id, changes);
+    }
   };
+
+  const displayObject = editingComponentId ? selectedChild : selected;
 
   return (
     <div
@@ -266,8 +285,12 @@ export function PropertiesPanel() {
       >
         {activeTab === 'canvas' ? (
           <CanvasProperties />
-        ) : selected ? (
-          <ObjectProperties object={selected} onUpdate={update} />
+        ) : displayObject ? (
+          displayObject.type === 'interactive' ? (
+            <InteractiveProperties object={displayObject as InteractiveComponentObject} />
+          ) : (
+            <ObjectProperties object={displayObject} onUpdate={update} />
+          )
         ) : selectedIds.length > 1 ? (
           <div
             style={{

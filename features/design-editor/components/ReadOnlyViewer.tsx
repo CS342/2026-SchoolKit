@@ -68,6 +68,9 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
           lineJoin={object.lineJoin}
         />
       );
+    case 'interactive':
+      // Interactive components require the RuntimeRenderer; skip in Konva read-only view
+      return null;
     default:
       return null;
   }

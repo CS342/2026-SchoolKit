@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Platform, ScrollView, Image, TouchableOpacity, Share } from 'react-native';
+import { View, Text, ActivityIndicator, Platform, ScrollView, Image, TouchableOpacity, Share, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,12 +9,18 @@ import { BookmarkButton } from '../../components/BookmarkButton';
 import { DownloadButton } from '../../components/DownloadButton';
 import { COLORS, SHADOWS } from '../../constants/onboarding-theme';
 import type { DesignDocument } from '../../features/design-editor/types/document';
+import { RuntimeRenderer } from '../../features/design-editor/components/runtime/RuntimeRenderer';
 
 // Dynamically import Konva components only on web
 let Stage: any = null;
 let Layer: any = null;
 let KonvaRect: any = null;
 let ReadOnlyObjectComponent: any = null;
+let WebPreviewObject: any = null;
+let WebPreviewFlipCard: any = null;
+let WebPreviewBottomSheet: any = null;
+let WebPreviewExpandable: any = null;
+let WebPreviewEntrance: any = null;
 
 if (Platform.OS === 'web') {
   const konva = require('react-konva');
@@ -23,6 +29,16 @@ if (Platform.OS === 'web') {
   KonvaRect = konva.Rect;
   ReadOnlyObjectComponent =
     require('../../features/design-editor/components/ReadOnlyViewer').ReadOnlyObject;
+  WebPreviewObject =
+    require('../../features/design-editor/components/preview/PreviewObject').PreviewObject;
+  WebPreviewFlipCard =
+    require('../../features/design-editor/components/preview/PreviewFlipCard').PreviewFlipCard;
+  WebPreviewBottomSheet =
+    require('../../features/design-editor/components/preview/PreviewBottomSheet').PreviewBottomSheet;
+  WebPreviewExpandable =
+    require('../../features/design-editor/components/preview/PreviewExpandable').PreviewExpandable;
+  WebPreviewEntrance =
+    require('../../features/design-editor/components/preview/PreviewEntrance').PreviewEntrance;
 }
 
 interface DesignData {
@@ -153,6 +169,7 @@ export default function DesignViewPage() {
   if (Platform.OS === 'web' && Stage) {
     const scale = viewportWidth / design.doc.canvas.width;
     const scaledHeight = design.doc.canvas.height * scale;
+    const webHasInteractive = design.doc.objects.some((o: any) => o.type === 'interactive');
 
     const handleShare = async () => {
       try {
@@ -206,36 +223,115 @@ export default function DesignViewPage() {
           </View>
         </View>
 
-        {/* Scrollable canvas area */}
-        <ScrollView
-          style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
-          contentContainerStyle={{
-            minHeight: '100%',
-            justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
-          } as any}
-        >
-          <Stage
-            width={viewportWidth}
-            height={scaledHeight}
-            scaleX={scale}
-            scaleY={scale}
+        {webHasInteractive ? (
+          /* HTML/CSS-based renderer for documents with interactive components */
+          <ScrollView
+            style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
+            contentContainerStyle={{
+              minHeight: '100%',
+              justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
+              alignItems: 'center',
+            } as any}
           >
-            <Layer>
-              <KonvaRect
-                x={0}
-                y={0}
-                width={design.doc.canvas.width}
-                height={design.doc.canvas.height}
-                fill={design.doc.canvas.background}
-              />
-              {design.doc.objects
-                .filter((o) => o.visible)
-                .map((obj) => (
-                  <ReadOnlyObjectComponent key={obj.id} object={obj} />
-                ))}
-            </Layer>
-          </Stage>
-        </ScrollView>
+            <div
+              style={{
+                width: viewportWidth,
+                height: scaledHeight,
+                position: 'relative' as const,
+                overflow: 'hidden' as const,
+              }}
+            >
+              <div
+                style={{
+                  width: design.doc.canvas.width,
+                  height: design.doc.canvas.height,
+                  backgroundColor: design.doc.canvas.background,
+                  position: 'relative' as const,
+                  transform: `scale(${scale})`,
+                  transformOrigin: '0 0',
+                }}
+              >
+                {design.doc.objects
+                  .filter((o: any) => o.visible)
+                  .map((obj: any) => (
+                    <WebDesignObject key={obj.id} object={obj} />
+                  ))}
+              </div>
+            </div>
+          </ScrollView>
+        ) : (
+          /* Konva-based renderer for static-only documents */
+          <ScrollView
+            style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
+            contentContainerStyle={{
+              minHeight: '100%',
+              justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
+            } as any}
+          >
+            <Stage
+              width={viewportWidth}
+              height={scaledHeight}
+              scaleX={scale}
+              scaleY={scale}
+            >
+              <Layer>
+                <KonvaRect
+                  x={0}
+                  y={0}
+                  width={design.doc.canvas.width}
+                  height={design.doc.canvas.height}
+                  fill={design.doc.canvas.background}
+                />
+                {design.doc.objects
+                  .filter((o: any) => o.visible)
+                  .map((obj: any) => (
+                    <ReadOnlyObjectComponent key={obj.id} object={obj} />
+                  ))}
+              </Layer>
+            </Stage>
+          </ScrollView>
+        )}
+      </View>
+    );
+  }
+
+  // Check if design has interactive components
+  const hasInteractive = design.doc.objects.some((o) => o.type === 'interactive');
+  const screenWidth = Dimensions.get('window').width;
+
+  // On mobile with interactive components, use RuntimeRenderer
+  if (hasInteractive) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingTop: insets.top + 10,
+            paddingBottom: 12,
+            backgroundColor: colors.white,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.borderCard,
+          }}
+        >
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.textDark} />
+          </TouchableOpacity>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: 17,
+              fontWeight: '600',
+              color: colors.textDark,
+              marginLeft: 12,
+            }}
+            numberOfLines={1}
+          >
+            {design.title}
+          </Text>
+        </View>
+        <RuntimeRenderer doc={design.doc} width={screenWidth} />
       </View>
     );
   }
@@ -315,4 +411,24 @@ export default function DesignViewPage() {
       </ScrollView>
     </View>
   );
+}
+
+/** Renders a single design object as HTML on web — dispatches interactive
+ *  components to the appropriate preview component. */
+function WebDesignObject({ object }: { object: any }) {
+  if (object.type === 'interactive') {
+    switch (object.interactionType) {
+      case 'flip-card':
+        return WebPreviewFlipCard ? <WebPreviewFlipCard object={object} /> : null;
+      case 'bottom-sheet':
+        return WebPreviewBottomSheet ? <WebPreviewBottomSheet object={object} /> : null;
+      case 'expandable':
+        return WebPreviewExpandable ? <WebPreviewExpandable object={object} /> : null;
+      case 'entrance':
+        return WebPreviewEntrance ? <WebPreviewEntrance object={object} /> : null;
+      default:
+        return null;
+    }
+  }
+  return WebPreviewObject ? <WebPreviewObject object={object} /> : null;
 }
