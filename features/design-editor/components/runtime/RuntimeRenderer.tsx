@@ -6,6 +6,9 @@ import { RuntimeFlipCard } from './RuntimeFlipCard';
 import { RuntimeBottomSheet } from './RuntimeBottomSheet';
 import { RuntimeExpandable } from './RuntimeExpandable';
 import { RuntimeEntrance } from './RuntimeEntrance';
+import { RuntimeCarousel } from './RuntimeCarousel';
+import { RuntimeTabs } from './RuntimeTabs';
+import { RuntimeQuiz } from './RuntimeQuiz';
 
 interface RuntimeRendererProps {
   doc: DesignDocument;
@@ -59,6 +62,12 @@ function RuntimeInteractive({ object }: { object: InteractiveComponentObject }) 
       return <RuntimeExpandable object={object} />;
     case 'entrance':
       return <RuntimeEntrance object={object} />;
+    case 'carousel':
+      return <RuntimeCarousel object={object} />;
+    case 'tabs':
+      return <RuntimeTabs object={object} />;
+    case 'quiz':
+      return <RuntimeQuiz object={object} />;
     default:
       return null;
   }

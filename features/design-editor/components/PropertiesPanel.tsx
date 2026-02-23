@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
-import type { DesignObject, InteractiveComponentObject } from '../types/document';
+import type { DesignObject, InteractiveComponentObject, GradientConfig, ShadowConfig, StrokeDashPreset } from '../types/document';
 import { InteractiveProperties } from './InteractiveProperties';
 import { AlignmentToolbar } from './AlignmentToolbar';
 
@@ -171,6 +171,38 @@ function SelectInput({
   );
 }
 
+function CheckboxInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        fontSize: 13,
+        color: colors.textDark,
+        cursor: 'pointer',
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ accentColor: colors.primary }}
+      />
+      {label}
+    </label>
+  );
+}
+
 function Section({
   title,
   children,
@@ -198,6 +230,119 @@ function Section({
   );
 }
 
+// ─── Shared font options ──────────────────────────────────────
+const FONT_OPTIONS = [
+  // Sans-serif
+  { value: 'Arial', label: 'Arial' },
+  { value: 'Helvetica', label: 'Helvetica' },
+  { value: 'Verdana', label: 'Verdana' },
+  { value: 'Trebuchet MS', label: 'Trebuchet MS' },
+  { value: 'Gill Sans', label: 'Gill Sans' },
+  { value: 'Tahoma', label: 'Tahoma' },
+  { value: 'Lucida Sans', label: 'Lucida Sans' },
+  // Serif
+  { value: 'Times New Roman', label: 'Times New Roman' },
+  { value: 'Georgia', label: 'Georgia' },
+  { value: 'Palatino', label: 'Palatino' },
+  { value: 'Garamond', label: 'Garamond' },
+  { value: 'Baskerville', label: 'Baskerville' },
+  // Monospace
+  { value: 'Courier New', label: 'Courier New' },
+  { value: 'Monaco', label: 'Monaco' },
+  { value: 'Menlo', label: 'Menlo' },
+  // Display
+  { value: 'Impact', label: 'Impact' },
+  { value: 'Copperplate', label: 'Copperplate' },
+  { value: 'Papyrus', label: 'Papyrus' },
+  { value: 'Brush Script MT', label: 'Brush Script MT' },
+];
+
+// ─── Text Decoration Input ────────────────────────────────────
+function TextDecorationInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const hasUnderline = (value || '').includes('underline');
+  const hasLineThrough = (value || '').includes('line-through');
+
+  const toggle = (part: string, on: boolean) => {
+    const parts = (value || '').split(' ').filter(Boolean);
+    const next = on ? [...parts, part] : parts.filter((p) => p !== part);
+    onChange(next.join(' '));
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 12 }}>
+      <CheckboxInput
+        label="Underline"
+        value={hasUnderline}
+        onChange={(on) => toggle('underline', on)}
+      />
+      <CheckboxInput
+        label="Strikethrough"
+        value={hasLineThrough}
+        onChange={(on) => toggle('line-through', on)}
+      />
+    </div>
+  );
+}
+
+// ─── Stroke Dash Section ──────────────────────────────────────
+function StrokeDashSection({
+  dash,
+  lineCap,
+  lineJoin,
+  onUpdate,
+}: {
+  dash: StrokeDashPreset | undefined;
+  lineCap: string | undefined;
+  lineJoin: string | undefined;
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  return (
+    <Section title="Stroke Style">
+      <div style={{ marginBottom: 6 }}>
+        <SelectInput
+          label="Dash Pattern"
+          value={dash ?? 'solid'}
+          options={[
+            { value: 'solid', label: 'Solid' },
+            { value: 'dashed', label: 'Dashed' },
+            { value: 'dotted', label: 'Dotted' },
+            { value: 'dash-dot', label: 'Dash-Dot' },
+          ]}
+          onChange={(v) => onUpdate({ dash: v } as any)}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <SelectInput
+          label="Line Cap"
+          value={lineCap ?? 'butt'}
+          options={[
+            { value: 'butt', label: 'Butt' },
+            { value: 'round', label: 'Round' },
+            { value: 'square', label: 'Square' },
+          ]}
+          onChange={(v) => onUpdate({ lineCap: v } as any)}
+        />
+        <SelectInput
+          label="Line Join"
+          value={lineJoin ?? 'miter'}
+          options={[
+            { value: 'miter', label: 'Miter' },
+            { value: 'round', label: 'Round' },
+            { value: 'bevel', label: 'Bevel' },
+          ]}
+          onChange={(v) => onUpdate({ lineJoin: v } as any)}
+        />
+      </div>
+    </Section>
+  );
+}
+
 export function PropertiesPanel() {
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const objects = useEditorStore((s) => s.objects);
@@ -217,7 +362,6 @@ export function PropertiesPanel() {
       ? objects.find((o) => o.id === selectedIds[0])
       : null;
 
-  // In component editing mode, find child from the editing component
   const editingComponent = editingComponentId
     ? objects.find((o) => o.id === editingComponentId)
     : null;
@@ -432,9 +576,181 @@ function ObjectProperties({
       {object.type === 'line' && (
         <LineProperties object={object} onUpdate={onUpdate} />
       )}
+
+      {object.type === 'star' && (
+        <StarProperties object={object} onUpdate={onUpdate} />
+      )}
+
+      {object.type === 'triangle' && (
+        <TriangleProperties object={object} onUpdate={onUpdate} />
+      )}
+
+      {object.type === 'arrow' && (
+        <ArrowProperties object={object} onUpdate={onUpdate} />
+      )}
+
+      {object.type === 'badge' && (
+        <BadgeProperties object={object} onUpdate={onUpdate} />
+      )}
     </>
   );
 }
+
+// ─── Gradient / Shadow / Blur sections ─────────────────────────
+
+function GradientSection({
+  gradient,
+  onUpdate,
+}: {
+  gradient: GradientConfig | null | undefined;
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const enabled = !!gradient;
+  return (
+    <Section title="Gradient">
+      <div style={{ marginBottom: 8 }}>
+        <CheckboxInput
+          label="Enable gradient"
+          value={enabled}
+          onChange={(on) => {
+            if (on) {
+              onUpdate({ gradient: { type: 'linear', colors: ['#7B68EE', '#0EA5E9'], angle: 90 } } as any);
+            } else {
+              onUpdate({ gradient: null } as any);
+            }
+          }}
+        />
+      </div>
+      {enabled && gradient && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <SelectInput
+              label="Type"
+              value={gradient.type}
+              options={[
+                { value: 'linear', label: 'Linear' },
+                { value: 'radial', label: 'Radial' },
+              ]}
+              onChange={(v) => onUpdate({ gradient: { ...gradient, type: v as 'linear' | 'radial' } } as any)}
+            />
+            {gradient.type === 'linear' && (
+              <NumberInput
+                label="Angle"
+                value={gradient.angle ?? 0}
+                onChange={(v) => onUpdate({ gradient: { ...gradient, angle: v } } as any)}
+                min={0}
+                max={360}
+              />
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <ColorInput
+              label="Start"
+              value={gradient.colors[0] || '#7B68EE'}
+              onChange={(c) => {
+                const colors = [...gradient.colors];
+                colors[0] = c;
+                onUpdate({ gradient: { ...gradient, colors } } as any);
+              }}
+            />
+            <ColorInput
+              label="End"
+              value={gradient.colors[1] || '#0EA5E9'}
+              onChange={(c) => {
+                const colors = [...gradient.colors];
+                colors[1] = c;
+                onUpdate({ gradient: { ...gradient, colors } } as any);
+              }}
+            />
+          </div>
+        </>
+      )}
+    </Section>
+  );
+}
+
+function ShadowSection({
+  shadow,
+  onUpdate,
+}: {
+  shadow: ShadowConfig | null | undefined;
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const enabled = !!shadow;
+  return (
+    <Section title="Shadow">
+      <div style={{ marginBottom: 8 }}>
+        <CheckboxInput
+          label="Enable shadow"
+          value={enabled}
+          onChange={(on) => {
+            if (on) {
+              onUpdate({ shadow: { color: 'rgba(0,0,0,0.25)', offsetX: 0, offsetY: 4, blur: 12 } } as any);
+            } else {
+              onUpdate({ shadow: null } as any);
+            }
+          }}
+        />
+      </div>
+      {enabled && shadow && (
+        <>
+          <div style={{ marginBottom: 8 }}>
+            <ColorInput
+              label="Color"
+              value={shadow.color}
+              onChange={(c) => onUpdate({ shadow: { ...shadow, color: c } } as any)}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <NumberInput
+              label="Offset X"
+              value={shadow.offsetX}
+              onChange={(v) => onUpdate({ shadow: { ...shadow, offsetX: v } } as any)}
+              min={-50}
+              max={50}
+            />
+            <NumberInput
+              label="Offset Y"
+              value={shadow.offsetY}
+              onChange={(v) => onUpdate({ shadow: { ...shadow, offsetY: v } } as any)}
+              min={-50}
+              max={50}
+            />
+          </div>
+          <NumberInput
+            label="Blur"
+            value={shadow.blur}
+            onChange={(v) => onUpdate({ shadow: { ...shadow, blur: v } } as any)}
+            min={0}
+            max={50}
+          />
+        </>
+      )}
+    </Section>
+  );
+}
+
+function BlurSection({
+  blur,
+  onUpdate,
+}: {
+  blur: number | undefined;
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  return (
+    <Section title="Blur">
+      <NumberInput
+        label="Blur Radius"
+        value={blur || 0}
+        onChange={(v) => onUpdate({ blur: Math.max(0, Math.min(20, v)) } as any)}
+        min={0}
+        max={20}
+      />
+    </Section>
+  );
+}
+
+// ─── Shape properties (rect/ellipse) ──────────────────────────
 
 function ShapeProperties({
   object,
@@ -443,6 +759,10 @@ function ShapeProperties({
   object: DesignObject & { fill: string; stroke: string; strokeWidth: number };
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const gradient = (object as any).gradient as GradientConfig | null | undefined;
+  const shadow = (object as any).shadow as ShadowConfig | null | undefined;
+  const blur = (object as any).blur as number | undefined;
+
   return (
     <>
       <Section title="Fill & Stroke">
@@ -486,6 +806,17 @@ function ShapeProperties({
           />
         </Section>
       )}
+
+      <StrokeDashSection
+        dash={(object as any).dash}
+        lineCap={(object as any).lineCap}
+        lineJoin={(object as any).lineJoin}
+        onUpdate={onUpdate}
+      />
+
+      <GradientSection gradient={gradient} onUpdate={onUpdate} />
+      <ShadowSection shadow={shadow} onUpdate={onUpdate} />
+      <BlurSection blur={blur} onUpdate={onUpdate} />
     </>
   );
 }
@@ -498,6 +829,7 @@ function TextProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const { colors } = useTheme();
+  const shadow = (object as any).shadow as ShadowConfig | null | undefined;
   return (
     <>
       <Section title="Text">
@@ -527,15 +859,7 @@ function TextProperties({
           <SelectInput
             label="Family"
             value={object.fontFamily}
-            options={[
-              { value: 'Arial', label: 'Arial' },
-              { value: 'Helvetica', label: 'Helvetica' },
-              { value: 'Times New Roman', label: 'Times New Roman' },
-              { value: 'Georgia', label: 'Georgia' },
-              { value: 'Courier New', label: 'Courier New' },
-              { value: 'Verdana', label: 'Verdana' },
-              { value: 'Impact', label: 'Impact' },
-            ]}
+            options={FONT_OPTIONS}
             onChange={(fontFamily) =>
               onUpdate({ fontFamily } as Partial<DesignObject>)
             }
@@ -562,7 +886,7 @@ function TextProperties({
             step={0.1}
           />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <SelectInput
             label="Style"
             value={object.fontStyle}
@@ -583,12 +907,58 @@ function TextProperties({
               { value: 'left', label: 'Left' },
               { value: 'center', label: 'Center' },
               { value: 'right', label: 'Right' },
+              { value: 'justify', label: 'Justify' },
             ]}
             onChange={(align) =>
               onUpdate({ align } as Partial<DesignObject>)
             }
           />
         </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <NumberInput
+            label="Letter Spacing"
+            value={object.letterSpacing ?? 0}
+            onChange={(v) => onUpdate({ letterSpacing: v } as any)}
+            min={-5}
+            max={50}
+            step={0.5}
+          />
+          <NumberInput
+            label="Padding"
+            value={object.padding ?? 0}
+            onChange={(v) => onUpdate({ padding: v } as any)}
+            min={0}
+            max={100}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <SelectInput
+            label="Vertical Align"
+            value={object.verticalAlign ?? 'top'}
+            options={[
+              { value: 'top', label: 'Top' },
+              { value: 'middle', label: 'Middle' },
+              { value: 'bottom', label: 'Bottom' },
+            ]}
+            onChange={(v) => onUpdate({ verticalAlign: v } as any)}
+          />
+          <SelectInput
+            label="Font Variant"
+            value={object.fontVariant ?? 'normal'}
+            options={[
+              { value: 'normal', label: 'Normal' },
+              { value: 'small-caps', label: 'Small Caps' },
+            ]}
+            onChange={(v) => onUpdate({ fontVariant: v } as any)}
+          />
+        </div>
+      </Section>
+
+      <Section title="Text Decoration">
+        <TextDecorationInput
+          value={object.textDecoration ?? ''}
+          onChange={(v) => onUpdate({ textDecoration: v } as any)}
+        />
       </Section>
 
       <Section title="Color">
@@ -598,6 +968,26 @@ function TextProperties({
           onChange={(fill) => onUpdate({ fill } as Partial<DesignObject>)}
         />
       </Section>
+
+      <Section title="Text Outline">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ColorInput
+            label="Outline Color"
+            value={object.stroke ?? ''}
+            onChange={(v) => onUpdate({ stroke: v } as any)}
+          />
+          <NumberInput
+            label="Outline Width"
+            value={object.strokeWidth ?? 0}
+            onChange={(v) => onUpdate({ strokeWidth: v } as any)}
+            min={0}
+            max={10}
+            step={0.5}
+          />
+        </div>
+      </Section>
+
+      <ShadowSection shadow={shadow} onUpdate={onUpdate} />
     </>
   );
 }
@@ -610,25 +1000,342 @@ function LineProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   return (
-    <Section title="Line">
-      <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-        <ColorInput
-          label="Stroke"
-          value={object.stroke}
-          onChange={(stroke) =>
-            onUpdate({ stroke } as Partial<DesignObject>)
-          }
+    <>
+      <Section title="Line">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <ColorInput
+            label="Stroke"
+            value={object.stroke}
+            onChange={(stroke) =>
+              onUpdate({ stroke } as Partial<DesignObject>)
+            }
+          />
+          <NumberInput
+            label="Width"
+            value={object.strokeWidth}
+            onChange={(strokeWidth) =>
+              onUpdate({ strokeWidth } as Partial<DesignObject>)
+            }
+            min={1}
+            max={20}
+          />
+        </div>
+      </Section>
+
+      <Section title="Stroke Style">
+        <div style={{ marginBottom: 6 }}>
+          <SelectInput
+            label="Dash Pattern"
+            value={object.dash ?? 'solid'}
+            options={[
+              { value: 'solid', label: 'Solid' },
+              { value: 'dashed', label: 'Dashed' },
+              { value: 'dotted', label: 'Dotted' },
+              { value: 'dash-dot', label: 'Dash-Dot' },
+            ]}
+            onChange={(v) => onUpdate({ dash: v } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <SelectInput
+            label="Line Cap"
+            value={object.lineCap}
+            options={[
+              { value: 'butt', label: 'Butt' },
+              { value: 'round', label: 'Round' },
+              { value: 'square', label: 'Square' },
+            ]}
+            onChange={(v) => onUpdate({ lineCap: v } as any)}
+          />
+          <SelectInput
+            label="Line Join"
+            value={object.lineJoin}
+            options={[
+              { value: 'miter', label: 'Miter' },
+              { value: 'round', label: 'Round' },
+              { value: 'bevel', label: 'Bevel' },
+            ]}
+            onChange={(v) => onUpdate({ lineJoin: v } as any)}
+          />
+        </div>
+      </Section>
+    </>
+  );
+}
+
+// ─── New shape property sections ──────────────────────────────
+
+function StarProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'star' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  return (
+    <>
+      <Section title="Star">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <NumberInput
+            label="Points"
+            value={object.points}
+            onChange={(v) => onUpdate({ points: Math.max(3, Math.min(12, Math.round(v))) } as any)}
+            min={3}
+            max={12}
+          />
+          <NumberInput
+            label="Inner Radius"
+            value={object.innerRadius}
+            onChange={(v) => onUpdate({ innerRadius: Math.max(0.3, Math.min(0.9, v)) } as any)}
+            min={0.3}
+            max={0.9}
+            step={0.05}
+          />
+        </div>
+      </Section>
+
+      <Section title="Fill & Stroke">
+        <div style={{ marginBottom: 8 }}>
+          <ColorInput
+            label="Fill"
+            value={object.fill}
+            onChange={(fill) => onUpdate({ fill } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ColorInput
+            label="Stroke"
+            value={object.stroke}
+            onChange={(stroke) => onUpdate({ stroke } as any)}
+          />
+          <NumberInput
+            label="Width"
+            value={object.strokeWidth}
+            onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
+            min={0}
+            max={20}
+          />
+        </div>
+      </Section>
+
+      <StrokeDashSection
+        dash={object.dash}
+        lineCap={object.lineCap}
+        lineJoin={object.lineJoin}
+        onUpdate={onUpdate}
+      />
+
+      <GradientSection gradient={object.gradient} onUpdate={onUpdate} />
+      <ShadowSection shadow={object.shadow} onUpdate={onUpdate} />
+    </>
+  );
+}
+
+function TriangleProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'triangle' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  return (
+    <>
+      <Section title="Fill & Stroke">
+        <div style={{ marginBottom: 8 }}>
+          <ColorInput
+            label="Fill"
+            value={object.fill}
+            onChange={(fill) => onUpdate({ fill } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ColorInput
+            label="Stroke"
+            value={object.stroke}
+            onChange={(stroke) => onUpdate({ stroke } as any)}
+          />
+          <NumberInput
+            label="Width"
+            value={object.strokeWidth}
+            onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
+            min={0}
+            max={20}
+          />
+        </div>
+      </Section>
+
+      <StrokeDashSection
+        dash={object.dash}
+        lineCap={object.lineCap}
+        lineJoin={object.lineJoin}
+        onUpdate={onUpdate}
+      />
+
+      <GradientSection gradient={object.gradient} onUpdate={onUpdate} />
+      <ShadowSection shadow={object.shadow} onUpdate={onUpdate} />
+    </>
+  );
+}
+
+function ArrowProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'arrow' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  return (
+    <>
+      <Section title="Arrow">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <ColorInput
+            label="Stroke"
+            value={object.stroke}
+            onChange={(stroke) => onUpdate({ stroke } as any)}
+          />
+          <NumberInput
+            label="Width"
+            value={object.strokeWidth}
+            onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
+            min={1}
+            max={20}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <NumberInput
+            label="Pointer Length"
+            value={object.pointerLength}
+            onChange={(v) => onUpdate({ pointerLength: v } as any)}
+            min={5}
+            max={50}
+          />
+          <NumberInput
+            label="Pointer Width"
+            value={object.pointerWidth}
+            onChange={(v) => onUpdate({ pointerWidth: v } as any)}
+            min={5}
+            max={50}
+          />
+        </div>
+      </Section>
+
+      <StrokeDashSection
+        dash={object.dash}
+        lineCap={object.lineCap}
+        lineJoin={object.lineJoin}
+        onUpdate={onUpdate}
+      />
+    </>
+  );
+}
+
+function BadgeProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'badge' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <>
+      <Section title="Badge Text">
+        <input
+          type="text"
+          value={object.text}
+          onChange={(e) => onUpdate({ text: e.target.value } as any)}
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+            fontSize: 13,
+            color: colors.textDark,
+            backgroundColor: colors.appBackground,
+            boxSizing: 'border-box',
+            marginBottom: 8,
+          }}
         />
+        <div style={{ marginBottom: 6 }}>
+          <SelectInput
+            label="Font Family"
+            value={object.fontFamily}
+            options={FONT_OPTIONS}
+            onChange={(v) => onUpdate({ fontFamily: v } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <NumberInput
+            label="Font Size"
+            value={object.fontSize}
+            onChange={(v) => onUpdate({ fontSize: v } as any)}
+            min={8}
+            max={48}
+          />
+          <ColorInput
+            label="Text Color"
+            value={object.textColor}
+            onChange={(v) => onUpdate({ textColor: v } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <SelectInput
+            label="Align"
+            value={object.align ?? 'center'}
+            options={[
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Center' },
+              { value: 'right', label: 'Right' },
+              { value: 'justify', label: 'Justify' },
+            ]}
+            onChange={(v) => onUpdate({ align: v } as any)}
+          />
+          <SelectInput
+            label="Vertical Align"
+            value={object.verticalAlign ?? 'middle'}
+            options={[
+              { value: 'top', label: 'Top' },
+              { value: 'middle', label: 'Middle' },
+              { value: 'bottom', label: 'Bottom' },
+            ]}
+            onChange={(v) => onUpdate({ verticalAlign: v } as any)}
+          />
+        </div>
+        <div style={{ marginBottom: 6 }}>
+          <NumberInput
+            label="Letter Spacing"
+            value={object.letterSpacing ?? 0}
+            onChange={(v) => onUpdate({ letterSpacing: v } as any)}
+            min={-5}
+            max={50}
+            step={0.5}
+          />
+        </div>
+        <TextDecorationInput
+          value={object.textDecoration ?? ''}
+          onChange={(v) => onUpdate({ textDecoration: v } as any)}
+        />
+      </Section>
+
+      <Section title="Background">
+        <div style={{ marginBottom: 8 }}>
+          <ColorInput
+            label="Fill"
+            value={object.fill}
+            onChange={(fill) => onUpdate({ fill } as any)}
+          />
+        </div>
         <NumberInput
-          label="Width"
-          value={object.strokeWidth}
-          onChange={(strokeWidth) =>
-            onUpdate({ strokeWidth } as Partial<DesignObject>)
-          }
-          min={1}
-          max={20}
+          label="Corner Radius"
+          value={object.cornerRadius}
+          onChange={(v) => onUpdate({ cornerRadius: v } as any)}
+          min={0}
+          max={100}
         />
-      </div>
-    </Section>
+      </Section>
+
+      <GradientSection gradient={object.gradient} onUpdate={onUpdate} />
+      <ShadowSection shadow={object.shadow} onUpdate={onUpdate} />
+    </>
   );
 }

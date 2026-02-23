@@ -11,7 +11,7 @@ import type {
 } from '../types/document';
 import { MOBILE_CANVAS, CANVAS_EXTEND_INCREMENT } from '../types/document';
 
-type ActiveTool = 'select' | 'text' | 'rect' | 'ellipse' | 'line' | 'image';
+type ActiveTool = 'select' | 'text' | 'rect' | 'ellipse' | 'line' | 'image' | 'star' | 'triangle' | 'arrow' | 'badge';
 
 interface EditorState {
   // ── Document data ─────────────────────────
@@ -48,6 +48,7 @@ interface EditorState {
   resetEditor: () => void;
 
   addObject: (obj: DesignObject) => void;
+  addObjects: (objs: DesignObject[]) => void;
   updateObject: (id: string, changes: Partial<DesignObject>) => void;
   deleteObjects: (ids: string[]) => void;
   reorderObject: (id: string, newIndex: number) => void;
@@ -144,6 +145,15 @@ export const useEditorStore = create<EditorState>()(
           produce((state: EditorState) => {
             state.objects.push(obj);
             state.selectedIds = [obj.id];
+            state.isDirty = true;
+          }),
+        ),
+
+      addObjects: (objs) =>
+        set(
+          produce((state: EditorState) => {
+            state.objects.push(...objs);
+            state.selectedIds = objs.map((o) => o.id);
             state.isDirty = true;
           }),
         ),

@@ -4,7 +4,21 @@ import type {
   TextObject,
   ImageObject,
   LineObject,
+  StarObject,
+  TriangleObject,
+  ArrowObject,
+  BadgeObject,
+  StrokeDashPreset,
 } from '../types/document';
+
+export function getDashArray(preset: StrokeDashPreset | undefined, strokeWidth: number): number[] | undefined {
+  switch (preset) {
+    case 'dashed':   return [strokeWidth * 4, strokeWidth * 2];
+    case 'dotted':   return [strokeWidth, strokeWidth * 2];
+    case 'dash-dot': return [strokeWidth * 4, strokeWidth * 2, strokeWidth, strokeWidth * 2];
+    default:         return undefined; // 'solid' or undefined
+  }
+}
 
 let counter = 0;
 
@@ -30,6 +44,12 @@ export function createRect(overrides?: Partial<RectObject>): RectObject {
     stroke: '',
     strokeWidth: 0,
     cornerRadius: 0,
+    gradient: null,
+    shadow: null,
+    blur: 0,
+    dash: 'solid',
+    lineCap: 'butt',
+    lineJoin: 'miter',
     ...overrides,
   };
 }
@@ -50,6 +70,12 @@ export function createEllipse(overrides?: Partial<EllipseObject>): EllipseObject
     fill: '#0EA5E9',
     stroke: '',
     strokeWidth: 0,
+    gradient: null,
+    shadow: null,
+    blur: 0,
+    dash: 'solid',
+    lineCap: 'butt',
+    lineJoin: 'miter',
     ...overrides,
   };
 }
@@ -74,6 +100,14 @@ export function createText(overrides?: Partial<TextObject>): TextObject {
     fill: '#111111',
     align: 'left',
     lineHeight: 1.2,
+    shadow: null,
+    letterSpacing: 0,
+    textDecoration: '',
+    verticalAlign: 'top',
+    padding: 0,
+    fontVariant: 'normal',
+    stroke: '',
+    strokeWidth: 0,
     ...overrides,
   };
 }
@@ -120,6 +154,117 @@ export function createLine(overrides?: Partial<LineObject>): LineObject {
     strokeWidth: 3,
     lineCap: 'round',
     lineJoin: 'round',
+    dash: 'solid',
+    ...overrides,
+  };
+}
+
+export function createStar(overrides?: Partial<StarObject>): StarObject {
+  return {
+    id: generateId(),
+    type: 'star',
+    name: 'Star',
+    x: 100,
+    y: 100,
+    width: 120,
+    height: 120,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    points: 5,
+    innerRadius: 0.5,
+    fill: '#F59E0B',
+    stroke: '',
+    strokeWidth: 0,
+    gradient: null,
+    shadow: null,
+    dash: 'solid',
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    ...overrides,
+  };
+}
+
+export function createTriangle(overrides?: Partial<TriangleObject>): TriangleObject {
+  return {
+    id: generateId(),
+    type: 'triangle',
+    name: 'Triangle',
+    x: 100,
+    y: 100,
+    width: 150,
+    height: 130,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    fill: '#22C55E',
+    stroke: '',
+    strokeWidth: 0,
+    gradient: null,
+    shadow: null,
+    dash: 'solid',
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    ...overrides,
+  };
+}
+
+export function createArrow(overrides?: Partial<ArrowObject>): ArrowObject {
+  return {
+    id: generateId(),
+    type: 'arrow',
+    name: 'Arrow',
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    points: [100, 100, 300, 100],
+    stroke: '#111111',
+    strokeWidth: 3,
+    pointerLength: 15,
+    pointerWidth: 12,
+    fill: '#111111',
+    dash: 'solid',
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    ...overrides,
+  };
+}
+
+export function createBadge(overrides?: Partial<BadgeObject>): BadgeObject {
+  return {
+    id: generateId(),
+    type: 'badge',
+    name: 'Badge',
+    x: 100,
+    y: 100,
+    width: 120,
+    height: 36,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    text: 'Badge',
+    fontSize: 14,
+    fontFamily: 'Arial',
+    fontStyle: 'bold',
+    textColor: '#FFFFFF',
+    fill: '#7B68EE',
+    cornerRadius: 18,
+    paddingX: 16,
+    paddingY: 8,
+    gradient: null,
+    shadow: null,
+    letterSpacing: 0,
+    textDecoration: '',
+    align: 'center',
+    verticalAlign: 'middle',
     ...overrides,
   };
 }

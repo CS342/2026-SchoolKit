@@ -25,6 +25,7 @@ export type Resource = {
   category: string;
   icon: string;
   target_roles: UserRole[];
+  design_id: string | null;
   created_at: string;
 };
 

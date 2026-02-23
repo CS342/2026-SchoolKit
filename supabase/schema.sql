@@ -30,6 +30,7 @@ CREATE TABLE resources (
   category TEXT NOT NULL,
   icon TEXT NOT NULL DEFAULT 'book-outline',
   target_roles user_role[] DEFAULT '{}',
+  design_id UUID,  -- links to designs(id) when resource is a published design
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

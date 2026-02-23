@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
@@ -8,6 +8,7 @@ import { TTSButton } from '../components/TTSButton';
 import { useTTS } from '../hooks/useTTS';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
+import { supabase } from '../lib/supabase';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
@@ -16,6 +17,62 @@ export default function TopicDetailScreen() {
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
   const { isSpeaking, isLoading, speak } = useTTS();
+  const [checkingDesign, setCheckingDesign] = useState(true);
+
+  // Check if this topic has a published custom design and redirect to the design viewer
+  useEffect(() => {
+    async function checkForDesign() {
+      try {
+        // Strategy 1: If we have a resource ID, check resources table for design_id
+        if (id) {
+          const { data: resource } = await supabase
+            .from('resources')
+            .select('design_id')
+            .eq('id', id)
+            .single();
+
+          if (resource?.design_id) {
+            router.replace(`/design-view/${resource.design_id}` as any);
+            return;
+          }
+        }
+
+        // Strategy 2: Search designs table by title for a published design
+        if (title) {
+          const { data: designs } = await supabase
+            .from('designs')
+            .select('id, published_resource_id')
+            .eq('title', title)
+            .not('published_resource_id', 'is', null)
+            .limit(1);
+
+          if (designs && designs.length > 0) {
+            router.replace(`/design-view/${designs[0].id}` as any);
+            return;
+          }
+
+          // Strategy 3: Search designs by title even if not formally published
+          // (covers case where design exists but publish to resources table failed)
+          const { data: anyDesigns } = await supabase
+            .from('designs')
+            .select('id')
+            .eq('title', title)
+            .order('updated_at', { ascending: false })
+            .limit(1);
+
+          if (anyDesigns && anyDesigns.length > 0) {
+            router.replace(`/design-view/${anyDesigns[0].id}` as any);
+            return;
+          }
+        }
+      } catch {
+        // Fall through to default template
+      }
+      setCheckingDesign(false);
+    }
+
+    checkForDesign();
+  }, [id, title]);
 
   const resourceId = id || title || '';
 
@@ -35,6 +92,14 @@ export default function TopicDetailScreen() {
       });
     } catch {}
   };
+
+  if (checkingDesign) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: withOpacity(color, 0.03) }]}>

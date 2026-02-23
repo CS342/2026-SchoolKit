@@ -38,6 +38,7 @@ export function usePublish() {
             category: opts.category,
             icon: opts.icon,
             target_roles: opts.targetRoles,
+            design_id: designId,
           })
           .eq('id', design.published_resource_id);
 
@@ -47,7 +48,7 @@ export function usePublish() {
         }
         resourceId = design.published_resource_id;
       } else {
-        // Insert new resource
+        // Insert new resource with a direct link back to the design
         const { data: newResource, error } = await supabase
           .from('resources')
           .insert({
@@ -56,6 +57,7 @@ export function usePublish() {
             category: opts.category,
             icon: opts.icon,
             target_roles: opts.targetRoles,
+            design_id: designId,
           })
           .select('id')
           .single();
@@ -66,12 +68,18 @@ export function usePublish() {
         }
         resourceId = newResource.id;
 
-        // Link the design to the resource
+        // Link the design to the resource and mark as shared
         await supabase
           .from('designs')
-          .update({ published_resource_id: resourceId })
+          .update({ published_resource_id: resourceId, is_shared: true })
           .eq('id', designId);
       }
+
+      // Ensure design is shared when published (covers update path too)
+      await supabase
+        .from('designs')
+        .update({ is_shared: true })
+        .eq('id', designId);
 
       return resourceId;
     },
@@ -83,7 +91,7 @@ export function usePublish() {
 
     const { data: design } = await supabase
       .from('designs')
-      .select('published_resource_id')
+      .select('published_resource_id, share_token')
       .eq('id', designId)
       .single();
 
@@ -93,9 +101,15 @@ export function usePublish() {
         .delete()
         .eq('id', design.published_resource_id);
 
+      // Only unshare if there's no active share link
+      const updates: Record<string, unknown> = { published_resource_id: null };
+      if (!design.share_token) {
+        updates.is_shared = false;
+      }
+
       await supabase
         .from('designs')
-        .update({ published_resource_id: null })
+        .update(updates)
         .eq('id', designId);
     }
   }, [designId]);

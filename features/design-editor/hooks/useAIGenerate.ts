@@ -17,9 +17,9 @@ export interface GenerateRequest {
   templateId?: string;
 }
 
-const VALID_STATIC_TYPES = new Set(['rect', 'ellipse', 'text', 'line']);
-const VALID_ALL_TYPES = new Set(['rect', 'ellipse', 'text', 'line', 'interactive']);
-const VALID_INTERACTION_TYPES = new Set(['flip-card', 'bottom-sheet', 'expandable', 'entrance']);
+const VALID_STATIC_TYPES = new Set(['rect', 'ellipse', 'text', 'line', 'star', 'triangle', 'arrow', 'badge']);
+const VALID_ALL_TYPES = new Set(['rect', 'ellipse', 'text', 'line', 'star', 'triangle', 'arrow', 'badge', 'interactive']);
+const VALID_INTERACTION_TYPES = new Set(['flip-card', 'bottom-sheet', 'expandable', 'entrance', 'carousel', 'tabs', 'quiz']);
 const VALID_FONT_STYLES = new Set(['normal', 'bold', 'italic', 'bold italic']);
 const VALID_ALIGNS = new Set(['left', 'center', 'right']);
 const HEX_REGEX = /^#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
@@ -99,12 +99,12 @@ DEPTH & LAYERING (this is critical — flat designs look amateur):
 
 DECORATIVE TECHNIQUES (use 2-3 per design):
 - Accent bars: thin rounded rects (4-8px tall, 60-120px wide) in accent colors, placed near titles or as dividers.
-- Floating circles: large ellipses (100-300px) at very low opacity (0.04-0.1) behind content for atmosphere. Place them partially off-canvas for a cropped effect.
-- Card shadows: simulate with a slightly larger, darker rect (2-4px offset, opacity 0.06-0.12) behind a white card.
-- Dot accents: small ellipses (8-16px) in accent colors placed near headings or at grid intersections.
-- Gradient simulation: stack 2-3 rects with different opacities of the same hue to simulate a gradient fade.
-- Section dividers: full-width colored bands (10-15% of canvas height) to break content into zones.
-- Icon-like shapes: combine a circle + small inner rect or ellipse to suggest icons (folder, star, etc.).
+- Floating circles: large ellipses (100-300px) at very low opacity (0.04-0.1) behind content for atmosphere.
+- Card shadows: use the shadow property on rects: shadow:{color:"rgba(0,0,0,0.1)",offsetX:0,offsetY:4,blur:12}
+- Gradients: use gradient on hero background rects: gradient:{type:"linear",colors:["#7B68EE","#5B4BC7"],angle:135}
+- Stars: decorative stars for ratings or accents.
+- Badges: pill-shaped labels for categories, tags, status indicators.
+- Section dividers: full-width colored bands to break content into zones.
 
 COLOR USAGE:
 - Every design needs a "hero color moment" — one large shape or section in a bold brand color.
@@ -113,11 +113,7 @@ COLOR USAGE:
 - For dark sections: use #1A1A2E or #2D2D44 background with white text and a bright accent color for pop.
 - Text on colored backgrounds: always white (#FFFFFF) or very light. Never dark text on dark backgrounds.
 
-WHAT MAKES A DESIGN LOOK PROFESSIONAL vs. AMATEUR:
-✓ Professional: layered shapes creating depth, generous whitespace, one strong focal point, 2-3 decorative accents, consistent corner radii, thoughtful color hierarchy.
-✗ Amateur: flat single-color background, evenly spaced items in a grid, no decorative elements, all text the same size, no visual hierarchy, every element same corner radius of 0.
-
-AIM FOR 12-25 OBJECTS per design. Simple designs with 4-5 objects look empty. Rich, layered designs need decorative elements, background shapes, and visual texture.
+AIM FOR 12-25 OBJECTS per design.
 
 ═══════════════════════════════════════════
 CANVAS & OBJECT TYPES
@@ -127,40 +123,74 @@ CANVAS: The user specifies width and height. All objects must stay within bounds
 
 1. rect — Rectangle shape
    Fields: type:"rect", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, fill (hex), stroke (hex or ""), strokeWidth, cornerRadius
+   Optional effects: gradient:{type:"linear"|"radial",colors:["#hex1","#hex2"],angle:number}, shadow:{color:string,offsetX:number,offsetY:number,blur:number}, blur:number(0-20)
 
 2. ellipse — Ellipse/circle
    Fields: type:"ellipse", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, fill (hex), stroke (hex or ""), strokeWidth
+   Optional effects: gradient, shadow, blur (same as rect)
 
 3. text — Text label
    Fields: type:"text", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, text (string), fontSize, fontFamily:"Arial"|"Georgia", fontStyle:"normal"|"bold"|"italic"|"bold italic", fill (hex), align:"left"|"center"|"right", lineHeight
+   Optional: shadow (same as rect, useful for text on images)
 
 4. line — Straight line
    Fields: type:"line", id, name, x:0, y:0, width:0, height:0, rotation:0, opacity:1, visible:true, locked:false, points:[x1,y1,x2,y2], stroke (hex), strokeWidth, lineCap:"round", lineJoin:"round"
 
-5. interactive — Interactive component with grouped children and interaction behavior.
-   Fields: type:"interactive", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, interactionType, interactionConfig, groups (array), childIds (string[]), children (rect/ellipse/text/line objects with LOCAL coordinates)
+5. star — Star shape
+   Fields: type:"star", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, points:number(3-12), innerRadius:number(0.3-0.9), fill (hex), stroke (hex or ""), strokeWidth
+   Optional: gradient, shadow (same as rect)
+   Use for: ratings, decorative accents, achievement markers
+
+6. triangle — Triangle shape
+   Fields: type:"triangle", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, fill (hex), stroke (hex or ""), strokeWidth
+   Optional: gradient, shadow
+   Use for: directional indicators, decorative geometry, play buttons
+
+7. arrow — Arrow line
+   Fields: type:"arrow", id, name, x:0, y:0, width:0, height:0, rotation:0, opacity:1, visible:true, locked:false, points:[x1,y1,x2,y2], stroke (hex), strokeWidth, pointerLength:15, pointerWidth:12, fill (hex)
+   Use for: flow diagrams, pointing to content, step connections
+
+8. badge — Pill-shaped label
+   Fields: type:"badge", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, text (string), fontSize, fontFamily, fontStyle, textColor (hex), fill (hex), cornerRadius, paddingX, paddingY
+   Optional: gradient, shadow
+   Use for: tags, categories, status labels, counts
+
+9. interactive — Interactive component with grouped children and interaction behavior.
+   Fields: type:"interactive", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, interactionType, interactionConfig, groups (array), childIds (string[]), children (static objects with LOCAL coordinates)
 
    interactionTypes:
 
    a) "flip-card" — Flips between front/back.
       config: { flipDuration:500, flipDirection:"horizontal"|"vertical", defaultSide:"front" }
       groups: [ {role:"front", label:"Front", objectIds:[...]}, {role:"back", label:"Back", objectIds:[...]} ]
-      Use for: flashcards, Q&A, vocabulary, before/after. Design both sides — front bold and inviting, back informative.
+      Use for: flashcards, Q&A, vocabulary, before/after.
 
    b) "bottom-sheet" — Button opens a sliding panel.
       config: { sheetHeightPercent:60, backdropOpacity:0.4, slideDuration:300, dismissOnBackdropTap:true }
       groups: [ {role:"trigger", label:"Trigger", objectIds:[...]}, {role:"content", label:"Content", objectIds:[...]} ]
-      Use for: "Learn More", supplementary details. Make the trigger button visually prominent with rounded corners and a bold fill.
 
    c) "expandable" — Collapsible section.
       config: { defaultExpanded:false, expandDuration:300, easing:"ease-in-out" }
       groups: [ {role:"header", label:"Header", objectIds:[...]}, {role:"body", label:"Body", objectIds:[...]} ]
-      Use for: FAQ, step-by-step content, categorized info. Style headers as rounded cards.
 
    d) "entrance" — Animated reveal on load/scroll.
       config: { animation:"fade-in"|"slide-up"|"scale-up"|"bounce", duration:500, staggerDelay:100, trigger:"on-load" }
       groups: [ {role:"content", label:"Content", objectIds:[...]} ]
-      Use for: hero sections, card sequences. Makes the design feel alive.
+
+   e) "carousel" — Swipeable slides.
+      config: { autoPlay:false, autoPlayInterval:3000, showDots:true, showArrows:true, transitionDuration:300 }
+      groups: [ {role:"slide-0", label:"Slide 1", objectIds:[...]}, {role:"slide-1", label:"Slide 2", objectIds:[...]}, ... ]
+      Use for: image galleries, multi-step instructions, before/after comparisons.
+
+   f) "tabs" — Tabbed content.
+      config: { defaultTab:0, tabPosition:"top"|"bottom", tabStyle:"underline"|"pill"|"boxed" }
+      groups: [ {role:"tab-0", label:"Tab 1", objectIds:[...]}, {role:"tab-1", label:"Tab 2", objectIds:[...]}, ... ]
+      Use for: categorized content, different views of same topic.
+
+   g) "quiz" — Knowledge check with answer feedback.
+      config: { questionText:"...", options:["A","B","C","D"], correctIndex:0, showFeedback:true, feedbackCorrect:"Great!", feedbackIncorrect:"Try again!" }
+      groups: [ {role:"question", label:"Question", objectIds:[...]}, {role:"feedback", label:"Feedback", objectIds:[...]} ]
+      Use for: knowledge checks, self-assessment, gamified learning.
 
 WHEN TO USE INTERACTIVE COMPONENTS:
 - Educational or informational content → always include at least one.
@@ -168,7 +198,24 @@ WHEN TO USE INTERACTIVE COMPONENTS:
 - Dense detail that would clutter → bottom-sheet
 - Multiple sections or steps → expandable
 - Card sequences or hero content → entrance animation
-- You can combine static and interactive objects freely.
+- Image galleries, step-by-step walkthroughs → carousel
+- Categorized content → tabs
+- Knowledge checks, quizzes → quiz
+
+VISUAL EFFECTS GUIDELINES:
+- Use gradients on hero backgrounds and CTA sections (e.g. gradient:{type:"linear",colors:["#7B68EE","#5B4BC7"],angle:135})
+- Use shadows on card-like rects for depth (e.g. shadow:{color:"rgba(0,0,0,0.1)",offsetX:0,offsetY:4,blur:12})
+- Use blur sparingly for frosted-glass overlays (blur:8 on a semi-transparent rect)
+- Stars are great as decorative accents or rating indicators
+- Badges work well for labels, tags, and status indicators
+- Arrows connect related content in flow diagrams
+
+COMPOUND LAYOUT PATTERNS (compose these using primitives):
+- Info Card: background rect with shadow + icon circle + title text + body text
+- Stat Counter: large number text + label text + accent bar rect
+- Quote Block: large quote mark text + quote body + attribution + accent line
+- CTA Block: gradient background rect + headline text + button rect + button text
+- Header Section: full-width gradient rect + title + subtitle + decorative line
 
 ═══════════════════════════════════════════
 STRUCTURAL RULES
@@ -178,8 +225,8 @@ STRUCTURAL RULES
 - Z-order: earlier objects render behind later ones. Background → decorative → cards → text.
 - Leave padding (at least 5% of canvas width) on left/right edges, and 20-40px top/bottom.
 - Every design must have visual depth — at minimum a tinted background shape + decorative accents behind the main content.
-- CANVAS HEIGHT: If the content requires more vertical space, set canvas.height larger than the provided value. The canvas scrolls vertically. For N stacked items, estimate: header(~120px) + N * (item_height + gap) + footer_padding(~60px).
-- INTERACTIVE COMPONENT SIZING: Flip cards should be roughly canvas_width - 40px wide and 180-250px tall. Bottom sheets / expandables should be full-width minus padding. Give each interactive component enough height for its children to display comfortably.
+- CANVAS HEIGHT: If the content requires more vertical space, set canvas.height larger than the provided value. The canvas scrolls vertically.
+- INTERACTIVE COMPONENT SIZING: Give each interactive component enough height for its children to display comfortably.
 
 OUTPUT FORMAT (strict JSON, no markdown, no commentary):
 {
@@ -219,16 +266,16 @@ CRITICAL REMINDERS:
 - If the items won't fit, INCREASE canvas.height (the canvas scrolls). Do NOT shrink or skip items.
 - Use placeholder text for content ("Myth #1", "Fact #1", "Description goes here...").
 - Start with a header section (title + decorative accents), then stack the main content below.
-- Each interactive component (flip card, expandable, etc.) needs properly sized children with backgrounds, text, and padding.
-- Add visual richness: tinted background rect, decorative floating circles at low opacity, accent bars, dot accents.
+- Each interactive component needs properly sized children with backgrounds, text, and padding.
+- Add visual richness: use gradients on hero backgrounds, shadows on cards, decorative stars/badges.
 - Use Georgia for headlines, Arial for body text.
-- Every design needs visual depth — layered shapes, varied opacity, rounded corners.
+- Every design needs visual depth — layered shapes, varied opacity, rounded corners, shadows, gradients.
 Return ONLY the JSON object.`);
 
   return lines.join('\n');
 }
 
-// Process a single static object (rect, ellipse, text, line) — used for both
+// Process a single static object — used for both
 // top-level objects and children inside interactive components.
 function processStaticObject(obj: Record<string, unknown>, boundsW: number, boundsH: number): Record<string, unknown> | null {
   const type = obj.type as string;
@@ -256,12 +303,26 @@ function processStaticObject(obj: Record<string, unknown>, boundsW: number, boun
     base.fontSize = base.fontSize || 24;
     base.lineHeight = base.lineHeight || 1.2;
     base.text = base.text ?? '';
+    // Sanitize shadow if present
+    if (base.shadow && typeof base.shadow === 'object') {
+      base.shadow = sanitizeShadow(base.shadow as Record<string, unknown>);
+    }
   }
 
   if (type === 'rect' || type === 'ellipse') {
     if (!isValidHex(base.fill as string)) base.fill = '#7B68EE';
     if (base.stroke && !isValidHex(base.stroke as string)) base.stroke = '';
     base.strokeWidth = base.strokeWidth ?? 0;
+    // Sanitize effects
+    if (base.gradient && typeof base.gradient === 'object') {
+      base.gradient = sanitizeGradient(base.gradient as Record<string, unknown>);
+    }
+    if (base.shadow && typeof base.shadow === 'object') {
+      base.shadow = sanitizeShadow(base.shadow as Record<string, unknown>);
+    }
+    if (typeof base.blur === 'number') {
+      base.blur = clamp(base.blur as number, 0, 20);
+    }
   }
 
   if (type === 'rect') {
@@ -278,7 +339,83 @@ function processStaticObject(obj: Record<string, unknown>, boundsW: number, boun
     }
   }
 
+  if (type === 'star') {
+    if (!isValidHex(base.fill as string)) base.fill = '#F59E0B';
+    if (base.stroke && !isValidHex(base.stroke as string)) base.stroke = '';
+    base.strokeWidth = base.strokeWidth ?? 0;
+    base.points = clamp((base.points as number) ?? 5, 3, 12);
+    base.innerRadius = clamp((base.innerRadius as number) ?? 0.5, 0.3, 0.9);
+    if (base.gradient && typeof base.gradient === 'object') {
+      base.gradient = sanitizeGradient(base.gradient as Record<string, unknown>);
+    }
+    if (base.shadow && typeof base.shadow === 'object') {
+      base.shadow = sanitizeShadow(base.shadow as Record<string, unknown>);
+    }
+  }
+
+  if (type === 'triangle') {
+    if (!isValidHex(base.fill as string)) base.fill = '#22C55E';
+    if (base.stroke && !isValidHex(base.stroke as string)) base.stroke = '';
+    base.strokeWidth = base.strokeWidth ?? 0;
+    if (base.gradient && typeof base.gradient === 'object') {
+      base.gradient = sanitizeGradient(base.gradient as Record<string, unknown>);
+    }
+    if (base.shadow && typeof base.shadow === 'object') {
+      base.shadow = sanitizeShadow(base.shadow as Record<string, unknown>);
+    }
+  }
+
+  if (type === 'arrow') {
+    if (!isValidHex(base.stroke as string)) base.stroke = '#111111';
+    if (!isValidHex(base.fill as string)) base.fill = '#111111';
+    base.strokeWidth = base.strokeWidth ?? 3;
+    base.pointerLength = base.pointerLength ?? 15;
+    base.pointerWidth = base.pointerWidth ?? 12;
+    if (!Array.isArray(base.points) || (base.points as number[]).length < 4) {
+      base.points = [0, 0, 100, 0];
+    }
+  }
+
+  if (type === 'badge') {
+    if (!isValidHex(base.fill as string)) base.fill = '#7B68EE';
+    if (!isValidHex(base.textColor as string)) base.textColor = '#FFFFFF';
+    base.text = base.text ?? 'Badge';
+    base.fontSize = base.fontSize ?? 14;
+    base.fontFamily = base.fontFamily || 'Arial';
+    if (!VALID_FONT_STYLES.has(base.fontStyle as string)) base.fontStyle = 'bold';
+    base.cornerRadius = base.cornerRadius ?? 18;
+    base.paddingX = base.paddingX ?? 16;
+    base.paddingY = base.paddingY ?? 8;
+    if (base.gradient && typeof base.gradient === 'object') {
+      base.gradient = sanitizeGradient(base.gradient as Record<string, unknown>);
+    }
+    if (base.shadow && typeof base.shadow === 'object') {
+      base.shadow = sanitizeShadow(base.shadow as Record<string, unknown>);
+    }
+  }
+
   return base;
+}
+
+function sanitizeGradient(g: Record<string, unknown>): Record<string, unknown> | null {
+  const type = g.type as string;
+  if (type !== 'linear' && type !== 'radial') return null;
+  const colors = g.colors;
+  if (!Array.isArray(colors) || colors.length < 2) return null;
+  return {
+    type,
+    colors: colors.map((c: unknown) => (typeof c === 'string' && isValidHex(c) ? c : '#7B68EE')),
+    angle: typeof g.angle === 'number' ? g.angle : 0,
+  };
+}
+
+function sanitizeShadow(s: Record<string, unknown>): Record<string, unknown> | null {
+  return {
+    color: typeof s.color === 'string' ? s.color : 'rgba(0,0,0,0.1)',
+    offsetX: typeof s.offsetX === 'number' ? s.offsetX : 0,
+    offsetY: typeof s.offsetY === 'number' ? s.offsetY : 4,
+    blur: typeof s.blur === 'number' ? clamp(s.blur as number, 0, 50) : 12,
+  };
 }
 
 function processAIDocument(raw: DesignDocument): DesignDocument {
@@ -304,7 +441,6 @@ function processAIDocument(raw: DesignDocument): DesignDocument {
       // Process children — they use local coordinates relative to the component
       const rawChildren = Array.isArray(raw.children) ? raw.children : [];
       const processedChildren: Record<string, unknown>[] = [];
-      // Map old AI IDs → new IDs for group objectIds
       const idMap = new Map<string, string>();
 
       for (const child of rawChildren) {

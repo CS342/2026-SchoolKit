@@ -9,6 +9,7 @@ import {
   createEllipse,
   createText,
   createLine,
+  getDashArray,
 } from '../utils/defaults';
 import { snapToGrid, magneticSnap } from '../utils/snap';
 import type { GuideLine, ObjectBounds } from '../utils/snap';
@@ -590,6 +591,9 @@ function EditableChildObject({
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
           cornerRadius={object.cornerRadius}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
         />
       );
     case 'ellipse':
@@ -601,6 +605,9 @@ function EditableChildObject({
           fill={object.fill}
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
         />
       );
     case 'text':
@@ -614,7 +621,15 @@ function EditableChildObject({
           fill={object.fill}
           align={object.align}
           width={object.width}
+          height={object.height}
           lineHeight={object.lineHeight}
+          letterSpacing={object.letterSpacing ?? 0}
+          textDecoration={object.textDecoration || ''}
+          verticalAlign={object.verticalAlign ?? 'top'}
+          padding={object.padding ?? 0}
+          fontVariant={object.fontVariant ?? 'normal'}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth ?? 0}
         />
       );
     case 'image':
@@ -629,6 +644,7 @@ function EditableChildObject({
           hitStrokeWidth={Math.max(20, object.strokeWidth + 10)}
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
+          dash={getDashArray(object.dash, object.strokeWidth)}
         />
       );
     default:

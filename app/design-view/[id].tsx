@@ -21,6 +21,9 @@ let WebPreviewFlipCard: any = null;
 let WebPreviewBottomSheet: any = null;
 let WebPreviewExpandable: any = null;
 let WebPreviewEntrance: any = null;
+let WebPreviewCarousel: any = null;
+let WebPreviewTabs: any = null;
+let WebPreviewQuiz: any = null;
 
 if (Platform.OS === 'web') {
   const konva = require('react-konva');
@@ -39,6 +42,12 @@ if (Platform.OS === 'web') {
     require('../../features/design-editor/components/preview/PreviewExpandable').PreviewExpandable;
   WebPreviewEntrance =
     require('../../features/design-editor/components/preview/PreviewEntrance').PreviewEntrance;
+  WebPreviewCarousel =
+    require('../../features/design-editor/components/preview/PreviewCarousel').PreviewCarousel;
+  WebPreviewTabs =
+    require('../../features/design-editor/components/preview/PreviewTabs').PreviewTabs;
+  WebPreviewQuiz =
+    require('../../features/design-editor/components/preview/PreviewQuiz').PreviewQuiz;
 }
 
 interface DesignData {
@@ -426,6 +435,12 @@ function WebDesignObject({ object }: { object: any }) {
         return WebPreviewExpandable ? <WebPreviewExpandable object={object} /> : null;
       case 'entrance':
         return WebPreviewEntrance ? <WebPreviewEntrance object={object} /> : null;
+      case 'carousel':
+        return WebPreviewCarousel ? <WebPreviewCarousel object={object} /> : null;
+      case 'tabs':
+        return WebPreviewTabs ? <WebPreviewTabs object={object} /> : null;
+      case 'quiz':
+        return WebPreviewQuiz ? <WebPreviewQuiz object={object} /> : null;
       default:
         return null;
     }

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Rect, Ellipse, Text, Image as KonvaImage, Line, Group } from 'react-konva';
+import { Rect, Ellipse, Text, Image as KonvaImage, Line, Group, Star, Arrow } from 'react-konva';
 import Konva from 'konva';
-import type { DesignObject, InteractiveComponentObject, StaticDesignObject } from '../types/document';
+import type { DesignObject, InteractiveComponentObject, StaticDesignObject, GradientConfig } from '../types/document';
 import { useEditorStore } from '../store/editor-store';
+import { getDashArray } from '../utils/defaults';
 import { snapToGrid, magneticSnap } from '../utils/snap';
 import type { GuideLine, ObjectBounds } from '../utils/snap';
 
@@ -12,6 +13,92 @@ interface CanvasObjectProps {
   onSnapGuidesChange?: (guides: GuideLine[]) => void;
   onSnapGuidesEnd?: () => void;
 }
+
+// ─── Gradient helpers ──────────────────────────────────────────
+
+function getLinearGradientProps(gradient: GradientConfig, w: number, h: number) {
+  const angle = (gradient.angle ?? 0) * (Math.PI / 180);
+  const cx = w / 2;
+  const cy = h / 2;
+  const len = Math.max(w, h);
+  const dx = Math.cos(angle) * len / 2;
+  const dy = Math.sin(angle) * len / 2;
+  const colors = gradient.colors;
+  const stops: (number | string)[] = [];
+  for (let i = 0; i < colors.length; i++) {
+    stops.push(i / (colors.length - 1), colors[i]);
+  }
+  return {
+    fillLinearGradientStartPoint: { x: cx - dx, y: cy - dy },
+    fillLinearGradientEndPoint: { x: cx + dx, y: cy + dy },
+    fillLinearGradientColorStops: stops,
+  };
+}
+
+function getRadialGradientProps(gradient: GradientConfig, w: number, h: number) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.max(w, h) / 2;
+  const colors = gradient.colors;
+  const stops: (number | string)[] = [];
+  for (let i = 0; i < colors.length; i++) {
+    stops.push(i / (colors.length - 1), colors[i]);
+  }
+  return {
+    fillRadialGradientStartPoint: { x: cx, y: cy },
+    fillRadialGradientEndPoint: { x: cx, y: cy },
+    fillRadialGradientStartRadius: 0,
+    fillRadialGradientEndRadius: r,
+    fillRadialGradientColorStops: stops,
+  };
+}
+
+function getGradientProps(gradient: GradientConfig | null | undefined, w: number, h: number) {
+  if (!gradient) return {};
+  if (gradient.type === 'radial') return getRadialGradientProps(gradient, w, h);
+  return getLinearGradientProps(gradient, w, h);
+}
+
+function getShadowProps(shadow: { color: string; offsetX: number; offsetY: number; blur: number } | null | undefined) {
+  if (!shadow) return {};
+  return {
+    shadowColor: shadow.color,
+    shadowOffsetX: shadow.offsetX,
+    shadowOffsetY: shadow.offsetY,
+    shadowBlur: shadow.blur,
+    shadowEnabled: true,
+  };
+}
+
+// ─── Blur component wrapper ───────────────────────────────────
+
+function BlurredRect({ blurRadius, ...props }: any) {
+  const ref = useRef<Konva.Rect>(null);
+  useEffect(() => {
+    if (ref.current && blurRadius > 0) {
+      ref.current.cache();
+    }
+  }, [blurRadius, props.width, props.height, props.fill]);
+  if (blurRadius > 0) {
+    return <Rect ref={ref} {...props} filters={[Konva.Filters.Blur]} blurRadius={blurRadius} />;
+  }
+  return <Rect {...props} />;
+}
+
+function BlurredEllipse({ blurRadius, ...props }: any) {
+  const ref = useRef<Konva.Ellipse>(null);
+  useEffect(() => {
+    if (ref.current && blurRadius > 0) {
+      ref.current.cache();
+    }
+  }, [blurRadius, props.radiusX, props.radiusY, props.fill]);
+  if (blurRadius > 0) {
+    return <Ellipse ref={ref} {...props} filters={[Konva.Filters.Blur]} blurRadius={blurRadius} />;
+  }
+  return <Ellipse {...props} />;
+}
+
+// ─── Main CanvasObject ────────────────────────────────────────
 
 export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGuidesEnd }: CanvasObjectProps) {
   const updateObject = useEditorStore((s) => s.updateObject);
@@ -98,8 +185,9 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
       newY = snapped.y;
     }
 
-    if (object.type === 'line') {
-      const scaledPoints = object.points.map((val, i) =>
+    if (object.type === 'line' || object.type === 'arrow') {
+      const pts = (object as any).points as number[];
+      const scaledPoints = pts.map((val: number, i: number) =>
         Math.round(val * (i % 2 === 0 ? scaleX : scaleY)),
       );
       updateObject(object.id, {
@@ -134,34 +222,55 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
   };
 
   switch (object.type) {
-    case 'rect':
+    case 'rect': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
       return (
-        <Rect
+        <BlurredRect
           {...commonProps}
           width={object.width}
           height={object.height}
-          fill={object.fill}
+          {...fillProp}
+          {...gradientProps}
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
           cornerRadius={object.cornerRadius}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+          blurRadius={object.blur || 0}
         />
       );
+    }
 
-    case 'ellipse':
+    case 'ellipse': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
       return (
-        <Ellipse
+        <BlurredEllipse
           {...commonProps}
           radiusX={object.width / 2}
           radiusY={object.height / 2}
           offsetX={0}
           offsetY={0}
-          fill={object.fill}
+          {...fillProp}
+          {...gradientProps}
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+          blurRadius={object.blur || 0}
         />
       );
+    }
 
-    case 'text':
+    case 'text': {
+      const shadowProps = getShadowProps(object.shadow);
       return (
         <Text
           {...commonProps}
@@ -172,9 +281,17 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
           fill={object.fill}
           align={object.align}
           width={object.width}
+          height={object.height}
           lineHeight={object.lineHeight}
+          letterSpacing={object.letterSpacing ?? 0}
+          textDecoration={object.textDecoration || ''}
+          verticalAlign={object.verticalAlign ?? 'top'}
+          padding={object.padding ?? 0}
+          fontVariant={object.fontVariant ?? 'normal'}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth ?? 0}
+          {...shadowProps}
           onDblClick={(e) => {
-            // Enable inline editing on double-click
             const textNode = e.target as Konva.Text;
             const stage = textNode.getStage();
             if (!stage) return;
@@ -199,7 +316,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
             textarea.style.fontFamily = object.fontFamily;
             textarea.style.border = '2px solid #7B68EE';
             textarea.style.borderRadius = '4px';
-            textarea.style.padding = '4px';
+            textarea.style.padding = `${object.padding ?? 0}px`;
             textarea.style.margin = '0';
             textarea.style.overflow = 'hidden';
             textarea.style.background = 'white';
@@ -207,6 +324,9 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
             textarea.style.resize = 'none';
             textarea.style.lineHeight = String(object.lineHeight);
             textarea.style.color = object.fill;
+            textarea.style.letterSpacing = `${object.letterSpacing ?? 0}px`;
+            textarea.style.textDecoration = object.textDecoration || 'none';
+            textarea.style.fontVariant = object.fontVariant ?? 'normal';
             textarea.style.zIndex = '10000';
 
             textarea.focus();
@@ -225,6 +345,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
           }}
         />
       );
+    }
 
     case 'image':
       return <CanvasImageObject object={object} commonProps={commonProps} />;
@@ -239,8 +360,106 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
           hitStrokeWidth={Math.max(20, object.strokeWidth + 10)}
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
+          dash={getDashArray(object.dash, object.strokeWidth)}
         />
       );
+
+    case 'star': {
+      const outerRadius = Math.min(object.width, object.height) / 2;
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Star
+          {...commonProps}
+          numPoints={object.points}
+          innerRadius={outerRadius * object.innerRadius}
+          outerRadius={outerRadius}
+          {...fillProp}
+          {...gradientProps}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+        />
+      );
+    }
+
+    case 'triangle': {
+      const w = object.width;
+      const h = object.height;
+      const triPoints = [w / 2, 0, w, h, 0, h];
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, w, h) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Line
+          {...commonProps}
+          points={triPoints}
+          closed
+          {...fillProp}
+          {...gradientProps}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+        />
+      );
+    }
+
+    case 'arrow':
+      return (
+        <Arrow
+          {...commonProps}
+          points={object.points}
+          stroke={object.stroke}
+          strokeWidth={object.strokeWidth}
+          pointerLength={object.pointerLength}
+          pointerWidth={object.pointerWidth}
+          fill={object.fill}
+          hitStrokeWidth={Math.max(20, object.strokeWidth + 10)}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+        />
+      );
+
+    case 'badge': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Group {...commonProps} width={object.width} height={object.height}>
+          <Rect
+            width={object.width}
+            height={object.height}
+            {...fillProp}
+            {...gradientProps}
+            cornerRadius={object.cornerRadius}
+            {...shadowProps}
+          />
+          <Text
+            x={object.paddingX}
+            y={object.paddingY}
+            width={object.width - object.paddingX * 2}
+            height={object.height - object.paddingY * 2}
+            text={object.text}
+            fontSize={object.fontSize}
+            fontFamily={object.fontFamily}
+            fontStyle={object.fontStyle}
+            fill={object.textColor}
+            align={object.align ?? 'center'}
+            verticalAlign={object.verticalAlign ?? 'middle'}
+            letterSpacing={object.letterSpacing ?? 0}
+            textDecoration={object.textDecoration || ''}
+          />
+        </Group>
+      );
+    }
 
     case 'interactive':
       return (
@@ -265,7 +484,6 @@ function InteractiveCanvasObject({
   commonProps: Record<string, unknown>;
   onDblClick: (e: Konva.KonvaEventObject<MouseEvent>) => void;
 }) {
-  // Show the default-visible group's children as a preview
   const defaultGroup = object.groups[0];
   const visibleChildIds = defaultGroup ? defaultGroup.objectIds : [];
   const visibleChildren = object.children.filter((c) =>
@@ -280,8 +498,6 @@ function InteractiveCanvasObject({
       onDblClick={onDblClick}
       onDblTap={onDblClick}
     >
-      {/* Component bounding box — hitFunc ensures the entire area is
-          clickable/draggable even though fill is transparent */}
       <Rect
         width={object.width}
         height={object.height}
@@ -298,12 +514,10 @@ function InteractiveCanvasObject({
         }}
       />
 
-      {/* Render default group children */}
       {visibleChildren.map((child) => (
         <StaticChildObject key={child.id} object={child} />
       ))}
 
-      {/* Type badge */}
       <Rect
         x={4}
         y={-22}
@@ -332,6 +546,9 @@ function getBadgeWidth(type: string): number {
     case 'bottom-sheet': return 80;
     case 'expandable': return 72;
     case 'entrance': return 62;
+    case 'carousel': return 62;
+    case 'tabs': return 40;
+    case 'quiz': return 40;
     default: return 70;
   }
 }
@@ -342,6 +559,9 @@ function getInteractionLabel(type: string): string {
     case 'bottom-sheet': return 'Bottom Sheet';
     case 'expandable': return 'Expandable';
     case 'entrance': return 'Entrance';
+    case 'carousel': return 'Carousel';
+    case 'tabs': return 'Tabs';
+    case 'quiz': return 'Quiz';
     default: return 'Interactive';
   }
 }
@@ -357,30 +577,53 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
   };
 
   switch (object.type) {
-    case 'rect':
+    case 'rect': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      const blurRadius = object.blur || 0;
       return (
-        <Rect
+        <BlurredRect
           {...commonProps}
           width={object.width}
           height={object.height}
-          fill={object.fill}
+          {...fillProp}
+          {...gradientProps}
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
           cornerRadius={object.cornerRadius}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+          blurRadius={blurRadius}
         />
       );
-    case 'ellipse':
+    }
+    case 'ellipse': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      const blurRadius = object.blur || 0;
       return (
-        <Ellipse
+        <BlurredEllipse
           {...commonProps}
           radiusX={object.width / 2}
           radiusY={object.height / 2}
-          fill={object.fill}
+          {...fillProp}
+          {...gradientProps}
           stroke={object.stroke || undefined}
           strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+          blurRadius={blurRadius}
         />
       );
-    case 'text':
+    }
+    case 'text': {
+      const shadowProps = getShadowProps(object.shadow);
       return (
         <Text
           {...commonProps}
@@ -391,9 +634,19 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
           fill={object.fill}
           align={object.align}
           width={object.width}
+          height={object.height}
           lineHeight={object.lineHeight}
+          letterSpacing={object.letterSpacing ?? 0}
+          textDecoration={object.textDecoration || ''}
+          verticalAlign={object.verticalAlign ?? 'top'}
+          padding={object.padding ?? 0}
+          fontVariant={object.fontVariant ?? 'normal'}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth ?? 0}
+          {...shadowProps}
         />
       );
+    }
     case 'image':
       return <StaticChildImage object={object} commonProps={commonProps} />;
     case 'line':
@@ -405,8 +658,101 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
           strokeWidth={object.strokeWidth}
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
+          dash={getDashArray(object.dash, object.strokeWidth)}
         />
       );
+    case 'star': {
+      const outerRadius = Math.min(object.width, object.height) / 2;
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Star
+          {...commonProps}
+          numPoints={object.points}
+          innerRadius={outerRadius * object.innerRadius}
+          outerRadius={outerRadius}
+          {...fillProp}
+          {...gradientProps}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+        />
+      );
+    }
+    case 'triangle': {
+      const w = object.width;
+      const h = object.height;
+      const triPoints = [w / 2, 0, w, h, 0, h];
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, w, h) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Line
+          {...commonProps}
+          points={triPoints}
+          closed
+          {...fillProp}
+          {...gradientProps}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+          {...shadowProps}
+        />
+      );
+    }
+    case 'arrow':
+      return (
+        <Arrow
+          {...commonProps}
+          points={object.points}
+          stroke={object.stroke}
+          strokeWidth={object.strokeWidth}
+          pointerLength={object.pointerLength}
+          pointerWidth={object.pointerWidth}
+          fill={object.fill}
+          dash={getDashArray(object.dash, object.strokeWidth)}
+          lineCap={object.lineCap}
+          lineJoin={object.lineJoin}
+        />
+      );
+    case 'badge': {
+      const gradientProps = object.gradient ? getGradientProps(object.gradient, object.width, object.height) : {};
+      const shadowProps = getShadowProps(object.shadow);
+      const fillProp = object.gradient ? {} : { fill: object.fill };
+      return (
+        <Group {...commonProps} width={object.width} height={object.height}>
+          <Rect
+            width={object.width}
+            height={object.height}
+            {...fillProp}
+            {...gradientProps}
+            cornerRadius={object.cornerRadius}
+            {...shadowProps}
+          />
+          <Text
+            x={object.paddingX}
+            y={object.paddingY}
+            width={object.width - object.paddingX * 2}
+            height={object.height - object.paddingY * 2}
+            text={object.text}
+            fontSize={object.fontSize}
+            fontFamily={object.fontFamily}
+            fontStyle={object.fontStyle}
+            fill={object.textColor}
+            align={object.align ?? 'center'}
+            verticalAlign={object.verticalAlign ?? 'middle'}
+            letterSpacing={object.letterSpacing ?? 0}
+            textDecoration={object.textDecoration || ''}
+          />
+        </Group>
+      );
+    }
     default:
       return null;
   }
@@ -444,14 +790,12 @@ function CanvasImageObject({
 
   useEffect(() => {
     const img = new window.Image();
-    // Only set crossOrigin for remote URLs (not blob: or data: URLs)
     const isLocal = object.src.startsWith('blob:') || object.src.startsWith('data:');
     if (!isLocal) {
       img.crossOrigin = 'anonymous';
     }
     img.onload = () => setImage(img);
     img.onerror = () => {
-      // Retry without crossOrigin if CORS fails
       const fallback = new window.Image();
       fallback.onload = () => setImage(fallback);
       fallback.src = object.src;
@@ -460,7 +804,6 @@ function CanvasImageObject({
   }, [object.src]);
 
   if (!image) {
-    // Render a placeholder rect so the object stays selectable/draggable while loading
     return (
       <Rect
         {...commonProps}

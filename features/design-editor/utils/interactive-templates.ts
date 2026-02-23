@@ -6,6 +6,9 @@ import type {
   BottomSheetConfig,
   ExpandableConfig,
   EntranceConfig,
+  CarouselConfig,
+  TabsConfig,
+  QuizConfig,
   StaticDesignObject,
 } from '../types/document';
 
@@ -102,7 +105,6 @@ export function createBottomSheet(cx: number, cy: number): InteractiveComponentO
   const x = cx - w / 2;
   const y = cy - h / 2;
 
-  // Trigger button
   const triggerBg = createRect({
     name: 'Button Background',
     x: w / 2 - 80, y: 10, width: 160, height: 44,
@@ -114,7 +116,6 @@ export function createBottomSheet(cx: number, cy: number): InteractiveComponentO
     text: 'Open Sheet', fontSize: 16, fontStyle: 'bold', fill: '#FFFFFF', align: 'center',
   });
 
-  // Sheet content
   const sheetBg = createRect({
     name: 'Sheet Background',
     x: 0, y: 0, width: w, height: 280,
@@ -168,7 +169,6 @@ export function createExpandable(cx: number, cy: number): InteractiveComponentOb
   const x = cx - w / 2;
   const y = cy - h / 2;
 
-  // Header
   const headerBg = createRect({
     name: 'Header Background',
     x: 0, y: 0, width: w, height: 52,
@@ -185,7 +185,6 @@ export function createExpandable(cx: number, cy: number): InteractiveComponentOb
     text: '▼', fontSize: 14, fill: '#9CA3AF', align: 'center',
   });
 
-  // Body
   const bodyBg = createRect({
     name: 'Body Background',
     x: 0, y: 0, width: w, height: 120,
@@ -263,5 +262,198 @@ export function createEntrance(cx: number, cy: number): InteractiveComponentObje
     ],
     childIds: cards.map((c) => c.id),
     children: cards,
+  });
+}
+
+// ─── New interactive components ─────────────────────────────
+
+export function createCarousel(cx: number, cy: number): InteractiveComponentObject {
+  const w = 340;
+  const h = 240;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+
+  const slideColors = ['#7B68EE', '#0EA5E9', '#22C55E'];
+  const slideTitles = ['Slide One', 'Slide Two', 'Slide Three'];
+
+  const allChildren: StaticDesignObject[] = [];
+  const groups: { role: string; label: string; objectIds: string[] }[] = [];
+
+  for (let i = 0; i < 3; i++) {
+    const bg = createRect({
+      name: `Slide ${i + 1} Background`,
+      x: 0, y: 0, width: w, height: h,
+      fill: slideColors[i], cornerRadius: 16, stroke: '', strokeWidth: 0,
+    });
+    const title = createText({
+      name: `Slide ${i + 1} Title`,
+      x: 20, y: h / 2 - 20, width: w - 40, height: 40,
+      text: slideTitles[i], fontSize: 24, fontStyle: 'bold', fill: '#FFFFFF', align: 'center',
+    });
+    const slideChildren = [bg, title];
+    allChildren.push(...slideChildren);
+    groups.push({
+      role: `slide-${i}`,
+      label: `Slide ${i + 1}`,
+      objectIds: slideChildren.map((c) => c.id),
+    });
+  }
+
+  const config: CarouselConfig = {
+    autoPlay: false,
+    autoPlayInterval: 3000,
+    showDots: true,
+    showArrows: true,
+    transitionDuration: 300,
+  };
+
+  return createInteractiveBase({
+    name: 'Carousel',
+    x, y, width: w, height: h,
+    interactionType: 'carousel',
+    interactionConfig: config,
+    groups,
+    childIds: allChildren.map((c) => c.id),
+    children: allChildren,
+  });
+}
+
+export function createTabs(cx: number, cy: number): InteractiveComponentObject {
+  const w = 340;
+  const h = 280;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+
+  const tabLabels = ['Tab One', 'Tab Two', 'Tab Three'];
+  const tabColors = ['#F0EBFF', '#E0F2FE', '#ECFDF5'];
+
+  const allChildren: StaticDesignObject[] = [];
+  const groups: { role: string; label: string; objectIds: string[] }[] = [];
+
+  for (let i = 0; i < 3; i++) {
+    const bg = createRect({
+      name: `Tab ${i + 1} Content Background`,
+      x: 0, y: 44, width: w, height: h - 44,
+      fill: tabColors[i], cornerRadius: 12, stroke: '#E8E8F0', strokeWidth: 1,
+    });
+    const tabHeader = createRect({
+      name: `Tab ${i + 1} Header`,
+      x: i * (w / 3), y: 0, width: w / 3, height: 40,
+      fill: i === 0 ? '#7B68EE' : '#F3F4F6', cornerRadius: 8, stroke: '', strokeWidth: 0,
+    });
+    const tabLabel = createText({
+      name: `Tab ${i + 1} Label`,
+      x: i * (w / 3), y: 10, width: w / 3, height: 20,
+      text: tabLabels[i], fontSize: 14, fontStyle: 'bold',
+      fill: i === 0 ? '#FFFFFF' : '#6B7280', align: 'center',
+    });
+    const contentText = createText({
+      name: `Tab ${i + 1} Content`,
+      x: 20, y: 64, width: w - 40, height: 80,
+      text: `Content for ${tabLabels[i]}. Add your material here.`,
+      fontSize: 15, fill: '#6B7280', align: 'left',
+    });
+    const tabChildren = [bg, tabHeader, tabLabel, contentText];
+    allChildren.push(...tabChildren);
+    groups.push({
+      role: `tab-${i}`,
+      label: tabLabels[i],
+      objectIds: tabChildren.map((c) => c.id),
+    });
+  }
+
+  const config: TabsConfig = {
+    defaultTab: 0,
+    tabPosition: 'top',
+    tabStyle: 'underline',
+  };
+
+  return createInteractiveBase({
+    name: 'Tabs',
+    x, y, width: w, height: h,
+    interactionType: 'tabs',
+    interactionConfig: config,
+    groups,
+    childIds: allChildren.map((c) => c.id),
+    children: allChildren,
+  });
+}
+
+export function createQuiz(cx: number, cy: number): InteractiveComponentObject {
+  const w = 340;
+  const h = 320;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+
+  // Question group
+  const questionBg = createRect({
+    name: 'Question Background',
+    x: 0, y: 0, width: w, height: h,
+    fill: '#FBF9FF', cornerRadius: 16, stroke: '#E8E0F0', strokeWidth: 1,
+  });
+  const questionTitle = createText({
+    name: 'Question Text',
+    x: 20, y: 20, width: w - 40, height: 40,
+    text: 'What is the answer?', fontSize: 20, fontStyle: 'bold', fill: '#2D2D44', align: 'left',
+  });
+
+  const optionLabels = ['Option A', 'Option B', 'Option C', 'Option D'];
+  const questionChildren: StaticDesignObject[] = [questionBg, questionTitle];
+
+  for (let i = 0; i < 4; i++) {
+    const optBg = createRect({
+      name: `Option ${i + 1} Background`,
+      x: 20, y: 80 + i * 52, width: w - 40, height: 44,
+      fill: '#FFFFFF', cornerRadius: 12, stroke: '#E8E8F0', strokeWidth: 1,
+    });
+    const optText = createText({
+      name: `Option ${i + 1} Label`,
+      x: 36, y: 90 + i * 52, width: w - 72, height: 24,
+      text: optionLabels[i], fontSize: 15, fill: '#2D2D44', align: 'left',
+    });
+    questionChildren.push(optBg, optText);
+  }
+
+  // Feedback group
+  const feedbackBg = createRect({
+    name: 'Feedback Background',
+    x: 0, y: 0, width: w, height: 160,
+    fill: '#ECFDF5', cornerRadius: 16, stroke: '#22C55E', strokeWidth: 1,
+  });
+  const feedbackTitle = createText({
+    name: 'Feedback Title',
+    x: 20, y: 30, width: w - 40, height: 32,
+    text: 'Correct!', fontSize: 24, fontStyle: 'bold', fill: '#22C55E', align: 'center',
+  });
+  const feedbackBody = createText({
+    name: 'Feedback Body',
+    x: 20, y: 70, width: w - 40, height: 60,
+    text: 'Great job! You selected the right answer.',
+    fontSize: 15, fill: '#6B7280', align: 'center',
+  });
+
+  const feedbackChildren: StaticDesignObject[] = [feedbackBg, feedbackTitle, feedbackBody];
+  const allChildren = [...questionChildren, ...feedbackChildren];
+
+  const config: QuizConfig = {
+    questionText: 'What is the answer?',
+    options: optionLabels,
+    correctIndex: 0,
+    showFeedback: true,
+    feedbackCorrect: 'Great job! You selected the right answer.',
+    feedbackIncorrect: 'Not quite. Try again!',
+  };
+
+  return createInteractiveBase({
+    name: 'Quiz',
+    x, y, width: w, height: h,
+    interactionType: 'quiz',
+    interactionConfig: config,
+    groups: [
+      { role: 'question', label: 'Question', objectIds: questionChildren.map((c) => c.id) },
+      { role: 'feedback', label: 'Feedback', objectIds: feedbackChildren.map((c) => c.id) },
+    ],
+    childIds: allChildren.map((c) => c.id),
+    children: allChildren,
   });
 }

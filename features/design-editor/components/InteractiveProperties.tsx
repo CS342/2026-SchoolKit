@@ -7,6 +7,9 @@ import type {
   BottomSheetConfig,
   ExpandableConfig,
   EntranceConfig,
+  CarouselConfig,
+  TabsConfig,
+  QuizConfig,
 } from '../types/document';
 
 function NumberInput({
@@ -265,6 +268,27 @@ export function InteractiveProperties({
           onUpdate={update}
         />
       )}
+
+      {object.interactionType === 'carousel' && (
+        <CarouselProperties
+          config={object.interactionConfig as CarouselConfig}
+          onUpdate={update}
+        />
+      )}
+
+      {object.interactionType === 'tabs' && (
+        <TabsProperties
+          config={object.interactionConfig as TabsConfig}
+          onUpdate={update}
+        />
+      )}
+
+      {object.interactionType === 'quiz' && (
+        <QuizProperties
+          config={object.interactionConfig as QuizConfig}
+          onUpdate={update}
+        />
+      )}
     </>
   );
 }
@@ -448,12 +472,273 @@ function EntranceProperties({
   );
 }
 
+// ─── New interactive type properties ────────────────────────
+
+function CarouselProperties({
+  config,
+  onUpdate,
+}: {
+  config: CarouselConfig;
+  onUpdate: (c: Record<string, unknown>) => void;
+}) {
+  return (
+    <Section title="Carousel Settings">
+      <div style={{ marginBottom: 8 }}>
+        <CheckboxInput
+          label="Auto-play"
+          value={config.autoPlay}
+          onChange={(v) => onUpdate({ autoPlay: v })}
+        />
+      </div>
+      {config.autoPlay && (
+        <div style={{ marginBottom: 8 }}>
+          <NumberInput
+            label="Interval (ms)"
+            value={config.autoPlayInterval}
+            onChange={(v) => onUpdate({ autoPlayInterval: v })}
+            min={1000}
+            max={10000}
+            step={500}
+          />
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <CheckboxInput
+          label="Show dots"
+          value={config.showDots}
+          onChange={(v) => onUpdate({ showDots: v })}
+        />
+        <CheckboxInput
+          label="Show arrows"
+          value={config.showArrows}
+          onChange={(v) => onUpdate({ showArrows: v })}
+        />
+      </div>
+      <NumberInput
+        label="Transition (ms)"
+        value={config.transitionDuration}
+        onChange={(v) => onUpdate({ transitionDuration: v })}
+        min={100}
+        max={1000}
+        step={50}
+      />
+    </Section>
+  );
+}
+
+function TabsProperties({
+  config,
+  onUpdate,
+}: {
+  config: TabsConfig;
+  onUpdate: (c: Record<string, unknown>) => void;
+}) {
+  return (
+    <Section title="Tabs Settings">
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <NumberInput
+          label="Default Tab"
+          value={config.defaultTab}
+          onChange={(v) => onUpdate({ defaultTab: Math.max(0, Math.round(v)) })}
+          min={0}
+          max={10}
+        />
+        <SelectInput
+          label="Position"
+          value={config.tabPosition}
+          options={[
+            { value: 'top', label: 'Top' },
+            { value: 'bottom', label: 'Bottom' },
+          ]}
+          onChange={(v) => onUpdate({ tabPosition: v })}
+        />
+      </div>
+      <SelectInput
+        label="Tab Style"
+        value={config.tabStyle}
+        options={[
+          { value: 'underline', label: 'Underline' },
+          { value: 'pill', label: 'Pill' },
+          { value: 'boxed', label: 'Boxed' },
+        ]}
+        onChange={(v) => onUpdate({ tabStyle: v })}
+      />
+    </Section>
+  );
+}
+
+function QuizProperties({
+  config,
+  onUpdate,
+}: {
+  config: QuizConfig;
+  onUpdate: (c: Record<string, unknown>) => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Section title="Quiz Settings">
+      <div style={{ marginBottom: 8 }}>
+        <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
+          Question
+        </label>
+        <textarea
+          value={config.questionText}
+          onChange={(e) => onUpdate({ questionText: e.target.value })}
+          style={{
+            width: '100%',
+            minHeight: 50,
+            padding: '6px 8px',
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+            fontSize: 13,
+            color: colors.textDark,
+            backgroundColor: colors.appBackground,
+            resize: 'vertical',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+
+      <div style={{ marginBottom: 8 }}>
+        <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
+          Options
+        </label>
+        {config.options.map((opt, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+            <input
+              type="radio"
+              name="correctAnswer"
+              checked={config.correctIndex === i}
+              onChange={() => onUpdate({ correctIndex: i })}
+              style={{ accentColor: colors.primary }}
+              title="Mark as correct"
+            />
+            <input
+              type="text"
+              value={opt}
+              onChange={(e) => {
+                const newOptions = [...config.options];
+                newOptions[i] = e.target.value;
+                onUpdate({ options: newOptions });
+              }}
+              style={{
+                flex: 1,
+                padding: '4px 8px',
+                borderRadius: 6,
+                border: `1px solid ${colors.borderCard}`,
+                fontSize: 13,
+                color: colors.textDark,
+                backgroundColor: colors.appBackground,
+              }}
+            />
+            {config.options.length > 2 && (
+              <button
+                onClick={() => {
+                  const newOptions = config.options.filter((_, idx) => idx !== i);
+                  const newCorrect = config.correctIndex >= i && config.correctIndex > 0
+                    ? config.correctIndex - 1
+                    : config.correctIndex;
+                  onUpdate({ options: newOptions, correctIndex: Math.min(newCorrect, newOptions.length - 1) });
+                }}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: colors.textLight,
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  padding: '0 4px',
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+        {config.options.length < 6 && (
+          <button
+            onClick={() => onUpdate({ options: [...config.options, `Option ${config.options.length + 1}`] })}
+            style={{
+              border: `1px dashed ${colors.borderCard}`,
+              background: 'none',
+              color: colors.textLight,
+              cursor: 'pointer',
+              fontSize: 12,
+              padding: '4px 8px',
+              borderRadius: 6,
+              width: '100%',
+            }}
+          >
+            + Add option
+          </button>
+        )}
+      </div>
+
+      <div style={{ marginBottom: 8 }}>
+        <CheckboxInput
+          label="Show feedback"
+          value={config.showFeedback}
+          onChange={(v) => onUpdate({ showFeedback: v })}
+        />
+      </div>
+
+      {config.showFeedback && (
+        <>
+          <div style={{ marginBottom: 4 }}>
+            <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
+              Correct Feedback
+            </label>
+            <input
+              type="text"
+              value={config.feedbackCorrect}
+              onChange={(e) => onUpdate({ feedbackCorrect: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '4px 8px',
+                borderRadius: 6,
+                border: `1px solid ${colors.borderCard}`,
+                fontSize: 13,
+                color: colors.textDark,
+                backgroundColor: colors.appBackground,
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
+              Incorrect Feedback
+            </label>
+            <input
+              type="text"
+              value={config.feedbackIncorrect}
+              onChange={(e) => onUpdate({ feedbackIncorrect: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '4px 8px',
+                borderRadius: 6,
+                border: `1px solid ${colors.borderCard}`,
+                fontSize: 13,
+                color: colors.textDark,
+                backgroundColor: colors.appBackground,
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        </>
+      )}
+    </Section>
+  );
+}
+
 function getTypeLabel(type: string): string {
   switch (type) {
     case 'flip-card': return 'Flip Card';
     case 'bottom-sheet': return 'Bottom Sheet';
     case 'expandable': return 'Expandable';
     case 'entrance': return 'Entrance Animation';
+    case 'carousel': return 'Carousel';
+    case 'tabs': return 'Tabs';
+    case 'quiz': return 'Quiz';
     default: return 'Interactive';
   }
 }

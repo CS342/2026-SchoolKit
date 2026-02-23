@@ -6,6 +6,9 @@ import { PreviewFlipCard } from './preview/PreviewFlipCard';
 import { PreviewBottomSheet } from './preview/PreviewBottomSheet';
 import { PreviewExpandable } from './preview/PreviewExpandable';
 import { PreviewEntrance } from './preview/PreviewEntrance';
+import { PreviewCarousel } from './preview/PreviewCarousel';
+import { PreviewTabs } from './preview/PreviewTabs';
+import { PreviewQuiz } from './preview/PreviewQuiz';
 
 interface PreviewOverlayProps {
   onClose: () => void;
@@ -132,6 +135,12 @@ function PreviewInteractive({ object }: { object: InteractiveComponentObject }) 
       return <PreviewExpandable object={object} />;
     case 'entrance':
       return <PreviewEntrance object={object} />;
+    case 'carousel':
+      return <PreviewCarousel object={object} />;
+    case 'tabs':
+      return <PreviewTabs object={object} />;
+    case 'quiz':
+      return <PreviewQuiz object={object} />;
     default:
       return null;
   }

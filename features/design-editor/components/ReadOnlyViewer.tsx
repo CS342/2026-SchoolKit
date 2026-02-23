@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Stage, Layer, Rect, Ellipse, Text, Image as KonvaImage, Line } from 'react-konva';
+import { Stage, Layer, Rect, Ellipse, Text, Image as KonvaImage, Line, Star, Arrow, Group } from 'react-konva';
 import type { DesignDocument, DesignObject } from '../types/document';
 
 interface ReadOnlyViewerProps {
@@ -67,6 +67,69 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
         />
+      );
+    case 'star': {
+      const outerRadius = Math.min(object.width, object.height) / 2;
+      return (
+        <Star
+          {...commonProps}
+          numPoints={object.points}
+          innerRadius={outerRadius * object.innerRadius}
+          outerRadius={outerRadius}
+          fill={object.fill}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+        />
+      );
+    }
+    case 'triangle': {
+      const triPoints = [object.width / 2, 0, object.width, object.height, 0, object.height];
+      return (
+        <Line
+          {...commonProps}
+          points={triPoints}
+          closed
+          fill={object.fill}
+          stroke={object.stroke || undefined}
+          strokeWidth={object.strokeWidth}
+        />
+      );
+    }
+    case 'arrow':
+      return (
+        <Arrow
+          {...commonProps}
+          points={object.points}
+          stroke={object.stroke}
+          strokeWidth={object.strokeWidth}
+          pointerLength={object.pointerLength}
+          pointerWidth={object.pointerWidth}
+          fill={object.fill}
+        />
+      );
+    case 'badge':
+      return (
+        <Group {...commonProps} width={object.width} height={object.height}>
+          <Rect
+            width={object.width}
+            height={object.height}
+            fill={object.fill}
+            cornerRadius={object.cornerRadius}
+          />
+          <Text
+            x={object.paddingX}
+            y={object.paddingY}
+            width={object.width - object.paddingX * 2}
+            height={object.height - object.paddingY * 2}
+            text={object.text}
+            fontSize={object.fontSize}
+            fontFamily={object.fontFamily}
+            fontStyle={object.fontStyle}
+            fill={object.textColor}
+            align="center"
+            verticalAlign="middle"
+          />
+        </Group>
       );
     case 'interactive':
       // Interactive components require the RuntimeRenderer; skip in Konva read-only view

@@ -16,7 +16,7 @@ const DEFAULT_COLOR = '#7B68EE';
  * Fetches resources from Supabase and merges with the hardcoded resource list.
  * Hardcoded resources take priority (they have custom routes and colors).
  * DB-only resources (e.g. published designs) are appended with derived colors.
- * Published designs automatically route to the design viewer.
+ * Published designs automatically route to the design viewer via design_id.
  */
 export function useResources() {
   const [resources, setResources] = useState<Resource[]>(ALL_RESOURCES);
@@ -24,30 +24,13 @@ export function useResources() {
 
   const fetchResources = useCallback(async () => {
     try {
-      // Fetch resources and published designs in parallel
-      const [resourcesResult, designsResult] = await Promise.all([
-        supabase
-          .from('resources')
-          .select('id, title, description, category, icon, target_roles, created_at'),
-        supabase
-          .from('designs')
-          .select('id, published_resource_id')
-          .not('published_resource_id', 'is', null),
-      ]);
+      const { data, error } = await supabase
+        .from('resources')
+        .select('id, title, description, category, icon, target_roles, design_id, created_at');
 
-      if (resourcesResult.error || !resourcesResult.data) {
+      if (error || !data) {
         setResources(ALL_RESOURCES);
         return;
-      }
-
-      // Build a map: resource ID -> design ID for published designs
-      const resourceToDesignMap = new Map<string, string>();
-      if (designsResult.data) {
-        for (const d of designsResult.data) {
-          if (d.published_resource_id) {
-            resourceToDesignMap.set(d.published_resource_id, d.id);
-          }
-        }
       }
 
       // Deduplicate by title — hardcoded resources take priority
@@ -55,20 +38,17 @@ export function useResources() {
         ALL_RESOURCES.map((r) => r.title.toLowerCase()),
       );
 
-      const dbResources: Resource[] = resourcesResult.data
+      const dbResources: Resource[] = data
         .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()))
-        .map((r) => {
-          const designId = resourceToDesignMap.get(r.id);
-          return {
-            id: r.id,
-            title: r.title,
-            category: r.category,
-            tags: [r.category.toLowerCase()],
-            icon: r.icon,
-            color: CATEGORY_COLORS[r.category] || DEFAULT_COLOR,
-            route: designId ? `/design-view/${designId}` : undefined,
-          };
-        });
+        .map((r) => ({
+          id: r.id,
+          title: r.title,
+          category: r.category,
+          tags: [r.category.toLowerCase()],
+          icon: r.icon,
+          color: CATEGORY_COLORS[r.category] || DEFAULT_COLOR,
+          route: r.design_id ? `/design-view/${r.design_id}` : undefined,
+        }));
 
       setResources([...ALL_RESOURCES, ...dbResources]);
     } catch {
