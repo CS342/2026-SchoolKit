@@ -22,25 +22,7 @@ import { useStories, StoryComment } from '../contexts/StoriesContext';
 import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { generateSpeech } from '../services/elevenLabs';
-import {
-  COLORS,
-  TYPOGRAPHY,
-  RADII,
-  BORDERS,
-  SHADOWS,
-  SPACING,
-  withOpacity,
-} from '../constants/onboarding-theme';
-
-function getRoleColor(role: UserRole | null): string {
-  switch (role) {
-    case 'student-k8': return COLORS.studentK8;
-    case 'student-hs': return COLORS.studentHS;
-    case 'parent': return COLORS.parent;
-    case 'staff': return COLORS.staff;
-    default: return COLORS.primary;
-  }
-}
+import { COLORS, TYPOGRAPHY } from '../constants/onboarding-theme';
 
 function getRoleLabel(role: UserRole | null): string {
   switch (role) {
@@ -83,103 +65,60 @@ function CommentItem({
   isOwn: boolean;
   onDelete: () => void;
 }) {
-  const roleColor = getRoleColor(comment.author_role);
   const roleLabel = getRoleLabel(comment.author_role);
-  const initial = (comment.author_name || '?')[0].toUpperCase();
+  const metaParts = [comment.author_name || 'Anonymous'];
+  if (roleLabel) metaParts.push(roleLabel);
+  metaParts.push(getRelativeTime(comment.created_at));
+  const metaLine = metaParts.join(' · ');
 
   return (
     <View style={commentStyles.container}>
-      <View style={[commentStyles.avatar, { backgroundColor: roleColor }]}>
-        <Text style={commentStyles.avatarText}>{initial}</Text>
+      <View style={commentStyles.headerRow}>
+        <Text style={commentStyles.meta} numberOfLines={1}>{metaLine}</Text>
+        {isOwn && (
+          <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+          </TouchableOpacity>
+        )}
       </View>
-      <View style={commentStyles.content}>
-        <View style={commentStyles.headerRow}>
-          <Text style={commentStyles.authorName} numberOfLines={1}>{comment.author_name || 'Anonymous'}</Text>
-          {roleLabel ? (
-            <View style={[commentStyles.roleBadge, { backgroundColor: withOpacity(roleColor, 0.1) }]}>
-              <Text style={[commentStyles.roleText, { color: roleColor }]}>{roleLabel}</Text>
-            </View>
-          ) : null}
-          <Text style={commentStyles.time}>{getRelativeTime(comment.created_at)}</Text>
-          <View style={{ flex: 1 }} />
-          {isOwn && (
-            <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-            </TouchableOpacity>
-          )}
-        </View>
-        <Text style={commentStyles.body}>{comment.body}</Text>
-      </View>
+      <Text style={commentStyles.body}>{comment.body}</Text>
     </View>
   );
 }
 
 const commentStyles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderCard,
-  },
-  avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    marginTop: 2,
-  },
-  avatarText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
-  authorName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    flexShrink: 1,
-  },
-  roleBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  roleText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  time: {
+  meta: {
     fontSize: 12,
-    fontWeight: '500',
     color: COLORS.textLight,
+    flex: 1,
+    marginRight: 8,
   },
   body: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
     color: COLORS.textDark,
     lineHeight: 22,
   },
 });
 
-// Exporting StoryDetailScreen as default component
 export default function StoryDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, isAnonymous } = useAuth();
-  const { selectedVoice } = useOnboarding();
-  const { stories, deleteStory, fetchComments, addComment, deleteComment, isStoryBookmarked, addStoryBookmark, removeStoryBookmark } = useStories();
+  const { selectedVoice, data: onboardingData } = useOnboarding();
+  const { stories, deleteStory, fetchComments, addComment, deleteComment, isStoryBookmarked, addStoryBookmark, removeStoryBookmark, isStoryLiked, toggleLike } = useStories();
   const { colors, appStyles } = useTheme();
 
   const [comments, setComments] = useState<StoryComment[]>([]);
@@ -187,29 +126,42 @@ export default function StoryDetailScreen() {
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
+  const likeScale = useRef(new RNAnimated.Value(1)).current;
 
-  // TTS state
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
 
   const story = stories.find(s => s.id === id);
   const isOwnStory = story && user?.id === story.author_id;
   const bookmarked = id ? isStoryBookmarked(id) : false;
+  const liked = id ? isStoryLiked(id) : false;
 
-  // Cleanup sound on unmount
+  const canViewStory = useMemo(() => {
+    if (!story) return false;
+    if (story.author_id === user?.id) return true; // Author can always view
+    const audiences = story.target_audiences || [];
+    // Default to all if none specified
+    if (audiences.length === 0) return true;
+    
+    let userGroup = 'Students';
+    if (onboardingData?.role === 'student-k8' || onboardingData?.role === 'student-hs') userGroup = 'Students';
+    else if (onboardingData?.role === 'parent') userGroup = 'Parents';
+    else if (onboardingData?.role === 'staff') userGroup = 'School Staff';
+    
+    // Strict enforcement: only users matching the chosen audience can view
+    return audiences.includes(userGroup) || audiences.includes(onboardingData?.role || '');
+  }, [story, user?.id, onboardingData?.role]);
+
   useEffect(() => {
     return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
+      if (sound) sound.unloadAsync();
     };
   }, [sound]);
 
   useEffect(() => {
-    if (id) {
-      loadComments();
-    }
+    if (id) loadComments();
   }, [id]);
 
   const loadComments = async () => {
@@ -249,7 +201,6 @@ export default function StoryDetailScreen() {
         setComments(prev => [...prev, newComment]);
         setCommentText('');
       } else {
-        // Fallback generic error if addComment returns null without throwing
         Alert.alert('Error', 'Failed to post comment. Please try again.');
       }
     } catch (error: any) {
@@ -275,10 +226,19 @@ export default function StoryDetailScreen() {
     ]);
   };
 
+  const handleLike = () => {
+    if (!id) return;
+    RNAnimated.sequence([
+      RNAnimated.timing(likeScale, { toValue: 1.4, duration: 100, useNativeDriver: true }),
+      RNAnimated.spring(likeScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+    ]).start();
+    toggleLike(id);
+  };
+
   const handleBookmark = () => {
     if (!id) return;
     RNAnimated.sequence([
-      RNAnimated.timing(bookmarkScale, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+      RNAnimated.timing(bookmarkScale, { toValue: 1.35, duration: 100, useNativeDriver: true }),
       RNAnimated.spring(bookmarkScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
     ]).start();
 
@@ -293,9 +253,7 @@ export default function StoryDetailScreen() {
     if (!story) return;
 
     if (isSpeaking) {
-      if (sound) {
-        await sound.pauseAsync();
-      }
+      if (sound) await sound.pauseAsync();
       setIsSpeaking(false);
       return;
     }
@@ -315,10 +273,9 @@ export default function StoryDetailScreen() {
       if (audioUri) {
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: audioUri },
-          { shouldPlay: true }
+          { shouldPlay: true, rate: playbackRate, shouldCorrectPitch: true }
         );
         setSound(newSound);
-
         newSound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded && status.didJustFinish) {
             setIsSpeaking(false);
@@ -336,9 +293,22 @@ export default function StoryDetailScreen() {
     }
   };
 
+  const togglePlaybackRate = async () => {
+    let nextRate = 1.0;
+    if (playbackRate === 1.0) nextRate = 1.25;
+    else if (playbackRate === 1.25) nextRate = 1.5;
+    else if (playbackRate === 1.5) nextRate = 2.0;
+    else nextRate = 1.0;
+    
+    setPlaybackRate(nextRate);
+    if (sound) {
+      await sound.setRateAsync(nextRate, true);
+    }
+  };
+
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  if (!story) {
+  if (!story || !canViewStory) {
     return (
       <View style={styles.container}>
         <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
@@ -349,18 +319,21 @@ export default function StoryDetailScreen() {
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Story not found</Text>
+          <Text style={styles.notFoundText}>{!story ? 'Story not found' : "You don't have permission to view this story"}</Text>
         </View>
       </View>
     );
   }
 
-  const roleColor = getRoleColor(story.author_role);
   const roleLabel = getRoleLabel(story.author_role);
-  const initial = (story.author_name || '?')[0].toUpperCase();
+  const metaParts = [story.author_name || 'Anonymous'];
+  if (roleLabel) metaParts.push(roleLabel);
+  metaParts.push(getRelativeTime(story.created_at));
+  const metaLine = metaParts.join(' · ');
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
         <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
@@ -385,83 +358,123 @@ export default function StoryDetailScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Story content */}
-          <View style={styles.storyCard}>
-            {/* Author row */}
-            <View style={styles.authorRow}>
-              <View style={[styles.avatarCircle, { backgroundColor: roleColor }]}>
-                <Text style={styles.avatarInitial}>{initial}</Text>
-              </View>
-              <View style={styles.authorInfo}>
-                <View style={styles.authorNameRow}>
-                  <Text style={styles.authorName}>{story.author_name || 'Anonymous'}</Text>
-                  {roleLabel ? (
-                    <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, 0.1) }]}>
-                      <Text style={[styles.roleText, { color: roleColor }]}>{roleLabel}</Text>
-                    </View>
-                  ) : null}
+          {/* Meta line */}
+          <Text style={styles.meta}>{metaLine}</Text>
+
+          {/* Title */}
+          <Text style={styles.storyTitle}>{story.title}</Text>
+
+          {/* Tags */}
+          {story.looking_for && story.looking_for.length > 0 && (
+            <View style={styles.tagsRow}>
+              {story.looking_for.map((need, idx) => (
+                <View key={idx} style={styles.tag}>
+                  <Text style={styles.tagText}>{need}</Text>
                 </View>
-                <Text style={styles.timeText}>{getRelativeTime(story.created_at)}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <TouchableOpacity
-                  onPress={handleSpeak}
-                  disabled={isLoadingAudio}
-                  style={{ padding: 4 }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  {isLoadingAudio ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <Ionicons
-                      name={isSpeaking ? 'stop-circle-outline' : 'volume-high-outline'}
-                      size={22}
-                      color={isSpeaking ? COLORS.error : COLORS.textLight}
-                    />
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleBookmark} style={{ padding: 4 }}>
-                  <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
-                    <Ionicons
-                      name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-                      size={22}
-                      color={bookmarked ? colors.primary : COLORS.textLight}
-                    />
-                  </RNAnimated.View>
-                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Audio Player Container */}
+          <View style={styles.audioControlsRow}>
+            <TouchableOpacity 
+              style={[styles.listenBtn, isSpeaking && styles.listenBtnPlaying]} 
+              onPress={handleSpeak}
+              disabled={isLoadingAudio}
+            >
+              {isLoadingAudio ? (
+                <ActivityIndicator size="small" color={isSpeaking ? COLORS.white : colors.primary} style={{ marginRight: 6 }} />
+              ) : (
+                <Ionicons 
+                  name={isSpeaking ? 'pause' : 'play'} 
+                  size={16} 
+                  color={isSpeaking ? COLORS.white : colors.primary} 
+                  style={{ marginRight: 6 }}
+                />
+              )}
+              <Text style={[styles.listenBtnText, isSpeaking && { color: COLORS.white }]}>
+                {isLoadingAudio ? 'Loading...' : isSpeaking ? 'Pause' : 'Listen'}
+              </Text>
+            </TouchableOpacity>
+            
+            {(sound !== null) && (
+              <TouchableOpacity style={styles.speedBtn} onPress={togglePlaybackRate}>
+                <Text style={styles.speedBtnText}>{playbackRate}x</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Body */}
+          <Text style={styles.storyBody}>{story.body}</Text>
+
+          {/* Action bar */}
+          <View style={styles.actionBar}>
+            <View style={styles.actionLeft}>
+              {/* Like */}
+              <TouchableOpacity
+                onPress={handleLike}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.actionItem}
+              >
+                <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+                  <Ionicons
+                    name={liked ? 'heart' : 'heart-outline'}
+                    size={24}
+                    color={liked ? '#E53935' : COLORS.textLight}
+                  />
+                </RNAnimated.View>
+                <Text style={[styles.actionText, liked && { color: '#E53935' }]}>
+                  {story.like_count}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Comments count */}
+              <View style={styles.actionItem}>
+                <Ionicons name="chatbubble-outline" size={22} color={COLORS.textLight} />
+                <Text style={styles.actionText}>{comments.length}</Text>
               </View>
             </View>
 
-            <Text style={styles.storyTitle}>{story.title}</Text>
-            <Text style={styles.storyBody}>{story.body}</Text>
+            <View style={styles.actionRight}>
+              <TouchableOpacity
+                onPress={handleBookmark}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+                  <Ionicons
+                    name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+                    size={24}
+                    color={bookmarked ? colors.primary : COLORS.textLight}
+                  />
+                </RNAnimated.View>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Comments section */}
-          <View style={styles.commentsSection}>
-            <Text style={styles.commentsTitle}>
-              Comments ({comments.length})
-            </Text>
+          <Text style={styles.commentsTitle}>
+            Comments ({comments.length})
+          </Text>
 
-            {commentsLoading ? (
-              <ActivityIndicator style={{ marginTop: 20 }} color={colors.primary} />
-            ) : comments.length === 0 ? (
-              <Text style={styles.noComments}>
-                No comments yet. {isAnonymous ? '' : 'Be the first to comment!'}
-              </Text>
-            ) : (
-              comments.map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  isOwn={user?.id === comment.author_id}
-                  onDelete={() => handleDeleteComment(comment.id)}
-                />
-              ))
-            )}
-          </View>
+          {commentsLoading ? (
+            <ActivityIndicator style={{ marginTop: 20 }} color={colors.primary} />
+          ) : comments.length === 0 ? (
+            <Text style={styles.noComments}>
+              No comments yet.{isAnonymous ? '' : ' Be the first to comment!'}
+            </Text>
+          ) : (
+            comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                isOwn={user?.id === comment.author_id}
+                onDelete={() => handleDeleteComment(comment.id)}
+              />
+            ))
+          )}
         </ScrollView>
 
-        {/* Comment input bar */}
+        {/* Comment input */}
         {!isAnonymous && (
           <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
             <TextInput
@@ -499,11 +512,11 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: c.appBackground,
+      backgroundColor: c.white,
     },
     scrollContent: {
-      paddingHorizontal: SPACING.screenPadding,
-      paddingTop: SPACING.sectionGap,
+      paddingHorizontal: 20,
+      paddingTop: 20,
       paddingBottom: 40,
     },
     notFound: {
@@ -515,85 +528,120 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       ...TYPOGRAPHY.body,
       color: c.textMuted,
     },
-    storyCard: {
-      backgroundColor: c.white,
-      borderRadius: RADII.card,
-      padding: 20,
-      borderWidth: BORDERS.card,
-      borderColor: c.borderCard,
-      ...SHADOWS.card,
-      marginBottom: SPACING.sectionGap,
+    meta: {
+      fontSize: 12,
+      color: COLORS.textLight,
+      fontWeight: '400',
+      marginBottom: 10,
     },
-    authorRow: {
+    storyTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: c.textDark,
+      lineHeight: 29,
+      letterSpacing: -0.3,
+      marginBottom: 14,
+    },
+    tagsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 14,
+    },
+    tag: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 100,
+      backgroundColor: COLORS.primary + '15',
+    },
+    tagText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: COLORS.primary,
+    },
+    storyBody: {
+      fontSize: 16,
+      fontWeight: '400',
+      color: c.textDark,
+      lineHeight: 26,
+    },
+    audioControlsRow: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 16,
+      gap: 10,
     },
-    avatarCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    avatarInitial: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#FFFFFF',
-    },
-    authorInfo: {
-      flex: 1,
-    },
-    authorNameRow: {
+    listenBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      backgroundColor: c.primary + '15',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 100,
     },
-    authorName: {
-      fontSize: 16,
+    listenBtnPlaying: {
+      backgroundColor: c.primary,
+    },
+    listenBtnText: {
+      fontSize: 14,
       fontWeight: '700',
-      color: c.textDark,
+      color: c.primary,
     },
-    roleBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: RADII.badgeSmall,
+    speedBtn: {
+      backgroundColor: c.appBackground,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: c.borderCard,
     },
-    roleText: {
-      fontSize: 12,
-      fontWeight: '600',
-    },
-    timeText: {
+    speedBtnText: {
       fontSize: 13,
-      fontWeight: '500',
-      color: c.textLight,
-      marginTop: 2,
-    },
-    storyTitle: {
-      ...TYPOGRAPHY.h2,
-      color: c.textDark,
-      marginBottom: 12,
-      lineHeight: 32,
-    },
-    storyBody: {
-      ...TYPOGRAPHY.bodyDescription,
+      fontWeight: '600',
       color: c.textMuted,
-      lineHeight: 26,
     },
-    commentsSection: {
-      marginTop: 4,
+    actionBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      marginTop: 18,
+      marginBottom: 20,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: '#E5E5EA',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: '#E5E5EA',
+    },
+    actionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    actionItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    actionRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+    },
+    actionText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: COLORS.textLight,
     },
     commentsTitle: {
-      ...TYPOGRAPHY.h3,
+      fontSize: 15,
+      fontWeight: '700',
       color: c.textDark,
-      marginBottom: 12,
+      marginBottom: 4,
     },
     noComments: {
-      ...TYPOGRAPHY.bodyDescription,
+      fontSize: 14,
       color: c.textLight,
-      textAlign: 'center',
-      paddingVertical: 24,
+      paddingVertical: 20,
     },
     inputBar: {
       flexDirection: 'row',
@@ -601,8 +649,8 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       paddingHorizontal: 16,
       paddingTop: 12,
       backgroundColor: c.white,
-      borderTopWidth: 1,
-      borderTopColor: c.borderCard,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: '#E5E5EA',
       gap: 10,
     },
     commentInput: {
@@ -614,10 +662,10 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       paddingHorizontal: 16,
       paddingVertical: 10,
       fontSize: 15,
-      fontWeight: '500',
+      fontWeight: '400',
       color: c.textDark,
-      borderWidth: 1,
-      borderColor: c.borderCard,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: '#E5E5EA',
     },
     sendButton: {
       padding: 8,

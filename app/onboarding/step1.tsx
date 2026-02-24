@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
+import { useAuth } from '../../contexts/AuthContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
@@ -19,6 +20,7 @@ import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../../c
 export default function Step1Screen() {
   const router = useRouter();
   const { updateName } = useOnboarding();
+  const { isAnonymous, signOut } = useAuth();
 
   const [name, setName] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -56,13 +58,27 @@ export default function Step1Screen() {
     }
   };
 
+  const handleBack = async () => {
+    if (isAnonymous) {
+      await signOut();
+      router.replace('/welcome');
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <OnboardingHeader currentStep={1} totalSteps={5} />
+        <OnboardingHeader 
+          currentStep={1} 
+          totalSteps={5} 
+          showBackOnFirstStep={isAnonymous}
+          onBack={handleBack}
+        />
 
         <View style={styles.content}>
           <Animated.View style={[SHARED_STYLES.pageIconCircle, iconStyle]}>

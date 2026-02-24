@@ -18,9 +18,10 @@ interface OnboardingHeaderProps {
   showHelper?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
+  showBackOnFirstStep?: boolean;
 }
 
-export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack, rightAction }: OnboardingHeaderProps) {
+export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack, rightAction, showBackOnFirstStep = false }: OnboardingHeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-20);
@@ -39,7 +40,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
   return (
     <Animated.View style={[styles.container, { paddingTop: insets.top + 10 }, entranceStyle]}>
       <View style={styles.topRow}>
-        {currentStep === 1 ? (
+        {currentStep === 1 && !showBackOnFirstStep ? (
           <View style={styles.placeholder} />
         ) : (
           <Pressable
