@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -12,30 +12,15 @@ import Animated, {
 import { useRouter } from 'expo-router';
 import { Story, useStories } from '../contexts/StoriesContext';
 import { UserRole } from '../contexts/OnboardingContext';
-import {
-  COLORS,
-  SHADOWS,
-  ANIMATION,
-  TYPOGRAPHY,
-  RADII,
-  BORDERS,
-  SPACING,
-  withOpacity,
-} from '../constants/onboarding-theme';
+import { COLORS, ANIMATION } from '../constants/onboarding-theme';
+import { CommunityNormsModal } from './CommunityNormsModal';
 
 interface StoryCardProps {
   story: Story;
   index: number;
-}
-
-function getRoleColor(role: UserRole | null): string {
-  switch (role) {
-    case 'student-k8': return COLORS.studentK8;
-    case 'student-hs': return COLORS.studentHS;
-    case 'parent': return COLORS.parent;
-    case 'staff': return COLORS.staff;
-    default: return COLORS.primary;
-  }
+  allowModeration?: boolean;
+  showAuthorStatus?: boolean;
+  showRejectedNorms?: boolean;
 }
 
 function getRoleLabel(role: UserRole | null): string {
@@ -55,38 +40,44 @@ function getRelativeTime(dateString: string): string {
 
   const minutes = Math.floor(diff / 60000);
   if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes}m`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}h`;
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return `${days}d`;
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
+  if (weeks < 4) return `${weeks}w`;
 
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return `${months}mo`;
 }
 
-export function StoryCard({ story, index }: StoryCardProps) {
+export function StoryCard({ story, index, allowModeration = false, showAuthorStatus = false, showRejectedNorms = false }: StoryCardProps) {
   const router = useRouter();
-  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark } = useStories();
+  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, isStoryLiked, toggleLike, deleteStory } = useStories();
   const scale = useSharedValue(1);
-  const translateY = useSharedValue(30);
+  const translateY = useSharedValue(20);
   const opacity = useSharedValue(0);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
+  const likeScale = useRef(new RNAnimated.Value(1)).current;
+  const [showRejectModal, setShowRejectModal] = React.useState(false);
 
-  const roleColor = getRoleColor(story.author_role);
   const roleLabel = getRoleLabel(story.author_role);
-  const initial = (story.author_name || '?')[0].toUpperCase();
   const bookmarked = isStoryBookmarked(story.id);
+  const liked = isStoryLiked(story.id);
+
+  const metaParts = [story.author_name || 'Anonymous'];
+  if (roleLabel) metaParts.push(roleLabel);
+  metaParts.push(getRelativeTime(story.created_at));
+  const metaLine = metaParts.join(' · ');
 
   useEffect(() => {
     const delay = index * ANIMATION.staggerDelay;
     translateY.value = withDelay(delay, withSpring(0, ANIMATION.springBouncy));
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: 350 }));
   }, []);
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -96,15 +87,28 @@ export function StoryCard({ story, index }: StoryCardProps) {
 
   const handlePress = () => {
     scale.value = withSequence(
-      withTiming(0.96, { duration: 80 }),
+      withTiming(0.98, { duration: 70 }),
       withSpring(1, ANIMATION.springBouncy),
     );
-    router.push(`/story-detail?id=${story.id}` as any);
+    if (showAuthorStatus && story.status === 'rejected') {
+      router.push(`/create-story?edit=true&id=${story.id}` as any);
+    } else {
+      router.push(`/story-detail?id=${story.id}` as any);
+    }
+  };
+
+  const handleLike = (e: any) => {
+    e.stopPropagation?.();
+    RNAnimated.sequence([
+      RNAnimated.timing(likeScale, { toValue: 1.4, duration: 100, useNativeDriver: true }),
+      RNAnimated.spring(likeScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+    ]).start();
+    toggleLike(story.id);
   };
 
   const handleBookmark = () => {
     RNAnimated.sequence([
-      RNAnimated.timing(bookmarkScale, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+      RNAnimated.timing(bookmarkScale, { toValue: 1.35, duration: 100, useNativeDriver: true }),
       RNAnimated.spring(bookmarkScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
     ]).start();
 
@@ -117,52 +121,126 @@ export function StoryCard({ story, index }: StoryCardProps) {
 
   return (
     <Pressable onPress={handlePress}>
-      <Animated.View style={[styles.card, SHADOWS.card, cardStyle]}>
-        {/* Author row */}
-        <View style={styles.authorRow}>
-          <View style={[styles.avatarCircle, { backgroundColor: roleColor }]}>
-            <Text style={styles.avatarInitial}>{initial}</Text>
-          </View>
-          <View style={styles.authorInfo}>
-            <View style={styles.authorNameRow}>
-              <Text style={styles.authorName} numberOfLines={1}>{story.author_name || 'Anonymous'}</Text>
-              {roleLabel ? (
-                <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, 0.1) }]}>
-                  <Text style={[styles.roleText, { color: roleColor }]}>{roleLabel}</Text>
-                </View>
-              ) : null}
-            </View>
-            <Text style={styles.timeText}>{getRelativeTime(story.created_at)}</Text>
-          </View>
-        </View>
-
-        {/* Content */}
-        <Text style={styles.title} numberOfLines={2}>{story.title}</Text>
-        <Text style={styles.bodyPreview} numberOfLines={3}>{story.body}</Text>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.footerLeft}>
-            <Ionicons name="chatbubble-outline" size={16} color={COLORS.textLight} />
-            <Text style={styles.footerText}>
-              {story.comment_count} {story.comment_count === 1 ? 'comment' : 'comments'}
+      <Animated.View style={[styles.card, cardStyle]}>
+        {/* Moderator pending banner */}
+        {story.status === 'pending' && allowModeration && (
+          <View style={styles.modBanner}>
+            <Text style={styles.modBannerText}>
+              Pending Review · Attempt {story.attempt_count || 1}
             </Text>
           </View>
+        )}
+
+        {/* Author status banner (In Review / Rejected) */}
+        {showAuthorStatus && story.status === 'pending' && (
+          <View style={styles.authorPendingBanner}>
+            <Ionicons name="time" size={12} color="#F57C00" style={{ marginRight: 4 }} />
+            <Text style={styles.authorPendingText}>In Review</Text>
+          </View>
+        )}
+        {showAuthorStatus && story.status === 'rejected' && (
+          <View style={styles.authorRejectedBanner}>
+            <Ionicons name="alert-circle" size={12} color={COLORS.error} style={{ marginRight: 4 }} />
+            <Text style={styles.authorRejectedText}>Action Required</Text>
+          </View>
+        )}
+
+        {/* Compact meta line */}
+        <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
+
+        {/* Title — the hero element */}
+        <Text style={styles.title} numberOfLines={2}>{story.title}</Text>
+
+        {/* Body preview */}
+        {story.body ? (
+          <Text style={styles.bodyPreview} numberOfLines={3}>{story.body}</Text>
+        ) : null}
+
+        {/* Rejected Norms List */}
+        {showRejectedNorms && story.status === 'rejected' && story.rejected_norms && story.rejected_norms.length > 0 && (
+          <View style={styles.normsContainer}>
+            <Text style={styles.normsLabel}>Broken Community Norms:</Text>
+            {story.rejected_norms.map((norm, idx) => (
+              <View key={idx} style={styles.normItem}>
+                <Ionicons name="close-circle" size={16} color={COLORS.error} />
+                <Text style={styles.normText}>{norm}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Action row */}
+        <View style={styles.actionRow}>
+          <View style={styles.actionLeft}>
+            <TouchableOpacity
+              onPress={handleLike}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              activeOpacity={0.7}
+              style={styles.actionItem}
+            >
+              <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+                <Ionicons
+                  name={liked ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={liked ? '#E53935' : COLORS.textLight}
+                />
+              </RNAnimated.View>
+              <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
+                {story.like_count}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.actionItem}>
+              <Ionicons name="chatbubble-outline" size={20} color={COLORS.textLight} />
+              <Text style={styles.actionText}>
+                {story.comment_count}
+              </Text>
+            </View>
+          </View>
+
           <TouchableOpacity
             onPress={handleBookmark}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.7}
           >
             <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
               <Ionicons
                 name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={20}
+                size={22}
                 color={bookmarked ? COLORS.primary : COLORS.textLight}
               />
             </RNAnimated.View>
           </TouchableOpacity>
         </View>
+
+        {/* Moderation approve/reject buttons */}
+        {allowModeration && story.status === 'pending' && (
+          <View style={styles.modActions}>
+            <Pressable
+              style={[styles.modButton, styles.modReject]}
+              onPress={() => setShowRejectModal(true)}
+            >
+              <Text style={[styles.modButtonText, { color: COLORS.error }]}>Reject</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.modButton, styles.modApprove]}
+              onPress={() => approveStory(story.id)}
+            >
+              <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Approve</Text>
+            </Pressable>
+          </View>
+        )}
       </Animated.View>
+
+      <CommunityNormsModal
+        visible={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        mode="select"
+        onAgree={(selectedNorms) => {
+          rejectStory(story.id, selectedNorms);
+          setShowRejectModal(false);
+        }}
+      />
     </Pressable>
   );
 }
@@ -170,86 +248,156 @@ export function StoryCard({ story, index }: StoryCardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: RADII.card,
-    padding: 18,
-    borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    marginBottom: 8,
   },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+  modBanner: {
+    backgroundColor: COLORS.primary + '15',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
   },
-  avatarCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  avatarInitial: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  authorInfo: {
-    flex: 1,
-  },
-  authorNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  authorName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    flexShrink: 1,
-  },
-  roleBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: RADII.badgeSmall,
-  },
-  roleText: {
+  modBannerText: {
     fontSize: 12,
     fontWeight: '600',
+    color: COLORS.primary,
   },
-  timeText: {
-    fontSize: 13,
-    fontWeight: '500',
+  authorPendingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E1',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  authorPendingText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#F57C00',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  authorRejectedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.error + '15',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  authorRejectedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.error,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  meta: {
+    fontSize: 12,
     color: COLORS.textLight,
-    marginTop: 1,
+    fontWeight: '400',
+    marginBottom: 7,
   },
   title: {
-    ...TYPOGRAPHY.body,
+    fontSize: 18,
+    fontWeight: '700',
     color: COLORS.textDark,
-    marginBottom: 6,
     lineHeight: 24,
+    marginBottom: 6,
+    letterSpacing: -0.2,
   },
   bodyPreview: {
-    ...TYPOGRAPHY.bodyDescription,
-    color: COLORS.textMuted,
-    lineHeight: 22,
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#555',
+    lineHeight: 21,
     marginBottom: 14,
   },
-  footer: {
+  normsContainer: {
+    backgroundColor: COLORS.error + '10',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.error + '30',
+  },
+  normsLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.error,
+    marginBottom: 8,
+  },
+  normItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginBottom: 4,
+  },
+  normText: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textDark,
+    lineHeight: 20,
+  },
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderCard,
-    paddingTop: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E5EA',
   },
-  footerLeft: {
+  actionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 14,
   },
-  footerText: {
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  actionText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     color: COLORS.textLight,
+  },
+  actionTextLiked: {
+    color: '#E53935',
+  },
+  modActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E5EA',
+  },
+  modButton: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 100,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  modReject: {
+    backgroundColor: COLORS.error + '10',
+    borderColor: COLORS.error + '30',
+  },
+  modApprove: {
+    backgroundColor: COLORS.successText + '10',
+    borderColor: COLORS.successText + '30',
+  },
+  modButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

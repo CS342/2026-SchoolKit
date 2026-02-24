@@ -11,6 +11,8 @@ CREATE TABLE stories (
   body TEXT NOT NULL,
   author_name TEXT NOT NULL DEFAULT '',
   author_role user_role,
+  looking_for TEXT[],
+  target_audiences TEXT[] DEFAULT ARRAY['student-k8', 'student-hs', 'parent', 'staff']::TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -93,7 +95,35 @@ CREATE TRIGGER stories_updated_at
   BEFORE UPDATE ON stories
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- Story likes
+CREATE TABLE story_likes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  story_id UUID NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, story_id)
+);
+
+ALTER TABLE story_likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone authenticated can read likes"
+  ON story_likes FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Users can create own likes"
+  ON story_likes FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own likes"
+  ON story_likes FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
 -- Indexes for performance
 CREATE INDEX idx_stories_created_at ON stories(created_at DESC);
 CREATE INDEX idx_story_comments_story_id ON story_comments(story_id, created_at ASC);
 CREATE INDEX idx_story_bookmarks_user ON story_bookmarks(user_id);
+CREATE INDEX idx_story_likes_story ON story_likes(story_id);
+CREATE INDEX idx_story_likes_user ON story_likes(user_id);
