@@ -41,7 +41,7 @@
     "openai": "^6.21.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-konva": "^19.0.10",
+    "react-konva": "19.0.10",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",
