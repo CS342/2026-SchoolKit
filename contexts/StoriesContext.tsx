@@ -25,6 +25,8 @@ export interface Story {
   attempt_count: number;
   looking_for?: string[];
   target_audiences?: string[];
+  story_tags?: string[];
+  reports?: { reason: string; details: string | null; created_at: string }[];
 }
 
 export interface StoryComment {
@@ -35,17 +37,21 @@ export interface StoryComment {
   author_name: string;
   author_role: UserRole | null;
   created_at: string;
+  like_count: number;
 }
 
 interface StoriesContextType {
   stories: Story[];
   storiesLoading: boolean;
   refreshStories: () => Promise<void>;
-  createStory: (title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[] }) => Promise<Story | null>;
+  createStory: (title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }) => Promise<Story | null>;
   deleteStory: (storyId: string) => Promise<void>;
   fetchComments: (storyId: string) => Promise<StoryComment[]>;
-  addComment: (storyId: string, body: string) => Promise<StoryComment | null>;
+  addComment: (storyId: string, body: string, postAnonymously?: boolean) => Promise<StoryComment | null>;
   deleteComment: (commentId: string, storyId: string) => Promise<void>;
+  commentLikes: string[];
+  isCommentLiked: (commentId: string) => boolean;
+  toggleCommentLike: (commentId: string) => Promise<void>;
   storyBookmarks: string[];
   isStoryBookmarked: (storyId: string) => boolean;
   addStoryBookmark: (storyId: string) => Promise<void>;
@@ -54,9 +60,14 @@ interface StoriesContextType {
   isStoryLiked: (storyId: string) => boolean;
   toggleLike: (storyId: string) => Promise<void>;
   rejectStory: (storyId: string, rejectedNorms: string[]) => Promise<void>;
+  dismissReport: (storyId: string) => Promise<void>;
   approveStory: (storyId: string) => Promise<void>;
-  updateStory: (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[] }) => Promise<Story | null>;
+  updateStory: (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }) => Promise<Story | null>;
   reportStory: (storyId: string, reason: string, details?: string) => Promise<void>;
+  downloadedStories: Story[];
+  isStoryDownloaded: (storyId: string) => boolean;
+  downloadStory: (story: Story) => void;
+  removeStoryDownload: (storyId: string) => void;
 }
 
 const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
@@ -64,6 +75,8 @@ const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
 const STORIES_CACHE_KEY = '@schoolkit_stories_cache';
 const STORY_BOOKMARKS_KEY = '@schoolkit_story_bookmarks';
 const STORY_LIKES_KEY = '@schoolkit_story_likes';
+const COMMENT_LIKES_KEY = '@schoolkit_comment_likes';
+const STORY_DOWNLOADS_KEY = '@schoolkit_story_downloads';
 
 export function StoriesProvider({ children }: { children: ReactNode }) {
   const { user, isAnonymous } = useAuth();
@@ -73,19 +86,70 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const [storiesLoading, setStoriesLoading] = useState(true);
   const [storyBookmarks, setStoryBookmarks] = useState<string[]>([]);
   const [storyLikes, setStoryLikes] = useState<string[]>([]);
+  const [commentLikes, setCommentLikes] = useState<string[]>([]);
+  const [downloadedStories, setDownloadedStories] = useState<Story[]>([]);
+
+  // Load downloads once on mount — available offline regardless of auth state
+  useEffect(() => {
+    AsyncStorage.getItem(STORY_DOWNLOADS_KEY).then(stored => {
+      if (stored) setDownloadedStories(JSON.parse(stored));
+    }).catch(() => {});
+  }, []);
+
+  const isStoryDownloaded = (storyId: string) => downloadedStories.some(s => s.id === storyId);
+
+  const downloadStory = (story: Story) => {
+    setDownloadedStories(prev => {
+      if (prev.some(s => s.id === story.id)) return prev;
+      const updated = [story, ...prev];
+      AsyncStorage.setItem(STORY_DOWNLOADS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const removeStoryDownload = (storyId: string) => {
+    setDownloadedStories(prev => {
+      const updated = prev.filter(s => s.id !== storyId);
+      AsyncStorage.setItem(STORY_DOWNLOADS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   useEffect(() => {
     if (user) {
       fetchStories();
       fetchStoryBookmarks();
       fetchStoryLikes();
+      fetchCommentLikes();
     } else {
       setStories([]);
       setStoryBookmarks([]);
       setStoryLikes([]);
+      setCommentLikes([]);
       setStoriesLoading(false);
     }
   }, [user?.id]);
+
+  const fetchCommentLikes = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('comment_likes')
+        .select('comment_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      if (data) {
+        const ids = data.map((l: { comment_id: string }) => l.comment_id);
+        setCommentLikes(ids);
+        AsyncStorage.setItem(COMMENT_LIKES_KEY, JSON.stringify(ids));
+      }
+    } catch {
+      try {
+        const cached = await AsyncStorage.getItem(COMMENT_LIKES_KEY);
+        if (cached) setCommentLikes(JSON.parse(cached));
+      } catch {}
+    }
+  };
 
   const fetchStories = async () => {
     try {
@@ -138,6 +202,17 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             }
           }
 
+          let parsedStoryTags: string[] = [];
+          if (Array.isArray(s.story_tags)) {
+            parsedStoryTags = s.story_tags;
+          } else if (typeof s.story_tags === 'string') {
+            try {
+              parsedStoryTags = JSON.parse(s.story_tags);
+            } catch (e) {
+              parsedStoryTags = s.story_tags.split(',').map((x: string) => x.trim()).filter((x: string) => x);
+            }
+          }
+          
           return {
             id: s.id,
             author_id: s.author_id,
@@ -155,8 +230,33 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             attempt_count: s.attempt_count || 1,
             looking_for: parsedLookingFor,
             target_audiences: parsedTargetAudiences,
+            story_tags: parsedStoryTags,
+            reports: [],
           };
         });
+
+        // Batch fetch reports for stories that actually have reports or are pending
+        const storiesToFetchReports = enriched.filter(s => s.report_count > 0 || s.status === 'pending');
+        if (storiesToFetchReports.length > 0) {
+          const { data: reportsData } = await supabase
+            .from('story_reports')
+            .select('story_id, reason, details, created_at')
+            .in('story_id', storiesToFetchReports.map(s => s.id));
+            
+          if (reportsData) {
+            const reportsByStoryId = reportsData.reduce((acc: Record<string, any[]>, r) => {
+              if (!acc[r.story_id]) acc[r.story_id] = [];
+              acc[r.story_id].push({ reason: r.reason, details: r.details, created_at: r.created_at });
+              return acc;
+            }, {});
+            
+            for (const s of enriched) {
+              if (reportsByStoryId[s.id]) {
+                s.reports = reportsByStoryId[s.id];
+              }
+            }
+          }
+        }
 
         setStories(enriched);
         AsyncStorage.setItem(STORIES_CACHE_KEY, JSON.stringify(enriched));
@@ -222,10 +322,10 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     await fetchStories();
   };
 
-  const createStory = async (title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[] }): Promise<Story | null> => {
+  const createStory = async (title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }): Promise<Story | null> => {
     if (!user?.id || isAnonymous) return null;
 
-    const { postAnonymously = false, lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'] } = options || {};
+    const { postAnonymously = false, lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
 
     const displayName = postAnonymously ? 'Anonymous' : (onboardingData.name || 'Anonymous');
     const displayRole = postAnonymously ? null : onboardingData.role;
@@ -246,6 +346,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       attempt_count: 1,
       looking_for: lookingFor,
       target_audiences: targetAudiences,
+      story_tags: storyTags,
     };
 
     setStories(prev => [optimisticStory, ...prev]);
@@ -263,6 +364,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           attempt_count: 1,
           looking_for: lookingFor,
           target_audiences: targetAudiences,
+          story_tags: storyTags,
         })
         .select()
         .single();
@@ -355,15 +457,40 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateStory = async (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[] }): Promise<Story | null> => {
+  const dismissReport = async (storyId: string) => {
+    // Optimistically UI update
+    setStories(prev => prev.map(s =>
+      s.id === storyId ? { ...s, report_count: 0, reports: [] } : s
+    ));
+
+    try {
+      // Delete the actual reports and the trigger will handle the count
+      const { error } = await supabase
+        .from('story_reports')
+        .delete()
+        .eq('story_id', storyId);
+      if (error) throw error;
+      
+      // Also manually reset report_count to 0 on the story, just in case
+      await supabase
+        .from('stories')
+        .update({ report_count: 0 })
+        .eq('id', storyId);
+    } catch (error) {
+      console.error('Error dismissing reports:', error);
+      fetchStories(); // Refresh if failed
+    }
+  };
+
+  const updateStory = async (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }): Promise<Story | null> => {
     if (!user?.id || isAnonymous) return null;
 
-    const { postAnonymously = false, lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'] } = options || {};
+    const { lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
 
     try {
       const { data, error } = await supabase
         .from('stories')
-        .update({ title, body, status: 'pending', attempt_count: 2, looking_for: lookingFor, target_audiences: targetAudiences })
+        .update({ title, body, status: 'pending', attempt_count: 2, looking_for: lookingFor, target_audiences: targetAudiences, story_tags: storyTags })
         .eq('id', storyId)
         .select()
         .single();
@@ -405,7 +532,24 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return (data || []).map(c => ({
+      const commentData = data || [];
+
+      // Fetch like counts for these comments
+      let likeCounts: Record<string, number> = {};
+      if (commentData.length > 0) {
+        const { data: likes } = await supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .in('comment_id', commentData.map(c => c.id));
+        if (likes) {
+          likeCounts = likes.reduce((acc: Record<string, number>, l) => {
+            acc[l.comment_id] = (acc[l.comment_id] || 0) + 1;
+            return acc;
+          }, {});
+        }
+      }
+
+      return commentData.map(c => ({
         id: c.id,
         story_id: c.story_id,
         author_id: c.author_id,
@@ -413,6 +557,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_name: c.author_name,
         author_role: c.author_role as UserRole | null,
         created_at: c.created_at,
+        like_count: likeCounts[c.id] || 0,
       }));
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -420,7 +565,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addComment = async (storyId: string, body: string): Promise<StoryComment | null> => {
+  const addComment = async (storyId: string, body: string, postAnonymously = false): Promise<StoryComment | null> => {
     if (!user?.id || isAnonymous) return null;
 
     try {
@@ -429,14 +574,17 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         throw new Error(moderationResult.reason || "Content flagged as inappropriate.");
       }
 
+      const displayName = postAnonymously ? 'Anonymous' : (onboardingData.name || 'Anonymous');
+      const displayRole = postAnonymously ? null : onboardingData.role;
+
       const { data, error } = await supabase
         .from('story_comments')
         .insert({
           story_id: storyId,
           author_id: user.id,
           body,
-          author_name: onboardingData.name || 'Anonymous',
-          author_role: onboardingData.role,
+          author_name: displayName,
+          author_role: displayRole,
         })
         .select()
         .single();
@@ -459,6 +607,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_name: data.author_name,
         author_role: data.author_role as UserRole | null,
         created_at: data.created_at,
+        like_count: 0,
       };
     } catch (error) {
       throw error;
@@ -479,6 +628,42 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Error deleting comment:', error);
+    }
+  };
+
+  const isCommentLiked = (commentId: string) => commentLikes.includes(commentId);
+
+  const toggleCommentLike = async (commentId: string) => {
+    if (!user?.id) return;
+    const liked = commentLikes.includes(commentId);
+    if (liked) {
+      setCommentLikes(prev => {
+        const updated = prev.filter(id => id !== commentId);
+        AsyncStorage.setItem(COMMENT_LIKES_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    } else {
+      setCommentLikes(prev => {
+        const updated = [commentId, ...prev];
+        AsyncStorage.setItem(COMMENT_LIKES_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    }
+    try {
+      if (liked) {
+        const { error } = await supabase.from('comment_likes').delete().eq('user_id', user.id).eq('comment_id', commentId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('comment_likes').insert({ user_id: user.id, comment_id: commentId });
+        if (error && error.code !== '23505') throw error;
+      }
+    } catch {
+      // Revert
+      if (liked) {
+        setCommentLikes(prev => { const u = [commentId, ...prev]; AsyncStorage.setItem(COMMENT_LIKES_KEY, JSON.stringify(u)); return u; });
+      } else {
+        setCommentLikes(prev => { const u = prev.filter(id => id !== commentId); AsyncStorage.setItem(COMMENT_LIKES_KEY, JSON.stringify(u)); return u; });
+      }
     }
   };
 
@@ -592,9 +777,17 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const reportStory = async (storyId: string, reason: string, details?: string) => {
     if (!user?.id) return;
 
-    // Optimistically update the UI to show increased report count
+    const newReport = { reason, details: details || null, created_at: new Date().toISOString() };
+
+    // Optimistically update the UI to show increased report count and append the report details
     setStories(prev => prev.map(s =>
-      s.id === storyId ? { ...s, report_count: s.report_count + 1 } : s
+      s.id === storyId 
+        ? { 
+            ...s, 
+            report_count: s.report_count + 1, 
+            reports: [...(s.reports || []), newReport] 
+          } 
+        : s
     ));
 
     try {
@@ -612,7 +805,13 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       console.error('Error reporting story:', error);
       // Revert optimistic update
       setStories(prev => prev.map(s =>
-        s.id === storyId ? { ...s, report_count: Math.max(0, s.report_count - 1) } : s
+        s.id === storyId 
+          ? { 
+              ...s, 
+              report_count: Math.max(0, s.report_count - 1),
+              reports: (s.reports || []).filter(r => r.created_at !== newReport.created_at)
+            } 
+          : s
       ));
     }
   };
@@ -636,9 +835,17 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         isStoryLiked,
         toggleLike,
         rejectStory,
+        dismissReport,
         approveStory,
         updateStory,
         reportStory,
+        commentLikes,
+        isCommentLiked,
+        toggleCommentLike,
+        downloadedStories,
+        isStoryDownloaded,
+        downloadStory,
+        removeStoryDownload,
       }}
     >
       {children}

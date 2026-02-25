@@ -32,8 +32,10 @@ CREATE POLICY "Users can view their own reports"
   TO authenticated
   USING (auth.uid() = user_id);
 
--- Note: Moderators might need a policy to view reports, but for now we're 
--- summarizing via report_count on the stories table which they can already read.
+CREATE POLICY "Moderators can view all reports"
+  ON story_reports FOR SELECT
+  TO authenticated
+  USING ((auth.jwt() ->> 'email') IN ('janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'));
 
 -- 5. Create function and trigger to auto-increment report_count
 CREATE OR REPLACE FUNCTION increment_story_report_count()

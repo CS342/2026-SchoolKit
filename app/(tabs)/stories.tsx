@@ -19,9 +19,11 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { useStories } from "../../contexts/StoriesContext";
+import { useOffline } from "../../contexts/OfflineContext";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { StoryCard } from "../../components/StoryCard";
 import { CommunityNormsModal } from "../../components/CommunityNormsModal";
+import { TopicTagsModal } from "../../components/TopicTagsModal";
 import { PrimaryButton } from "../../components/onboarding/PrimaryButton";
 import {
   GRADIENTS,
@@ -35,27 +37,41 @@ export default function StoriesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAnonymous } = useAuth();
-  const { stories, storiesLoading, refreshStories } = useStories();
+  const { stories, storiesLoading, refreshStories, downloadedStories } = useStories();
+  const { isOnline } = useOffline();
   const { colors, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showNormsModal, setShowNormsModal] = useState(false);
   const [sort, setSort] = useState<"new" | "popular" | "my-stories">("new");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showTagsModal, setShowTagsModal] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const isModerator = user?.email === 'janinatroper@gmail.com';
+  const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
+  const isModerator = user?.email && MODERATOR_EMAILS.includes(user.email);
   const [isModeratorMode, setIsModeratorMode] = useState(false);
   const { data: onboardingData } = useOnboarding();
 
   const displayedStories = useMemo(() => {
+    // When offline, show only downloaded stories (with search still applied)
+    if (!isOnline) {
+      if (!searchQuery.trim()) return downloadedStories;
+      const q = searchQuery.toLowerCase().trim();
+      return downloadedStories.filter((s) =>
+        (s.title && s.title.toLowerCase().includes(q)) ||
+        (s.body && s.body.toLowerCase().includes(q))
+      );
+    }
+
     // If we're looking at "My Stories", we want all of our own stories regardless of status/audience
     if (sort === "my-stories" && user) {
       return stories.filter((s) => s.author_id === user.id);
     }
 
     let filtered = isModeratorMode
-      ? stories.filter((s) => s.status === "pending" || s.report_count > 0)
-      : stories.filter((s) => s.status === "approved" && s.report_count === 0);
+      ? stories.filter((s) => s.status === "pending" || (s.status === "approved" && s.report_count > 0))
+      : stories.filter((s) => s.status === "approved");
 
     // Filter by target audience matching the current user's role
     if (!isModeratorMode) {
@@ -86,12 +102,18 @@ export default function StoriesScreen() {
         (s.body && s.body.toLowerCase().includes(q))
       );
     }
+    
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(s => 
+        s.story_tags && s.story_tags.some(tag => selectedTags.includes(tag))
+      );
+    }
 
     if (!isModeratorMode && sort === "popular") {
       return [...filtered].sort((a, b) => b.like_count - a.like_count);
     }
     return filtered;
-  }, [stories, isModeratorMode, user?.id, sort, onboardingData?.role, searchQuery]);
+  }, [stories, isModeratorMode, user?.id, sort, onboardingData?.role, searchQuery, selectedTags]);
 
   const rejectedCount = useMemo(() => {
     if (!user) return 0;
@@ -101,7 +123,7 @@ export default function StoriesScreen() {
   }, [stories, user]);
 
   const pendingCount = useMemo(() => {
-    return stories.filter((s) => s.status === "pending" || s.report_count > 0).length;
+    return stories.filter((s) => s.status === "pending" || (s.status === "approved" && s.report_count > 0)).length;
   }, [stories]);
 
   useEffect(() => {
@@ -174,22 +196,35 @@ export default function StoriesScreen() {
         </View>
       </Animated.View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={18} color={COLORS.textLight} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search stories..."
-          placeholderTextColor={COLORS.textLight}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
-            <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
-          </Pressable>
-        )}
+      {/* Search and Filter */}
+      <View style={styles.searchFilterContainer}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={18} color={COLORS.textLight} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search stories..."
+            placeholderTextColor={COLORS.textLight}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
+              <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
+            </Pressable>
+          )}
+        </View>
+        <Pressable 
+          style={[styles.filterBtn, selectedTags.length > 0 && styles.filterBtnActive]}
+          onPress={() => setShowTagsModal(true)}
+        >
+          <Ionicons name={selectedTags.length > 0 ? "filter" : "filter-outline"} size={20} color={selectedTags.length > 0 ? COLORS.primary : COLORS.textDark} />
+          {selectedTags.length > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{selectedTags.length}</Text>
+            </View>
+          )}
+        </Pressable>
       </View>
 
       {/* Sort bar OR mod mode indicator */}
@@ -269,8 +304,18 @@ export default function StoriesScreen() {
         </View>
       )}
 
+      {/* Offline banner */}
+      {!isOnline && (
+        <View style={styles.offlineBanner}>
+          <Ionicons name="cloud-offline-outline" size={15} color="#5C5C8A" />
+          <Text style={styles.offlineBannerText}>
+            You're offline · Showing your downloads
+          </Text>
+        </View>
+      )}
+
       {/* Rejected stories notification */}
-      {rejectedCount > 0 && !isModeratorMode && (
+      {rejectedCount > 0 && !isModeratorMode && !(!isOnline) && (
         <Pressable
           style={styles.rejectedBanner}
           onPress={() => router.push("/rejected-stories" as any)}
@@ -307,7 +352,17 @@ export default function StoriesScreen() {
           />
         }
         ListEmptyComponent={
-          storiesLoading ? null : isModeratorMode ? (
+          storiesLoading ? null : !isOnline ? (
+            <View style={styles.emptyContainer}>
+              <View style={sharedStyles.pageIconCircle}>
+                <Ionicons name="cloud-offline-outline" size={SIZING.iconPage} color="#9090C0" />
+              </View>
+              <Text style={sharedStyles.pageTitle}>No downloads yet</Text>
+              <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
+                Save stories while online using the download button, then read them anytime offline.
+              </Text>
+            </View>
+          ) : isModeratorMode ? (
             <View style={styles.emptyContainer}>
               <View
                 style={[
@@ -400,6 +455,18 @@ export default function StoriesScreen() {
         onClose={() => setShowNormsModal(false)}
         mode="view"
       />
+      
+      <TopicTagsModal
+        visible={showTagsModal}
+        onClose={() => setShowTagsModal(false)}
+        selectedTags={selectedTags}
+        onToggleTag={(tag: string) => {
+          setSelectedTags(prev => 
+            prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+          );
+        }}
+        onClearAll={() => setSelectedTags([])}
+      />
     </View>
   );
 }
@@ -453,14 +520,20 @@ const makeStyles = (c: typeof import("../../constants/theme").COLORS_LIGHT) =>
       borderColor: "#fff",
     },
 
-    // ── Search Bar ─────────────────────────────────────────────
-    searchContainer: {
+    // ── Search & Filter ─────────────────────────────────────────────
+    searchFilterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.white,
       marginHorizontal: 16,
       marginTop: 4,
       marginBottom: 8,
+      gap: 10,
+    },
+    searchContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.white,
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderRadius: 12,
@@ -475,6 +548,37 @@ const makeStyles = (c: typeof import("../../constants/theme").COLORS_LIGHT) =>
       fontSize: 15,
       color: c.textDark,
       paddingVertical: 0,
+    },
+    filterBtn: {
+      padding: 10,
+      backgroundColor: c.white,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#E5E5EA',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    filterBtnActive: {
+      borderColor: COLORS.primary,
+      backgroundColor: COLORS.primary + '10',
+    },
+    filterBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      backgroundColor: COLORS.primary,
+      borderRadius: 10,
+      width: 16,
+      height: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: c.appBackground,
+    },
+    filterBadgeText: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      color: c.white,
     },
 
     // ── Mod mode indicator bar ───────────────────────────────
@@ -535,6 +639,24 @@ const makeStyles = (c: typeof import("../../constants/theme").COLORS_LIGHT) =>
     },
     sortTextActive: {
       color: COLORS.primary,
+    },
+
+    // ── Offline banner ───────────────────────────────────────
+    offlineBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      marginHorizontal: 16,
+      marginBottom: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      backgroundColor: "#EDEDF8",
+      borderRadius: 8,
+    },
+    offlineBannerText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: "#5C5C8A",
     },
 
     // ── Rejected banner ──────────────────────────────────────

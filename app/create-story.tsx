@@ -18,6 +18,8 @@ import { useStories, Story } from '../contexts/StoriesContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { CommunityNormsModal } from '../components/CommunityNormsModal';
+import { StoryStartersModal } from '../components/StoryStartersModal';
+import { TopicTagsModal } from '../components/TopicTagsModal';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -59,8 +61,11 @@ export default function CreateStoryScreen() {
   const [postAnonymously, setPostAnonymously] = useState(existingStory ? existingStory.author_name === 'Anonymous' : false);
   const [lookingFor, setLookingFor] = useState<string[]>(existingStory?.looking_for || []);
   const [targetAudiences, setTargetAudiences] = useState<string[]>(initialAudiences);
+  const [storyTags, setStoryTags] = useState<string[]>(existingStory?.story_tags || []);
   const [submitting, setSubmitting] = useState(false);
   const [showNorms, setShowNorms] = useState(false);
+  const [showStarters, setShowStarters] = useState(false);
+  const [showTagsModal, setShowTagsModal] = useState(false);
 
   const [initialState] = useState({
     title: existingStory?.title || '',
@@ -68,6 +73,7 @@ export default function CreateStoryScreen() {
     postAnonymously: existingStory ? existingStory.author_name === 'Anonymous' : false,
     lookingFor: existingStory?.looking_for || [],
     targetAudiences: initialAudiences,
+    storyTags: existingStory?.story_tags || [],
   });
 
   const hasMadeChanges = useMemo(() => {
@@ -79,9 +85,10 @@ export default function CreateStoryScreen() {
     // Check arrays
     if (lookingFor.length !== initialState.lookingFor.length || !lookingFor.every(v => initialState.lookingFor.includes(v))) return true;
     if (targetAudiences.length !== initialState.targetAudiences.length || !targetAudiences.every(v => initialState.targetAudiences.includes(v))) return true;
+    if (storyTags.length !== initialState.storyTags.length || !storyTags.every(v => initialState.storyTags.includes(v))) return true;
     
     return false;
-  }, [isEditing, title, body, postAnonymously, lookingFor, targetAudiences, initialState]);
+  }, [isEditing, title, body, postAnonymously, lookingFor, targetAudiences, storyTags, initialState]);
 
   const isExhausted = isEditing && existingStory?.status === 'rejected' && (existingStory?.attempt_count || 0) >= 2;
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !submitting && !isExhausted && hasMadeChanges;
@@ -101,9 +108,9 @@ export default function CreateStoryScreen() {
     
     let result;
     if (isEditing && editId) {
-        result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences });
+        result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     } else {
-        result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences });
+        result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     }
     
     setSubmitting(false);
@@ -164,7 +171,13 @@ export default function CreateStoryScreen() {
           autoFocus={!isExhausted}
           editable={!isExhausted}
         />
-        <Text style={styles.charCount}>{title.length}/120</Text>
+        <View style={styles.titleRow}>
+          <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={styles.startersBtn}>
+            <Ionicons name="sparkles" size={16} color={colors.primary} />
+            <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
+          </Pressable>
+          <Text style={styles.charCount}>{title.length}/120</Text>
+        </View>
 
         <TextInput
           style={[styles.bodyInput, isExhausted && { backgroundColor: colors.backgroundLight, color: COLORS.textMuted }]}
@@ -176,6 +189,39 @@ export default function CreateStoryScreen() {
           textAlignVertical="top"
           editable={!isExhausted}
         />
+
+        {/* Content Tags via Dropdown/Modal */}
+        <Text style={styles.sectionHeading}>Topic Tags</Text>
+        <Pressable 
+          style={styles.tagsDropdownBtn}
+          onPress={() => !isExhausted && setShowTagsModal(true)}
+        >
+          <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
+            {storyTags.length > 0 
+              ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
+              : "Select topic tags..."}
+          </Text>
+          <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
+        </Pressable>
+        
+        {storyTags.length > 0 && (
+          <View style={styles.selectedTagsContainer}>
+            {storyTags.map((tag) => (
+              <View key={tag} style={styles.selectedTagChip}>
+                <Text style={styles.selectedTagText}>{tag}</Text>
+                {!isExhausted && (
+                  <Pressable 
+                    onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
+                    hitSlop={8}
+                    style={{ marginLeft: 4 }}
+                  >
+                    <Ionicons name="close-circle" size={16} color={colors.primary} />
+                  </Pressable>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Looking For Chips */}
         <Text style={styles.sectionHeading}>I'm looking for...</Text>
@@ -306,6 +352,26 @@ export default function CreateStoryScreen() {
           mode="submit"
           onAgree={handleFinalSubmit}
       />
+
+      <StoryStartersModal
+        visible={showStarters}
+        onClose={() => setShowStarters(false)}
+        onSelectPrompt={(prompt) => {
+          setBody((prev) => prev ? `${prev}\n\n${prompt}` : prompt);
+        }}
+      />
+
+      <TopicTagsModal
+        visible={showTagsModal}
+        onClose={() => setShowTagsModal(false)}
+        selectedTags={storyTags}
+        onToggleTag={(tag) => {
+          setStoryTags(prev => 
+            prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+          );
+        }}
+        onClearAll={() => setStoryTags([])}
+      />
     </View>
   );
 }
@@ -324,6 +390,25 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       borderBottomColor: c.borderCard,
       paddingVertical: 16,
       marginBottom: 4,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    startersBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: c.primary + '15',
+      borderRadius: 100,
+      gap: 6,
+    },
+    startersText: {
+      fontSize: 13,
+      fontWeight: '600',
     },
     charCount: {
       fontSize: 13,
@@ -403,6 +488,48 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       color: c.textMuted,
     },
     chipTextSelected: {
+      color: c.primary,
+    },
+    tagsDropdownBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.white,
+      borderWidth: 1.5,
+      borderColor: c.borderCard,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      marginBottom: 12,
+    },
+    tagsDropdownText: {
+      fontSize: 16,
+      color: c.textLight,
+    },
+    tagsDropdownTextSelected: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.textDark,
+    },
+    selectedTagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 10,
+    },
+    selectedTagChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.primary + '15',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: c.primary + '30',
+    },
+    selectedTagText: {
+      fontSize: 13,
+      fontWeight: '600',
       color: c.primary,
     },
     normsContainer: {

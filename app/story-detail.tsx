@@ -26,6 +26,11 @@ import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { ReportStoryModal } from "../components/ReportStoryModal";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+const COMMENT_REMINDERS = [
+  "Remember: Lead with empathy.",
+  "Thank you for supporting this author.",
+  "A kind word goes a long way.",
+];
 
 function getLookingForText(lookingFor: string[]): string {
   const lower = lookingFor.map(s => s.charAt(0).toLowerCase() + s.slice(1));
@@ -85,11 +90,15 @@ function getRelativeTime(dateString: string): string {
 function CommentItem({
   comment,
   isOwn,
+  isLiked,
   onDelete,
+  onLike,
 }: {
   comment: StoryComment;
   isOwn: boolean;
+  isLiked: boolean;
   onDelete: () => void;
+  onLike: () => void;
 }) {
   const roleLabel = getRoleLabel(comment.author_role);
   const metaParts = [comment.author_name || "Anonymous"];
@@ -113,6 +122,18 @@ function CommentItem({
         )}
       </View>
       <Text style={commentStyles.body}>{comment.body}</Text>
+      <TouchableOpacity onPress={onLike} style={commentStyles.likeRow} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+        <Ionicons
+          name={isLiked ? "heart" : "heart-outline"}
+          size={14}
+          color={isLiked ? "#E53935" : COLORS.textLight}
+        />
+        {comment.like_count > 0 && (
+          <Text style={[commentStyles.likeCount, isLiked && commentStyles.likeCountActive]}>
+            {comment.like_count}
+          </Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -141,6 +162,21 @@ const commentStyles = StyleSheet.create({
     color: COLORS.textDark,
     lineHeight: 22,
   },
+  likeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  likeCount: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textLight,
+  },
+  likeCountActive: {
+    color: "#E53935",
+  },
 });
 
 export default function StoryDetailScreen() {
@@ -161,6 +197,12 @@ export default function StoryDetailScreen() {
     isStoryLiked,
     toggleLike,
     reportStory,
+    isCommentLiked,
+    toggleCommentLike,
+    downloadedStories,
+    isStoryDownloaded,
+    downloadStory,
+    removeStoryDownload,
   } = useStories();
   const { colors, appStyles } = useTheme();
 
@@ -168,19 +210,24 @@ export default function StoryDetailScreen() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [postAnonymously, setPostAnonymously] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
+  const downloadScale = useRef(new RNAnimated.Value(1)).current;
   const [showReportModal, setShowReportModal] = useState(false);
+
+  const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
 
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
-  const story = stories.find((s) => s.id === id);
+  const story = stories.find((s) => s.id === id) ?? downloadedStories.find((s) => s.id === id);
   const isOwnStory = story && user?.id === story.author_id;
   const bookmarked = id ? isStoryBookmarked(id) : false;
   const liked = id ? isStoryLiked(id) : false;
+  const downloaded = id ? isStoryDownloaded(id) : false;
 
   const canViewStory = useMemo(() => {
     if (!story) return false;
@@ -247,7 +294,7 @@ export default function StoryDetailScreen() {
     if (!commentText.trim() || !id || submitting) return;
     setSubmitting(true);
     try {
-      const newComment = await addComment(id, commentText.trim());
+      const newComment = await addComment(id, commentText.trim(), postAnonymously);
       if (newComment) {
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
@@ -262,6 +309,18 @@ export default function StoryDetailScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    const liked = isCommentLiked(commentId);
+    toggleCommentLike(commentId);
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? { ...c, like_count: liked ? Math.max(0, c.like_count - 1) : c.like_count + 1 }
+          : c
+      )
+    );
   };
 
   const handleDeleteComment = (commentId: string) => {
@@ -318,6 +377,19 @@ export default function StoryDetailScreen() {
       removeStoryBookmark(id);
     } else {
       addStoryBookmark(id);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!story) return;
+    RNAnimated.sequence([
+      RNAnimated.timing(downloadScale, { toValue: 1.35, duration: 100, useNativeDriver: true }),
+      RNAnimated.spring(downloadScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+    ]).start();
+    if (downloaded) {
+      removeStoryDownload(story.id);
+    } else {
+      downloadStory(story);
     }
   };
 
@@ -504,6 +576,17 @@ export default function StoryDetailScreen() {
           {/* Body */}
           <Text style={styles.storyBody}>{story.body}</Text>
 
+          {/* Tags */}
+          {story.story_tags && story.story_tags.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {story.story_tags.map(tag => (
+                <View key={tag} style={styles.tagBadge}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Looking for */}
           {Array.isArray(story.looking_for) && story.looking_for.length > 0 && (
             <Text style={styles.lookingForText}>
@@ -547,6 +630,18 @@ export default function StoryDetailScreen() {
 
             <View style={styles.actionRight}>
               <TouchableOpacity
+                onPress={handleDownload}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <RNAnimated.View style={{ transform: [{ scale: downloadScale }] }}>
+                <Ionicons
+                  name={downloaded ? "checkmark-circle" : "download-outline"}
+                  size={24}
+                  color={downloaded ? colors.primary : COLORS.textLight}
+                />
+              </RNAnimated.View>
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={handleBookmark}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
@@ -583,7 +678,9 @@ export default function StoryDetailScreen() {
                 key={comment.id}
                 comment={comment}
                 isOwn={user?.id === comment.author_id}
+                isLiked={isCommentLiked(comment.id)}
                 onDelete={() => handleDeleteComment(comment.id)}
+                onLike={() => handleLikeComment(comment.id)}
               />
             ))
           )}
@@ -591,12 +688,29 @@ export default function StoryDetailScreen() {
 
         {/* Comment input */}
         {!isAnonymous && (
-          <View
-            style={[
-              styles.inputBar,
-              { paddingBottom: Math.max(insets.bottom, 12) },
-            ]}
-          >
+          <View style={styles.commentInputWrapper}>
+            <View style={styles.anonRow}>
+              <Pressable
+                onPress={() => setPostAnonymously((v) => !v)}
+                style={[styles.anonToggle, postAnonymously && styles.anonToggleActive]}
+              >
+                <Ionicons
+                  name={postAnonymously ? "eye-off" : "eye-off-outline"}
+                  size={13}
+                  color={postAnonymously ? colors.primary : COLORS.textLight}
+                />
+                <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
+                  {postAnonymously ? "Posting anonymously" : "Post anonymously"}
+                </Text>
+              </Pressable>
+            </View>
+            <Text style={styles.reminderText}>{reminderText}</Text>
+            <View
+              style={[
+                styles.inputBar,
+                { paddingBottom: Math.max(insets.bottom, 12) },
+              ]}
+            >
             <TextInput
               style={styles.commentInput}
               placeholder="Offer support or share your thoughts..."
@@ -622,6 +736,7 @@ export default function StoryDetailScreen() {
               )}
             </TouchableOpacity>
           </View>
+        </View>
         )}
       </KeyboardAvoidingView>
 
@@ -684,6 +799,27 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
       fontWeight: "400",
       color: c.textDark,
       lineHeight: 26,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 16,
+    },
+    tagBadge: {
+      backgroundColor: c.appBackground,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.borderCard,
+    },
+    tagText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: c.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     audioControlsRow: {
       flexDirection: "row",
@@ -763,14 +899,24 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
       color: c.textLight,
       paddingVertical: 20,
     },
+    commentInputWrapper: {
+      backgroundColor: c.white,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: "#E5E5EA",
+      paddingTop: 8,
+    },
+    reminderText: {
+      fontSize: 12,
+      fontStyle: 'italic',
+      color: c.textLight,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
     inputBar: {
       flexDirection: "row",
       alignItems: "flex-end",
       paddingHorizontal: 16,
-      paddingTop: 12,
       backgroundColor: c.white,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: "#E5E5EA",
       gap: 10,
     },
     commentInput: {
@@ -790,5 +936,31 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
     sendButton: {
       padding: 8,
       marginBottom: 2,
+    },
+    anonRow: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 4,
+    },
+    anonToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      alignSelf: "flex-start",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 100,
+      backgroundColor: COLORS.appBackground,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "#E5E5EA",
+    },
+    anonToggleActive: {
+      backgroundColor: COLORS.primary + "12",
+      borderColor: COLORS.primary + "40",
+    },
+    anonToggleText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: COLORS.textLight,
     },
   });

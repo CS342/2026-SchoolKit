@@ -240,7 +240,7 @@ export default function AuthScreen() {
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  textContentType={isSignUp ? 'newPassword' : 'password'}
+                  textContentType={isSignUp ? 'none' : 'password'}
                   returnKeyType={isSignUp ? 'next' : 'go'}
                   onSubmitEditing={() => {
                     if (isSignUp) confirmPasswordRef.current?.focus();
@@ -298,7 +298,7 @@ export default function AuthScreen() {
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    textContentType="newPassword"
+                    textContentType="none"
                     returnKeyType="go"
                     onSubmitEditing={handleSubmit}
                   />

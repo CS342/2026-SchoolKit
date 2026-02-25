@@ -71,7 +71,7 @@ function getRelativeTime(dateString: string): string {
 export function StoryCard({ story, index, allowModeration = false, showAuthorStatus = false, showRejectedNorms = false }: StoryCardProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, isStoryLiked, toggleLike } = useStories();
+  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, dismissReport, isStoryLiked, toggleLike } = useStories();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(20);
   const opacity = useSharedValue(0);
@@ -148,10 +148,22 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           </View>
         )}
         {story.status === 'approved' && allowModeration && story.report_count > 0 && (
-          <View style={[styles.modBanner, { backgroundColor: COLORS.error + '15' }]}>
+          <View style={[styles.modBanner, { backgroundColor: COLORS.error + '15', alignSelf: 'stretch' }]}>
             <Text style={[styles.modBannerText, { color: COLORS.error }]}>
               Reported {story.report_count} time(s)
             </Text>
+            {story.reports && story.reports.length > 0 && (
+              <View style={styles.reportsList}>
+                {story.reports.map((report, idx) => (
+                  <View key={`report-${idx}`} style={styles.reportItem}>
+                    <Text style={styles.reportReason}>• {report.reason}</Text>
+                    {report.details ? (
+                      <Text style={styles.reportDetails}>"{report.details}"</Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -187,6 +199,17 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           <Text style={styles.bodyPreview} numberOfLines={3}>{story.body}</Text>
         ) : null}
 
+        {/* Content Tags */}
+        {story.story_tags && story.story_tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {story.story_tags.map(tag => (
+              <View key={tag} style={styles.tagBadge}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Rejected Norms List */}
         {showRejectedNorms && story.status === 'rejected' && story.rejected_norms && story.rejected_norms.length > 0 && (
           <View style={styles.normsContainer}>
@@ -201,51 +224,53 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         )}
 
         {/* Action row */}
-        <View style={styles.actionRow}>
-          <View style={styles.actionLeft}>
+        {!allowModeration && (
+          <View style={styles.actionRow}>
+            <View style={styles.actionLeft}>
+              <TouchableOpacity
+                onPress={handleLike}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                activeOpacity={0.7}
+                style={styles.actionItem}
+              >
+                <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+                  <Ionicons
+                    name={liked ? 'heart' : 'heart-outline'}
+                    size={20}
+                    color={liked ? '#E53935' : COLORS.textLight}
+                  />
+                </RNAnimated.View>
+                <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
+                  {story.like_count}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.actionItem}>
+                <Ionicons name="chatbubble-outline" size={20} color={COLORS.textLight} />
+                <Text style={styles.actionText}>
+                  {story.comment_count}
+                </Text>
+              </View>
+            </View>
+
             <TouchableOpacity
-              onPress={handleLike}
+              onPress={handleBookmark}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               activeOpacity={0.7}
-              style={styles.actionItem}
             >
-              <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+              <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
                 <Ionicons
-                  name={liked ? 'heart' : 'heart-outline'}
-                  size={20}
-                  color={liked ? '#E53935' : COLORS.textLight}
+                  name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+                  size={22}
+                  color={bookmarked ? COLORS.primary : COLORS.textLight}
                 />
               </RNAnimated.View>
-              <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
-                {story.like_count}
-              </Text>
             </TouchableOpacity>
-
-            <View style={styles.actionItem}>
-              <Ionicons name="chatbubble-outline" size={20} color={COLORS.textLight} />
-              <Text style={styles.actionText}>
-                {story.comment_count}
-              </Text>
-            </View>
           </View>
-
-          <TouchableOpacity
-            onPress={handleBookmark}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-          >
-            <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
-              <Ionicons
-                name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={22}
-                color={bookmarked ? COLORS.primary : COLORS.textLight}
-              />
-            </RNAnimated.View>
-          </TouchableOpacity>
-        </View>
+        )}
 
         {/* Moderation actions */}
-        {allowModeration && (story.status === 'pending' || story.report_count > 0) && (
+        {allowModeration && (story.status === 'pending' || (story.status === 'approved' && story.report_count > 0)) && (
           <View style={styles.modActions}>
             <Pressable
               style={[styles.modButton, styles.modReject]}
@@ -261,6 +286,14 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
                 onPress={() => approveStory(story.id)}
               >
                 <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Approve</Text>
+              </Pressable>
+            )}
+            {story.status === 'approved' && story.report_count > 0 && (
+              <Pressable
+                style={[styles.modButton, styles.modApprove]}
+                onPress={() => dismissReport(story.id)}
+              >
+                <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Dismiss Report</Text>
               </Pressable>
             )}
           </View>
@@ -313,6 +346,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.primary,
+  },
+  reportsList: {
+    marginTop: 8,
+    gap: 6,
+  },
+  reportItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.error + '25',
+  },
+  reportReason: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.error,
+  },
+  reportDetails: {
+    fontSize: 12,
+    color: COLORS.textDark,
+    marginTop: 2,
+    fontStyle: 'italic',
+    paddingLeft: 8,
   },
   authorPendingBanner: {
     flexDirection: 'row',
@@ -371,13 +427,34 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   bodyPreview: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#555',
-    lineHeight: 21,
-    marginBottom: 14,
-  },
-  normsContainer: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: '#555',
+      lineHeight: 21,
+      marginBottom: 14,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 14,
+    },
+    tagBadge: {
+      backgroundColor: COLORS.appBackground,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: '#E5E5EA',
+    },
+    tagText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: COLORS.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    normsContainer: {
     backgroundColor: COLORS.error + '10',
     padding: 12,
     borderRadius: 8,
