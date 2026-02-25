@@ -770,6 +770,12 @@ export default function UnderstandingCancerScreen() {
   };
 
   const handleSpeak = async () => {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+    });
+
     if (isSpeaking) {
       if (sound) {
         await sound.pauseAsync();

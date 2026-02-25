@@ -324,6 +324,12 @@ export default function StoryDetailScreen() {
   const handleSpeak = async () => {
     if (!story) return;
 
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+    });
+
     if (isSpeaking) {
       if (sound) await sound.pauseAsync();
       setIsSpeaking(false);
