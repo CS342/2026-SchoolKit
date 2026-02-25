@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,10 +34,11 @@ export default function AboutScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo / Icon */}
-        <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="school" size={48} color={colors.primary} />
-        </View>
+        {/* Logo */}
+        <Image
+          source={require('../assets/images/SchoolKit.png')}
+          style={{ width: 100, height: 100, resizeMode: 'contain', marginBottom: 12, marginTop: 8 }}
+        />
 
         <Text style={[styles.appName, { color: colors.textDark }]}>SchoolKit</Text>
 

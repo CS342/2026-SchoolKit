@@ -577,6 +577,7 @@ const handoutStyles = StyleSheet.create({
     itemRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
     checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, marginRight: 10, marginTop: 2, flexShrink: 0 },
     itemText: { fontSize: 14, color: COLORS.textMuted, lineHeight: 20, flex: 1 },
+    itemTextChecked: { textDecorationLine: "line-through" as const, color: COLORS.textLight, opacity: 0.6 },
     disclaimerBox: {
         flexDirection: "row",
         alignItems: "flex-start",

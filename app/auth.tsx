@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Animated,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -169,7 +170,28 @@ export default function AuthScreen() {
             style={[styles.headerBanner, { paddingTop: insets.top + 2 }]}
           >
             <View style={styles.headerDecorativeCircle} />
-            <Ionicons name="school-outline" size={32} color={COLORS.white} />
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              {Array.from({ length: 20 }, (_, i) => {
+                const size = 30 + i * 3;
+                const opacity = 0.5 - i * 0.024;
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      position: 'absolute' as const,
+                      width: size,
+                      height: size,
+                      borderRadius: size / 2,
+                      backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
+                    }}
+                  />
+                );
+              })}
+              <Image
+                source={require('../assets/images/SchoolKit-transparent.png')}
+                style={{ width: 56, height: 56, resizeMode: 'contain' }}
+              />
+            </View>
             <Text style={styles.headerTitle}>SchoolKit</Text>
             <Text style={styles.headerSubtitle}>
               {isSignUp ? 'Create your account' : 'Welcome back'}

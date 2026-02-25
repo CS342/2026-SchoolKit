@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -8,6 +8,8 @@ import Animated, {
   withSpring,
   withDelay,
   withTiming,
+  withRepeat,
+  Easing,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 
@@ -24,6 +26,7 @@ export default function WelcomeScreen() {
   const buttonTranslateY = useSharedValue(40);
   const buttonOpacity = useSharedValue(0);
   const buttonScale = useSharedValue(1);
+  const glowScale = useSharedValue(1);
 
   const skipToEnd = () => {
     iconScale.value = withSpring(1, ANIMATION.springBouncy);
@@ -41,11 +44,23 @@ export default function WelcomeScreen() {
     buttonOpacity.value = withDelay(1200, withTiming(1, { duration: 600 }));
     buttonTranslateY.value = withDelay(1200, withSpring(0, ANIMATION.springBouncy));
     const timer = setTimeout(() => setAnimDone(true), 1800);
+
+    // Start glow breathing animation
+    glowScale.value = withDelay(800, withRepeat(
+      withTiming(1.08, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+      -1, // infinite
+      true // reverse
+    ));
+
     return () => clearTimeout(timer);
   }, []);
 
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
   }));
 
   const titleStyle = useAnimatedStyle(() => ({
@@ -71,24 +86,35 @@ export default function WelcomeScreen() {
         <DecorativeBackground variant="welcome" gradientColors={GRADIENTS.welcomeHero}>
           <View style={styles.content}>
             <View style={styles.centerContent}>
-              <Animated.View style={iconStyle}>
-                <Ionicons name="school" size={56} color={COLORS.white} />
+              <Animated.View style={[iconStyle, styles.logoContainer]}>
+                {/* Smooth layered glow — 50 circles fading outward */}
+                {Array.from({ length: 40 }, (_, i) => {
+                  const size = 110 + i * 3.5;
+                  const opacity = 0.5 - i * 0.012;
+                  return (
+                    <Animated.View
+                      key={i}
+                      style={[{
+                        position: 'absolute' as const,
+                        width: size,
+                        height: size,
+                        borderRadius: size / 2,
+                        backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
+                      }, glowStyle]}
+                    />
+                  );
+                })}
+                <Image
+                  source={require('../assets/images/SchoolKit-transparent.png')}
+                  style={{ width: 180, height: 180, resizeMode: 'contain' }}
+                />
               </Animated.View>
 
-              <View style={styles.gap20} />
-
-              <Animated.Text style={[styles.title, titleStyle]}>
-                SchoolKit
-              </Animated.Text>
-
-              <View style={styles.gap8} />
+              <View style={{ height: 60 }} />
 
               <Animated.Text style={[styles.tagline, taglineStyle]}>
                 Support for every school journey
-              </Animated.Text>
-
-
-            </View>
+              </Animated.Text>            </View>
           </View>
 
           <Animated.View style={[SHARED_STYLES.buttonContainer, buttonAnimStyle]}>
@@ -125,8 +151,9 @@ const styles = StyleSheet.create({
   centerContent: {
     alignItems: 'center',
   },
-  gap20: {
-    height: 20,
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   gap8: {
     height: 8,
