@@ -554,7 +554,8 @@ export default function ProfileScreen() {
             />
             <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
             <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => router.push('/about')} theme={theme} />
-            <SettingRow icon="help-circle-outline" label="Questions & Feedback" onPress={() => router.push('/help-support')} isLast theme={theme} />
+            <SettingRow icon="help-circle-outline" label="Frequently Asked Questions" onPress={() => router.push('/help-support?section=faq')} theme={theme} />
+            <SettingRow icon="chatbubble-ellipses-outline" label="Share Feedback" onPress={() => router.push('/help-support?section=feedback')} isLast theme={theme} />
           </View>
         </AnimatedSection>
 

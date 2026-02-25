@@ -119,8 +119,12 @@ export default function Step2Screen() {
   const handleContinue = () => {
     if (selectedRole) {
       updateRole(selectedRole);
-      // Navigate to step2b for grade selection (all roles except none)
-      router.push('/onboarding/step2b');
+      // Students skip grade selection — go straight to school journey
+      if (selectedRole === 'student-k8' || selectedRole === 'student-hs') {
+        router.push('/onboarding/step3');
+      } else {
+        router.push('/onboarding/step2b');
+      }
     }
   };
 

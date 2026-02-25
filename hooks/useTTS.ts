@@ -15,8 +15,9 @@ export function useTTS() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // Track the text that was used to generate the current cached sound
+  // Track the text and voice used to generate the current cached sound
   const currentTextRef = useRef<string | null>(null);
+  const currentVoiceRef = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -30,6 +31,7 @@ export function useTTS() {
       await soundRef.current.unloadAsync();
       soundRef.current = null;
       currentTextRef.current = null;
+      currentVoiceRef.current = null;
     }
     setIsSpeaking(false);
   }, []);
@@ -43,8 +45,8 @@ export function useTTS() {
         return;
       }
 
-      // If paused on the same text, resume
-      if (!isSpeaking && soundRef.current && currentTextRef.current === text) {
+      // If paused on the same text with the same voice, resume
+      if (!isSpeaking && soundRef.current && currentTextRef.current === text && currentVoiceRef.current === selectedVoice) {
         await soundRef.current.playAsync();
         setIsSpeaking(true);
         return;
@@ -69,6 +71,7 @@ export function useTTS() {
           );
           soundRef.current = newSound;
           currentTextRef.current = text;
+          currentVoiceRef.current = selectedVoice;
 
           newSound.setOnPlaybackStatusUpdate((status) => {
             if (status.isLoaded && status.didJustFinish) {
