@@ -12,7 +12,7 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -64,6 +64,18 @@ const FAQS = [
   {
     q: 'Who is SchoolKit for?',
     a: 'SchoolKit supports young cancer survivors and their families, caregivers, and school staff as they navigate the return to school after treatment.',
+  },
+  {
+    q: 'How can I check my progress?',
+    a: 'Go to the Profile tab to see your completed topics, downloaded resources, and bookmarks. Your activity is saved automatically as you explore the app.',
+  },
+  {
+    q: 'How long will it take for my story to be approved?',
+    a: 'Stories are reviewed by our team before appearing in the community. This usually takes 1–3 days. You\'ll be able to see your story\'s status in the Stories tab.',
+  },
+  {
+    q: 'What is the Stories tab for?',
+    a: 'The Stories tab is a community space where users can share their own life experiences related to the school re-entry journey. You can post anonymously or with your name — it\'s up to you.',
   },
 ];
 
@@ -138,6 +150,7 @@ function FAQItem({
 
 export default function HelpSupportScreen() {
   const router = useRouter();
+  const { section } = useLocalSearchParams<{ section?: string }>();
   const insets = useSafeAreaInsets();
   const { data } = useOnboarding();
   const { user } = useAuth();
@@ -149,6 +162,8 @@ export default function HelpSupportScreen() {
   const [submitted, setSubmitted] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const feedbackSectionY = useRef<number>(0);
 
   const faqAnim = useSharedValue(0);
   const feedbackAnim = useSharedValue(0);
@@ -158,6 +173,13 @@ export default function HelpSupportScreen() {
   useEffect(() => {
     faqAnim.value = withDelay(150, withTiming(1, { duration: 350 }));
     feedbackAnim.value = withDelay(300, withTiming(1, { duration: 350 }));
+    if (section === 'feedback') {
+      const timer = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: feedbackSectionY.current, animated: true });
+        inputRef.current?.focus();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   useEffect(() => {
@@ -214,28 +236,35 @@ export default function HelpSupportScreen() {
         <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Help & Support</Text>
+        <Text style={appStyles.editHeaderTitle}>
+          {section === 'feedback' ? 'Share Feedback' : 'Frequently Asked Questions'}
+        </Text>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
-        {/* FAQ Section */}
-        <Animated.View style={faqStyle}>
+        {/* FAQ Section — only shown when section=faq */}
+        {section !== 'feedback' && <Animated.View style={faqStyle}>
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>FREQUENTLY ASKED QUESTIONS</Text>
           <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
             {FAQS.map((item, i) => (
               <FAQItem key={i} item={item} index={i} colors={colors} shadows={shadows} />
             ))}
           </View>
-        </Animated.View>
+        </Animated.View>}
 
-        {/* Feedback Section */}
-        <Animated.View style={feedbackStyle}>
+        {/* Feedback Section — only shown when section=feedback */}
+        {section !== 'faq' &&
+        <Animated.View
+          style={feedbackStyle}
+          onLayout={(e) => { feedbackSectionY.current = e.nativeEvent.layout.y; }}
+        >
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>SHARE YOUR FEEDBACK</Text>
           <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
             {submitted ? (
@@ -290,7 +319,7 @@ export default function HelpSupportScreen() {
               </View>
             )}
           </View>
-        </Animated.View>
+        </Animated.View>}
       </ScrollView>
     </View>
   );
