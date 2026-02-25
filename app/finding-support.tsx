@@ -32,6 +32,7 @@ type StoryData = {
     front: string;
     text: string;
     color: string;
+    fontSize?: number;
 };
 
 type TipCard = {
@@ -57,6 +58,7 @@ const STORIES: StoryData[] = [
         front: "Finding New Friends After Treatment",
         color: "#C5A3D6",
         text: "After my diagnosis of leukemia (ALL), I was tutored at home for my entire eighth grade year. One of the most difficult things was that all the people I hung out with were too afraid to talk with me when I came back. They would walk past me in the hall and not even acknowledge me. Only one friend ever visited me in the hospital. When I went back in ninth grade, the teachers were incredibly supportive, but dealing with friends was very difficult. I just started hanging out with a new group of friends. By high school, I made lots of new friends.",
+        fontSize: 11,
     },
     {
         id: "s3",
@@ -64,6 +66,7 @@ const STORIES: StoryData[] = [
         front: "Connecting Through Sports",
         color: "#95D1BB",
         text: "I had bilateral retinoblastoma when I was 2\u00BD. They had to remove both eyes, so I'm totally blind. I am an athlete and have been involved in several sports. Right now I'm into mountain biking with a tandem bike. It's really a liberating experience and a wonderful icebreaker. It's a great way to get out in the community and meet people with similar interests. Whether you have a disability or not, athletics is rewarding to anyone who is involved.",
+        fontSize: 13,
     },
 ];
 
@@ -157,7 +160,7 @@ function StoryFlipCard({ story }: { story: StoryData }) {
                     ]}
                 >
                     <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
-                        <Text style={storyStyles.text}>{"\u201C"}{story.text}{"\u201D"}</Text>
+                        <Text style={[storyStyles.text, story.fontSize ? { fontSize: story.fontSize, lineHeight: story.fontSize * 1.5 } : undefined]}>{"\u201C"}{story.text}{"\u201D"}</Text>
                     </ScrollView>
                 </Animated.View>
             </View>
@@ -208,7 +211,7 @@ const storyStyles = StyleSheet.create({
 });
 
 // ─── Map Path Bubbles ───────────────────────────────────────────────────────
-const BUBBLE_SIZE = 260;
+const BUBBLE_SIZE = 200;
 
 function MapBubble({
     card,
@@ -275,8 +278,8 @@ function MapConnector({ fromIndex }: { fromIndex: number }) {
 const mapStyles = StyleSheet.create({
     pathContainer: { paddingBottom: 10 },
     bubbleWrapper: { width: BUBBLE_SIZE },
-    bubbleLeft: { alignSelf: "flex-start", marginLeft: 230 },
-    bubbleRight: { alignSelf: "flex-end", marginRight: 230 },
+    bubbleLeft: { alignSelf: "flex-start", marginLeft: 140 },
+    bubbleRight: { alignSelf: "flex-end", marginRight: 140 },
     bubble: {
         width: BUBBLE_SIZE,
         height: BUBBLE_SIZE,
@@ -292,7 +295,7 @@ const mapStyles = StyleSheet.create({
         elevation: 4,
     },
     bubbleText: {
-        fontSize: 20,
+        fontSize: 14,
         fontWeight: "700",
         textAlign: "center",
         lineHeight: 16,
