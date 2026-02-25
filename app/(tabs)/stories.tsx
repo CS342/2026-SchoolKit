@@ -6,6 +6,7 @@ import {
   FlatList,
   RefreshControl,
   Pressable,
+  TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,6 +41,7 @@ export default function StoriesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showNormsModal, setShowNormsModal] = useState(false);
   const [sort, setSort] = useState<"new" | "popular" | "my-stories">("new");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isModerator = user?.email === 'janinatroper@gmail.com';
   const [isModeratorMode, setIsModeratorMode] = useState(false);
@@ -77,11 +79,19 @@ export default function StoriesScreen() {
       });
     }
 
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((s) => 
+        (s.title && s.title.toLowerCase().includes(q)) || 
+        (s.body && s.body.toLowerCase().includes(q))
+      );
+    }
+
     if (!isModeratorMode && sort === "popular") {
       return [...filtered].sort((a, b) => b.like_count - a.like_count);
     }
     return filtered;
-  }, [stories, isModeratorMode, user?.id, sort, onboardingData?.role]);
+  }, [stories, isModeratorMode, user?.id, sort, onboardingData?.role, searchQuery]);
 
   const rejectedCount = useMemo(() => {
     if (!user) return 0;
@@ -163,6 +173,24 @@ export default function StoriesScreen() {
           </View>
         </View>
       </Animated.View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={18} color={COLORS.textLight} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search stories..."
+          placeholderTextColor={COLORS.textLight}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
+            <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
+          </Pressable>
+        )}
+      </View>
 
       {/* Sort bar OR mod mode indicator */}
       {isModeratorMode ? (
@@ -423,6 +451,30 @@ const makeStyles = (c: typeof import("../../constants/theme").COLORS_LIGHT) =>
       backgroundColor: COLORS.error,
       borderWidth: 1.5,
       borderColor: "#fff",
+    },
+
+    // ── Search Bar ─────────────────────────────────────────────
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.white,
+      marginHorizontal: 16,
+      marginTop: 4,
+      marginBottom: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#E5E5EA',
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 15,
+      color: c.textDark,
+      paddingVertical: 0,
     },
 
     // ── Mod mode indicator bar ───────────────────────────────
