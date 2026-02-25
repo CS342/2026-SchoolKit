@@ -197,8 +197,8 @@ export default function VoiceSelectionScreen() {
             title="Continue"
             onPress={handleContinue}
           />
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
-             <Text style={styles.skipButtonText}>Skip for now</Text>
+          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
       </View>
@@ -290,14 +290,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  skipButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    color: COLORS.textLight,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
 });

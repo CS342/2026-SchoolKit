@@ -102,16 +102,16 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
 
           {mode === 'submit' && (
             <View style={styles.ackBox}>
-              <Text style={styles.ackTitle}>Acknowledgment</Text>
-              <Text style={styles.ackText}>By submitting your story, you agree to uphold these norms. All stories are reviewed by our moderation team before appearing in the feed to ensure the community remains safe and supportive for everyone.</Text>
+              <Text style={styles.ackTitle}>A Promise to Our Community</Text>
+              <Text style={styles.ackText}>Thank you for being willing to share something so personal. By submitting your story, you're agreeing to hold this space with care — for yourself and for everyone else here who is going through something hard. All stories are reviewed before they appear in the feed.</Text>
             </View>
           )}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           {mode === 'submit' ? (
-            <PrimaryButton 
-              title={hasScrolledToBottom ? "I Agree & Submit" : "Read norms to agree"} 
+            <PrimaryButton
+              title={hasScrolledToBottom ? "I Promise & Share My Story" : "Read our promise to agree"}
               onPress={() => onAgree?.([])} 
               disabled={!hasScrolledToBottom}
             />

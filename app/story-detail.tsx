@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -12,25 +12,51 @@ import {
   TouchableOpacity,
   Animated as RNAnimated,
   ActivityIndicator,
-} from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Audio } from 'expo-av';
-import { useAuth } from '../contexts/AuthContext';
-import { useStories, StoryComment } from '../contexts/StoriesContext';
-import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { generateSpeech } from '../services/elevenLabs';
-import { COLORS, TYPOGRAPHY } from '../constants/onboarding-theme';
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
+import { useAuth } from "../contexts/AuthContext";
+import { useStories, StoryComment } from "../contexts/StoriesContext";
+import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { generateSpeech } from "../services/elevenLabs";
+import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
+import { ReportStoryModal } from "../components/ReportStoryModal";
+
+const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+
+function getLookingForText(lookingFor: string[]): string {
+  const lower = lookingFor.map(s => s.charAt(0).toLowerCase() + s.slice(1));
+  if (lower.length === 1) return lower[0] === 'just sharing' ? 'Just sharing' : `Looking for ${lower[0]}`;
+  const onlyJustSharing = lower.every(s => s === 'just sharing');
+  if (onlyJustSharing) return 'Just sharing';
+  return `Looking for ${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`;
+}
+
+function getAudienceHint(targetAudiences?: string[]): string {
+  if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
+  const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
+  const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
+  if (hasAll || tags.length === 0) return '';
+  if (tags.length === 1) return `For ${tags[0]}`;
+  if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
+  return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
+}
 
 function getRoleLabel(role: UserRole | null): string {
   switch (role) {
-    case 'student-k8': return 'Student';
-    case 'student-hs': return 'Student';
-    case 'parent': return 'Parent';
-    case 'staff': return 'Staff';
-    default: return '';
+    case "student-k8":
+      return "Student";
+    case "student-hs":
+      return "Student";
+    case "parent":
+      return "Parent";
+    case "staff":
+      return "Staff";
+    default:
+      return "";
   }
 }
 
@@ -40,7 +66,7 @@ function getRelativeTime(dateString: string): string {
   const diff = now - date;
 
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'just now';
+  if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
 
   const hours = Math.floor(minutes / 60);
@@ -66,17 +92,22 @@ function CommentItem({
   onDelete: () => void;
 }) {
   const roleLabel = getRoleLabel(comment.author_role);
-  const metaParts = [comment.author_name || 'Anonymous'];
+  const metaParts = [comment.author_name || "Anonymous"];
   if (roleLabel) metaParts.push(roleLabel);
   metaParts.push(getRelativeTime(comment.created_at));
-  const metaLine = metaParts.join(' · ');
+  const metaLine = metaParts.join(" · ");
 
   return (
     <View style={commentStyles.container}>
       <View style={commentStyles.headerRow}>
-        <Text style={commentStyles.meta} numberOfLines={1}>{metaLine}</Text>
+        <Text style={commentStyles.meta} numberOfLines={1}>
+          {metaLine}
+        </Text>
         {isOwn && (
-          <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={onDelete}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Ionicons name="trash-outline" size={15} color={COLORS.error} />
           </TouchableOpacity>
         )}
@@ -90,12 +121,12 @@ const commentStyles = StyleSheet.create({
   container: {
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 6,
   },
   meta: {
@@ -106,7 +137,7 @@ const commentStyles = StyleSheet.create({
   },
   body: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: "400",
     color: COLORS.textDark,
     lineHeight: 22,
   },
@@ -118,22 +149,35 @@ export default function StoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, isAnonymous } = useAuth();
   const { selectedVoice, data: onboardingData } = useOnboarding();
-  const { stories, deleteStory, fetchComments, addComment, deleteComment, isStoryBookmarked, addStoryBookmark, removeStoryBookmark, isStoryLiked, toggleLike } = useStories();
+  const {
+    stories,
+    deleteStory,
+    fetchComments,
+    addComment,
+    deleteComment,
+    isStoryBookmarked,
+    addStoryBookmark,
+    removeStoryBookmark,
+    isStoryLiked,
+    toggleLike,
+    reportStory,
+  } = useStories();
   const { colors, appStyles } = useTheme();
 
   const [comments, setComments] = useState<StoryComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
 
-  const story = stories.find(s => s.id === id);
+  const story = stories.find((s) => s.id === id);
   const isOwnStory = story && user?.id === story.author_id;
   const bookmarked = id ? isStoryBookmarked(id) : false;
   const liked = id ? isStoryLiked(id) : false;
@@ -144,14 +188,21 @@ export default function StoryDetailScreen() {
     const audiences = story.target_audiences || [];
     // Default to all if none specified
     if (audiences.length === 0) return true;
-    
-    let userGroup = 'Students';
-    if (onboardingData?.role === 'student-k8' || onboardingData?.role === 'student-hs') userGroup = 'Students';
-    else if (onboardingData?.role === 'parent') userGroup = 'Parents';
-    else if (onboardingData?.role === 'staff') userGroup = 'School Staff';
-    
+
+    let userGroup = "Students";
+    if (
+      onboardingData?.role === "student-k8" ||
+      onboardingData?.role === "student-hs"
+    )
+      userGroup = "Students";
+    else if (onboardingData?.role === "parent") userGroup = "Parents";
+    else if (onboardingData?.role === "staff") userGroup = "School Staff";
+
     // Strict enforcement: only users matching the chosen audience can view
-    return audiences.includes(userGroup) || audiences.includes(onboardingData?.role || '');
+    return (
+      audiences.includes(userGroup) ||
+      audiences.includes(onboardingData?.role || "")
+    );
   }, [story, user?.id, onboardingData?.role]);
 
   useEffect(() => {
@@ -174,13 +225,13 @@ export default function StoryDetailScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      'Delete Story',
-      'Are you sure you want to delete this story? This cannot be undone.',
+      "Delete Story",
+      "Are you sure you want to delete this story? This cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             if (id) {
               await deleteStory(id);
@@ -188,7 +239,7 @@ export default function StoryDetailScreen() {
             }
           },
         },
-      ],
+      ]
     );
   };
 
@@ -198,28 +249,31 @@ export default function StoryDetailScreen() {
     try {
       const newComment = await addComment(id, commentText.trim());
       if (newComment) {
-        setComments(prev => [...prev, newComment]);
-        setCommentText('');
+        setComments((prev) => [...prev, newComment]);
+        setCommentText("");
       } else {
-        Alert.alert('Error', 'Failed to post comment. Please try again.');
+        Alert.alert("Error", "Failed to post comment. Please try again.");
       }
     } catch (error: any) {
-      Alert.alert('Comment Rejected', error.message || 'Failed to post comment.');
+      Alert.alert(
+        "Comment Rejected",
+        error.message || "Failed to post comment."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert('Delete Comment', 'Delete this comment?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert("Delete Comment", "Delete this comment?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: 'Delete',
-        style: 'destructive',
+        text: "Delete",
+        style: "destructive",
         onPress: async () => {
           if (id) {
             await deleteComment(commentId, id);
-            setComments(prev => prev.filter(c => c.id !== commentId));
+            setComments((prev) => prev.filter((c) => c.id !== commentId));
           }
         },
       },
@@ -229,8 +283,17 @@ export default function StoryDetailScreen() {
   const handleLike = () => {
     if (!id) return;
     RNAnimated.sequence([
-      RNAnimated.timing(likeScale, { toValue: 1.4, duration: 100, useNativeDriver: true }),
-      RNAnimated.spring(likeScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+      RNAnimated.timing(likeScale, {
+        toValue: 1.4,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(likeScale, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      }),
     ]).start();
     toggleLike(id);
   };
@@ -238,8 +301,17 @@ export default function StoryDetailScreen() {
   const handleBookmark = () => {
     if (!id) return;
     RNAnimated.sequence([
-      RNAnimated.timing(bookmarkScale, { toValue: 1.35, duration: 100, useNativeDriver: true }),
-      RNAnimated.spring(bookmarkScale, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+      RNAnimated.timing(bookmarkScale, {
+        toValue: 1.35,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(bookmarkScale, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      }),
     ]).start();
 
     if (bookmarked) {
@@ -286,7 +358,7 @@ export default function StoryDetailScreen() {
         setIsSpeaking(false);
       }
     } catch (error) {
-      console.error('Audio playback error:', error);
+      console.error("Audio playback error:", error);
       setIsSpeaking(false);
     } finally {
       setIsLoadingAudio(false);
@@ -299,7 +371,7 @@ export default function StoryDetailScreen() {
     else if (playbackRate === 1.25) nextRate = 1.5;
     else if (playbackRate === 1.5) nextRate = 2.0;
     else nextRate = 1.0;
-    
+
     setPlaybackRate(nextRate);
     if (sound) {
       await sound.setRateAsync(nextRate, true);
@@ -312,30 +384,42 @@ export default function StoryDetailScreen() {
     return (
       <View style={styles.container}>
         <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-          <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
+          <Pressable
+            style={appStyles.editBackButton}
+            onPress={() => router.back()}
+          >
             <Ionicons name="chevron-back" size={22} color={colors.textDark} />
           </Pressable>
           <Text style={appStyles.editHeaderTitle}>Story</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>{!story ? 'Story not found' : "You don't have permission to view this story"}</Text>
+          <Text style={styles.notFoundText}>
+            {!story
+              ? "Story not found"
+              : "You don't have permission to view this story"}
+          </Text>
         </View>
       </View>
     );
   }
 
   const roleLabel = getRoleLabel(story.author_role);
-  const metaParts = [story.author_name || 'Anonymous'];
+  const metaParts = [story.author_name || "Anonymous"];
   if (roleLabel) metaParts.push(roleLabel);
   metaParts.push(getRelativeTime(story.created_at));
-  const metaLine = metaParts.join(' · ');
+  const audienceHint = getAudienceHint(story.target_audiences);
+  if (audienceHint) metaParts.push(audienceHint);
+  const metaLine = metaParts.join(" · ");
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
+        <Pressable
+          style={appStyles.editBackButton}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={appStyles.editHeaderTitle}>Story</Text>
@@ -344,13 +428,15 @@ export default function StoryDetailScreen() {
             <Ionicons name="trash-outline" size={22} color={colors.error} />
           </Pressable>
         ) : (
-          <View style={{ width: 40 }} />
+          <Pressable onPress={() => setShowReportModal(true)} style={{ padding: 8 }}>
+            <Ionicons name="flag-outline" size={22} color={colors.textLight} />
+          </Pressable>
         )}
       </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
         <ScrollView
@@ -364,41 +450,46 @@ export default function StoryDetailScreen() {
           {/* Title */}
           <Text style={styles.storyTitle}>{story.title}</Text>
 
-          {/* Tags */}
-          {story.looking_for && story.looking_for.length > 0 && (
-            <View style={styles.tagsRow}>
-              {story.looking_for.map((need, idx) => (
-                <View key={idx} style={styles.tag}>
-                  <Text style={styles.tagText}>{need}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
           {/* Audio Player Container */}
           <View style={styles.audioControlsRow}>
-            <TouchableOpacity 
-              style={[styles.listenBtn, isSpeaking && styles.listenBtnPlaying]} 
+            <TouchableOpacity
+              style={[styles.listenBtn, isSpeaking && styles.listenBtnPlaying]}
               onPress={handleSpeak}
               disabled={isLoadingAudio}
             >
               {isLoadingAudio ? (
-                <ActivityIndicator size="small" color={isSpeaking ? COLORS.white : colors.primary} style={{ marginRight: 6 }} />
+                <ActivityIndicator
+                  size="small"
+                  color={isSpeaking ? COLORS.white : colors.primary}
+                  style={{ marginRight: 6 }}
+                />
               ) : (
-                <Ionicons 
-                  name={isSpeaking ? 'pause' : 'play'} 
-                  size={16} 
-                  color={isSpeaking ? COLORS.white : colors.primary} 
+                <Ionicons
+                  name={isSpeaking ? "pause" : "play"}
+                  size={16}
+                  color={isSpeaking ? COLORS.white : colors.primary}
                   style={{ marginRight: 6 }}
                 />
               )}
-              <Text style={[styles.listenBtnText, isSpeaking && { color: COLORS.white }]}>
-                {isLoadingAudio ? 'Loading...' : isSpeaking ? 'Pause' : 'Listen'}
+              <Text
+                style={[
+                  styles.listenBtnText,
+                  isSpeaking && { color: COLORS.white },
+                ]}
+              >
+                {isLoadingAudio
+                  ? "Loading..."
+                  : isSpeaking
+                  ? "Pause"
+                  : "Listen"}
               </Text>
             </TouchableOpacity>
-            
-            {(sound !== null) && (
-              <TouchableOpacity style={styles.speedBtn} onPress={togglePlaybackRate}>
+
+            {sound !== null && (
+              <TouchableOpacity
+                style={styles.speedBtn}
+                onPress={togglePlaybackRate}
+              >
                 <Text style={styles.speedBtnText}>{playbackRate}x</Text>
               </TouchableOpacity>
             )}
@@ -406,6 +497,13 @@ export default function StoryDetailScreen() {
 
           {/* Body */}
           <Text style={styles.storyBody}>{story.body}</Text>
+
+          {/* Looking for */}
+          {Array.isArray(story.looking_for) && story.looking_for.length > 0 && (
+            <Text style={styles.lookingForText}>
+              {getLookingForText(story.looking_for)}
+            </Text>
+          )}
 
           {/* Action bar */}
           <View style={styles.actionBar}>
@@ -418,19 +516,25 @@ export default function StoryDetailScreen() {
               >
                 <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
                   <Ionicons
-                    name={liked ? 'heart' : 'heart-outline'}
+                    name={liked ? "heart" : "heart-outline"}
                     size={24}
-                    color={liked ? '#E53935' : COLORS.textLight}
+                    color={liked ? "#E53935" : COLORS.textLight}
                   />
                 </RNAnimated.View>
-                <Text style={[styles.actionText, liked && { color: '#E53935' }]}>
+                <Text
+                  style={[styles.actionText, liked && { color: "#E53935" }]}
+                >
                   {story.like_count}
                 </Text>
               </TouchableOpacity>
 
               {/* Comments count */}
               <View style={styles.actionItem}>
-                <Ionicons name="chatbubble-outline" size={22} color={COLORS.textLight} />
+                <Ionicons
+                  name="chatbubble-outline"
+                  size={22}
+                  color={COLORS.textLight}
+                />
                 <Text style={styles.actionText}>{comments.length}</Text>
               </View>
             </View>
@@ -440,9 +544,11 @@ export default function StoryDetailScreen() {
                 onPress={handleBookmark}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+                <RNAnimated.View
+                  style={{ transform: [{ scale: bookmarkScale }] }}
+                >
                   <Ionicons
-                    name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+                    name={bookmarked ? "bookmark" : "bookmark-outline"}
                     size={24}
                     color={bookmarked ? colors.primary : COLORS.textLight}
                   />
@@ -453,14 +559,17 @@ export default function StoryDetailScreen() {
 
           {/* Comments section */}
           <Text style={styles.commentsTitle}>
-            Comments ({comments.length})
+            {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Response' : 'Responses'}` : 'Responses'}
           </Text>
 
           {commentsLoading ? (
-            <ActivityIndicator style={{ marginTop: 20 }} color={colors.primary} />
+            <ActivityIndicator
+              style={{ marginTop: 20 }}
+              color={colors.primary}
+            />
           ) : comments.length === 0 ? (
             <Text style={styles.noComments}>
-              No comments yet.{isAnonymous ? '' : ' Be the first to comment!'}
+              {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
             </Text>
           ) : (
             comments.map((comment) => (
@@ -476,10 +585,15 @@ export default function StoryDetailScreen() {
 
         {/* Comment input */}
         {!isAnonymous && (
-          <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          <View
+            style={[
+              styles.inputBar,
+              { paddingBottom: Math.max(insets.bottom, 12) },
+            ]}
+          >
             <TextInput
               style={styles.commentInput}
-              placeholder="Add a comment..."
+              placeholder="Offer support or share your thoughts..."
               placeholderTextColor={COLORS.inputPlaceholder}
               value={commentText}
               onChangeText={setCommentText}
@@ -504,11 +618,22 @@ export default function StoryDetailScreen() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      <ReportStoryModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={(reason, details) => {
+          if (story) {
+            reportStory(story.id, reason, details);
+            Alert.alert("Report Submitted", "Thank you for helping keep our community safe.");
+          }
+        }}
+      />
     </View>
   );
 }
 
-const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
+const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -521,8 +646,8 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     },
     notFound: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     notFoundText: {
       ...TYPOGRAPHY.body,
@@ -531,50 +656,39 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     meta: {
       fontSize: 12,
       color: COLORS.textLight,
-      fontWeight: '400',
+      fontWeight: "400",
       marginBottom: 10,
     },
     storyTitle: {
       fontSize: 22,
-      fontWeight: '700',
+      fontWeight: "700",
       color: c.textDark,
       lineHeight: 29,
       letterSpacing: -0.3,
       marginBottom: 14,
     },
-    tagsRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-      marginBottom: 14,
-    },
-    tag: {
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 100,
-      backgroundColor: COLORS.primary + '15',
-    },
-    tagText: {
+    lookingForText: {
       fontSize: 12,
-      fontWeight: '600',
-      color: COLORS.primary,
+      fontStyle: "italic",
+      color: c.textLight,
+      marginTop: 12,
     },
     storyBody: {
       fontSize: 16,
-      fontWeight: '400',
+      fontWeight: "400",
       color: c.textDark,
       lineHeight: 26,
     },
     audioControlsRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginBottom: 16,
       gap: 10,
     },
     listenBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: c.primary + '15',
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.primary + "15",
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 100,
@@ -584,7 +698,7 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     },
     listenBtnText: {
       fontSize: 14,
-      fontWeight: '700',
+      fontWeight: "700",
       color: c.primary,
     },
     speedBtn: {
@@ -597,44 +711,44 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     },
     speedBtnText: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: "600",
       color: c.textMuted,
     },
     actionBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingVertical: 12,
       marginTop: 18,
       marginBottom: 20,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: '#E5E5EA',
+      borderTopColor: "#E5E5EA",
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: '#E5E5EA',
+      borderBottomColor: "#E5E5EA",
     },
     actionLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 16,
     },
     actionItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 5,
     },
     actionRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 20,
     },
     actionText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: COLORS.textLight,
     },
     commentsTitle: {
       fontSize: 15,
-      fontWeight: '700',
+      fontWeight: "700",
       color: c.textDark,
       marginBottom: 4,
     },
@@ -644,13 +758,13 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       paddingVertical: 20,
     },
     inputBar: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
+      flexDirection: "row",
+      alignItems: "flex-end",
       paddingHorizontal: 16,
       paddingTop: 12,
       backgroundColor: c.white,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: '#E5E5EA',
+      borderTopColor: "#E5E5EA",
       gap: 10,
     },
     commentInput: {
@@ -662,10 +776,10 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       paddingHorizontal: 16,
       paddingVertical: 10,
       fontSize: 15,
-      fontWeight: '400',
+      fontWeight: "400",
       color: c.textDark,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: '#E5E5EA',
+      borderColor: "#E5E5EA",
     },
     sendButton: {
       padding: 8,

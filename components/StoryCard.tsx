@@ -12,7 +12,8 @@ import Animated, {
 import { useRouter } from 'expo-router';
 import { Story, useStories } from '../contexts/StoriesContext';
 import { UserRole } from '../contexts/OnboardingContext';
-import { COLORS, ANIMATION } from '../constants/onboarding-theme';
+import { useAuth } from '../contexts/AuthContext';
+import { COLORS, ANIMATION, SHADOWS } from '../constants/onboarding-theme';
 import { CommunityNormsModal } from './CommunityNormsModal';
 
 interface StoryCardProps {
@@ -21,6 +22,18 @@ interface StoryCardProps {
   allowModeration?: boolean;
   showAuthorStatus?: boolean;
   showRejectedNorms?: boolean;
+}
+
+const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+
+function getAudienceHint(targetAudiences?: string[]): string {
+  if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
+  const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
+  const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
+  if (hasAll || tags.length === 0) return '';
+  if (tags.length === 1) return `For ${tags[0]}`;
+  if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
+  return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
 }
 
 function getRoleLabel(role: UserRole | null): string {
@@ -57,7 +70,8 @@ function getRelativeTime(dateString: string): string {
 
 export function StoryCard({ story, index, allowModeration = false, showAuthorStatus = false, showRejectedNorms = false }: StoryCardProps) {
   const router = useRouter();
-  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, isStoryLiked, toggleLike, deleteStory } = useStories();
+  const { user } = useAuth();
+  const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, isStoryLiked, toggleLike } = useStories();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(20);
   const opacity = useSharedValue(0);
@@ -68,10 +82,13 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   const roleLabel = getRoleLabel(story.author_role);
   const bookmarked = isStoryBookmarked(story.id);
   const liked = isStoryLiked(story.id);
+  const isMyStory = user?.id === story.author_id;
 
   const metaParts = [story.author_name || 'Anonymous'];
   if (roleLabel) metaParts.push(roleLabel);
   metaParts.push(getRelativeTime(story.created_at));
+  const audienceHint = getAudienceHint(story.target_audiences);
+  if (audienceHint) metaParts.push(audienceHint);
   const metaLine = metaParts.join(' · ');
 
   useEffect(() => {
@@ -121,12 +138,19 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
 
   return (
     <Pressable onPress={handlePress}>
-      <Animated.View style={[styles.card, cardStyle]}>
-        {/* Moderator pending banner */}
+      <Animated.View style={[styles.card, (isMyStory && story.status === 'approved' && !showAuthorStatus) && styles.myStoryCard, cardStyle]}>
+        {/* Moderator banners */}
         {story.status === 'pending' && allowModeration && (
           <View style={styles.modBanner}>
             <Text style={styles.modBannerText}>
               Pending Review · Attempt {story.attempt_count || 1}
+            </Text>
+          </View>
+        )}
+        {story.status === 'approved' && allowModeration && story.report_count > 0 && (
+          <View style={[styles.modBanner, { backgroundColor: COLORS.error + '15' }]}>
+            <Text style={[styles.modBannerText, { color: COLORS.error }]}>
+              Reported {story.report_count} time(s)
             </Text>
           </View>
         )}
@@ -142,6 +166,13 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           <View style={styles.authorRejectedBanner}>
             <Ionicons name="alert-circle" size={12} color={COLORS.error} style={{ marginRight: 4 }} />
             <Text style={styles.authorRejectedText}>Action Required</Text>
+          </View>
+        )}
+
+        {/* Your Story Badge */}
+        {isMyStory && story.status === 'approved' && !showAuthorStatus && (
+          <View style={styles.myStoryIcon}>
+            <Ionicons name="person" size={14} color={COLORS.primary} />
           </View>
         )}
 
@@ -213,21 +244,25 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           </TouchableOpacity>
         </View>
 
-        {/* Moderation approve/reject buttons */}
-        {allowModeration && story.status === 'pending' && (
+        {/* Moderation actions */}
+        {allowModeration && (story.status === 'pending' || story.report_count > 0) && (
           <View style={styles.modActions}>
             <Pressable
               style={[styles.modButton, styles.modReject]}
               onPress={() => setShowRejectModal(true)}
             >
-              <Text style={[styles.modButtonText, { color: COLORS.error }]}>Reject</Text>
+              <Text style={[styles.modButtonText, { color: COLORS.error }]}>
+                {story.status === 'approved' ? 'Revoke' : 'Reject'}
+              </Text>
             </Pressable>
-            <Pressable
-              style={[styles.modButton, styles.modApprove]}
-              onPress={() => approveStory(story.id)}
-            >
-              <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Approve</Text>
-            </Pressable>
+            {story.status === 'pending' && (
+              <Pressable
+                style={[styles.modButton, styles.modApprove]}
+                onPress={() => approveStory(story.id)}
+              >
+                <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Approve</Text>
+              </Pressable>
+            )}
           </View>
         )}
       </Animated.View>
@@ -249,9 +284,22 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    marginBottom: 8,
+    paddingTop: 18,
+    paddingBottom: 16,
+    marginBottom: 12,
+    borderRadius: 16,
+    ...SHADOWS.card,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  myStoryCard: {
+    borderColor: COLORS.primary + '80',
+    borderWidth: 1.5,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   modBanner: {
     backgroundColor: COLORS.primary + '15',
@@ -299,6 +347,14 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+  },
+  myStoryIcon: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    backgroundColor: COLORS.primary + '15',
+    padding: 6,
+    borderRadius: 100,
   },
   meta: {
     fontSize: 12,
@@ -393,8 +449,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.error + '30',
   },
   modApprove: {
-    backgroundColor: COLORS.successText + '10',
-    borderColor: COLORS.successText + '30',
+    backgroundColor: COLORS.primary + '10',
+    borderColor: COLORS.primary + '30',
   },
   modButtonText: {
     fontSize: 14,

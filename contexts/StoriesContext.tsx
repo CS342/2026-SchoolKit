@@ -21,6 +21,7 @@ export interface Story {
   like_count: number;
   status: StoryStatus;
   rejected_norms?: string[];
+  report_count: number;
   attempt_count: number;
   looking_for?: string[];
   target_audiences?: string[];
@@ -55,6 +56,7 @@ interface StoriesContextType {
   rejectStory: (storyId: string, rejectedNorms: string[]) => Promise<void>;
   approveStory: (storyId: string) => Promise<void>;
   updateStory: (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[] }) => Promise<Story | null>;
+  reportStory: (storyId: string, reason: string, details?: string) => Promise<void>;
 }
 
 const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
@@ -149,6 +151,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             like_count: s.likes_count || 0,
             status: s.status || 'approved',
             rejected_norms: s.rejected_norms || [],
+            report_count: s.report_count || 0,
             attempt_count: s.attempt_count || 1,
             looking_for: parsedLookingFor,
             target_audiences: parsedTargetAudiences,
@@ -238,6 +241,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       updated_at: new Date().toISOString(),
       comment_count: 0,
       like_count: 0,
+      report_count: 0,
       status: 'pending',
       attempt_count: 1,
       looking_for: lookingFor,
@@ -270,6 +274,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_role: data.author_role as UserRole | null,
         comment_count: 0,
         like_count: 0,
+        report_count: data.report_count || 0,
         status: data.status,
         attempt_count: data.attempt_count,
         rejected_norms: data.rejected_norms,
@@ -372,6 +377,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_role: data.author_role as UserRole | null,
         comment_count: originalStory?.comment_count || 0,
         like_count: originalStory?.like_count || 0,
+        report_count: data.report_count || originalStory?.report_count || 0,
         status: data.status,
         attempt_count: data.attempt_count,
         rejected_norms: data.rejected_norms,
@@ -455,7 +461,6 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         created_at: data.created_at,
       };
     } catch (error) {
-      console.error('Error adding comment:', error);
       throw error;
     }
   };
@@ -584,6 +589,34 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const reportStory = async (storyId: string, reason: string, details?: string) => {
+    if (!user?.id) return;
+
+    // Optimistically update the UI to show increased report count
+    setStories(prev => prev.map(s =>
+      s.id === storyId ? { ...s, report_count: s.report_count + 1 } : s
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('story_reports')
+        .insert({
+          story_id: storyId,
+          user_id: user.id,
+          reason,
+          details: details || null
+        });
+
+      if (error && error.code !== '23505') throw error; // Ignore constraint violations (duplicate reports)
+    } catch (error) {
+      console.error('Error reporting story:', error);
+      // Revert optimistic update
+      setStories(prev => prev.map(s =>
+        s.id === storyId ? { ...s, report_count: Math.max(0, s.report_count - 1) } : s
+      ));
+    }
+  };
+
   return (
     <StoriesContext.Provider
       value={{
@@ -605,6 +638,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         rejectStory,
         approveStory,
         updateStory,
+        reportStory,
       }}
     >
       {children}
