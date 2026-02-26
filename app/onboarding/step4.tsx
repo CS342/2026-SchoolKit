@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,47 +14,7 @@ import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
 
 import { GRADIENTS, ANIMATION, COLORS, RADII, SHARED_STYLES } from '../../constants/onboarding-theme';
-
-interface TopicOption {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-}
-
-const STUDENT_TOPICS: TopicOption[] = [
-  { label: 'What you might experience', icon: 'leaf-outline', color: '#7B68EE' },
-  { label: 'Friends and social life', icon: 'people-outline', color: '#0EA5E9' },
-  { label: 'Dealing with feelings', icon: 'heart-outline', color: '#EC4899' },
-  { label: 'Keeping up with school during treatment', icon: 'book-outline', color: '#66D9A6' },
-  { label: 'Getting back to school after treatment', icon: 'arrow-forward-circle-outline', color: '#F59E0B' },
-  { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#7B68EE' },
-  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
-  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
-];
-
-const PARENT_TOPICS: TopicOption[] = [
-  { label: 'Supporting my child during treatment', icon: 'heart-outline', color: '#EC4899' },
-  { label: 'Becoming a strong advocate for my child', icon: 'megaphone-outline', color: '#7B68EE' },
-  { label: 'Collaborating with the school team', icon: 'people-outline', color: '#0EA5E9' },
-  { label: 'Working with healthcare providers', icon: 'medical-outline', color: '#66D9A6' },
-  { label: 'Easing the financial burden', icon: 'wallet-outline', color: '#F59E0B' },
-  { label: 'Caregiving through cultural or language barriers', icon: 'globe-outline', color: '#7B68EE' },
-  { label: 'Coping with stress and emotions', icon: 'sunny-outline', color: '#EC4899' },
-  { label: 'Helping my child with friendships', icon: 'chatbubbles-outline', color: '#0EA5E9' },
-  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
-  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
-];
-
-const STAFF_TOPICS: TopicOption[] = [
-  { label: 'Supporting students during treatment', icon: 'heart-outline', color: '#EC4899' },
-  { label: 'Helping students transition back to school', icon: 'arrow-forward-circle-outline', color: '#7B68EE' },
-  { label: 'Fostering emotional and physical safety', icon: 'shield-outline', color: '#66D9A6' },
-  { label: 'Working with families and medical teams', icon: 'people-outline', color: '#0EA5E9' },
-  { label: 'Collaborating with healthcare providers', icon: 'medical-outline', color: '#F59E0B' },
-  { label: 'Understanding treatment side effects', icon: 'information-circle-outline', color: '#7B68EE' },
-  { label: 'Understanding What Cancer Is and Isn\'t', icon: 'information-circle-outline', color: '#3B82F6' },
-  { label: 'Encouraging Positive Peer Support', icon: 'people-outline', color: '#0EA5E9' },
-];
+import { PAGE_TOPICS } from '../../constants/resources';
 
 function CounterPill({ count }: { count: number }) {
   const scale = useSharedValue(1);
@@ -93,19 +53,7 @@ export default function Step4Screen() {
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
 
-  const availableTopics = useMemo(() => {
-    switch (data.role) {
-      case 'student-k8':
-      case 'student-hs':
-        return STUDENT_TOPICS;
-      case 'parent':
-        return PARENT_TOPICS;
-      case 'staff':
-        return STAFF_TOPICS;
-      default:
-        return STUDENT_TOPICS;
-    }
-  }, [data.role]);
+  const availableTopics = PAGE_TOPICS;
 
   const toggleTopic = (topic: string) => {
     setSelectedTopics(prev =>

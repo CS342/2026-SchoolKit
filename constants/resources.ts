@@ -20,5 +20,15 @@ export const ALL_RESOURCES: Resource[] = [
 
 export const ALL_RESOURCE_IDS = ALL_RESOURCES.map(r => r.id);
 
+/** Topics shown in onboarding (step 4) and the Profile Topics editor — one per finished page. */
+export const PAGE_TOPICS: { label: string; icon: string; color: string }[] = [
+  { label: "Understanding What Cancer Is and Isn't", icon: 'bulb', color: '#F59E0B' },
+  { label: 'Encouraging Positive Peer Support',       icon: 'people', color: '#06B6D4' },
+  { label: 'The School Nurse: Your Ally at School',   icon: 'medkit', color: '#EF4444' },
+  { label: 'Best Practices for Juggling School and Life', icon: 'trophy', color: '#F97316' },
+  { label: 'How to Find People Who Understand Your Journey', icon: 'compass', color: '#10B981' },
+  { label: "Feeling Sick? Here's What to Do",         icon: 'thermometer-outline', color: '#0EA5E9' },
+];
+
 export const RESOURCE_CATEGORIES = ['School', 'Social', 'Health', 'Family', 'Emotions'] as const;
 export type ResourceCategory = (typeof RESOURCE_CATEGORIES)[number];
