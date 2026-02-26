@@ -65,7 +65,7 @@ export default function StoriesScreen() {
     }
 
     // If we're looking at "My Stories", we want all of our own stories regardless of status/audience
-    if (sort === "my-stories" && user) {
+    if (!isModeratorMode && sort === "my-stories" && user) {
       return stories.filter((s) => s.author_id === user.id);
     }
 

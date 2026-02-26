@@ -27,6 +27,7 @@ import RNAnimated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTTS } from "../hooks/useTTS";
 import { TTSButton } from "../components/TTSButton";
+import { RecommendationList } from "../components/RecommendationList";
 import {
   COLORS,
   TYPOGRAPHY,
@@ -840,6 +841,12 @@ export default function SchoolNurseScreen() {
         <RNAnimated.View style={accordionStyle}>
           <AccordionSection section={ACCORDION_SECTION} />
         </RNAnimated.View>
+
+        {/* Recommendations */}
+        <RecommendationList 
+          currentId="13" 
+          currentTags={['school', 'nurse', 'health', 'medicine', 'support', 'back to school']} 
+        />
       </ScrollView>
 
       {/* Bottom sheet */}

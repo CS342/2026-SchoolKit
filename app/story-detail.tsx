@@ -24,6 +24,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { ReportStoryModal } from "../components/ReportStoryModal";
+import { RecommendationList } from "../components/RecommendationList";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const COMMENT_REMINDERS = [
@@ -683,6 +684,14 @@ export default function StoryDetailScreen() {
                 onLike={() => handleLikeComment(comment.id)}
               />
             ))
+          )}
+
+          {/* Recommendations */}
+          {story && (
+            <RecommendationList 
+              currentId={story.id} 
+              currentTags={story.story_tags || []} 
+            />
           )}
         </ScrollView>
 

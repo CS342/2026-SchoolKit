@@ -24,6 +24,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookmarkButton } from '../components/BookmarkButton';
+import { RecommendationList } from '../components/RecommendationList';
 import { DownloadButton } from '../components/DownloadButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -908,6 +909,12 @@ export default function UnderstandingCancerScreen() {
             </View>
           ))}
         </View>
+
+        {/* Recommendations */}
+        <RecommendationList 
+          currentId="11" 
+          currentTags={['cancer', 'understanding', 'myths', 'facts']} 
+        />
       </ScrollView>
 
       {/* Expanded card modal */}

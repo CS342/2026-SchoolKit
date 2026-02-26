@@ -25,6 +25,7 @@ import RNAnimated, {
   withSpring,
 } from "react-native-reanimated";
 import { BookmarkButton } from "../components/BookmarkButton";
+import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { TTSButton } from "../components/TTSButton";
 import { useTTS } from "../hooks/useTTS";
@@ -789,6 +790,12 @@ export default function PeerSupportScreen() {
         <View style={styles.circleWrapper}>
           <CircleLayout topics={PEER_TOPICS} onTopicPress={handleTopicPress} />
         </View>
+
+        {/* Recommendations */}
+        <RecommendationList 
+          currentId="12" 
+          currentTags={['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion']} 
+        />
       </ScrollView>
 
       {/* Bottom Sheet */}

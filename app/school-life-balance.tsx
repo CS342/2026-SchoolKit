@@ -19,6 +19,7 @@ import { generateSpeech } from "../services/elevenLabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
 import { BookmarkButton } from "../components/BookmarkButton";
+import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
 
@@ -741,6 +742,12 @@ export default function SchoolLifeBalanceScreen() {
                         ))}
                     </View>
                 </View>
+
+                {/* Recommendations */}
+                <RecommendationList 
+                  currentId="14" 
+                  currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']} 
+                />
             </ScrollView>
 
             {/* Expanded card modal */}

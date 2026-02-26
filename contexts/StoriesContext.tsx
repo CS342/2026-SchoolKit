@@ -488,16 +488,33 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     const { lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
 
     try {
+      const originalStory = stories.find(s => s.id === storyId);
+      const isResubmitting = originalStory?.status === 'rejected';
+      const newAttemptCount = isResubmitting ? (originalStory?.attempt_count || 1) + 1 : (originalStory?.attempt_count || 1);
+      const newStatus = isResubmitting ? 'pending' : (originalStory?.status || 'pending');
+
+      const updates: any = {
+        title,
+        body,
+        status: newStatus,
+        attempt_count: newAttemptCount,
+        looking_for: lookingFor,
+        target_audiences: targetAudiences,
+        story_tags: storyTags,
+      };
+
+      if (isResubmitting) {
+        updates.rejected_norms = [];
+      }
+
       const { data, error } = await supabase
         .from('stories')
-        .update({ title, body, status: 'pending', attempt_count: 2, looking_for: lookingFor, target_audiences: targetAudiences, story_tags: storyTags })
+        .update(updates)
         .eq('id', storyId)
         .select()
         .single();
 
       if (error) throw error;
-
-      const originalStory = stories.find(s => s.id === storyId);
 
       const updatedStory: Story = {
         ...data,
@@ -507,7 +524,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         report_count: data.report_count || originalStory?.report_count || 0,
         status: data.status,
         attempt_count: data.attempt_count,
-        rejected_norms: data.rejected_norms,
+        rejected_norms: data.rejected_norms || [],
       };
 
       setStories(prev => {
