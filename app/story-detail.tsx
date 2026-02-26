@@ -21,6 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useStories, StoryComment } from "../contexts/StoriesContext";
 import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { ReportStoryModal } from "../components/ReportStoryModal";
@@ -206,6 +207,14 @@ export default function StoryDetailScreen() {
     removeStoryDownload,
   } = useStories();
   const { colors, appStyles } = useTheme();
+  const { fireEvent } = useAccomplishments();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (id) fireEvent('story_read_30s');
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   const [comments, setComments] = useState<StoryComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -299,6 +308,7 @@ export default function StoryDetailScreen() {
       if (newComment) {
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
+        fireEvent('story_commented');
       } else {
         Alert.alert("Error", "Failed to post comment. Please try again.");
       }
@@ -559,8 +569,8 @@ export default function StoryDetailScreen() {
                 {isLoadingAudio
                   ? "Loading..."
                   : isSpeaking
-                  ? "Pause"
-                  : "Listen"}
+                    ? "Pause"
+                    : "Listen"}
               </Text>
             </TouchableOpacity>
 
@@ -635,12 +645,12 @@ export default function StoryDetailScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <RNAnimated.View style={{ transform: [{ scale: downloadScale }] }}>
-                <Ionicons
-                  name={downloaded ? "checkmark-circle" : "download-outline"}
-                  size={24}
-                  color={downloaded ? colors.primary : COLORS.textLight}
-                />
-              </RNAnimated.View>
+                  <Ionicons
+                    name={downloaded ? "checkmark-circle" : "download-outline"}
+                    size={24}
+                    color={downloaded ? colors.primary : COLORS.textLight}
+                  />
+                </RNAnimated.View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleBookmark}
@@ -720,32 +730,32 @@ export default function StoryDetailScreen() {
                 { paddingBottom: Math.max(insets.bottom, 12) },
               ]}
             >
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Offer support or share your thoughts..."
-              placeholderTextColor={COLORS.inputPlaceholder}
-              value={commentText}
-              onChangeText={setCommentText}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              onPress={handleSubmitComment}
-              disabled={!commentText.trim() || submitting}
-              style={styles.sendButton}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Ionicons
-                  name="send"
-                  size={22}
-                  color={commentText.trim() ? colors.primary : COLORS.textLight}
-                />
-              )}
-            </TouchableOpacity>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Offer support or share your thoughts..."
+                placeholderTextColor={COLORS.inputPlaceholder}
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                onPress={handleSubmitComment}
+                disabled={!commentText.trim() || submitting}
+                style={styles.sendButton}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons
+                    name="send"
+                    size={22}
+                    color={commentText.trim() ? colors.primary : COLORS.textLight}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
         )}
       </KeyboardAvoidingView>
 

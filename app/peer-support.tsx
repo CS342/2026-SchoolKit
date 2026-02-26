@@ -41,6 +41,7 @@ import {
 } from "../constants/onboarding-theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
+import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -619,7 +620,33 @@ export default function PeerSupportScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { selectedVoice } = useOnboarding();
+  const { fireEvent, fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+
   const [selectedTopic, setSelectedTopic] = useState<PeerTopic | null>(null);
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [timeSpent10s, setTimeSpent10s] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeSpent10s(true);
+      fireEvent('peer_support_read_30s');
+      fireResourceOpened('12'); // resource ID 12 = Peer Support
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (scrolledToEnd && timeSpent10s) {
+      fireResourceScrolledToEnd('12');
+    }
+  }, [scrolledToEnd, timeSpent10s, fireResourceScrolledToEnd]);
+
+  const handleScroll = ({ nativeEvent }: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+      setScrolledToEnd(true);
+    }
+  };
 
   // TTS state for main page
   const [pageSound, setPageSound] = useState<Audio.Sound | null>(null);
@@ -711,7 +738,7 @@ export default function PeerSupportScreen() {
       await Share.share({
         message: 'Check out "Encouraging Positive Peer Support" on SchoolKit — learn how to help peers support a returning student.',
       });
-    } catch {}
+    } catch { }
   };
 
   const handleTopicPress = (topic: PeerTopic) => {
@@ -748,6 +775,8 @@ export default function PeerSupportScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
       >
         {/* Page Title */}
         <RNAnimated.View style={titleStyle}>

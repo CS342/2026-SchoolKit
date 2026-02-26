@@ -87,20 +87,23 @@ export default function WelcomeScreen() {
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={[iconStyle, styles.logoContainer]}>
-                {/* Smooth layered glow — 50 circles fading outward */}
+                {/* Smooth layered glow */}
                 {Array.from({ length: 40 }, (_, i) => {
                   const size = 110 + i * 3.5;
                   const opacity = 0.5 - i * 0.012;
                   return (
                     <Animated.View
                       key={i}
-                      style={[{
-                        position: 'absolute' as const,
-                        width: size,
-                        height: size,
-                        borderRadius: size / 2,
-                        backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
-                      }, glowStyle]}
+                      style={[
+                        {
+                          position: 'absolute' as const,
+                          width: size,
+                          height: size,
+                          borderRadius: size / 2,
+                          backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
+                        },
+                        glowStyle,
+                      ]}
                     />
                   );
                 })}
@@ -110,11 +113,18 @@ export default function WelcomeScreen() {
                 />
               </Animated.View>
 
-              <View style={{ height: 60 }} />
+              <View style={{ height: 40 }} />
+
+              <Animated.Text style={[styles.title, titleStyle]}>
+                SchoolKit
+              </Animated.Text>
+
+              <View style={styles.gap8} />
 
               <Animated.Text style={[styles.tagline, taglineStyle]}>
                 Support for every school journey
-              </Animated.Text>            </View>
+              </Animated.Text>
+            </View>
           </View>
 
           <Animated.View style={[SHARED_STYLES.buttonContainer, buttonAnimStyle]}>

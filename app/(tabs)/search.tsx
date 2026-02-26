@@ -32,6 +32,7 @@ import {
   BORDERS,
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -129,6 +130,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, appStyles, decorativeShapes, isDark } = useTheme();
+  const { fireEvent } = useAccomplishments();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -194,6 +196,7 @@ export default function SearchScreen() {
     if (searchQuery.trim()) {
       addRecentSearch(searchQuery.trim());
       setShowRecentSearches(false);
+      fireEvent('search_performed');
     }
   };
 

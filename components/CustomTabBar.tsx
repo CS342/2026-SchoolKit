@@ -12,17 +12,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { useResponsive } from '../hooks/useResponsive';
 
 const TAB_ICONS: Record<string, {
   active: keyof typeof Ionicons.glyphMap;
   inactive: keyof typeof Ionicons.glyphMap;
 }> = {
-  index:     { active: 'home',         inactive: 'home-outline' },
-  search:    { active: 'search',       inactive: 'search-outline' },
-  stories:   { active: 'chatbubbles', inactive: 'chatbubbles-outline' },
-  bookmarks: { active: 'bookmark',    inactive: 'bookmark-outline' },
-  profile:   { active: 'person',      inactive: 'person-outline' },
+  index: { active: 'home', inactive: 'home-outline' },
+  search: { active: 'search', inactive: 'search-outline' },
+  stories: { active: 'chatbubbles', inactive: 'chatbubbles-outline' },
+  bookmarks: { active: 'bookmark', inactive: 'bookmark-outline' },
+  profile: { active: 'person', inactive: 'person-outline' },
 };
 
 // ─── Shared navigation helpers ──────────────────────────────────
@@ -109,6 +110,7 @@ function TabBarItem({ routeName, label, isFocused, onPress, onLongPress }: TabBa
 
 function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, shadows, isDark } = useTheme();
+  const { fireTabVisited } = useAccomplishments();
   const insets = useSafeAreaInsets();
   const [containerWidth, setContainerWidth] = useState(0);
   const indicatorX = useSharedValue(0);
@@ -158,6 +160,34 @@ function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const label = descriptors[route.key].options.title ?? route.name;
+
+          const onPress = () => {
+            if (process.env.EXPO_OS === 'ios') {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+
+            fireTabVisited(route.name);
+
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.dispatch({
+                ...CommonActions.navigate(route.name, route.params),
+                target: state.key,
+              });
+            }
+          };
+
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
 
           return (
             <TabBarItem

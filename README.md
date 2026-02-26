@@ -56,7 +56,7 @@ The application is built with a client-server architecture.
     npm install
     ```
 
-2.  **Start the mobile development server:**
+2.  **Start the development server:**
     ```bash
     npx expo start
     ```

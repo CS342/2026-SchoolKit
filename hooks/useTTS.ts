@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import { generateSpeech } from '../services/elevenLabs';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 
 /**
  * Reusable TTS hook. Handles audio generation, playback, pause/resume, and cleanup.
@@ -12,6 +13,7 @@ import { useOnboarding } from '../contexts/OnboardingContext';
  */
 export function useTTS() {
   const { selectedVoice } = useOnboarding();
+  const { fireEvent } = useAccomplishments();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +73,7 @@ export function useTTS() {
           );
           soundRef.current = newSound;
           currentTextRef.current = text;
+          fireEvent('tts_played');
           currentVoiceRef.current = selectedVoice;
 
           newSound.setOnPlaybackStatusUpdate((status) => {

@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { CommunityNormsModal } from '../components/CommunityNormsModal';
 import { StoryStartersModal } from '../components/StoryStartersModal';
 import { TopicTagsModal } from '../components/TopicTagsModal';
@@ -38,6 +39,7 @@ export default function CreateStoryScreen() {
   const insets = useSafeAreaInsets();
   const { isAnonymous } = useAuth();
   const { createStory, updateStory, deleteStory, stories } = useStories();
+  const { fireEvent } = useAccomplishments();
   const { data: onboardingData } = useOnboarding();
   const { colors, appStyles } = useTheme();
 
@@ -81,12 +83,12 @@ export default function CreateStoryScreen() {
     if (title !== initialState.title) return true;
     if (body !== initialState.body) return true;
     if (postAnonymously !== initialState.postAnonymously) return true;
-    
+
     // Check arrays
     if (lookingFor.length !== initialState.lookingFor.length || !lookingFor.every(v => initialState.lookingFor.includes(v))) return true;
     if (targetAudiences.length !== initialState.targetAudiences.length || !targetAudiences.every(v => initialState.targetAudiences.includes(v))) return true;
     if (storyTags.length !== initialState.storyTags.length || !storyTags.every(v => initialState.storyTags.includes(v))) return true;
-    
+
     return false;
   }, [isEditing, title, body, postAnonymously, lookingFor, targetAudiences, storyTags, initialState]);
 
@@ -105,17 +107,18 @@ export default function CreateStoryScreen() {
   const handleFinalSubmit = async () => {
     setShowNorms(false);
     setSubmitting(true);
-    
+
     let result;
     if (isEditing && editId) {
-        result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
+      result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     } else {
-        result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
+      result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     }
-    
+
     setSubmitting(false);
 
     if (result) {
+      fireEvent('story_created');
       router.back();
     } else {
       Alert.alert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
@@ -148,7 +151,7 @@ export default function CreateStoryScreen() {
               </Text>
             </View>
             <Text style={styles.normsDesc}>
-              {isExhausted 
+              {isExhausted
                 ? 'This story has reached the maximum number of resubmissions and cannot be edited further. Please review your violations and delete the story.'
                 : 'Please edit your story to resolve the following community norm violations before resubmitting:'}
             </Text>
@@ -192,25 +195,25 @@ export default function CreateStoryScreen() {
 
         {/* Content Tags via Dropdown/Modal */}
         <Text style={styles.sectionHeading}>Topic Tags</Text>
-        <Pressable 
+        <Pressable
           style={styles.tagsDropdownBtn}
           onPress={() => !isExhausted && setShowTagsModal(true)}
         >
           <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
-            {storyTags.length > 0 
+            {storyTags.length > 0
               ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
               : "Select topic tags..."}
           </Text>
           <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
         </Pressable>
-        
+
         {storyTags.length > 0 && (
           <View style={styles.selectedTagsContainer}>
             {storyTags.map((tag) => (
               <View key={tag} style={styles.selectedTagChip}>
                 <Text style={styles.selectedTagText}>{tag}</Text>
                 {!isExhausted && (
-                  <Pressable 
+                  <Pressable
                     onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
                     hitSlop={8}
                     style={{ marginLeft: 4 }}
@@ -304,21 +307,23 @@ export default function CreateStoryScreen() {
             disabled={isExhausted}
           />
         </View>
-        
+
         <View style={styles.bottomActions}>
           {isEditing && existingStory?.status === 'rejected' && (
             <Pressable
               style={[
-                styles.actionBtn, 
+                styles.actionBtn,
                 isExhausted ? styles.deleteBtnSolid : styles.deleteBtn
               ]}
               onPress={() => {
                 Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive', onPress: async () => {
+                  {
+                    text: 'Delete', style: 'destructive', onPress: async () => {
                       await deleteStory(editId);
                       router.back();
-                  }}
+                    }
+                  }
                 ]);
               }}
             >
@@ -347,10 +352,10 @@ export default function CreateStoryScreen() {
       </ScrollView>
 
       <CommunityNormsModal
-          visible={showNorms}
-          onClose={() => setShowNorms(false)}
-          mode="submit"
-          onAgree={handleFinalSubmit}
+        visible={showNorms}
+        onClose={() => setShowNorms(false)}
+        mode="submit"
+        onAgree={handleFinalSubmit}
       />
 
       <StoryStartersModal
@@ -366,7 +371,7 @@ export default function CreateStoryScreen() {
         onClose={() => setShowTagsModal(false)}
         selectedTags={storyTags}
         onToggleTag={(tag) => {
-          setStoryTags(prev => 
+          setStoryTags(prev =>
             prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
           );
         }}

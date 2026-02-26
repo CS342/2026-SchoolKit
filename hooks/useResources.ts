@@ -40,6 +40,7 @@ export function useResources() {
         .select('id, title, description, category, icon, target_roles, design_id, created_at');
 
       if (error || !data) {
+        console.error('useResources error fetching data:', error);
         setResources(ALL_RESOURCES);
         return;
       }
@@ -52,13 +53,19 @@ export function useResources() {
       const dbResources: Resource[] = data
         .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()))
         .map((r) => {
+          // Generate an abbreviation from the first two words of the title
+          const words = r.title.split(' ');
+          const abbr = words.slice(0, 2).join(' ');
+
           const override = APPROVED_DB_OVERRIDES[r.title.toLowerCase()] ?? {};
           return {
             id: r.id,
             title: r.title,
+            abbr,
+            shortDescription: r.description || '',
             category: r.category,
             tags: [r.category.toLowerCase()],
-            icon: override.icon ?? r.icon,
+            icon: override.icon ?? r.icon ?? 'document-text-outline',
             color: override.color ?? CATEGORY_COLORS[r.category] ?? DEFAULT_COLOR,
             route: r.design_id ? `/design-view/${r.design_id}` : undefined,
             // Pages not in the approved list only appear in the Design Generated tab
@@ -66,6 +73,7 @@ export function useResources() {
           };
         });
 
+      console.log('useResources: Successfully fetched', dbResources.length, 'resources from DB. Merging with ALL_RESOURCES...');
       setResources([...ALL_RESOURCES, ...dbResources]);
     } catch {
       setResources(ALL_RESOURCES);
@@ -76,6 +84,22 @@ export function useResources() {
 
   useEffect(() => {
     fetchResources();
+
+    // Subscribe to realtime changes on 'resources' table
+    const channel = supabase
+      .channel('public:resources')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'resources' },
+        (_payload) => {
+          fetchResources(); // simple refetch on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchResources]);
 
   return { resources, loading, refetch: fetchResources };

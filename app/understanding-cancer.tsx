@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useOnboarding } from "../contexts/OnboardingContext";
+import { useAccomplishments } from "../contexts/AccomplishmentContext";
 import { Audio } from "expo-av";
 import { generateSpeech, VOICES } from "../services/elevenLabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -100,7 +101,7 @@ const CARDS: CardData[] = [
     id: "9",
     front:
       "These myths don't cover everything, but we hope they help you think more carefully about what you hear. **Learning the facts helps everyone feel more comfortable.**",
-    backHeadline: "Knowledge is Power", 
+    backHeadline: "Knowledge is Power",
     back: "Understanding the truth about childhood cancer helps create a supportive environment for everyone.",
     canFlip: false, // Wait, this card has canFlip: false in original.
   },
@@ -301,8 +302,8 @@ function ExpandedCardModal({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Timers
-  let stampTimer: NodeJS.Timeout;
-  let flipTimer: NodeJS.Timeout;
+  let stampTimer: ReturnType<typeof setTimeout>;
+  let flipTimer: ReturnType<typeof setTimeout>;
 
   React.useEffect(() => {
     if (visible) {
@@ -346,19 +347,19 @@ function ExpandedCardModal({
             }),
           ]).start(() => {
             // 3. Wait after stamp (e.g., 0.8s) before flipping
-             flipTimer = setTimeout(() => {
+            flipTimer = setTimeout(() => {
               Animated.spring(flipAnim, {
                 toValue: 1,
                 friction: 8,
                 tension: 10,
                 useNativeDriver: false, // Must be false for height animation
               }).start(() => {
-                  // Animate underline after flip
-                  Animated.timing(factUnderlineAnim, {
-                      toValue: 1,
-                      duration: 400,
-                      useNativeDriver: false,
-                  }).start();
+                // Animate underline after flip
+                Animated.timing(factUnderlineAnim, {
+                  toValue: 1,
+                  duration: 400,
+                  useNativeDriver: false,
+                }).start();
               });
             }, 800);
           });
@@ -372,12 +373,12 @@ function ExpandedCardModal({
             tension: 10,
             useNativeDriver: false, // Must be false for height animation
           }).start(() => {
-              // Animate underline after flip
-              Animated.timing(factUnderlineAnim, {
-                  toValue: 1,
-                  duration: 400,
-                  useNativeDriver: false,
-              }).start();
+            // Animate underline after flip
+            Animated.timing(factUnderlineAnim, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: false,
+            }).start();
           });
         }, 1200);
       }
@@ -469,7 +470,7 @@ function ExpandedCardModal({
   // If I use useNativeDriver: true for flipAnim, I cannot interpolate height on the View style directly if it's not a transform.
   // However, I can just use `useNativeDriver: false` for the flip animation to keep the height animation working.
   // Ideally, distinct animations for transform (native) and layout (js) would be better, but simpler to revert to false for flip.
-  
+
   // Re-evaluating: The user wants "Show animation...".
   // I will revert useNativeDriver for flipAnim to false in my head (and in the code below) to preserve the height animation which is crucial for the card size change.
 
@@ -479,8 +480,8 @@ function ExpandedCardModal({
   });
 
   const underlineWidth = factUnderlineAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ["0%", "100%"]
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"]
   });
 
   // Dynamic font size based on text length
@@ -507,7 +508,7 @@ function ExpandedCardModal({
             style={[styles.modalBackdrop, { opacity: opacityAnim }]}
           />
         </Pressable>
-        
+
         <Animated.View
           style={[
             styles.expandedCardContainer,
@@ -540,65 +541,65 @@ function ExpandedCardModal({
                   },
                 ]}
               >
-              <View style={styles.expandedCardInnerFront}>
-                {isMyth && (
-                  <>
-                    <View style={styles.mythBadgeContainer}>
-                      <View
-                        style={[
-                          styles.mythBadge,
-                          { backgroundColor: "rgba(255,255,255,0.3)" },
-                        ]}
-                      >
-                        <Text style={styles.mythBadgeText}>MYTH</Text>
+                <View style={styles.expandedCardInnerFront}>
+                  {isMyth && (
+                    <>
+                      <View style={styles.mythBadgeContainer}>
+                        <View
+                          style={[
+                            styles.mythBadge,
+                            { backgroundColor: "rgba(255,255,255,0.3)" },
+                          ]}
+                        >
+                          <Text style={styles.mythBadgeText}>MYTH</Text>
+                        </View>
                       </View>
-                    </View>
-                    {/* Animated Myth Image */}
-                    <Animated.Image
-                      source={require("../assets/images/myth.png")}
-                      style={[
-                        styles.mythImage, 
-                        {
-                          transform: [
-                            { rotate: "45deg" },
-                            { scale: mythScaleAnim }
-                          ],
-                          opacity: mythOpacityAnim
-                        }
-                      ]}
-                      resizeMode="contain"
-                    />
-                  </>
-                )}
-                
-                <View style={styles.expandedFrontContent}>
-                  <Text style={[styles.expandedFrontTitle, { color: "#2D2D44" }]}>
-                    {displayTitle}
-                  </Text>
-                </View>
-              </View>
+                      {/* Animated Myth Image */}
+                      <Animated.Image
+                        source={require("../assets/images/myth.png")}
+                        style={[
+                          styles.mythImage,
+                          {
+                            transform: [
+                              { rotate: "45deg" },
+                              { scale: mythScaleAnim }
+                            ],
+                            opacity: mythOpacityAnim
+                          }
+                        ]}
+                        resizeMode="contain"
+                      />
+                    </>
+                  )}
 
-              {/* Index card lines */}
-              <View style={styles.expandedCardLines}>
-                <View
-                  style={[
-                    styles.cardLine,
-                    { backgroundColor: "rgba(255,255,255,0.4)" },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.cardLine,
-                    { backgroundColor: "rgba(255,255,255,0.3)" },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.cardLine,
-                    { backgroundColor: "rgba(255,255,255,0.2)" },
-                  ]}
-                />
-              </View>
+                  <View style={styles.expandedFrontContent}>
+                    <Text style={[styles.expandedFrontTitle, { color: "#2D2D44" }]}>
+                      {displayTitle}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Index card lines */}
+                <View style={styles.expandedCardLines}>
+                  <View
+                    style={[
+                      styles.cardLine,
+                      { backgroundColor: "rgba(255,255,255,0.4)" },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.cardLine,
+                      { backgroundColor: "rgba(255,255,255,0.3)" },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.cardLine,
+                      { backgroundColor: "rgba(255,255,255,0.2)" },
+                    ]}
+                  />
+                </View>
               </View>
             </Animated.View>
 
@@ -624,84 +625,84 @@ function ExpandedCardModal({
                   },
                 ]}
               >
-              <View style={styles.expandedCardInner}>
-                {/* Fact badge & Speaking controls */}
-                <View style={styles.factHeader}>
+                <View style={styles.expandedCardInner}>
+                  {/* Fact badge & Speaking controls */}
+                  <View style={styles.factHeader}>
                     {/* FACT Label & Underline */}
                     <View style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <Text style={[styles.factBigText, { color: "#10B981" }]}>Fact</Text>
-                        <Animated.View 
-                            style={{
-                                height: 4,
-                                backgroundColor: "#10B981",
-                                width: underlineWidth,
-                                borderRadius: 2,
-                                marginTop: 2,
-                            }}
-                        />
+                      <Text style={[styles.factBigText, { color: "#10B981" }]}>Fact</Text>
+                      <Animated.View
+                        style={{
+                          height: 4,
+                          backgroundColor: "#10B981",
+                          width: underlineWidth,
+                          borderRadius: 2,
+                          marginTop: 2,
+                        }}
+                      />
                     </View>
-                    
+
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       {/* Voice Selector Removed - managed in Profile */}
 
-                      <TouchableOpacity 
-                          onPress={onToggleSpeak}
-                          style={styles.speakerButton}
-                          disabled={isLoadingAudio}
-                          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                      <TouchableOpacity
+                        onPress={onToggleSpeak}
+                        style={styles.speakerButton}
+                        disabled={isLoadingAudio}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                          {isLoadingAudio ? (
-                             <ActivityIndicator size="small" color="#10B981" />
-                          ) : (
-                             <Ionicons 
-                                name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} 
-                                size={28} 
-                                color={isSpeaking ? "#FF6B6B" : "#2D2D44"} 
-                             />
-                          )}
+                        {isLoadingAudio ? (
+                          <ActivityIndicator size="small" color="#10B981" />
+                        ) : (
+                          <Ionicons
+                            name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"}
+                            size={28}
+                            color={isSpeaking ? "#FF6B6B" : "#2D2D44"}
+                          />
+                        )}
                       </TouchableOpacity>
                     </View>
+                  </View>
+
+                  {/* Back Headline - Fixed at top */}
+                  {item.backHeadline && (
+                    <View style={{ marginBottom: 16 }}>
+                      <Text style={styles.backHeadline}>
+                        {item.backHeadline}
+                      </Text>
+                      <View style={[styles.backDivider, { backgroundColor: "#10B981" + "40", marginTop: 8 }]} />
+                    </View>
+                  )}
+
+                  {/* Answer content */}
+                  <ScrollView
+                    style={styles.backContentScroll}
+                    showsVerticalScrollIndicator={true}
+                    contentContainerStyle={{
+                      flexGrow: 1,
+                      paddingBottom: 40,
+                      paddingHorizontal: 4,
+                    }}
+                  >
+                    {item.back && renderTextWithBold(item.back, [
+                      styles.expandedAnswerText,
+                      { fontSize: backTextFontSize, lineHeight: backTextFontSize * 1.5 }
+                    ])}
+                  </ScrollView>
                 </View>
 
-                {/* Back Headline - Fixed at top */}
-                {item.backHeadline && (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={styles.backHeadline}>
-                      {item.backHeadline}
-                    </Text>
-                    <View style={[styles.backDivider, { backgroundColor: "#10B981" + "40", marginTop: 8 }]} />
-                  </View>
-                )}
-
-                {/* Answer content */}
-                <ScrollView
-                  style={styles.backContentScroll}
-                  showsVerticalScrollIndicator={true}
-                  contentContainerStyle={{ 
-                    flexGrow: 1, 
-                    paddingBottom: 40,
-                    paddingHorizontal: 4,
-                  }}
-                >
-                  {item.back && renderTextWithBold(item.back, [
-                    styles.expandedAnswerText,
-                    { fontSize: backTextFontSize, lineHeight: backTextFontSize * 1.5 }
-                  ])}
-                </ScrollView>
-              </View>
-
-              {/* Index card lines */}
-              <View style={styles.expandedCardLines}>
-                <View
-                  style={[styles.cardLine, { backgroundColor: "#10B981" + "40" }]}
-                />
-                <View
-                  style={[styles.cardLine, { backgroundColor: "#10B981" + "30" }]}
-                />
-                <View
-                  style={[styles.cardLine, { backgroundColor: "#10B981" + "20" }]}
-                />
-              </View>
+                {/* Index card lines */}
+                <View style={styles.expandedCardLines}>
+                  <View
+                    style={[styles.cardLine, { backgroundColor: "#10B981" + "40" }]}
+                  />
+                  <View
+                    style={[styles.cardLine, { backgroundColor: "#10B981" + "30" }]}
+                  />
+                  <View
+                    style={[styles.cardLine, { backgroundColor: "#10B981" + "20" }]}
+                  />
+                </View>
               </View>
             </Animated.View>
           </View>
@@ -715,8 +716,28 @@ function ExpandedCardModal({
 
 export default function UnderstandingCancerScreen() {
   const { selectedVoice } = useOnboarding();
+  const { fireEvent, fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [timeSpent10s, setTimeSpent10s] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeSpent10s(true);
+      fireEvent('cancer_info_read_30s');
+      fireResourceOpened('11'); // resource ID 11 = Understanding Cancer
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (scrolledToEnd && timeSpent10s) {
+      fireResourceScrolledToEnd('11');
+    }
+  }, [scrolledToEnd, timeSpent10s, fireResourceScrolledToEnd]);
+
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [expandedCard, setExpandedCard] = useState<CardData | null>(null);
   const [selectedColor, setSelectedColor] = useState("#FF9AA2");
@@ -747,12 +768,18 @@ export default function UnderstandingCancerScreen() {
     // Calculate how many cards should be visible based on scroll position
     const visibleHeight = scrollY + SCREEN_HEIGHT;
     const buffer = 100; // Buffer to start animating before fully in view
-    
+
     // Calculate index based on card position (top = index * overlap)
     const newLimit = Math.floor((visibleHeight - buffer) / CARD_OVERLAP);
-    
+
     if (newLimit > visibleLimit) {
       setVisibleLimit(newLimit);
+    }
+
+    // Scroll-to-end detection
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+      setScrolledToEnd(true);
     }
   };
 
@@ -795,22 +822,22 @@ export default function UnderstandingCancerScreen() {
             textToSpeak += expandedCard.backHeadline + ". ";
           }
           textToSpeak += expandedCard.back.replace(/\*\*/g, ""); // Clean markdown
-          
+
           const audioUri = await generateSpeech(textToSpeak, selectedVoice);
-          
+
           if (audioUri) {
             const { sound: newSound } = await Audio.Sound.createAsync(
               { uri: audioUri },
               { shouldPlay: true }
             );
             setSound(newSound);
-            
+
             // Reset state when playback finishes
             newSound.setOnPlaybackStatusUpdate((status) => {
-                if (status.isLoaded && status.didJustFinish) {
-                    setIsSpeaking(false);
-                    newSound.setPositionAsync(0);
-                }
+              if (status.isLoaded && status.didJustFinish) {
+                setIsSpeaking(false);
+                newSound.setPositionAsync(0);
+              }
             });
           }
         } catch (error) {
@@ -824,15 +851,15 @@ export default function UnderstandingCancerScreen() {
   };
 
   const handleVoiceChange = async (voiceId: string) => {
-      if (selectedVoice === voiceId) return;
-      
-      // Stop current audio
-      if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-          setSound(null);
-      }
-      setIsSpeaking(false);
+    if (selectedVoice === voiceId) return;
+
+    // Stop current audio
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      setSound(null);
+    }
+    setIsSpeaking(false);
   };
 
   const handleCardPress = (card: CardData) => {
@@ -846,7 +873,7 @@ export default function UnderstandingCancerScreen() {
       await Share.share({
         message: 'Check out "Understanding What Cancer Is and Isn\'t" on SchoolKit — learn the facts and bust common myths about cancer.',
       });
-    } catch {}
+    } catch { }
   };
 
   return (

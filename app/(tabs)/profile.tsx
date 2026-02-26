@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 import { ALL_RESOURCES } from "../../constants/resources";
 import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
@@ -305,7 +306,7 @@ export default function ProfileScreen() {
     selectedVoice,
     updateVoice,
   } = useOnboarding();
-
+  const { fireEvent } = useAccomplishments();
 
   // Modal State
   const [isVoiceModalVisible, setIsVoiceModalVisible] = React.useState(false);
@@ -519,6 +520,18 @@ export default function ProfileScreen() {
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>GENERAL</Text>
           <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
             <SettingRow
+              icon="leaf-outline"
+              label="Knowledge Tree"
+              onPress={() => router.push('/knowledge-tree' as any)}
+              theme={theme}
+            />
+            <SettingRow
+              icon="extension-puzzle-outline"
+              label="My Puzzles"
+              onPress={() => router.push('/accomplishments' as any)}
+              theme={theme}
+            />
+            <SettingRow
               icon="moon-outline"
               label="Appearance"
               value={appearanceLabel}
@@ -628,6 +641,7 @@ export default function ProfileScreen() {
         selectedVoice={selectedVoice}
         onSelectVoice={(voiceId) => {
             updateVoice(voiceId);
+            fireEvent('voice_changed');
             setIsVoiceModalVisible(false);
         }}
       />
