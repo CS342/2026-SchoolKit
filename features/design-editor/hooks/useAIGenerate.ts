@@ -15,6 +15,7 @@ export interface GenerateRequest {
   };
   prompt?: string;
   templateId?: string;
+  existingDocument?: DesignDocument;
 }
 
 const VALID_STATIC_TYPES = new Set(['rect', 'ellipse', 'text', 'line', 'star', 'triangle', 'arrow', 'badge']);
@@ -236,10 +237,78 @@ OUTPUT FORMAT (strict JSON, no markdown, no commentary):
   "assets": {}
 }`;
 
+/** Produce compact JSON of an existing design, stripping default values to reduce token count. */
+function serializeForPrompt(doc: DesignDocument): string {
+  const DEFAULTS: Record<string, unknown> = {
+    visible: true,
+    locked: false,
+    rotation: 0,
+    opacity: 1,
+  };
+
+  function stripDefaults(obj: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (key in DEFAULTS && value === DEFAULTS[key]) continue;
+      if (Array.isArray(value)) {
+        out[key] = value.map((item) =>
+          item && typeof item === 'object' && !Array.isArray(item)
+            ? stripDefaults(item as Record<string, unknown>)
+            : item,
+        );
+      } else if (value && typeof value === 'object') {
+        out[key] = stripDefaults(value as Record<string, unknown>);
+      } else {
+        out[key] = value;
+      }
+    }
+    return out;
+  }
+
+  const compact = {
+    canvas: doc.canvas,
+    objects: doc.objects.map((o) => stripDefaults(o as unknown as Record<string, unknown>)),
+  };
+  return JSON.stringify(compact);
+}
+
 function buildUserPrompt(request: GenerateRequest, templateSkeleton: string | null): string {
   const lines: string[] = [];
+  const isEditMode = !!request.existingDocument;
+
   lines.push(`Canvas size: ${request.canvas.width}x${request.canvas.height} pixels.`);
 
+  // ── Edit mode: inject existing design ──
+  if (isEditMode) {
+    const serialized = serializeForPrompt(request.existingDocument!);
+    lines.push(`
+═══ EDIT MODE ═══
+You are EDITING an existing design. Here is the current design JSON:
+${serialized}
+
+EDIT RULES:
+- Preserve ALL existing objects unless the user explicitly asks to remove or change them.
+- Keep existing IDs, positions, sizes, and colors unless the change requires modifying them.
+- Only add, remove, or modify what the user's instruction describes.
+- Return the COMPLETE design (all objects, not just changed ones).
+- You may increase canvas.height if new content requires more space.
+═════════════════`);
+
+    lines.push(`Edit instruction: ${request.prompt || 'Improve the design'}`);
+
+    lines.push(`
+CRITICAL REMINDERS:
+- Return the COMPLETE design JSON including ALL objects (modified and unmodified).
+- Only change what the user asked for. Preserve everything else exactly.
+- Keep the same visual style, colors, and layout unless the user says otherwise.
+- If adding new elements, place them logically relative to existing content.
+- You may increase canvas.height if needed to fit new content.
+Return ONLY the JSON object.`);
+
+    return lines.join('\n');
+  }
+
+  // ── Create mode (original behavior) ──
   if (templateSkeleton) {
     lines.push(
       `Use this layout skeleton as a starting point. Preserve the general positioning but fill in content, refine colors, and adjust sizes to look polished:`,
@@ -535,9 +604,11 @@ export function useAIGenerate(): UseAIGenerateReturn {
           );
         }
 
-        // Build template skeleton if needed
+        const isEditMode = !!request.existingDocument;
+
+        // Build template skeleton if needed (skip for edit mode)
         let templateSkeleton: string | null = null;
-        if (request.templateId) {
+        if (!isEditMode && request.templateId) {
           templateSkeleton = getTemplateSkeleton(
             request.templateId,
             request.canvas.width,
@@ -556,7 +627,7 @@ export function useAIGenerate(): UseAIGenerateReturn {
           body: JSON.stringify({
             model: 'gpt-4o',
             response_format: { type: 'json_object' },
-            temperature: 0.7,
+            temperature: isEditMode ? 0.4 : 0.7,
             max_tokens: 16384,
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },

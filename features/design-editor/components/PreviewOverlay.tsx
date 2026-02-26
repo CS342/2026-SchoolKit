@@ -18,10 +18,9 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
   const canvas = useEditorStore((s) => s.canvas);
   const objects = useEditorStore((s) => s.objects);
 
-  // Scale to fit the viewport
+  // Scale to fill available width, allow vertical scrolling
   const maxWidth = window.innerWidth - 80;
-  const maxHeight = window.innerHeight - 120;
-  const scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height, 1);
+  const scale = maxWidth / canvas.width;
 
   return (
     <div
@@ -33,14 +32,14 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        overflowY: 'auto',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
       {/* Close button */}
       <div
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: 16,
           right: 24,
           zIndex: 1001,
@@ -79,6 +78,8 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
           overflow: 'hidden',
           boxShadow: '0 4px 40px rgba(0,0,0,0.4)',
           position: 'relative',
+          flexShrink: 0,
+          marginTop: 60,
         }}
       >
         {/* Full-size canvas — objects render at original coordinates,
@@ -109,7 +110,9 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
           color: 'rgba(255,255,255,0.4)',
           fontSize: 12,
           marginTop: 16,
+          marginBottom: 24,
           fontWeight: 500,
+          flexShrink: 0,
         }}
       >
         Interactive Preview — Click to interact

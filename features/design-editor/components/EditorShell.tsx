@@ -63,6 +63,7 @@ export function EditorShell({
   const loadDocument = useEditorStore((s) => s.loadDocument);
   const markDirty = useEditorStore((s) => s.markDirty);
   const titleState = useEditorStore((s) => s.title);
+  const getDocument = useEditorStore((s) => s.getDocument);
 
   const { saveNow } = useAutoSave(stageRef);
   const { uploadImage } = useDesignAssets();
@@ -350,17 +351,16 @@ export function EditorShell({
         visible={showAIGenerate}
         onClose={() => setShowAIGenerate(false)}
         canvasSize={{ width: canvas.width, height: canvas.height }}
+        existingDocument={objects.length > 0 ? getDocument() : null}
         onDesignGenerated={(doc: DesignDocument, genTitle: string) => {
-          if (objects.length > 0) {
-            const ok = window.confirm(
-              'This will replace your current design. Continue?',
-            );
-            if (!ok) return;
-          }
           if (designId) {
             loadDocument(designId, genTitle || titleState, {
               ...doc,
-              canvas: { ...doc.canvas, width: canvas.width, height: canvas.height },
+              canvas: {
+                ...doc.canvas,
+                width: canvas.width,
+                height: Math.max(canvas.height, doc.canvas.height),
+              },
             });
             markDirty();
           }
@@ -371,10 +371,22 @@ export function EditorShell({
         <PreviewOverlay onClose={() => setPreviewMode(false)} />
       )}
 
-      {/* CSS for spinner animation */}
+      {/* CSS for spinner + generation progress animations */}
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { transform: scale(1); opacity: 0.85; }
+          50% { transform: scale(1.12); opacity: 1; }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(6px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
