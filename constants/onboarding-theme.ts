@@ -15,6 +15,10 @@ export const GRADIENTS = {
   infoBlue: ['#3B82F6', '#60A5FA'] as const,
   accentAmber: ['#F59E0B', '#FBBF24'] as const,
   errorRed: ['#EF4444', '#F87171'] as const,
+  accentCyan: ['#06B6D4', '#22D3EE'] as const,
+  accentViolet: ['#8B5CF6', '#A78BFA'] as const,
+  accentOrange: ['#F97316', '#FB923C'] as const,
+  accentEmerald: ['#10B981', '#34D399'] as const,
 };
 
 export const SHADOWS = {
@@ -318,6 +322,16 @@ export function getGradientForColor(color: string): readonly [string, string] {
       return GRADIENTS.errorRed;
     case '#3B82F6':
       return GRADIENTS.infoBlue;
+    case '#F59E0B':
+      return GRADIENTS.accentAmber;
+    case '#06B6D4':
+      return GRADIENTS.accentCyan;
+    case '#8B5CF6':
+      return GRADIENTS.accentViolet;
+    case '#F97316':
+      return GRADIENTS.accentOrange;
+    case '#10B981':
+      return GRADIENTS.accentEmerald;
     default:
       return GRADIENTS.roleStudentHS;
   }
