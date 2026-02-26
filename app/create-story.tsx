@@ -20,6 +20,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { CommunityNormsModal } from '../components/CommunityNormsModal';
 import { StoryStartersModal } from '../components/StoryStartersModal';
 import { TopicTagsModal } from '../components/TopicTagsModal';
@@ -42,6 +43,7 @@ export default function CreateStoryScreen() {
   const insets = useSafeAreaInsets();
   const { isAnonymous } = useAuth();
   const { createStory, updateStory, deleteStory, stories } = useStories();
+  const { fireEvent } = useAccomplishments();
   const { data: onboardingData } = useOnboarding();
   const { colors, appStyles } = useTheme();
 
@@ -87,7 +89,6 @@ export default function CreateStoryScreen() {
     if (title !== initialState.title) return true;
     if (body !== initialState.body) return true;
     if (postAnonymously !== initialState.postAnonymously) return true;
-    
     // Check arrays safely
     const safeLookingFor = lookingFor || [];
     const safeTargetAudiences = targetAudiences || [];
@@ -99,7 +100,6 @@ export default function CreateStoryScreen() {
     if (safeLookingFor.length !== safeInitialLookingFor.length || !safeLookingFor.every(v => safeInitialLookingFor.includes(v))) return true;
     if (safeTargetAudiences.length !== safeInitialTargetAudiences.length || !safeTargetAudiences.every(v => safeInitialTargetAudiences.includes(v))) return true;
     if (safeStoryTags.length !== safeInitialStoryTags.length || !safeStoryTags.every(v => safeInitialStoryTags.includes(v))) return true;
-    
     return false;
   }, [isEditing, title, body, postAnonymously, lookingFor, targetAudiences, storyTags, initialState]);
 
@@ -135,17 +135,18 @@ export default function CreateStoryScreen() {
   const handleFinalSubmit = async () => {
     setShowNorms(false);
     setSubmitting(true);
-    
+
     let result;
     if (isEditing && editId) {
-        result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
+      result = await updateStory(editId, title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     } else {
-        result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
+      result = await createStory(title.trim(), body.trim(), { postAnonymously, lookingFor, targetAudiences, storyTags });
     }
-    
+
     setSubmitting(false);
 
     if (result) {
+      fireEvent('story_created');
       if (!isEditing || (isEditing && existingStory?.status === 'rejected')) {
         Alert.alert(
           'Story Submitted',
@@ -172,8 +173,8 @@ export default function CreateStoryScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
@@ -181,171 +182,206 @@ export default function CreateStoryScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-        <Pressable style={styles.topicReminder} onPress={handleViewNorms}>
-          <Ionicons name="school-outline" size={16} color="#5C5C8A" />
-          <Text style={styles.topicReminderText}>Stories must relate to school and cancer.</Text>
-          <View style={styles.topicReminderLink}>
-            <Text style={styles.topicReminderLinkText}>Review norms</Text>
-            <Ionicons name="chevron-forward" size={13} color="#5C5C8A" />
-          </View>
-        </Pressable>
-
-        {isEditing && existingStory?.status === 'rejected' && existingStory.rejected_norms && existingStory.rejected_norms.length > 0 && (
-          <View style={styles.normsContainer}>
-            <View style={styles.normsHeader}>
-              <Text style={styles.normsLabel}>{isExhausted ? 'Limit Reached' : 'Action Required'}</Text>
-              <Text style={styles.normsAttemptText}>
-                Attempt {existingStory.attempt_count || 1} of 2
-              </Text>
+          <Pressable style={styles.topicReminder} onPress={handleViewNorms}>
+            <Ionicons name="school-outline" size={16} color="#5C5C8A" />
+            <Text style={styles.topicReminderText}>Stories must relate to school and cancer.</Text>
+            <View style={styles.topicReminderLink}>
+              <Text style={styles.topicReminderLinkText}>Review norms</Text>
+              <Ionicons name="chevron-forward" size={13} color="#5C5C8A" />
             </View>
-            <Text style={styles.normsDesc}>
-              {isExhausted 
-                ? 'This story has reached the maximum number of resubmissions and cannot be edited further. Please review your violations and delete the story.'
-                : 'Please edit your story to resolve the following community norm violations before resubmitting:'}
-            </Text>
-            {existingStory.rejected_norms.map((norm, idx) => (
-              <View key={idx} style={styles.normItem}>
-                <Ionicons name="close-circle" size={16} color={COLORS.error} />
-                <Text style={styles.normText}>{norm}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <TextInput
-          style={[styles.titleInput, isExhausted && { color: COLORS.textMuted }]}
-          placeholder="Title"
-          placeholderTextColor={COLORS.inputPlaceholder}
-          value={title}
-          onChangeText={setTitle}
-          maxLength={120}
-          autoFocus={!isExhausted}
-          editable={!isExhausted}
-        />
-        <View style={styles.titleRow}>
-          <Pressable onPress={() => !isExhausted && setShowSettingsModal(true)} style={styles.startersBtn}>
-            <Ionicons name="options-outline" size={16} color={colors.primary} />
-            <Text style={[styles.startersText, { color: colors.primary }]}>Add tags and change audience</Text>
           </Pressable>
-          <Text style={styles.charCount}>{title.length}/120</Text>
-        </View>
 
-        {/* Selected settings preview area */}
-        { (!isExhausted && (storyTags.length > 0 || audienceHint !== '')) && (
-          <View style={styles.previewContainer}>
-            {audienceHint !== '' && (
-              <Text style={styles.audiencePreviewText}>
-                {audienceHint}
-              </Text>
-            )}
-            
-            {storyTags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {storyTags.map(tag => {
-                  const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
-                  return (
-                    <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
-                      <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
-                    </View>
-                  );
-                })}
+          {isEditing && existingStory?.status === 'rejected' && existingStory.rejected_norms && existingStory.rejected_norms.length > 0 && (
+            <View style={styles.normsContainer}>
+              <View style={styles.normsHeader}>
+                <Text style={styles.normsLabel}>{isExhausted ? 'Limit Reached' : 'Action Required'}</Text>
+                <Text style={styles.normsAttemptText}>
+                  Attempt {existingStory.attempt_count || 1} of 2
+                </Text>
               </View>
-            )}
-          </View>
-        )}
-
-        <TextInput
-          style={[styles.bodyInput, isExhausted && { backgroundColor: colors.backgroundLight, color: COLORS.textMuted }]}
-          placeholder="Share your experience navigating cancer and school..."
-          placeholderTextColor={COLORS.inputPlaceholder}
-          value={body}
-          onChangeText={setBody}
-          multiline
-          textAlignVertical="top"
-          editable={!isExhausted}
-        />
-
-        {body.trim().length === 0 && (
-          <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={[styles.startersBtn, { marginTop: 12, alignSelf: 'flex-start' }]}>
-            <Ionicons name="sparkles" size={16} color={colors.primary} />
-            <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
-          </Pressable>
-        )}
-
-        {/* Looking For preview area */}
-        { (!isExhausted && lookingFor.length > 0) && (
-          <View style={styles.lookingForPreview}>
-            <Text style={styles.lookingForText}>
-              Looking for: {lookingFor.join(' · ')}
-            </Text>
-          </View>
-        )}
-
-        {/* Anonymous toggle */}
-        <View style={styles.anonymousRow}>
-          <View style={styles.anonymousInfo}>
-            <Ionicons
-              name={postAnonymously ? 'eye-off' : 'eye'}
-              size={20}
-              color={postAnonymously ? colors.primary : COLORS.textLight}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.anonymousLabel}>Post anonymously</Text>
-              <Text style={styles.anonymousHint}>
-                {postAnonymously
-                  ? 'Your name and role will be hidden'
-                  : 'Your name and role will be visible'}
+              <Text style={styles.normsDesc}>
+                {isExhausted
+                  ? 'This story has reached the maximum number of resubmissions and cannot be edited further. Please review your violations and delete the story.'
+                  : 'Please edit your story to resolve the following community norm violations before resubmitting:'}
               </Text>
+              {existingStory.rejected_norms.map((norm, idx) => (
+                <View key={idx} style={styles.normItem}>
+                  <Ionicons name="close-circle" size={16} color={COLORS.error} />
+                  <Text style={styles.normText}>{norm}</Text>
+                </View>
+              ))}
             </View>
-          </View>
-          <Switch
-            value={postAnonymously}
-            onValueChange={setPostAnonymously}
-            trackColor={{ false: COLORS.borderCard, true: colors.primary }}
-            thumbColor="#FFFFFF"
-            disabled={isExhausted}
-          />
-        </View>
-        
-        <View style={styles.bottomActions}>
-          {isEditing && existingStory?.status === 'rejected' && (
-            <Pressable
-              style={[
-                styles.actionBtn, 
-                isExhausted ? styles.deleteBtnSolid : styles.deleteBtn
-              ]}
-              onPress={() => {
-                Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive', onPress: async () => {
-                      await deleteStory(editId);
-                      router.back();
-                  }}
-                ]);
-              }}
-            >
-              <Text style={[
-                isExhausted ? styles.deleteBtnTextSolid : styles.deleteBtnText
-              ]}>Delete Story</Text>
-            </Pressable>
           )}
 
-          {!isExhausted && (
-            <Pressable
-              style={[styles.actionBtn, styles.primaryBtn, !canSubmit && styles.primaryBtnDisabled]}
-              onPress={handlePreSubmit}
-              disabled={!canSubmit}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={[styles.primaryBtnText, !canSubmit && styles.primaryBtnTextDisabled]}>
-                  {isEditing && existingStory?.status === 'rejected' ? 'Resubmit' : 'Post Story'}
+          <TextInput
+            style={[styles.titleInput, isExhausted && { color: COLORS.textMuted }]}
+            placeholder="Title"
+            placeholderTextColor={COLORS.inputPlaceholder}
+            value={title}
+            onChangeText={setTitle}
+            maxLength={120}
+            autoFocus={!isExhausted}
+            editable={!isExhausted}
+          />
+          <View style={styles.titleRow}>
+            <Pressable onPress={() => !isExhausted && setShowSettingsModal(true)} style={styles.startersBtn}>
+              <Ionicons name="options-outline" size={16} color={colors.primary} />
+              <Text style={[styles.startersText, { color: colors.primary }]}>Add tags and change audience</Text>
+            </Pressable>
+            <Text style={styles.charCount}>{title.length}/120</Text>
+          </View>
+
+          {/* Selected settings preview area */}
+          {(!isExhausted && (storyTags.length > 0 || audienceHint !== '')) && (
+            <View style={styles.previewContainer}>
+              {audienceHint !== '' && (
+                <Text style={styles.audiencePreviewText}>
+                  {audienceHint}
                 </Text>
               )}
+
+              {storyTags.length > 0 && (
+                <View style={styles.tagsContainer}>
+                  {storyTags.map(tag => {
+                    const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+                    return (
+                      <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
+                        <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+
+          <TextInput
+            style={[styles.bodyInput, isExhausted && { backgroundColor: colors.backgroundLight, color: COLORS.textMuted }]}
+            placeholder="Share your experience navigating cancer and school..."
+            placeholderTextColor={COLORS.inputPlaceholder}
+            value={body}
+            onChangeText={setBody}
+            multiline
+            textAlignVertical="top"
+            editable={!isExhausted}
+          />
+
+          {body.trim().length === 0 && (
+            <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={[styles.startersBtn, { marginTop: 12, alignSelf: 'flex-start' }]}>
+              <Ionicons name="sparkles" size={16} color={colors.primary} />
+              <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
             </Pressable>
           )}
-        </View>
+
+          {/* Content Tags via Dropdown/Modal */}
+          <Text style={styles.sectionHeading}>Topic Tags</Text>
+          <Pressable
+            style={styles.tagsDropdownBtn}
+            onPress={() => !isExhausted && setShowTagsModal(true)}
+          >
+            <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
+              {storyTags.length > 0
+                ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
+                : "Select topic tags..."}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
+          </Pressable>
+
+          {storyTags.length > 0 && (
+            <View style={styles.selectedTagsContainer}>
+              {storyTags.map((tag) => (
+                <View key={tag} style={styles.selectedTagChip}>
+                  <Text style={styles.selectedTagText}>{tag}</Text>
+                  {!isExhausted && (
+                    <Pressable
+                      onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
+                      hitSlop={8}
+                      style={{ marginLeft: 4 }}
+                    >
+                      <Ionicons name="close-circle" size={16} color={colors.primary} />
+                    </Pressable>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Looking For preview area */}
+          {(!isExhausted && lookingFor.length > 0) && (
+            <View style={styles.lookingForPreview}>
+              <Text style={styles.lookingForText}>
+                Looking for: {lookingFor.join(' · ')}
+              </Text>
+            </View>
+          )}
+
+          {/* Anonymous toggle */}
+          <View style={styles.anonymousRow}>
+            <View style={styles.anonymousInfo}>
+              <Ionicons
+                name={postAnonymously ? 'eye-off' : 'eye'}
+                size={20}
+                color={postAnonymously ? colors.primary : COLORS.textLight}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.anonymousLabel}>Post anonymously</Text>
+                <Text style={styles.anonymousHint}>
+                  {postAnonymously
+                    ? 'Your name and role will be hidden'
+                    : 'Your name and role will be visible'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={postAnonymously}
+              onValueChange={setPostAnonymously}
+              trackColor={{ false: COLORS.borderCard, true: colors.primary }}
+              thumbColor="#FFFFFF"
+              disabled={isExhausted}
+            />
+          </View>
+
+          <View style={styles.bottomActions}>
+            {isEditing && existingStory?.status === 'rejected' && (
+              <Pressable
+                style={[
+                  styles.actionBtn,
+                  isExhausted ? styles.deleteBtnSolid : styles.deleteBtn
+                ]}
+                onPress={() => {
+                  Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete', style: 'destructive', onPress: async () => {
+                        await deleteStory(editId);
+                        router.back();
+                      }
+                    }
+                  ]);
+                }}
+              >
+                <Text style={[
+                  isExhausted ? styles.deleteBtnTextSolid : styles.deleteBtnText
+                ]}>Delete Story</Text>
+              </Pressable>
+            )}
+
+            {!isExhausted && (
+              <Pressable
+                style={[styles.actionBtn, styles.primaryBtn, !canSubmit && styles.primaryBtnDisabled]}
+                onPress={handlePreSubmit}
+                disabled={!canSubmit}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={[styles.primaryBtnText, !canSubmit && styles.primaryBtnTextDisabled]}>
+                    {isEditing && existingStory?.status === 'rejected' ? 'Resubmit' : 'Post Story'}
+                  </Text>
+                )}
+              </Pressable>
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -368,21 +404,21 @@ export default function CreateStoryScreen() {
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.settingsScroll}>
-              
+
               {/* Content Tags via Dropdown/Modal */}
               <Text style={styles.sectionHeading}>Topic Tags</Text>
-              <Pressable 
+              <Pressable
                 style={styles.tagsDropdownBtn}
                 onPress={() => !isExhausted && setShowTagsModal(true)}
               >
                 <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
-                  {storyTags.length > 0 
+                  {storyTags.length > 0
                     ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
                     : "Select topic tags..."}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
               </Pressable>
-              
+
               {storyTags.length > 0 && (
                 <View style={styles.selectedTagsContainer}>
                   {storyTags.map((tag) => {
@@ -485,10 +521,10 @@ export default function CreateStoryScreen() {
       </Modal>
 
       <CommunityNormsModal
-          visible={showNorms}
-          onClose={() => setShowNorms(false)}
-          mode={normsMode}
-          onAgree={normsMode === 'submit' ? handleFinalSubmit : undefined}
+        visible={showNorms}
+        onClose={() => setShowNorms(false)}
+        mode={normsMode}
+        onAgree={normsMode === 'submit' ? handleFinalSubmit : undefined}
       />
 
       <StoryStartersModal
@@ -498,6 +534,7 @@ export default function CreateStoryScreen() {
           setBody((prev) => prev ? `${prev}\n\n${prompt}` : prompt);
         }}
       />
+
 
     </View>
   );

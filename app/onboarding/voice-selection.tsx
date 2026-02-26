@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Image } from 'expo-image';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
@@ -16,6 +17,7 @@ import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS } from '../../constant
 export default function VoiceSelectionScreen() {
   const router = useRouter();
   const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding } = useOnboarding();
+  const { fireEvent } = useAccomplishments();
   const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || '21m00Tcm4TlvDq8ikWAM'); // Default to Rachel if none
 
   // Audio playback state for samples
@@ -68,6 +70,7 @@ export default function VoiceSelectionScreen() {
 
   const handleContinue = () => {
     updateVoice(selectedVoice);
+    fireEvent('voice_changed');
     completeOnboarding();
     router.replace('/loading');
   };

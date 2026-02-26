@@ -21,6 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useStories, StoryComment } from "../contexts/StoriesContext";
 import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
@@ -208,9 +209,17 @@ export default function StoryDetailScreen() {
     removeStoryDownload,
   } = useStories();
   const { colors, appStyles, isDark } = useTheme();
+  const { fireEvent } = useAccomplishments();
 
   const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
   const isModeratorMode = Boolean(user?.email && MODERATOR_EMAILS.includes(user.email));
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (id) fireEvent('story_read_30s');
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   const [comments, setComments] = useState<StoryComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -308,6 +317,7 @@ export default function StoryDetailScreen() {
       if (newComment) {
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
+        fireEvent('story_commented');
       } else {
         Alert.alert("Error", "Failed to post comment. Please try again.");
       }

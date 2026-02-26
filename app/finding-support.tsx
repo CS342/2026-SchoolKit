@@ -314,6 +314,12 @@ const mapStyles = StyleSheet.create({
     connectorRight: {
         alignItems: "flex-start",
         marginLeft: 30 + BUBBLE_SIZE / 2,
+    },
+    dashedLine: {
+        width: 0,
+        height: "100%",
+        borderWidth: 1.5,
+        borderStyle: "dashed",
     }
 });
 

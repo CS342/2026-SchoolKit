@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,11 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { RADII, SPACING } from '../constants/onboarding-theme';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 
 export default function AboutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, appStyles } = useTheme();
+  const { fireEvent } = useAccomplishments();
+
+  useEffect(() => {
+    fireEvent('about_opened');
+  }, []);
 
   const styles = useMemo(() => makeStyles(colors, shadows), [colors, shadows]);
 

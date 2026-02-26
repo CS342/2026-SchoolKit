@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { TTSButton } from '../components/TTSButton';
 import { useTTS } from '../hooks/useTTS';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { supabase } from '../lib/supabase';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
@@ -17,6 +18,8 @@ export default function TopicDetailScreen() {
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
   const { isSpeaking, isLoading, speak } = useTTS();
+  const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [checkingDesign, setCheckingDesign] = useState(true);
 
   // Check if this topic has a published custom design and redirect to the design viewer
@@ -76,6 +79,21 @@ export default function TopicDetailScreen() {
 
   const resourceId = id || title || '';
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (resourceId) fireResourceOpened(resourceId);
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [resourceId]);
+
+  const handleScroll = ({ nativeEvent }: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+      setScrolledToEnd(true);
+      if (resourceId) fireResourceScrolledToEnd(resourceId);
+    }
+  };
+
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
   const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
 
@@ -90,7 +108,7 @@ export default function TopicDetailScreen() {
       await Share.share({
         message: `Check out "${title}" on SchoolKit — a resource to help students and families navigate school during cancer treatment.`,
       });
-    } catch {}
+    } catch { }
   };
 
   if (checkingDesign) {
@@ -118,7 +136,7 @@ export default function TopicDetailScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} onScroll={handleScroll} scrollEventThrottle={100}>
         <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
             <Ionicons name="book" size={40} color={color} />

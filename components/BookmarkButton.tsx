@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
+import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { COLORS } from '../constants/onboarding-theme';
 
 interface BookmarkButtonProps {
@@ -12,6 +13,7 @@ interface BookmarkButtonProps {
 
 export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }: BookmarkButtonProps) {
   const { isBookmarked, addBookmark, removeBookmark } = useOnboarding();
+  const { fireEvent } = useAccomplishments();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const bookmarked = isBookmarked(resourceId);
 
@@ -34,6 +36,7 @@ export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }
       removeBookmark(resourceId);
     } else {
       addBookmark(resourceId);
+      fireEvent('resource_bookmarked');
     }
   };
 

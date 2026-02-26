@@ -21,6 +21,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../contexts/OnboardingContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useAccomplishments } from "../../contexts/AccomplishmentContext";
+import { ALL_RESOURCES } from "../../constants/resources";
+import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
   RADII,
   SIZING,
@@ -121,8 +125,36 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const { colors, shadows, appStyles } = theme;
-  const { data, updateProfilePicture } = useOnboarding();
+  const { colors, shadows, appStyles, isDark, themePreference, setThemePreference } = theme;
+  const {
+    data,
+    resetOnboarding,
+    updateProfilePicture,
+    downloadAllResources,
+    downloads,
+    selectedVoice,
+    updateVoice,
+  } = useOnboarding();
+  const { fireEvent } = useAccomplishments();
+
+  // Modal State
+  const [isVoiceModalVisible, setIsVoiceModalVisible] = React.useState(false);
+  const [isAppearanceModalVisible, setIsAppearanceModalVisible] = React.useState(false);
+
+  // Computed properties
+  const appearanceLabel = themePreference === 'system' ? 'System' : themePreference === 'dark' ? 'Dark' : 'Light';
+  const handleAppearance = () => setIsAppearanceModalVisible(true);
+  const handleRetakeSurvey = () => {
+    Alert.alert(
+      "Retake Survey",
+      "This will guide you through the initial setup again.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Proceed", onPress: () => { router.push('/onboarding'); } }
+      ]
+    );
+  };
+  const handleDownloadAll = () => downloadAllResources();
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -272,7 +304,63 @@ export default function ProfileScreen() {
           </View>
         </AnimatedSection>
 
-        <AnimatedSection delay={420}>
+        <AnimatedSection delay={460}>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>GENERAL</Text>
+          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
+            <SettingRow
+              icon="leaf-outline"
+              label="Knowledge Tree"
+              onPress={() => router.push('/knowledge-tree' as any)}
+              theme={theme}
+            />
+            <SettingRow
+              icon="extension-puzzle-outline"
+              label="My Puzzles"
+              onPress={() => router.push('/accomplishments' as any)}
+              theme={theme}
+            />
+            <SettingRow
+              icon="moon-outline"
+              label="Appearance"
+              value={appearanceLabel}
+              onPress={handleAppearance}
+              theme={theme}
+            />
+            <SettingRow
+              icon="mic-outline"
+              label="Voice"
+              value={Object.values(VOICE_META).find((meta) => meta.id === selectedVoice)?.name || 'Peter'}
+              onPress={() => setIsVoiceModalVisible(true)}
+              theme={theme}
+            />
+            {Platform.OS === 'web' && (
+              <SettingRow
+                icon="color-palette-outline"
+                label="Design Editor"
+                value="Create visuals"
+                onPress={() => router.push('/(editor)/designs')}
+                theme={theme}
+              />
+            )}
+            <SettingRow
+              icon="cloud-download-outline"
+              label="Download All"
+              value={
+                downloads.length >= ALL_RESOURCES.length
+                  ? "All saved"
+                  : `${downloads.length}/${ALL_RESOURCES.length}`
+              }
+              onPress={handleDownloadAll}
+              theme={theme}
+            />
+            <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
+            <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => router.push('/about')} theme={theme} />
+            <SettingRow icon="help-circle-outline" label="Frequently Asked Questions" onPress={() => router.push('/help-support?section=faq')} theme={theme} />
+            <SettingRow icon="chatbubble-ellipses-outline" label="Share Feedback" onPress={() => router.push('/help-support?section=feedback')} isLast theme={theme} />
+          </View>
+        </AnimatedSection>
+
+        <AnimatedSection delay={500}>
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
 
           <Pressable
@@ -308,6 +396,68 @@ export default function ProfileScreen() {
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
+      {/* Appearance Modal */}
+      <Modal visible={isAppearanceModalVisible} transparent animationType="fade" onRequestClose={() => setIsAppearanceModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAppearanceModalVisible(false)}>
+            <View style={styles.modalBackdrop} />
+          </Pressable>
+          <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
+            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Appearance</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Choose your preferred theme</Text>
+            <View style={{ gap: 10, marginBottom: 20 }}>
+              {([
+                { key: 'system' as const, label: 'System', icon: 'phone-portrait-outline' as const, desc: 'Match device settings' },
+                { key: 'light' as const, label: 'Light', icon: 'sunny-outline' as const, desc: 'Always use light mode' },
+                { key: 'dark' as const, label: 'Dark', icon: 'moon-outline' as const, desc: 'Always use dark mode' },
+              ]).map((option) => {
+                const isSelected = themePreference === option.key;
+                return (
+                  <Pressable
+                    key={option.key}
+                    style={[
+                      styles.voiceCard,
+                      { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
+                      shadows.card,
+                      isSelected && { backgroundColor: colors.backgroundLight },
+                    ]}
+                    onPress={() => {
+                      setThemePreference(option.key);
+                      setIsAppearanceModalVisible(false);
+                    }}
+                  >
+                    <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 20 }]}>
+                      <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
+                    </View>
+                    <View style={styles.voiceInfo}>
+                      <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{option.label}</Text>
+                      <Text style={[styles.voiceDesc, { color: colors.textLight }]}>{option.desc}</Text>
+                    </View>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={() => setIsAppearanceModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Voice Selection Modal */}
+      <VoiceSelectorModal
+        visible={isVoiceModalVisible}
+        onClose={() => setIsVoiceModalVisible(false)}
+        selectedVoice={selectedVoice}
+        onSelectVoice={(voiceId) => {
+          updateVoice(voiceId);
+          fireEvent('voice_changed');
+          setIsVoiceModalVisible(false);
+        }}
+      />
     </View>
   );
 }

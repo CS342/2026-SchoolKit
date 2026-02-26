@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useOnboarding } from "../contexts/OnboardingContext";
+import { useAccomplishments } from "../contexts/AccomplishmentContext";
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { generateSpeech, VOICES } from "../services/elevenLabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -301,8 +302,8 @@ function ExpandedCardModal({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Timers
-  let stampTimer: any;
-  let flipTimer: any;
+  let stampTimer: ReturnType<typeof setTimeout>;
+  let flipTimer: ReturnType<typeof setTimeout>;
 
   React.useEffect(() => {
     if (visible) {
@@ -715,8 +716,28 @@ function ExpandedCardModal({
 
 export default function UnderstandingCancerScreen() {
   const { selectedVoice } = useOnboarding();
+  const { fireEvent, fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [timeSpent10s, setTimeSpent10s] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeSpent10s(true);
+      fireEvent('cancer_info_read_30s');
+      fireResourceOpened('11'); // resource ID 11 = Understanding Cancer
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (scrolledToEnd && timeSpent10s) {
+      fireResourceScrolledToEnd('11');
+    }
+  }, [scrolledToEnd, timeSpent10s, fireResourceScrolledToEnd]);
+
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [expandedCard, setExpandedCard] = useState<CardData | null>(null);
   const [selectedColor, setSelectedColor] = useState("#FF9AA2");
@@ -753,6 +774,12 @@ export default function UnderstandingCancerScreen() {
 
     if (newLimit > visibleLimit) {
       setVisibleLimit(newLimit);
+    }
+
+    // Scroll-to-end detection
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+      setScrolledToEnd(true);
     }
   };
 
@@ -800,7 +827,11 @@ export default function UnderstandingCancerScreen() {
     if (selectedVoice === voiceId) return;
 
     // Stop current audio
-    player.pause();
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      setSound(null);
+    }
     setIsSpeaking(false);
   };
 
