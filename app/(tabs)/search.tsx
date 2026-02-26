@@ -35,7 +35,8 @@ import { useTheme } from "../../contexts/ThemeContext";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const CATEGORIES = ["All", ...RESOURCE_CATEGORIES];
+const CATEGORIES = ["All", ...RESOURCE_CATEGORIES, "Design"] as const;
+type CategoryTab = (typeof CATEGORIES)[number];
 const RECENT_SEARCHES_KEY = "@schoolkit_recent_searches";
 const MAX_RECENT_SEARCHES = 5;
 
@@ -46,6 +47,7 @@ const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   Social: "people-outline",
   Health: "medical-outline",
   Family: "home-outline",
+  Design: "color-palette-outline",
 };
 
 // Animated decorative circle for background
@@ -128,7 +130,7 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { colors, shadows, appStyles, decorativeShapes, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryTab>("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const { resources } = useResources();
@@ -205,6 +207,15 @@ export default function SearchScreen() {
     const matchesSearch =
       resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       resource.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (selectedCategory === "Design") {
+      // Design tab shows only design-editor pages
+      return matchesSearch && resource.designOnly === true;
+    }
+
+    // All other tabs exclude design-only pages
+    if (resource.designOnly) return false;
+
     const matchesCategory =
       selectedCategory === "All" || resource.category === selectedCategory;
     return matchesSearch && matchesCategory;

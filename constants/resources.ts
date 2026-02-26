@@ -6,6 +6,8 @@ export interface Resource {
   icon: string;
   color: string;
   route?: string;
+  /** True for design-editor pages that only appear in the Design Generated tab */
+  designOnly?: boolean;
 }
 
 export const ALL_RESOURCES: Resource[] = [
