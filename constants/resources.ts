@@ -3,6 +3,8 @@ export interface Resource {
   title: string;
   abbr: string;           // ≤ 2-word label shown in leaf circle on the tree
   shortDescription: string;
+  abbr: string;           // ≤ 2-word label shown in leaf circle on the tree
+  shortDescription: string;
   category: string;
   tags: string[];
   icon: string;
