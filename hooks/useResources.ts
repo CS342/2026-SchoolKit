@@ -12,6 +12,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const DEFAULT_COLOR = '#7B68EE';
 
+// Only these DB/design-editor pages are shown in the library.
+// Add titles here as pages are finished and ready.
+const APPROVED_DB_TITLES = new Set([
+  'feeling sick? here\'s what to do',
+]);
+
 /**
  * Fetches resources from Supabase and merges with the hardcoded resource list.
  * Hardcoded resources take priority (they have custom routes and colors).
@@ -39,7 +45,7 @@ export function useResources() {
       );
 
       const dbResources: Resource[] = data
-        .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()))
+        .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()) && APPROVED_DB_TITLES.has(r.title.toLowerCase()))
         .map((r) => ({
           id: r.id,
           title: r.title,
