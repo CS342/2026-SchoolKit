@@ -120,9 +120,6 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
                   <Text style={[styles.cardType, { color: resource.color }]}>{resource.category}</Text>
                 </View>
                 <Text style={styles.cardTitle} numberOfLines={2}>{resource.title}</Text>
-                <View style={[styles.badge, { backgroundColor: withOpacity(resource.color, 0.1) }]}>
-                  <Text style={[styles.badgeText, { color: resource.color }]}>{resource.category}</Text>
-                </View>
               </Pressable>
             );
           }
