@@ -117,7 +117,7 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name={resource.icon as any} size={16} color={resource.color} style={styles.icon} />
-                  <Text style={[styles.cardType, { color: resource.color }]}>Topic</Text>
+                  <Text style={[styles.cardType, { color: resource.color }]}>{resource.category}</Text>
                 </View>
                 <Text style={styles.cardTitle} numberOfLines={2}>{resource.title}</Text>
                 <View style={[styles.badge, { backgroundColor: withOpacity(resource.color, 0.1) }]}>
