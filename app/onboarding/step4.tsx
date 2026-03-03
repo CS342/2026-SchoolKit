@@ -107,7 +107,7 @@ export default function Step4Screen() {
                   onPress={() => toggleTopic(topic.label)}
                   multiSelect
                   color={topic.color}
-                  icon={topic.icon}
+                  icon={topic.icon as any}
                 />
               ))}
             </View>
