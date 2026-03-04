@@ -14,7 +14,7 @@ import {
     ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import { Paths, File as FSFile, Directory } from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,18 +29,21 @@ type InputMode = "type" | "write" | "erase" | "image";
 const DRAW_COLORS = ["#000000", "#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#757575"];
 const STROKE_WIDTHS = [2, 4, 8];
 
-const JOURNAL_IMAGES_DIR = `${FileSystem.documentDirectory}journal-images/`;
+const getJournalImagesDir = (): Directory => {
+    return new Directory(Paths.document, "journal-images");
+};
 
 const copyImageToDocuments = async (tempUri: string): Promise<string> => {
-    const dirInfo = await FileSystem.getInfoAsync(JOURNAL_IMAGES_DIR);
-    if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(JOURNAL_IMAGES_DIR, { intermediates: true });
+    const dir = getJournalImagesDir();
+    if (!dir.exists) {
+        dir.create({ intermediates: true });
     }
     const ext = tempUri.split('.').pop()?.split('?')[0] || 'jpg';
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const destUri = `${JOURNAL_IMAGES_DIR}${filename}`;
-    await FileSystem.copyAsync({ from: tempUri, to: destUri });
-    return destUri;
+    const destFile = new FSFile(dir, filename);
+    const sourceFile = new FSFile(tempUri);
+    sourceFile.copy(destFile);
+    return destFile.uri;
 };
 
 export default function NotebookScreen() {
@@ -226,9 +229,10 @@ export default function NotebookScreen() {
                     text: "Delete", style: "destructive", onPress: async () => {
                         const deletedPage = notebook.pages[currentPageIndex];
                         // Clean up images from deleted page
+                        const docUri = Paths.document.uri;
                         for (const img of deletedPage.images) {
-                            if (img.uri.startsWith(FileSystem.documentDirectory || '')) {
-                                try { await FileSystem.deleteAsync(img.uri, { idempotent: true }); } catch { }
+                            if (img.uri.startsWith(docUri)) {
+                                try { const f = new FSFile(img.uri); if (f.exists) f.delete(); } catch { }
                             }
                         }
                         const newPages = notebook.pages.filter((_, i) => i !== currentPageIndex);
@@ -283,8 +287,8 @@ export default function NotebookScreen() {
                 const tempUri = result.assets[0].uri;
 
                 // Validate file size (max 10MB)
-                const fileInfo = await FileSystem.getInfoAsync(tempUri);
-                if (fileInfo.exists && 'size' in fileInfo && fileInfo.size && fileInfo.size > 10 * 1024 * 1024) {
+                const tempFile = new FSFile(tempUri);
+                if (tempFile.exists && tempFile.size > 10 * 1024 * 1024) {
                     Alert.alert("File Too Large", "Please select an image under 10MB.");
                     return;
                 }
@@ -529,7 +533,7 @@ export default function NotebookScreen() {
                     </View>
 
                     {/* Drawing layer wrapped in pan handler */}
-                    <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} {...panResponder.panHandlers}>
+                    <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents={inputMode === "write" || inputMode === "erase" ? "auto" : "none"} {...panResponder.panHandlers}>
                         <Svg
                             style={StyleSheet.absoluteFill}
                             pointerEvents={inputMode === "write" || inputMode === "erase" ? "auto" : "none"}

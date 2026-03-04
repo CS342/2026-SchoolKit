@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
+import { Paths, File as FSFile } from 'expo-file-system';
 
 export const MAX_NOTEBOOKS = 20;
 export const MAX_PAGES = 50;
@@ -46,14 +46,13 @@ interface JournalContextType {
 
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
 
-const deletePageImages = async (page: JournalPage) => {
+const deletePageImages = (page: JournalPage) => {
+    const docUri = Paths.document.uri;
     for (const img of page.images) {
-        if (img.uri.startsWith(FileSystem.documentDirectory || '')) {
+        if (img.uri.startsWith(docUri)) {
             try {
-                const info = await FileSystem.getInfoAsync(img.uri);
-                if (info.exists) {
-                    await FileSystem.deleteAsync(img.uri, { idempotent: true });
-                }
+                const f = new FSFile(img.uri);
+                if (f.exists) f.delete();
             } catch {
                 // Ignore cleanup errors
             }
