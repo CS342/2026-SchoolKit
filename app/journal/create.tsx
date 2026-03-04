@@ -8,12 +8,13 @@ import {
     TextInput,
     Platform,
     KeyboardAvoidingView,
+    Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useJournal } from "../../contexts/JournalContext";
+import { useJournal, MAX_NOTEBOOKS } from "../../contexts/JournalContext";
 import { COVERS, PAPERS } from "../../constants/journal";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
@@ -24,7 +25,7 @@ export default function CreateNotebookScreen() {
     const insets = useSafeAreaInsets();
     const theme = useTheme();
     const { colors, appStyles } = theme;
-    const { createNotebook } = useJournal();
+    const { createNotebook, notebooks } = useJournal();
 
     const [step, setStep] = useState<SetupStep>("cover");
     const [selectedCover, setSelectedCover] = useState(COVERS[0]);
@@ -33,7 +34,11 @@ export default function CreateNotebookScreen() {
 
     const handleCreate = () => {
         const finalTitle = title.trim() || "Untitled Notebook";
-        const id = createNotebook(finalTitle, selectedCover.id, selectedPaper.id);
+        const id = createNotebook(finalTitle.slice(0, 40), selectedCover.id, selectedPaper.id);
+        if (!id) {
+            Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
+            return;
+        }
         // Navigate replace so "back" from notebook goes to library
         router.replace(`/journal/${id}`);
     };
@@ -95,22 +100,24 @@ export default function CreateNotebookScreen() {
                     >
                         {paper.pattern === "lined" && (
                             <View style={styles.patternContainer}>
-                                {[1, 2, 3, 4, 5].map(i => (
+                                {Array.from({ length: 10 }).map((_, i) => (
                                     <View key={`line-${i}`} style={styles.horizontalLine} />
                                 ))}
                             </View>
                         )}
                         {paper.pattern === "grid" && (
-                            <View style={styles.patternContainer}>
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <View key={`gline-${i}`} style={styles.horizontalLine} />
-                                ))}
+                            <>
+                                <View style={styles.patternContainer}>
+                                    {Array.from({ length: 10 }).map((_, i) => (
+                                        <View key={`gline-${i}`} style={styles.horizontalLine} />
+                                    ))}
+                                </View>
                                 <View style={styles.gridVerticalContainer}>
-                                    {[1, 2, 3].map(i => (
+                                    {Array.from({ length: 6 }).map((_, i) => (
                                         <View key={`vline-${i}`} style={styles.verticalLine} />
                                     ))}
                                 </View>
-                            </View>
+                            </>
                         )}
 
                         {selectedPaper.id === paper.id && (
@@ -160,6 +167,7 @@ export default function CreateNotebookScreen() {
                     value={title}
                     onChangeText={setTitle}
                     autoFocus
+                    maxLength={40}
                 />
             </View>
 
@@ -229,10 +237,10 @@ const styles = StyleSheet.create({
     cardLabel: { position: "absolute", bottom: 20, fontSize: 14, fontWeight: "600", textAlign: "center", width: "100%" },
     selectedItem: { transform: [{ scale: 1.05 }] },
     checkmark: { position: "absolute", top: 12, right: 12, width: 24, height: 24, borderRadius: 12, justifyContent: "center", alignItems: "center" },
-    patternContainer: { flex: 1, width: "100%" },
-    horizontalLine: { height: 1, backgroundColor: "#E0E0E0", width: "100%", marginTop: 32 },
-    gridVerticalContainer: { ...StyleSheet.absoluteFillObject, flexDirection: "row", justifyContent: "space-around" },
-    verticalLine: { width: 1, height: "100%", backgroundColor: "#E0E0E0" },
+    patternContainer: { ...StyleSheet.absoluteFillObject, justifyContent: "space-evenly" },
+    horizontalLine: { height: 1, backgroundColor: "#C0C0C0", width: "100%" },
+    gridVerticalContainer: { ...StyleSheet.absoluteFillObject, flexDirection: "row", justifyContent: "space-evenly" },
+    verticalLine: { width: 1, height: "100%", backgroundColor: "#C0C0C0" },
     nextButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 16, borderRadius: 30, marginTop: 40, gap: 8 },
     nextButtonText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
     buttonRow: { flexDirection: "row", marginTop: 40 },

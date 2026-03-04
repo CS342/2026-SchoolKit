@@ -90,12 +90,12 @@ export default function CreateStoryScreen() {
     if (body !== initialState.body) return true;
     if (postAnonymously !== initialState.postAnonymously) return true;
     // Check arrays safely
-    const safeLookingFor = lookingFor || [];
-    const safeTargetAudiences = targetAudiences || [];
-    const safeStoryTags = storyTags || [];
-    const safeInitialLookingFor = initialState.lookingFor || [];
-    const safeInitialTargetAudiences = initialState.targetAudiences || [];
-    const safeInitialStoryTags = initialState.storyTags || [];
+    const safeLookingFor = Array.isArray(lookingFor) ? lookingFor : [];
+    const safeTargetAudiences = Array.isArray(targetAudiences) ? targetAudiences : [];
+    const safeStoryTags = Array.isArray(storyTags) ? storyTags : [];
+    const safeInitialLookingFor = Array.isArray(initialState.lookingFor) ? initialState.lookingFor : [];
+    const safeInitialTargetAudiences = Array.isArray(initialState.targetAudiences) ? initialState.targetAudiences : [];
+    const safeInitialStoryTags = Array.isArray(initialState.storyTags) ? initialState.storyTags : [];
 
     if (safeLookingFor.length !== safeInitialLookingFor.length || !safeLookingFor.every(v => safeInitialLookingFor.includes(v))) return true;
     if (safeTargetAudiences.length !== safeInitialTargetAudiences.length || !safeTargetAudiences.every(v => safeInitialTargetAudiences.includes(v))) return true;

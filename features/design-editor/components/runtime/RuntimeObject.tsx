@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Platform, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Polygon, Line as SvgLine, Defs, Marker, Path } from 'react-native-svg';
 import type { StaticDesignObject, ShadowConfig, GradientConfig } from '../../types/document';
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -211,6 +212,120 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       return (
         <View style={{ ...badgeStyle, backgroundColor: object.fill }}>
           <Text style={textStyle}>{object.text}</Text>
+        </View>
+      );
+    }
+
+    case 'star': {
+      const cx = object.width / 2;
+      const cy = object.height / 2;
+      const outerR = Math.min(object.width, object.height) / 2;
+      const innerR = outerR * (object.innerRadius ?? 0.5);
+      const numPoints = object.points ?? 5;
+      const pts: string[] = [];
+      for (let i = 0; i < numPoints * 2; i++) {
+        const angle = (Math.PI / numPoints) * i - Math.PI / 2;
+        const r = i % 2 === 0 ? outerR : innerR;
+        pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+      }
+      return (
+        <View
+          style={{
+            position: 'absolute',
+            left: object.x,
+            top: object.y,
+            width: object.width,
+            height: object.height,
+            opacity: object.opacity,
+            transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
+            ...getShadowStyle(object.shadow),
+          }}
+        >
+          <Svg width={object.width} height={object.height}>
+            <Polygon
+              points={pts.join(' ')}
+              fill={object.fill}
+              stroke={object.stroke || 'none'}
+              strokeWidth={object.strokeWidth || 0}
+            />
+          </Svg>
+        </View>
+      );
+    }
+
+    case 'triangle': {
+      const triPts = `${object.width / 2},0 ${object.width},${object.height} 0,${object.height}`;
+      return (
+        <View
+          style={{
+            position: 'absolute',
+            left: object.x,
+            top: object.y,
+            width: object.width,
+            height: object.height,
+            opacity: object.opacity,
+            transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
+            ...getShadowStyle(object.shadow),
+          }}
+        >
+          <Svg width={object.width} height={object.height}>
+            <Polygon
+              points={triPts}
+              fill={object.fill}
+              stroke={object.stroke || 'none'}
+              strokeWidth={object.strokeWidth || 0}
+            />
+          </Svg>
+        </View>
+      );
+    }
+
+    case 'arrow': {
+      const points = object.points ?? [0, 0, 100, 0];
+      const x1 = points[0], y1 = points[1], x2 = points[2], y2 = points[3];
+      const svgW = Math.max(Math.abs(x2 - x1), 1) + (object.pointerLength ?? 15) * 2;
+      const svgH = Math.max(Math.abs(y2 - y1), 1) + (object.pointerWidth ?? 12) * 2;
+      const padX = object.pointerLength ?? 15;
+      const padY = object.pointerWidth ?? 12;
+      const markerId = `arrow_${object.id || 'head'}`;
+      return (
+        <View
+          style={{
+            position: 'absolute',
+            left: object.x,
+            top: object.y,
+            width: svgW,
+            height: svgH,
+            opacity: object.opacity,
+            transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
+          }}
+        >
+          <Svg width={svgW} height={svgH}>
+            <Defs>
+              <Marker
+                id={markerId}
+                markerWidth={String(object.pointerLength ?? 15)}
+                markerHeight={String(object.pointerWidth ?? 12)}
+                refX={String(object.pointerLength ?? 15)}
+                refY={String((object.pointerWidth ?? 12) / 2)}
+                orient="auto"
+              >
+                <Path
+                  d={`M0,0 L${object.pointerLength ?? 15},${(object.pointerWidth ?? 12) / 2} L0,${object.pointerWidth ?? 12} Z`}
+                  fill={object.fill || object.stroke}
+                />
+              </Marker>
+            </Defs>
+            <SvgLine
+              x1={Math.min(x1, x2) === x1 ? padX : svgW - padX}
+              y1={Math.min(y1, y2) === y1 ? padY : svgH - padY}
+              x2={Math.min(x1, x2) === x1 ? svgW - padX : padX}
+              y2={Math.min(y1, y2) === y1 ? svgH - padY : padY}
+              stroke={object.stroke}
+              strokeWidth={object.strokeWidth || 2}
+              markerEnd={`url(#${markerId})`}
+            />
+          </Svg>
         </View>
       );
     }
