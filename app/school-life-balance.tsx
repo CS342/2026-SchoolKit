@@ -22,6 +22,7 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -308,6 +309,7 @@ function ExpandedCardModal({
     isLoadingAudio: boolean;
     onToggleSpeak: () => void;
 }) {
+    const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
@@ -380,7 +382,7 @@ function ExpandedCardModal({
 
                     {/* Back */}
                     <Animated.View style={[styles.expandedCardShadow, styles.expandedCardBackSide, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, height: cardHeight }]}>
-                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: "#FFFFFF", borderColor: color }]}>
+                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
                             <View style={styles.expandedCardInner}>
                                 <View style={styles.factHeader}>
                                     <View>
@@ -420,6 +422,7 @@ function ExpandedCardModal({
 
 // ─── Handout Modal ────────────────────────────────────────────────────────────
 function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: () => void }) {
+    const { isDark, colors } = useTheme();
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const backdropAnim = useRef(new Animated.Value(0)).current;
     const [internalVisible, setInternalVisible] = useState(false);
@@ -461,7 +464,7 @@ function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: 
                     <Animated.View style={[handoutStyles.backdrop, { opacity: backdropAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }) }]} />
                 </Pressable>
 
-                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }] }]}>
+                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}>
                     {/* Handle bar */}
                     <View style={handoutStyles.handleArea}>
                         <View style={handoutStyles.handle} />

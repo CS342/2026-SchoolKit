@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Modal, Pressable, TextInput, KeyboardAvoidingVi
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { AppTheme } from '../constants/theme';
 import { PrimaryButton } from './onboarding/PrimaryButton';
 
 interface ReportStoryModalProps {
@@ -21,6 +23,8 @@ const REPORT_REASONS = [
 
 export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModalProps) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
 
@@ -56,7 +60,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
           <View style={styles.header}>
             <Text style={styles.title}>Report Story</Text>
             <Pressable onPress={handleClose} hitSlop={10}>
-              <Ionicons name="close" size={24} color={COLORS.textLight} />
+              <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>
 
@@ -89,7 +93,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
               <TextInput
                 style={styles.textInput}
                 placeholder="Can you tell us more?"
-                placeholderTextColor={COLORS.textLight + '80'}
+                placeholderTextColor={colors.textLight + '80'}
                 value={details}
                 onChangeText={setDetails}
                 multiline
@@ -115,20 +119,25 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(c: AppTheme['colors'], isDark: boolean) {
+  return StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: COLORS.white,
+    backgroundColor: isDark ? c.backgroundLight : c.white,
     borderTopLeftRadius: RADII.cardLarge || 24,
     borderTopRightRadius: RADII.cardLarge || 24,
     paddingTop: 24,
     paddingHorizontal: 20,
     maxHeight: '80%',
-    ...SHADOWS.card,
+    shadowColor: isDark ? '#000' : '#2D2D44',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: isDark ? 0.3 : 0.04,
+    shadowRadius: 12,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
@@ -139,11 +148,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textDark,
+    color: c.textDark,
   },
   subtitle: {
     fontSize: 14,
-    color: COLORS.textLight,
+    color: c.textLight,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -160,61 +169,62 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: RADII.card,
-    backgroundColor: COLORS.backgroundLight,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    backgroundColor: isDark ? c.backgroundLight : c.appBackground,
+    borderWidth: 1.5,
+    borderColor: isDark ? c.borderCard : 'transparent',
   },
   optionSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '0D',
+    borderColor: c.primary,
+    backgroundColor: isDark ? c.primary + '15' : c.primary + '0D',
   },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: isDark ? c.borderCard : c.border,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: COLORS.primary,
+    borderColor: c.primary,
   },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: COLORS.primary,
+    backgroundColor: c.primary,
   },
   optionText: {
     fontSize: 15,
-    color: COLORS.textDark,
+    color: c.textDark,
     fontWeight: '500',
   },
   optionTextSelected: {
-    color: COLORS.primary,
+    color: c.primary,
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: COLORS.backgroundLight,
+    backgroundColor: isDark ? c.backgroundLight : c.appBackground,
     borderRadius: RADII.card,
     padding: 16,
     fontSize: 15,
-    color: COLORS.textDark,
+    color: c.textDark,
     minHeight: 100,
     marginTop: 4,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 1.5,
+    borderColor: isDark ? c.borderCard : c.border,
   },
   footer: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
+    borderTopColor: isDark ? c.borderCard : c.border,
   },
   submitBtn: {
     width: '100%',
   }
 });
+}

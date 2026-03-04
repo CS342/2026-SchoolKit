@@ -90,7 +90,6 @@ export default function BookmarksScreen() {
         <View style={styles.headerTitleRow}>
           <Text style={[appStyles.tabHeaderTitle, { marginBottom: 0 }]}>Library</Text>
         </View>
-        <Text style={appStyles.tabHeaderSubtitle}>Your saved resources and offline stories</Text>
 
         <View style={styles.tabsContainer}>
           <View style={styles.tabBackground}>

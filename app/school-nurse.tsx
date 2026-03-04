@@ -37,6 +37,7 @@ import {
   BORDERS,
   ANIMATION,
 } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -210,6 +211,7 @@ function BottomSheet({
   section: SectionData | null;
   onClose: () => void;
 }) {
+  const { isDark, colors } = useTheme();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
@@ -332,7 +334,7 @@ function BottomSheet({
 
         {/* Sheet */}
         <Animated.View
-          style={[sheetStyles.sheet, { transform: [{ translateY }] }]}
+          style={[sheetStyles.sheet, { transform: [{ translateY }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}
         >
           {/* Drag handle */}
           <View {...panResponder.panHandlers} style={sheetStyles.handleArea}>

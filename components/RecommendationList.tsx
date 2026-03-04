@@ -2,9 +2,12 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStories, Story } from '../contexts/StoriesContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { ALL_RESOURCES, Resource } from '../constants/resources';
 import { COLORS, TYPOGRAPHY, SHADOWS, RADII, withOpacity } from '../constants/onboarding-theme';
+import { AppTheme } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface RecommendationListProps {
   currentId: string;
@@ -21,6 +24,9 @@ const CARD_WIDTH = width * 0.75;
 export function RecommendationList({ currentId, currentTags }: RecommendationListProps) {
   const router = useRouter();
   const { stories } = useStories();
+  const { colors, isDark } = useTheme();
+
+  const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const recommendations = useMemo(() => {
     const lowercaseCurrentTags = (currentTags || []).map(t => t.toLowerCase());
@@ -77,6 +83,12 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[colors.primary, '#E150F4', '#FF7A9F', '#FFAE73', '#FFE770']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientBar}
+      />
       <Text style={styles.headerTitle}>You may also find helpful:</Text>
       <ScrollView 
         horizontal 
@@ -129,18 +141,26 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(c: AppTheme['colors'], isDark: boolean) {
+  return StyleSheet.create({
   container: {
     marginVertical: 24,
-    borderTopWidth: 2,
-    borderTopColor: COLORS.primary,
-    backgroundColor: '#F8F8FA',
+    backgroundColor: isDark ? c.backgroundLight : '#F8F8FA',
     paddingTop: 24,
     paddingBottom: 24,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  gradientBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
   },
   headerTitle: {
     ...TYPOGRAPHY.h3,
-    color: '#1A1A2E',
+    color: c.textDark,
     marginBottom: 16,
     paddingHorizontal: 20,
     fontSize: 18,
@@ -151,12 +171,16 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.card,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    ...SHADOWS.card,
+    borderWidth: 1.5,
+    borderColor: isDark ? c.borderCard : '#E5E5EA',
+    shadowColor: isDark ? '#000' : '#2D2D44',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.3 : 0.03,
+    shadowRadius: 10,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -169,20 +193,20 @@ const styles = StyleSheet.create({
   cardType: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: c.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   cardTitle: {
     ...TYPOGRAPHY.body,
     fontSize: 16,
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 6,
     lineHeight: 22,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: COLORS.textLight,
+    color: c.textLight,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -191,7 +215,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
-    color: COLORS.textLight,
+    color: c.textLight,
     fontWeight: '500',
   },
   badge: {
@@ -206,3 +230,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+}

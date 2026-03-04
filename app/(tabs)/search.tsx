@@ -55,7 +55,14 @@ function AnimatedCircle({
   shape,
   index,
 }: {
-  shape: { size: number; color: string; top?: number; bottom?: number; left?: number; right?: number };
+  shape: {
+    size: number;
+    color: string;
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+  };
   index: number;
 }) {
   const opacity = useSharedValue(0);
@@ -111,10 +118,7 @@ function AnimatedSection({
 
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
-    translateY.value = withDelay(
-      delay,
-      withSpring(0, ANIMATION.springSmooth)
-    );
+    translateY.value = withDelay(delay, withSpring(0, ANIMATION.springSmooth));
   }, []);
 
   const style = useAnimatedStyle(() => ({
@@ -147,10 +151,7 @@ export default function SearchScreen() {
       100,
       withSpring(1, ANIMATION.springSmooth)
     );
-    searchBarOpacity.value = withDelay(
-      100,
-      withTiming(1, { duration: 350 })
-    );
+    searchBarOpacity.value = withDelay(100, withTiming(1, { duration: 350 }));
   }, []);
 
   const headerStyle = useAnimatedStyle(() => ({
@@ -177,10 +178,10 @@ export default function SearchScreen() {
 
   const addRecentSearch = async (query: string) => {
     if (!query.trim()) return;
-    const updated = [
-      query,
-      ...recentSearches.filter((s) => s !== query),
-    ].slice(0, MAX_RECENT_SEARCHES);
+    const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(
+      0,
+      MAX_RECENT_SEARCHES
+    );
     setRecentSearches(updated);
     await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   };
@@ -227,14 +228,8 @@ export default function SearchScreen() {
 
   useEffect(() => {
     if (filteredResources.length === 0) {
-      emptyOpacity.value = withDelay(
-        200,
-        withTiming(1, { duration: 400 })
-      );
-      emptyScale.value = withDelay(
-        200,
-        withSpring(1, ANIMATION.springSmooth)
-      );
+      emptyOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
+      emptyScale.value = withDelay(200, withSpring(1, ANIMATION.springSmooth));
     } else {
       emptyOpacity.value = 0;
       emptyScale.value = 0.9;
@@ -261,16 +256,22 @@ export default function SearchScreen() {
   return (
     <View style={styles.container}>
       {/* Decorative background shapes */}
-      {((decorativeShapes as any).search || []).map((shape: any, index: number) => (
-        <AnimatedCircle key={index} shape={shape} index={index} />
-      ))}
+      {((decorativeShapes as any).search || []).map(
+        (shape: any, index: number) => (
+          <AnimatedCircle key={index} shape={shape} index={index} />
+        )
+      )}
 
       {/* Header */}
-      <Animated.View style={[appStyles.tabHeader, shadows.header, { paddingTop: insets.top + 10 }, headerStyle]}>
+      <Animated.View
+        style={[
+          appStyles.tabHeader,
+          shadows.header,
+          { paddingTop: insets.top + 10 },
+          headerStyle,
+        ]}
+      >
         <Text style={appStyles.tabHeaderTitle}>Search</Text>
-        <Text style={appStyles.tabHeaderSubtitle}>
-          Find support and information
-        </Text>
       </Animated.View>
 
       <ScrollView
@@ -401,7 +402,7 @@ export default function SearchScreen() {
                         [...GRADIENTS.primaryButton] as [
                           string,
                           string,
-                          ...string[],
+                          ...string[]
                         ]
                       }
                       start={{ x: 0, y: 0 }}
@@ -452,11 +453,7 @@ export default function SearchScreen() {
               icon={resource.icon}
               color={resource.color}
               onPress={() =>
-                handleResourcePress(
-                  resource.id,
-                  resource.title,
-                  resource.route
-                )
+                handleResourcePress(resource.id, resource.title, resource.route)
               }
               index={index}
               showDownloadIndicator
@@ -471,11 +468,7 @@ export default function SearchScreen() {
           <Animated.View style={[styles.emptyStateCard, emptyStateEntrance]}>
             <LinearGradient
               colors={
-                [...GRADIENTS.primaryButton] as [
-                  string,
-                  string,
-                  ...string[],
-                ]
+                [...GRADIENTS.primaryButton] as [string, string, ...string[]]
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -483,9 +476,7 @@ export default function SearchScreen() {
             >
               <Ionicons
                 name={
-                  searchQuery.length > 0
-                    ? "search-outline"
-                    : "compass-outline"
+                  searchQuery.length > 0 ? "search-outline" : "compass-outline"
                 }
                 size={SIZING.iconPage}
                 color={colors.white}

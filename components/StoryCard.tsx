@@ -13,7 +13,9 @@ import { useRouter } from 'expo-router';
 import { Story, useStories } from '../contexts/StoriesContext';
 import { UserRole } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { COLORS, ANIMATION, SHADOWS } from '../constants/onboarding-theme';
+import { AppTheme } from '../constants/theme';
 import { CommunityNormsModal } from './CommunityNormsModal';
 
 interface StoryCardProps {
@@ -46,6 +48,57 @@ function getRoleLabel(role: UserRole | null): string {
   }
 }
 
+// Exported so story-detail and create-story can share the same colors.
+// Each tag has its own unique hue cycling through the full color wheel.
+export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
+  // School Stage (Peaches -> Oranges)
+  'Back to School':           { bg: '#FFF1F2', text: '#E11D48' },  // rose-50, rose-600
+  'In School Now':            { bg: '#FFF7ED', text: '#C2410C' },  // orange-50, orange-700
+  'In School':                { bg: '#FFF7ED', text: '#C2410C' },  // orange-50, orange-700
+  'Taking a Break':           { bg: '#FFEDD5', text: '#9A3412' },  // orange-100, orange-800
+  'Home / Hospital Learning': { bg: '#FED7AA', text: '#7C2D12' },  // orange-200, orange-900
+
+  // Treatment Stage - Distinct (Teals / Slate)
+  'Before Treatment':         { bg: '#F1F5F9', text: '#334155' },  // slate
+  'During Treatment':         { bg: '#CFFAFE', text: '#0E7490' },  // cyan
+  'After Treatment':          { bg: '#CCFBF1', text: '#0F766E' },  // teal
+
+  // Academics (Yellows / Greens)
+  'Catching Up':        { bg: '#FEF3C7', text: '#B45309' },  // amber
+  'School Support':     { bg: '#FEF9C3', text: '#A16207' },  // yellow
+  'Attendance':         { bg: '#ECFCCB', text: '#4D7C0F' },  // lime
+  'Activities':         { bg: '#D9F99D', text: '#3F6212' },  // lime-deep
+  'Workload':           { bg: '#D1FAE5', text: '#047857' },  // emerald
+  'Test Stress':        { bg: '#A7F3D0', text: '#065F46' },  // emerald-deep
+  'School Environment': { bg: '#DCFCE7', text: '#15803D' },  // green
+  'Teachers & Staff':   { bg: '#BBF7D0', text: '#166534' },  // green-deep
+
+  // Social & Emotional (Blues)
+  'Friendships':         { bg: '#E0F2FE', text: '#0369A1' },  // sky
+  'Relationships':       { bg: '#BAE6FD', text: '#075985' },  // sky-deep
+  'Mental Health':       { bg: '#DBEAFE', text: '#1D4ED8' },  // blue
+  'Confidence':          { bg: '#BFDBFE', text: '#1E40AF' },  // blue-deep
+  'Feeling Different':   { bg: '#E0E7FF', text: '#4338CA' },  // indigo
+  'Emotional Wellbeing': { bg: '#C7D2FE', text: '#3730A3' },  // indigo-deep
+
+  // Symptoms (Purples)
+  'Fatigue':             { bg: '#EDE9FE', text: '#6D28D9' },  // violet
+  'Anxiety':             { bg: '#DDD6FE', text: '#5B21B6' },  // violet-deep
+  'Depression':          { bg: '#F5F3FF', text: '#4C1D95' },  // purple-deep
+  'Sleep':               { bg: '#F3E8FF', text: '#7E22CE' },  // purple
+
+  // Practical (Pinks / Fuchsia)
+  'Financial Support': { bg: '#FAE8FF', text: '#A21CAF' },  // fuchsia
+  'Logistics':         { bg: '#FCE7F3', text: '#BE185D' },  // pink
+  'College Planning':  { bg: '#FBCFE8', text: '#9D174D' },  // pink-deep
+
+  // Others
+  'Question':          { bg: '#FEF08A', text: '#854D0E' },  // yellow-deep
+  'My Experience':     { bg: '#E9D5FF', text: '#7E22CE' },  // purple
+};
+
+export const DEFAULT_TAG_COLOR = { bg: '#EEEEF6', text: '#5C5C8A' };
+
 function getRelativeTime(dateString: string): string {
   const now = Date.now();
   const date = new Date(dateString).getTime();
@@ -71,6 +124,7 @@ function getRelativeTime(dateString: string): string {
 export function StoryCard({ story, index, allowModeration = false, showAuthorStatus = false, showRejectedNorms = false }: StoryCardProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, dismissReport, isStoryLiked, toggleLike } = useStories();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(20);
@@ -78,6 +132,8 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
   const [showRejectModal, setShowRejectModal] = React.useState(false);
+
+  const styles = React.useMemo(() => makeCardStyles(colors, isDark), [colors, isDark]);
 
   const roleLabel = getRoleLabel(story.author_role);
   const bookmarked = isStoryBookmarked(story.id);
@@ -148,13 +204,13 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           </View>
         )}
         {story.status === 'approved' && allowModeration && story.report_count > 0 && (
-          <View style={[styles.modBanner, { backgroundColor: COLORS.error + '15', alignSelf: 'stretch' }]}>
-            <Text style={[styles.modBannerText, { color: COLORS.error }]}>
+          <View style={[styles.modBanner, { backgroundColor: colors.error + '15', alignSelf: 'stretch' }]}>
+            <Text style={[styles.modBannerText, { color: colors.error }]}>
               Reported {story.report_count} time(s)
             </Text>
             {story.reports && story.reports.length > 0 && (
               <View style={styles.reportsList}>
-                {story.reports.map((report, idx) => (
+                {story.reports.map((report: any, idx: number) => (
                   <View key={`report-${idx}`} style={styles.reportItem}>
                     <Text style={styles.reportReason}>• {report.reason}</Text>
                     {report.details ? (
@@ -170,13 +226,13 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {/* Author status banner (In Review / Rejected) */}
         {showAuthorStatus && story.status === 'pending' && (
           <View style={styles.authorPendingBanner}>
-            <Ionicons name="time" size={12} color="#F57C00" style={{ marginRight: 4 }} />
+            <Ionicons name="time" size={12} color={isDark ? '#FCA5A5' : '#F57C00'} style={{ marginRight: 4 }} />
             <Text style={styles.authorPendingText}>In Review</Text>
           </View>
         )}
         {showAuthorStatus && story.status === 'rejected' && (
           <View style={styles.authorRejectedBanner}>
-            <Ionicons name="alert-circle" size={12} color={COLORS.error} style={{ marginRight: 4 }} />
+            <Ionicons name="alert-circle" size={12} color={colors.error} style={{ marginRight: 4 }} />
             <Text style={styles.authorRejectedText}>Action Required</Text>
           </View>
         )}
@@ -184,7 +240,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {/* Your Story Badge */}
         {isMyStory && story.status === 'approved' && !showAuthorStatus && (
           <View style={styles.myStoryIcon}>
-            <Ionicons name="person" size={14} color={COLORS.primary} />
+            <Ionicons name="person" size={14} color={isDark ? '#E9D5FF' : colors.primary} />
           </View>
         )}
 
@@ -202,170 +258,144 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {/* Content Tags */}
         {story.story_tags && story.story_tags.length > 0 && (
           <View style={styles.tagsContainer}>
-            {story.story_tags.map(tag => (
-              <View key={tag} style={styles.tagBadge}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
+            {story.story_tags.map(tag => {
+              const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+              return (
+                <View key={tag} style={[styles.tagBadge, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
+                  <Text style={[styles.tagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
         {/* Rejected Norms List */}
         {showRejectedNorms && story.status === 'rejected' && story.rejected_norms && story.rejected_norms.length > 0 && (
           <View style={styles.normsContainer}>
-            <Text style={styles.normsLabel}>Broken Community Norms:</Text>
+            <Text style={styles.normsLabel}>Please edit your story to follow these norms:</Text>
             {story.rejected_norms.map((norm, idx) => (
               <View key={idx} style={styles.normItem}>
-                <Ionicons name="close-circle" size={16} color={COLORS.error} />
+                <Ionicons name="close-circle" size={16} color={colors.error} />
                 <Text style={styles.normText}>{norm}</Text>
               </View>
             ))}
           </View>
         )}
 
-        {/* Action row */}
-        {!allowModeration && (
-          <View style={styles.actionRow}>
-            <View style={styles.actionLeft}>
-              <TouchableOpacity
-                onPress={handleLike}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                activeOpacity={0.7}
-                style={styles.actionItem}
-              >
-                <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
-                  <Ionicons
-                    name={liked ? 'heart' : 'heart-outline'}
-                    size={20}
-                    color={liked ? '#E53935' : COLORS.textLight}
-                  />
-                </RNAnimated.View>
-                <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
-                  {story.like_count}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.actionItem}>
-                <Ionicons name="chatbubble-outline" size={20} color={COLORS.textLight} />
-                <Text style={styles.actionText}>
-                  {story.comment_count}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              onPress={handleBookmark}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              activeOpacity={0.7}
-            >
-              <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
-                <Ionicons
-                  name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-                  size={22}
-                  color={bookmarked ? COLORS.primary : COLORS.textLight}
-                />
+        {/* Bottom Action Row (Like & Commment) — Only if approved */}
+        {story.status === 'approved' && (
+        <View style={styles.actionRow}>
+          <View style={styles.actionLeft}>
+            <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7}>
+              <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+                <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? '#E53935' : colors.textLight} />
               </RNAnimated.View>
+              <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
+                {story.likes_count || 0}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/story-detail?id=${story.id}#comments` as any)} hitSlop={10}>
+              <Ionicons name="chatbubble-outline" size={18} color={colors.textLight} style={{ transform: [{ scaleX: -1 }] }} />
+              <Text style={styles.actionText}>Discuss</Text>
             </TouchableOpacity>
           </View>
-        )}
+          
+          <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7}>
+            <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+              <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={19} color={bookmarked ? colors.primary : colors.textLight} />
+            </RNAnimated.View>
+          </TouchableOpacity>
+        </View>
+      )}
 
-        {/* Moderation actions */}
-        {allowModeration && (story.status === 'pending' || (story.status === 'approved' && story.report_count > 0)) && (
-          <View style={styles.modActions}>
-            <Pressable
-              style={[styles.modButton, styles.modReject]}
-              onPress={() => setShowRejectModal(true)}
-            >
-              <Text style={[styles.modButtonText, { color: COLORS.error }]}>
-                {story.status === 'approved' ? 'Revoke' : 'Reject'}
-              </Text>
-            </Pressable>
-            {story.status === 'pending' && (
-              <Pressable
-                style={[styles.modButton, styles.modApprove]}
-                onPress={() => approveStory(story.id)}
-              >
-                <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Approve</Text>
-              </Pressable>
-            )}
-            {story.status === 'approved' && story.report_count > 0 && (
-              <Pressable
-                style={[styles.modButton, styles.modApprove]}
-                onPress={() => dismissReport(story.id)}
-              >
-                <Text style={[styles.modButtonText, { color: COLORS.successText }]}>Dismiss Report</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
-      </Animated.View>
+      {/* Internal Mod Controls */}
+      {allowModeration && story.status === 'pending' && (
+        <View style={styles.modActions}>
+          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); setShowRejectModal(true); }}>
+            <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+            <Text style={styles.modRejectText}>Reject</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id); }}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={colors.white} />
+            <Text style={styles.modApproveText}>Approve</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {allowModeration && story.status === 'approved' && story.report_count > 0 && (
+        <View style={styles.modActions}>
+          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); /* Reject completely here or unpublish */ rejectStory(story.id, []); }}>
+            <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+            <Text style={styles.modRejectText}>Take Down</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.modButton, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={(e) => { e.stopPropagation(); dismissReport(story.id); }}>
+            <Ionicons name="checkmark-done-outline" size={16} color={colors.textLight} />
+            <Text style={[styles.actionText, { color: colors.textLight }]}>Dismiss Flags</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-      <CommunityNormsModal
-        visible={showRejectModal}
-        onClose={() => setShowRejectModal(false)}
-        mode="select"
-        onAgree={(selectedNorms) => {
-          rejectStory(story.id, selectedNorms);
-          setShowRejectModal(false);
-        }}
-      />
+      {showRejectModal && (
+        <CommunityNormsModal visible={true} onClose={() => setShowRejectModal(false)} onAgree={(norms) => { rejectStory(story.id, norms); setShowRejectModal(false); }} mode="select" />
+      )}
+    </Animated.View>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+function makeCardStyles(c: AppTheme['colors'], isDark: boolean) {
+  return StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 16,
-    marginBottom: 12,
-    borderRadius: 16,
-    ...SHADOWS.card,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  myStoryCard: {
-    borderColor: COLORS.primary + '80',
+    backgroundColor: isDark ? c.backgroundLight : c.white,
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 16,
     borderWidth: 1.5,
-    shadowColor: COLORS.primary,
+    borderColor: isDark ? c.borderCard : '#E8E8F0',
+    shadowColor: isDark ? '#000' : '#2D2D44',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: isDark ? 0.3 : 0.04,
+    shadowRadius: 12,
     elevation: 4,
   },
+  myStoryCard: {
+    backgroundColor: isDark ? '#322447' : '#F4F0FC',
+  },
   modBanner: {
-    backgroundColor: COLORS.primary + '15',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 4,
-    marginBottom: 10,
+    backgroundColor: isDark ? '#3A2000' : '#FFF3E0',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     alignSelf: 'flex-start',
+    marginBottom: 12,
   },
   modBannerText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontWeight: '700',
+    color: isDark ? '#FCA5A5' : '#E65100',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   reportsList: {
     marginTop: 8,
     gap: 6,
   },
   reportItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
     padding: 8,
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.error + '25',
+    borderColor: c.error + '25',
   },
   reportReason: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.error,
+    color: c.error,
   },
   reportDetails: {
     fontSize: 12,
-    color: COLORS.textDark,
+    color: c.textDark,
     marginTop: 2,
     fontStyle: 'italic',
     paddingLeft: 8,
@@ -373,7 +403,7 @@ const styles = StyleSheet.create({
   authorPendingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF8E1',
+    backgroundColor: isDark ? '#3A2000' : '#FFF8E1',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 100,
@@ -383,14 +413,14 @@ const styles = StyleSheet.create({
   authorPendingText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#F57C00',
+    color: isDark ? '#FCA5A5' : '#F57C00',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   authorRejectedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.error + '15',
+    backgroundColor: c.error + '15',
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 100,
@@ -400,7 +430,7 @@ const styles = StyleSheet.create({
   authorRejectedText: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.error,
+    color: c.error,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -408,20 +438,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 14,
     right: 14,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: isDark ? c.primary + '30' : c.primary + '15',
     padding: 6,
     borderRadius: 100,
   },
   meta: {
     fontSize: 12,
-    color: COLORS.textLight,
+    color: c.textLight,
     fontWeight: '400',
     marginBottom: 7,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textDark,
+    color: c.textDark,
     lineHeight: 24,
     marginBottom: 6,
     letterSpacing: -0.2,
@@ -429,7 +459,7 @@ const styles = StyleSheet.create({
   bodyPreview: {
       fontSize: 14,
       fontWeight: '400',
-      color: '#555',
+      color: c.textMuted,
       lineHeight: 21,
       marginBottom: 14,
     },
@@ -440,32 +470,26 @@ const styles = StyleSheet.create({
       marginBottom: 14,
     },
     tagBadge: {
-      backgroundColor: COLORS.appBackground,
-      paddingHorizontal: 8,
+      paddingHorizontal: 9,
       paddingVertical: 4,
-      borderRadius: 6,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: '#E5E5EA',
+      borderRadius: 100,
     },
     tagText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '600',
-      color: COLORS.textMuted,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     normsContainer: {
-    backgroundColor: COLORS.error + '10',
+    backgroundColor: c.error + '10',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.error + '30',
+    borderColor: c.error + '30',
   },
   normsLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.error,
+    color: c.error,
     marginBottom: 8,
   },
   normItem: {
@@ -477,7 +501,7 @@ const styles = StyleSheet.create({
   normText: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.textDark,
+    color: c.textDark,
     lineHeight: 20,
   },
   actionRow: {
@@ -486,7 +510,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: isDark ? c.borderCard : '#E5E5EA',
   },
   actionLeft: {
     flexDirection: 'row',
@@ -501,7 +525,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 13,
     fontWeight: '500',
-    color: COLORS.textLight,
+    color: c.textLight,
   },
   actionTextLiked: {
     color: '#E53935',
@@ -512,7 +536,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: isDark ? c.borderCard : '#E5E5EA',
   },
   modButton: {
     flex: 1,
@@ -522,15 +546,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   modReject: {
-    backgroundColor: COLORS.error + '10',
-    borderColor: COLORS.error + '30',
+    borderColor: c.error + '30',
+    backgroundColor: c.error + '10',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  modRejectText: {
+    color: c.error,
+    fontWeight: '600',
+    fontSize: 13,
   },
   modApprove: {
-    backgroundColor: COLORS.primary + '10',
-    borderColor: COLORS.primary + '30',
+    borderColor: c.primary,
+    backgroundColor: c.primary,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
   },
-  modButtonText: {
-    fontSize: 14,
+  modApproveText: {
+    color: '#FFF',
     fontWeight: '600',
+    fontSize: 13,
   },
 });
+}

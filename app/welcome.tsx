@@ -87,7 +87,6 @@ export default function WelcomeScreen() {
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={[iconStyle, styles.logoContainer]}>
-                {/* Smooth layered glow — 50 circles fading outward */}
                 {Array.from({ length: 40 }, (_, i) => {
                   const size = 110 + i * 3.5;
                   const opacity = 0.5 - i * 0.012;
@@ -114,7 +113,8 @@ export default function WelcomeScreen() {
 
               <Animated.Text style={[styles.tagline, taglineStyle]}>
                 Support for every school journey
-              </Animated.Text>            </View>
+              </Animated.Text>
+            </View>
           </View>
 
           <Animated.View style={[SHARED_STYLES.buttonContainer, buttonAnimStyle]}>
