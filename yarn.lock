@@ -3503,10 +3503,10 @@ expo-asset@~12.0.12:
     "@expo/image-utils" "^0.8.8"
     expo-constants "~18.0.12"
 
-expo-audio@^55.0.8:
-  version "55.0.8"
-  resolved "https://registry.npmjs.org/expo-audio/-/expo-audio-55.0.8.tgz"
-  integrity sha512-X61pQSikE2rsP2ZTMFUMThOmgGyYEHcmZpGVMrKJgcYtRCFKuctB/z69dFQPoumL+zTz8qlBoGohjkHVvA9P8A==
+expo-audio@~1.1.1:
+  version "1.1.1"
+  resolved "https://registry.npmjs.org/expo-audio/-/expo-audio-1.1.1.tgz"
+  integrity sha512-CPCpJ+0AEHdzWROc0f00Zh6e+irLSl2ALos/LPvxEeIcJw1APfBa4DuHPkL4CQCWsVe7EnUjFpdwpqsEUWcP0g==
 
 expo-av@~16.0.8:
   version "16.0.8"
