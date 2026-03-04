@@ -197,11 +197,14 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
         rotation: Math.round(node.rotation() * 10) / 10,
       } as Partial<DesignObject>);
     } else {
+      // Use object.width/height from state instead of node.width()/height()
+      // because some Konva shapes (e.g. Line used for triangles, Star) don't
+      // report width/height via node.width() — they return 0.
       updateObject(object.id, {
         x: newX,
         y: newY,
-        width: Math.max(5, Math.round(node.width() * scaleX)),
-        height: Math.max(5, Math.round(node.height() * scaleY)),
+        width: Math.max(5, Math.round(object.width * scaleX)),
+        height: Math.max(5, Math.round(object.height * scaleY)),
         rotation: Math.round(node.rotation() * 10) / 10,
       });
     }

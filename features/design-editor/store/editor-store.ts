@@ -92,6 +92,8 @@ interface EditorState {
   addChildObject: (obj: StaticDesignObject) => void;
   updateChildObject: (childId: string, changes: Partial<StaticDesignObject>) => void;
   deleteChildObjects: (childIds: string[]) => void;
+  addGroup: (componentId: string, group: { role: string; label: string }, children: StaticDesignObject[]) => void;
+  removeGroup: (componentId: string, groupRole: string) => void;
   setPreviewMode: (on: boolean) => void;
   getEditingComponent: () => InteractiveComponentObject | null;
 }
@@ -475,6 +477,41 @@ export const useEditorStore = create<EditorState>()(
             state.selectedIds = state.selectedIds.filter(
               (id) => !childIds.includes(id),
             );
+            state.isDirty = true;
+          }),
+        ),
+
+      addGroup: (componentId, group, children) =>
+        set(
+          produce((state: EditorState) => {
+            const comp = state.objects.find((o) => o.id === componentId);
+            if (!comp || comp.type !== 'interactive') return;
+            comp.children.push(...children);
+            comp.childIds.push(...children.map((c) => c.id));
+            comp.groups.push({
+              role: group.role,
+              label: group.label,
+              objectIds: children.map((c) => c.id),
+            });
+            state.isDirty = true;
+          }),
+        ),
+
+      removeGroup: (componentId, groupRole) =>
+        set(
+          produce((state: EditorState) => {
+            const comp = state.objects.find((o) => o.id === componentId);
+            if (!comp || comp.type !== 'interactive') return;
+            const group = comp.groups.find((g) => g.role === groupRole);
+            if (!group) return;
+            const idsToRemove = new Set(group.objectIds);
+            comp.children = comp.children.filter((c) => !idsToRemove.has(c.id));
+            comp.childIds = comp.childIds.filter((id) => !idsToRemove.has(id));
+            comp.groups = comp.groups.filter((g) => g.role !== groupRole);
+            if (state.activeGroupRole === groupRole && comp.groups.length > 0) {
+              state.activeGroupRole = comp.groups[0].role;
+            }
+            state.selectedIds = state.selectedIds.filter((id) => !idsToRemove.has(id));
             state.isDirty = true;
           }),
         ),

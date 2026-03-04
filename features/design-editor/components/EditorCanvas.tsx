@@ -559,8 +559,8 @@ function EditableChildObject({
       updateChildObject(object.id, {
         x: newX,
         y: newY,
-        width: Math.max(5, Math.round(node.width() * scaleX)),
-        height: Math.max(5, Math.round(node.height() * scaleY)),
+        width: Math.max(5, Math.round(object.width * scaleX)),
+        height: Math.max(5, Math.round(object.height * scaleY)),
         rotation: Math.round(node.rotation() * 10) / 10,
       });
     }

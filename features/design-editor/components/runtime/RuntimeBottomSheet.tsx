@@ -1,23 +1,28 @@
 import React, { useRef, useState } from 'react';
-import { View, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Animated, Text } from 'react-native';
 import type { InteractiveComponentObject, BottomSheetConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
+import { COLORS, SHADOWS } from '../../../../constants/onboarding-theme';
 
 export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObject }) {
   const config = object.interactionConfig as BottomSheetConfig;
-  const [isOpen, setIsOpen] = useState(false);
+  const [openSheetIndex, setOpenSheetIndex] = useState<number | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
   const triggerGroup = object.groups.find((g) => g.role === 'trigger');
-  const contentGroup = object.groups.find((g) => g.role === 'content');
+  const contentGroups = object.groups
+    .filter((g) => g.role.startsWith('content'))
+    .sort((a, b) => a.role.localeCompare(b.role));
+
   const triggerChildren = object.children.filter((c) => triggerGroup?.objectIds.includes(c.id));
-  const contentChildren = object.children.filter((c) => contentGroup?.objectIds.includes(c.id));
 
   const sheetHeight = (object.height * config.sheetHeightPercent) / 100;
 
-  const open = () => {
-    setIsOpen(true);
+  const openSheet = (index: number) => {
+    setOpenSheetIndex(index);
+    slideAnim.setValue(0);
+    backdropAnim.setValue(0);
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: 1,
@@ -44,13 +49,39 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
         duration: config.slideDuration,
         useNativeDriver: true,
       }),
-    ]).start(() => setIsOpen(false));
+    ]).start(() => setOpenSheetIndex(null));
+  };
+
+  const goToNextSheet = () => {
+    if (openSheetIndex !== null && openSheetIndex < contentGroups.length - 1) {
+      // Animate out then in for the next sheet
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: config.slideDuration / 2,
+        useNativeDriver: true,
+      }).start(() => {
+        setOpenSheetIndex(openSheetIndex + 1);
+        slideAnim.setValue(0);
+        Animated.timing(slideAnim, {
+          toValue: 1,
+          duration: config.slideDuration / 2,
+          useNativeDriver: true,
+        }).start();
+      });
+    }
   };
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [sheetHeight, 0],
   });
+
+  const isOpen = openSheetIndex !== null;
+  const activeContentGroup = isOpen ? contentGroups[openSheetIndex] : null;
+  const activeContentChildren = activeContentGroup
+    ? object.children.filter((c) => activeContentGroup.objectIds.includes(c.id))
+    : [];
+  const hasNextSheet = isOpen && openSheetIndex < contentGroups.length - 1;
 
   return (
     <View
@@ -64,7 +95,7 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
       }}
     >
       {/* Trigger */}
-      <TouchableOpacity activeOpacity={0.8} onPress={open} style={{ flex: 1 }}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => openSheet(0)} style={{ flex: 1 }}>
         <View style={{ position: 'relative', width: object.width, height: object.height }}>
           {triggerChildren.map((child) => (
             <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
@@ -106,11 +137,72 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
             width: object.width,
             height: sheetHeight,
             transform: [{ translateY }],
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            backgroundColor: COLORS.white,
+            ...SHADOWS.cardSelected,
+            overflow: 'hidden',
           }}
         >
-          {contentChildren.map((child) => (
+          {/* Drag handle */}
+          <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: COLORS.borderCard,
+              }}
+            />
+          </View>
+
+          {/* Sheet page indicator for stacked sheets */}
+          {contentGroups.length > 1 && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 4,
+                marginBottom: 8,
+              }}
+            >
+              {contentGroups.map((_, i) => (
+                <View
+                  key={i}
+                  style={{
+                    width: i === openSheetIndex ? 16 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: i === openSheetIndex ? '#7B68EE' : '#E5E7EB',
+                  }}
+                />
+              ))}
+            </View>
+          )}
+
+          {activeContentChildren.map((child) => (
             <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
           ))}
+
+          {/* Next sheet button */}
+          {hasNextSheet && (
+            <TouchableOpacity
+              onPress={goToNextSheet}
+              style={{
+                position: 'absolute',
+                bottom: 16,
+                right: 16,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                backgroundColor: '#7B68EE',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+                Next
+              </Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       )}
     </View>

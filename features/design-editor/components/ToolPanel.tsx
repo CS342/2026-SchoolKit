@@ -317,17 +317,16 @@ function InteractiveFlyout({
 }) {
   const addInteractiveComponent = useEditorStore((s) => s.addInteractiveComponent);
   const canvas = useEditorStore((s) => s.canvas);
-  const cx = canvas.width / 2;
   const cy = canvas.height / 2;
-
+  const cw = canvas.width;
   const creators: Record<string, () => void> = {
-    'flip-card': () => addInteractiveComponent(createFlipCard(cx, cy)),
-    'bottom-sheet': () => addInteractiveComponent(createBottomSheet(cx, cy)),
-    'expandable': () => addInteractiveComponent(createExpandable(cx, cy)),
-    'entrance': () => addInteractiveComponent(createEntrance(cx, cy)),
-    'carousel': () => addInteractiveComponent(createCarousel(cx, cy)),
-    'tabs': () => addInteractiveComponent(createTabs(cx, cy)),
-    'quiz': () => addInteractiveComponent(createQuiz(cx, cy)),
+    'flip-card': () => addInteractiveComponent(createFlipCard(cy, cw)),
+    'bottom-sheet': () => addInteractiveComponent(createBottomSheet(cy, cw)),
+    'expandable': () => addInteractiveComponent(createExpandable(cy, cw)),
+    'entrance': () => addInteractiveComponent(createEntrance(cy, cw)),
+    'carousel': () => addInteractiveComponent(createCarousel(cy, cw)),
+    'tabs': () => addInteractiveComponent(createTabs(cy, cw)),
+    'quiz': () => addInteractiveComponent(createQuiz(cy, cw)),
   };
 
   return (

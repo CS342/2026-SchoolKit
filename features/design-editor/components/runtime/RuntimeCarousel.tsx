@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, TouchableOpacity, Animated, Text } from 'react-native';
 import type { InteractiveComponentObject, CarouselConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
+import { SHADOWS } from '../../../../constants/onboarding-theme';
 
 export function RuntimeCarousel({ object }: { object: InteractiveComponentObject }) {
   const config = object.interactionConfig as CarouselConfig;
@@ -53,24 +54,26 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
           <TouchableOpacity
             onPress={() => goToSlide((activeSlide - 1 + slideGroups.length) % slideGroups.length)}
             style={{
-              position: 'absolute', left: 8, top: '50%',
-              width: 28, height: 28, borderRadius: 14,
-              backgroundColor: 'rgba(0,0,0,0.3)',
+              position: 'absolute', left: 8, top: '45%',
+              width: 32, height: 32, borderRadius: 16,
+              backgroundColor: 'rgba(255,255,255,0.9)',
               alignItems: 'center', justifyContent: 'center',
+              ...SHADOWS.iconCircle,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16 }}>‹</Text>
+            <Text style={{ color: '#374151', fontSize: 16, fontWeight: '600' }}>‹</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => goToSlide((activeSlide + 1) % slideGroups.length)}
             style={{
-              position: 'absolute', right: 8, top: '50%',
-              width: 28, height: 28, borderRadius: 14,
-              backgroundColor: 'rgba(0,0,0,0.3)',
+              position: 'absolute', right: 8, top: '45%',
+              width: 32, height: 32, borderRadius: 16,
+              backgroundColor: 'rgba(255,255,255,0.9)',
               alignItems: 'center', justifyContent: 'center',
+              ...SHADOWS.iconCircle,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16 }}>›</Text>
+            <Text style={{ color: '#374151', fontSize: 16, fontWeight: '600' }}>›</Text>
           </TouchableOpacity>
         </>
       )}
@@ -87,7 +90,9 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
               key={i}
               onPress={() => goToSlide(i)}
               style={{
-                width: 8, height: 8, borderRadius: 4,
+                width: i === activeSlide ? 16 : 8,
+                height: 8,
+                borderRadius: 4,
                 backgroundColor: i === activeSlide ? '#fff' : 'rgba(255,255,255,0.4)',
               }}
             />

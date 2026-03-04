@@ -12,6 +12,78 @@ import type {
   StaticDesignObject,
 } from '../types/document';
 
+// ─── Helpers for dynamically adding groups ──────────────────
+
+export function createSlideChildren(index: number, w: number, h: number): StaticDesignObject[] {
+  const colors = ['#7B68EE', '#0EA5E9', '#22C55E', '#F59E0B', '#EC4899', '#10B981', '#8B5CF6', '#EF4444', '#06B6D4', '#F97316'];
+  const color = colors[index % colors.length];
+  const bg = createRect({
+    name: `Slide ${index + 1} Background`,
+    x: 0, y: 0, width: w, height: h,
+    fill: color, cornerRadius: 16, stroke: '', strokeWidth: 0,
+  });
+  const title = createText({
+    name: `Slide ${index + 1} Title`,
+    x: 20, y: h / 2 - 20, width: w - 40, height: 40,
+    text: `Slide ${index + 1}`, fontSize: 24, fontStyle: 'bold', fill: '#FFFFFF', align: 'center',
+  });
+  return [bg, title];
+}
+
+export function createTabChildren(index: number, w: number, h: number, tabCount: number): StaticDesignObject[] {
+  const colors = ['#F0EBFF', '#E0F2FE', '#ECFDF5', '#FEF3C7', '#FCE7F3', '#D1FAE5', '#EDE9FE', '#FEE2E2'];
+  const color = colors[index % colors.length];
+  const bg = createRect({
+    name: `Tab ${index + 1} Content Background`,
+    x: 0, y: 44, width: w, height: h - 44,
+    fill: color, cornerRadius: 12, stroke: '#E8E8F0', strokeWidth: 1,
+  });
+  const tabHeader = createRect({
+    name: `Tab ${index + 1} Header`,
+    x: index * (w / tabCount), y: 0, width: w / tabCount, height: 40,
+    fill: '#F3F4F6', cornerRadius: 8, stroke: '', strokeWidth: 0,
+  });
+  const tabLabel = createText({
+    name: `Tab ${index + 1} Label`,
+    x: index * (w / tabCount), y: 10, width: w / tabCount, height: 20,
+    text: `Tab ${index + 1}`, fontSize: 14, fontStyle: 'bold', fill: '#6B7280', align: 'center',
+  });
+  const contentText = createText({
+    name: `Tab ${index + 1} Content`,
+    x: 20, y: 64, width: w - 40, height: 80,
+    text: `Content for Tab ${index + 1}. Add your material here.`,
+    fontSize: 15, fill: '#6B7280', align: 'left',
+  });
+  return [bg, tabHeader, tabLabel, contentText];
+}
+
+export function createSheetContentChildren(index: number, w: number): StaticDesignObject[] {
+  const sheetBg = createRect({
+    name: `Sheet ${index + 1} Background`,
+    x: 0, y: 0, width: w, height: 280,
+    fill: '#FFFFFF', cornerRadius: 16, stroke: '#E5E7EB', strokeWidth: 1,
+  });
+  const dragHandle = createRect({
+    name: `Sheet ${index + 1} Handle`,
+    x: w / 2 - 20, y: 8, width: 40, height: 4,
+    fill: '#D1D5DB', cornerRadius: 2, stroke: '', strokeWidth: 0,
+  });
+  const title = createText({
+    name: `Sheet ${index + 1} Title`,
+    x: 20, y: 28, width: w - 40, height: 28,
+    text: `Sheet ${index + 1}`, fontSize: 20, fontStyle: 'bold', fill: '#111111', align: 'left',
+  });
+  const body = createText({
+    name: `Sheet ${index + 1} Body`,
+    x: 20, y: 64, width: w - 40, height: 80,
+    text: 'Sheet content goes here.',
+    fontSize: 15, fill: '#6B7280', align: 'left',
+  });
+  return [sheetBg, dragHandle, title, body];
+}
+
+// ─── Interactive component factory ──────────────────────────
+
 function createInteractiveBase(
   overrides: Partial<InteractiveComponentObject>,
 ): InteractiveComponentObject {
@@ -36,10 +108,10 @@ function createInteractiveBase(
   };
 }
 
-export function createFlipCard(cx: number, cy: number): InteractiveComponentObject {
-  const w = 320;
+export function createFlipCard(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 220;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const frontBg = createRect({
@@ -99,10 +171,10 @@ export function createFlipCard(cx: number, cy: number): InteractiveComponentObje
   });
 }
 
-export function createBottomSheet(cx: number, cy: number): InteractiveComponentObject {
-  const w = 320;
+export function createBottomSheet(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 400;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const triggerBg = createRect({
@@ -163,10 +235,10 @@ export function createBottomSheet(cx: number, cy: number): InteractiveComponentO
   });
 }
 
-export function createExpandable(cx: number, cy: number): InteractiveComponentObject {
-  const w = 320;
+export function createExpandable(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 200;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const headerBg = createRect({
@@ -221,10 +293,10 @@ export function createExpandable(cx: number, cy: number): InteractiveComponentOb
   });
 }
 
-export function createEntrance(cx: number, cy: number): InteractiveComponentObject {
-  const w = 360;
+export function createEntrance(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 300;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const cards: StaticDesignObject[] = [];
@@ -267,10 +339,10 @@ export function createEntrance(cx: number, cy: number): InteractiveComponentObje
 
 // ─── New interactive components ─────────────────────────────
 
-export function createCarousel(cx: number, cy: number): InteractiveComponentObject {
-  const w = 340;
+export function createCarousel(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 240;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const slideColors = ['#7B68EE', '#0EA5E9', '#22C55E'];
@@ -318,10 +390,10 @@ export function createCarousel(cx: number, cy: number): InteractiveComponentObje
   });
 }
 
-export function createTabs(cx: number, cy: number): InteractiveComponentObject {
-  const w = 340;
+export function createTabs(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 280;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   const tabLabels = ['Tab One', 'Tab Two', 'Tab Three'];
@@ -379,10 +451,10 @@ export function createTabs(cx: number, cy: number): InteractiveComponentObject {
   });
 }
 
-export function createQuiz(cx: number, cy: number): InteractiveComponentObject {
-  const w = 340;
+export function createQuiz(cy: number, canvasWidth: number): InteractiveComponentObject {
+  const w = canvasWidth;
   const h = 320;
-  const x = cx - w / 2;
+  const x = 0;
   const y = cy - h / 2;
 
   // Question group

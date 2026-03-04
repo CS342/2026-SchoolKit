@@ -220,7 +220,7 @@ export function InteractiveProperties({
         </button>
       </Section>
 
-      <Section title="Groups">
+      <Section title={`Groups (${object.groups.length})`}>
         {object.groups.map((group) => (
           <div
             key={group.role}
@@ -239,6 +239,14 @@ export function InteractiveProperties({
             </span>
           </div>
         ))}
+        {['carousel', 'tabs', 'bottom-sheet'].includes(object.interactionType) && (
+          <div style={{ fontSize: 11, color: colors.textLight, marginTop: 4 }}>
+            Use the tab bar above the canvas to add or remove {
+              object.interactionType === 'carousel' ? 'slides' :
+              object.interactionType === 'tabs' ? 'tabs' : 'sheets'
+            }.
+          </div>
+        )}
       </Section>
 
       {object.interactionType === 'flip-card' && (
