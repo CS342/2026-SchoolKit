@@ -7,9 +7,9 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Platform,
   ActivityIndicator,
   Image,
-  Platform,
   TextInput,
   LayoutAnimation,
   UIManager,
@@ -485,16 +485,22 @@ export function SettingsSheet() {
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out', style: 'destructive', onPress: async () => {
-          try { await signOut(); close(); router.replace('/welcome'); }
-          catch (err: any) { Alert.alert('Sign Out Failed', err.message || 'Something went wrong.'); }
+  const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      if (!window.confirm('Are you sure you want to sign out?')) return;
+      try { await signOut(); close(); router.replace('/welcome'); }
+      catch (err: any) { window.alert(err.message || 'Sign out failed.'); }
+    } else {
+      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out', style: 'destructive', onPress: async () => {
+            try { await signOut(); close(); router.replace('/welcome'); }
+            catch (err: any) { Alert.alert('Sign Out Failed', err.message || 'Something went wrong.'); }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const appearanceLabel = theme.themePreference === 'system' ? 'System' : theme.themePreference === 'light' ? 'Light' : 'Dark';
