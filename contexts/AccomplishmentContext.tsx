@@ -37,6 +37,7 @@ interface AccomplishmentContextType {
   earnedPieceIds: Set<string>;
   visibleChapterIds: Set<string>;
   openedResourceIds: Set<string>;
+  scrolledToEndIds: Set<string>;
   revealingPiece: PieceDefinition | null;
   earnedAt: Record<string, number>;
   isEarned: (pieceId: string) => boolean;
@@ -68,6 +69,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
   const [earnedPieceIds, setEarnedPieceIds] = useState<Set<string>>(new Set());
   const [visibleChapterIds, setVisibleChapterIds] = useState<Set<string>>(new Set());
   const [openedResourceIds, setOpenedResourceIds] = useState<Set<string>>(new Set());
+  const [scrolledToEndIds, setScrolledToEndIds] = useState<Set<string>>(new Set());
   const [revealingPiece, setRevealingPiece] = useState<PieceDefinition | null>(null);
   const [earnedAt, setEarnedAt] = useState<Record<string, number>>({});
   const [isHydrated, setIsHydrated] = useState(false);
@@ -118,6 +120,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
             setEarnedPieceIds(earned);
             setVisibleChapterIds(visible);
             setOpenedResourceIds(opened);
+            setScrolledToEndIds(scrolledToEnd);
             setEarnedAt(at);
           } catch (e) {
             console.warn('[Accomplishments] Failed to parse persisted state:', e);
@@ -173,7 +176,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
     }
 
     // Haptic feedback
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
 
     persistState();
   }, [showNextToast, persistState]);
@@ -182,6 +185,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
   const fireResourceScrolledToEnd = useCallback((resourceId: string) => {
     if (!scrolledToEndIdsRef.current.has(resourceId)) {
       scrolledToEndIdsRef.current.add(resourceId);
+      setScrolledToEndIds(new Set(scrolledToEndIdsRef.current));
       persistState();
     }
   }, [persistState]);
@@ -260,12 +264,13 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isResourceFullyViewed = useCallback((id: string) =>
-    openedResourceIdsRef.current.has(id) && scrolledToEndIdsRef.current.has(id), []);
+    openedResourceIdsRef.current.has(id) && scrolledToEndIdsRef.current.has(id), [openedResourceIds, scrolledToEndIds]);
 
   const value: AccomplishmentContextType = {
     earnedPieceIds,
     visibleChapterIds,
     openedResourceIds,
+    scrolledToEndIds,
     revealingPiece,
     earnedAt,
     isEarned,
