@@ -100,22 +100,24 @@ export default function CreateNotebookScreen() {
                     >
                         {paper.pattern === "lined" && (
                             <View style={styles.patternContainer}>
-                                {[1, 2, 3, 4, 5].map(i => (
+                                {Array.from({ length: 10 }).map((_, i) => (
                                     <View key={`line-${i}`} style={styles.horizontalLine} />
                                 ))}
                             </View>
                         )}
                         {paper.pattern === "grid" && (
-                            <View style={styles.patternContainer}>
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <View key={`gline-${i}`} style={styles.horizontalLine} />
-                                ))}
+                            <>
+                                <View style={styles.patternContainer}>
+                                    {Array.from({ length: 10 }).map((_, i) => (
+                                        <View key={`gline-${i}`} style={styles.horizontalLine} />
+                                    ))}
+                                </View>
                                 <View style={styles.gridVerticalContainer}>
-                                    {[1, 2, 3].map(i => (
+                                    {Array.from({ length: 6 }).map((_, i) => (
                                         <View key={`vline-${i}`} style={styles.verticalLine} />
                                     ))}
                                 </View>
-                            </View>
+                            </>
                         )}
 
                         {selectedPaper.id === paper.id && (
@@ -235,9 +237,9 @@ const styles = StyleSheet.create({
     cardLabel: { position: "absolute", bottom: 20, fontSize: 14, fontWeight: "600", textAlign: "center", width: "100%" },
     selectedItem: { transform: [{ scale: 1.05 }] },
     checkmark: { position: "absolute", top: 12, right: 12, width: 24, height: 24, borderRadius: 12, justifyContent: "center", alignItems: "center" },
-    patternContainer: { flex: 1, width: "100%" },
-    horizontalLine: { height: 1, backgroundColor: "#C0C0C0", width: "100%", marginTop: 32 },
-    gridVerticalContainer: { ...StyleSheet.absoluteFillObject, flexDirection: "row", justifyContent: "space-around" },
+    patternContainer: { ...StyleSheet.absoluteFillObject, justifyContent: "space-evenly" },
+    horizontalLine: { height: 1, backgroundColor: "#C0C0C0", width: "100%" },
+    gridVerticalContainer: { ...StyleSheet.absoluteFillObject, flexDirection: "row", justifyContent: "space-evenly" },
     verticalLine: { width: 1, height: "100%", backgroundColor: "#C0C0C0" },
     nextButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 16, borderRadius: 30, marginTop: 40, gap: 8 },
     nextButtonText: { color: "#FFF", fontSize: 16, fontWeight: "600" },

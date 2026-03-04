@@ -492,19 +492,19 @@ export default function NotebookScreen() {
                     {/* Paper Background Patterns */}
                     {selectedPaper.pattern === "lined" && (
                         <View style={[styles.absoluteFill, { zIndex: 0 }]}>
-                            {Array.from({ length: 40 }).map((_, i) => (
-                                <View key={`bg-line-${i}`} style={[styles.bgHorizontalLine, { top: (i + 1) * 32 }]} />
+                            {Array.from({ length: 60 }).map((_, i) => (
+                                <View key={`bg-line-${i}`} style={[styles.bgHorizontalLine, { top: (i + 1) * 24 }]} />
                             ))}
                         </View>
                     )}
                     {selectedPaper.pattern === "grid" && (
                         <View style={[styles.absoluteFill, { zIndex: 0 }]}>
-                            {Array.from({ length: 40 }).map((_, i) => (
-                                <View key={`bg-gline-${i}`} style={[styles.bgHorizontalLine, { top: (i + 1) * 32 }]} />
+                            {Array.from({ length: 60 }).map((_, i) => (
+                                <View key={`bg-gline-${i}`} style={[styles.bgHorizontalLine, { top: (i + 1) * 24 }]} />
                             ))}
                             <View style={styles.absoluteFill}>
-                                {Array.from({ length: 20 }).map((_, i) => (
-                                    <View key={`bg-vline-${i}`} style={[styles.bgVerticalLine, { left: (i + 1) * 32 }]} />
+                                {Array.from({ length: 60 }).map((_, i) => (
+                                    <View key={`bg-vline-${i}`} style={[styles.bgVerticalLine, { left: (i + 1) * 24 }]} />
                                 ))}
                             </View>
                         </View>
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     bgHorizontalLine: { position: "absolute", width: "100%", height: 1, backgroundColor: "rgba(0,0,0,0.15)" },
     bgVerticalLine: { position: "absolute", height: "100%", width: 1, backgroundColor: "rgba(0,0,0,0.15)" },
     drawingContainer: { ...StyleSheet.absoluteFillObject, zIndex: 1 },
-    textInput: { flex: 1, padding: 24, paddingTop: 32, fontSize: 18, lineHeight: 32, fontFamily: Platform.OS === "ios" ? "System" : "Roboto", textAlignVertical: "top", backgroundColor: "transparent" },
+    textInput: { flex: 1, padding: 24, paddingTop: 24, fontSize: 16, lineHeight: 24, fontFamily: Platform.OS === "ios" ? "System" : "Roboto", textAlignVertical: "top", backgroundColor: "transparent" },
     writeHint: { ...StyleSheet.absoluteFillObject, justifyContent: "center", alignItems: "center" },
     undoButton: { position: "absolute", bottom: 24, right: 24, width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.8)", justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
     writeOverlayText: { marginTop: 16, fontSize: 16, fontWeight: "500" },
