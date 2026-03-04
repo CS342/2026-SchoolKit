@@ -172,11 +172,15 @@ export default function CreateStoryScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={appStyles.editScrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ScrollView
+          contentContainerStyle={appStyles.editScrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <Pressable style={styles.topicReminder} onPress={handleViewNorms}>
           <Ionicons name="school-outline" size={16} color="#5C5C8A" />
           <Text style={styles.topicReminderText}>Stories must relate to school and cancer.</Text>
@@ -342,7 +346,8 @@ export default function CreateStoryScreen() {
             </Pressable>
           )}
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         visible={showSettingsModal}
