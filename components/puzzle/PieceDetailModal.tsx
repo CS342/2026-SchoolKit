@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   pieceName: {
     fontSize: 19,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: -0.2,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
     color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
     lineHeight: 23,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
   earnDate: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     marginBottom: 20,
     letterSpacing: 0.1,
   },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   chapterBadgeText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     letterSpacing: 0.2,
   },
 });

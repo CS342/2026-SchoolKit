@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
   countBadge: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     color: COLORS.textMuted,
     letterSpacing: -0.1,
   },
@@ -187,6 +188,7 @@ const styles = StyleSheet.create({
   emptyMessage: {
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
     color: COLORS.textMuted,
     textAlign: 'center',
     lineHeight: 24,

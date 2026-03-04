@@ -135,19 +135,19 @@ const styles = StyleSheet.create({
   },
   chapterTitle: {
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: 'Raleway_800ExtraBold',
     color: '#FFFFFF',
     letterSpacing: -0.4,
   },
   chapterSubtitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
   },
   progressText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     color: 'rgba(255,255,255,0.9)',
     letterSpacing: -0.2,
   },
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   },
   completeBadgeText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },
@@ -171,14 +171,14 @@ const styles = StyleSheet.create({
   },
   introText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
     color: COLORS.textMuted,
     lineHeight: 25,
     marginBottom: 16,
   },
   hintText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
     color: COLORS.textLight,
     marginBottom: 28,
   },

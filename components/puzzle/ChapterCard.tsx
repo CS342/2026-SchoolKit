@@ -40,40 +40,40 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }:
 
   return (
     <TouchableOpacity activeOpacity={onPress ? 0.85 : 1} onPress={onPress} disabled={!onPress}>
-    <Animated.View style={[styles.card, animStyle]}>
-      {/* Gradient header strip */}
-      <LinearGradient
-        colors={chapter.gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.headerText}>
-            <Text style={styles.chapterTitle}>{chapter.title}</Text>
-            <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
-          </View>
-          {isComplete ? (
-            <View style={styles.completeBadge}>
-              <Text style={styles.completeBadgeText}>Complete</Text>
+      <Animated.View style={[styles.card, animStyle]}>
+        {/* Gradient header strip */}
+        <LinearGradient
+          colors={chapter.gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerText}>
+              <Text style={styles.chapterTitle}>{chapter.title}</Text>
+              <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
             </View>
-          ) : (
-            <Text style={styles.progressText}>
-              {earnedCount} / {chapter.pieceCount}
-            </Text>
-          )}
-        </View>
-      </LinearGradient>
+            {isComplete ? (
+              <View style={styles.completeBadge}>
+                <Text style={styles.completeBadgeText}>Complete</Text>
+              </View>
+            ) : (
+              <Text style={styles.progressText}>
+                {earnedCount} / {chapter.pieceCount}
+              </Text>
+            )}
+          </View>
+        </LinearGradient>
 
-      {/* Puzzle grid */}
-      <View style={styles.gridContainer}>
-        <PuzzleGrid
-          chapter={chapter}
-          earnedPieceIds={earnedPieceIds}
-          pieceSize={52}
-        />
-      </View>
-    </Animated.View>
+        {/* Puzzle grid */}
+        <View style={styles.gridContainer}>
+          <PuzzleGrid
+            chapter={chapter}
+            earnedPieceIds={earnedPieceIds}
+            pieceSize={52}
+          />
+        </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 }
@@ -100,19 +100,19 @@ const styles = StyleSheet.create({
   },
   chapterTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontFamily: 'Raleway_800ExtraBold',
     color: COLORS.white,
     letterSpacing: -0.3,
   },
   chapterSubtitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     color: 'rgba(255,255,255,0.8)',
     marginTop: 1,
   },
   progressText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     color: 'rgba(255,255,255,0.9)',
     letterSpacing: -0.2,
   },
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   },
   completeBadgeText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     color: COLORS.white,
     letterSpacing: 0.2,
   },

@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
   countBadge: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     letterSpacing: -0.1,
   },
   treeScroll: {

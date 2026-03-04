@@ -171,7 +171,7 @@ function SectionNode({
         <SvgText
           x={nx} y={ny + NODE_R + 15}
           textAnchor="middle"
-          fontWeight="700" fontSize={12} fill={color}
+          fontFamily="Raleway_700Bold" fontSize={12} fill={color}
         >
           {label}
         </SvgText>
@@ -237,7 +237,7 @@ function Leaf({
         <SvgText
           x={cx} y={cy + LEAF_R + 12}
           textAnchor="middle"
-          fontWeight="700" fontSize={11} fill={labelColor}
+          fontFamily="Raleway_700Bold" fontSize={11} fill={labelColor}
         >
           {resource.abbr}
         </SvgText>
