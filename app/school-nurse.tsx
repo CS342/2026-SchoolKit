@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import RNAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -215,6 +215,8 @@ function BottomSheet({
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
   const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
 
   const maxBullets = 6;
   while (bulletAnims.length < maxBullets) {
@@ -278,6 +280,7 @@ function BottomSheet({
 
   const handleDismiss = useCallback(() => {
     stop();
+    player.pause();
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SHEET_HEIGHT,
@@ -297,11 +300,6 @@ function BottomSheet({
 
   const handleSpeak = async () => {
     if (!section) return;
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
     speak(`${section.title}. ${section.items.join(". ")}`);
   };
 
@@ -568,6 +566,8 @@ const accordionStyles = StyleSheet.create({
 function AccordionSection({ section }: { section: SectionData }) {
   const [expanded, setExpanded] = useState(false);
   const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
 
   const handlePress = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -576,11 +576,6 @@ function AccordionSection({ section }: { section: SectionData }) {
   };
 
   const handleSpeak = async () => {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
     speak(`${section.title}. ${section.items.join(". ")}`);
   };
 
@@ -843,9 +838,9 @@ export default function SchoolNurseScreen() {
         </RNAnimated.View>
 
         {/* Recommendations */}
-        <RecommendationList 
-          currentId="13" 
-          currentTags={['school', 'nurse', 'health', 'medicine', 'support', 'back to school']} 
+        <RecommendationList
+          currentId="13"
+          currentTags={['school', 'nurse', 'health', 'medicine', 'support', 'back to school']}
         />
       </ScrollView>
 

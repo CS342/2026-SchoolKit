@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Image } from 'expo-image';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
@@ -17,41 +17,33 @@ export default function VoiceSelectionScreen() {
   const router = useRouter();
   const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding } = useOnboarding();
   const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || '21m00Tcm4TlvDq8ikWAM'); // Default to Rachel if none
-  
+
   // Audio playback state for samples
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isSampleLoading, setIsSampleLoading] = useState(false);
 
   const isStudent = data.role && (data.role === 'student-k8' || data.role === 'student-hs');
 
   useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
+    if (playerStatus.isLoaded && playerStatus.didJustFinish) {
+      setPlayingVoiceId(null);
+    }
+  }, [playerStatus.isLoaded, playerStatus.didJustFinish]);
 
   const handlePlaySample = async (voiceId: string, name: string) => {
     try {
       if (playingVoiceId === voiceId) {
         // Stop if currently playing this voice
-        if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-          setSound(null);
-          setPlayingVoiceId(null);
-        }
+        player.pause();
+        setPlayingVoiceId(null);
         return;
       }
 
       // Stop previous
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-        setPlayingVoiceId(null);
-      }
+      player.pause();
+      setPlayingVoiceId(null);
 
       setIsSampleLoading(true);
       setPlayingVoiceId(voiceId);
@@ -61,18 +53,10 @@ export default function VoiceSelectionScreen() {
       const uri = await generateSpeech(text, voiceId);
 
       if (uri) {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri },
-            { shouldPlay: true }
-        );
-        setSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded && status.didJustFinish) {
-                setPlayingVoiceId(null);
-            }
-        });
+        player.replace(uri);
+        player.play();
       } else {
-          setPlayingVoiceId(null);
+        setPlayingVoiceId(null);
       }
     } catch (e) {
       console.error("Error playing sample", e);
@@ -109,9 +93,9 @@ export default function VoiceSelectionScreen() {
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
       <View style={styles.container}>
-        <OnboardingHeader 
-          currentStep={isStudent ? 6 : 5} 
-          totalSteps={isStudent ? 6 : 5} 
+        <OnboardingHeader
+          currentStep={isStudent ? 6 : 5}
+          totalSteps={isStudent ? 6 : 5}
         />
 
         <ScrollView
@@ -141,47 +125,47 @@ export default function VoiceSelectionScreen() {
 
                       return (
                         <Pressable
-                            key={voice.id}
-                            style={[
-                                styles.voiceCard,
-                                isSelected && styles.voiceCardSelected,
-                                !isSelected && SHADOWS.card,
-                            ]}
-                            onPress={() => setSelectedVoice(voice.id)}
+                          key={voice.id}
+                          style={[
+                            styles.voiceCard,
+                            isSelected && styles.voiceCardSelected,
+                            !isSelected && SHADOWS.card,
+                          ]}
+                          onPress={() => setSelectedVoice(voice.id)}
                         >
-                            {voice.image ? (
-                              <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
-                            ) : (
-                              <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
-                                <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                              </View>
-                            )}
-                            
-                            <View style={styles.voiceInfo}>
-                                <Text style={[styles.voiceName, isSelected && { color: COLORS.primary }]}>{voice.name}</Text>
-                                <Text style={styles.voiceDesc}>{voice.description}</Text>
+                          {voice.image ? (
+                            <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
+                          ) : (
+                            <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
+                              <Text style={styles.voiceInitial}>{voice.initial}</Text>
                             </View>
+                          )}
 
-                            <Pressable
-                                style={[
-                                    styles.playButton,
-                                    isPlaying ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.backgroundLight }
-                                ]}
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    handlePlaySample(voice.id, voice.name);
-                                }}
-                            >
-                                {isSampleLoading && isPlaying ? (
-                                    <ActivityIndicator size="small" color="#FFFFFF" />
-                                ) : (
-                                    <Ionicons
-                                        name={isPlaying ? "stop" : "play"}
-                                        size={16}
-                                        color={isPlaying ? '#FFFFFF' : COLORS.primary}
-                                    />
-                                )}
-                            </Pressable>
+                          <View style={styles.voiceInfo}>
+                            <Text style={[styles.voiceName, isSelected && { color: COLORS.primary }]}>{voice.name}</Text>
+                            <Text style={styles.voiceDesc}>{voice.description}</Text>
+                          </View>
+
+                          <Pressable
+                            style={[
+                              styles.playButton,
+                              isPlaying ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.backgroundLight }
+                            ]}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handlePlaySample(voice.id, voice.name);
+                            }}
+                          >
+                            {isSampleLoading && isPlaying ? (
+                              <ActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                              <Ionicons
+                                name={isPlaying ? "stop" : "play"}
+                                size={16}
+                                color={isPlaying ? '#FFFFFF' : COLORS.primary}
+                              />
+                            )}
+                          </Pressable>
                         </Pressable>
                       );
                     })}

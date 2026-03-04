@@ -23,7 +23,7 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useSettings } from '../contexts/SettingsContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -161,30 +161,30 @@ function VoiceView({
   onBack: () => void;
 }) {
   const { colors, shadows } = theme;
-  const [sound, setSound] = React.useState<Audio.Sound | null>(null);
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
   const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
   useEffect(() => {
-    return () => { if (sound) sound.unloadAsync(); };
-  }, [sound]);
+    if (playerStatus.isLoaded && playerStatus.didJustFinish) {
+      setPlayingVoiceId(null);
+    }
+  }, [playerStatus.didJustFinish, playerStatus.isLoaded]);
 
   const handlePlaySample = async (voiceId: string) => {
     try {
       if (playingVoiceId === voiceId) {
-        if (sound) { await sound.stopAsync(); await sound.unloadAsync(); setSound(null); setPlayingVoiceId(null); }
+        player.pause();
+        setPlayingVoiceId(null);
         return;
       }
-      if (sound) { await sound.unloadAsync(); setSound(null); setPlayingVoiceId(null); }
       setIsLoading(true);
       setPlayingVoiceId(voiceId);
       const uri = await generateSpeech('The quick brown fox jumps over the lazy dog.', voiceId);
       if (uri) {
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
-        setSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) setPlayingVoiceId(null);
-        });
+        player.replace(uri);
+        player.play();
       } else {
         setPlayingVoiceId(null);
       }
@@ -373,7 +373,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
     setIsSubmitting(true);
     try {
       await supabase.from('user_questions').insert({ user_id: user?.id ?? null, question: feedbackText.trim(), role: data.role ?? null });
-    } catch {}
+    } catch { }
     finally {
       setIsSubmitting(false);
       setFeedbackText('');

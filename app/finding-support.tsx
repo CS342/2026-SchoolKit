@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { generateSpeech } from "../services/elevenLabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
@@ -623,12 +623,14 @@ export default function FindingSupportScreen() {
     const [activeHandout, setActiveHandout] = useState(null);
 
     // Page TTS
-    const [pageSound, setPageSound] = useState<Audio.Sound | null>(null);
+    const pagePlayer = useAudioPlayer();
+    const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
     const [isPageSpeaking, setIsPageSpeaking] = useState(false);
     const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
 
     // Card TTS
-    const [cardSound, setCardSound] = useState<Audio.Sound | null>(null);
+    const cardPlayer = useAudioPlayer();
+    const cardPlayerStatus = useAudioPlayerStatus(cardPlayer);
     const [isCardSpeaking, setIsCardSpeaking] = useState(false);
     const [isCardLoadingAudio, setIsCardLoadingAudio] = useState(false);
 
@@ -662,22 +664,29 @@ export default function FindingSupportScreen() {
 
     // Cleanup
     useEffect(() => {
-        return () => {
-            if (pageSound) pageSound.unloadAsync();
-            if (cardSound) cardSound.unloadAsync();
-        };
-    }, [pageSound, cardSound]);
+        if (pagePlayerStatus.isLoaded && pagePlayerStatus.didJustFinish) {
+            setIsPageSpeaking(false);
+            pagePlayer.seekTo(0);
+        }
+    }, [pagePlayerStatus.isLoaded, pagePlayerStatus.didJustFinish, pagePlayer]);
+
+    useEffect(() => {
+        if (cardPlayerStatus.isLoaded && cardPlayerStatus.didJustFinish) {
+            setIsCardSpeaking(false);
+            cardPlayer.seekTo(0);
+        }
+    }, [cardPlayerStatus.isLoaded, cardPlayerStatus.didJustFinish, cardPlayer]);
 
     // Page TTS
     const handlePageSpeak = async () => {
         if (isPageSpeaking) {
-            if (pageSound) await pageSound.pauseAsync();
+            pagePlayer.pause();
             setIsPageSpeaking(false);
             return;
         }
         setIsPageSpeaking(true);
-        if (pageSound) {
-            await pageSound.playAsync();
+        if (pagePlayerStatus.isLoaded) {
+            pagePlayer.play();
             return;
         }
         try {
@@ -685,17 +694,8 @@ export default function FindingSupportScreen() {
             const text = `How to Find People Who Understand Your Journey. A friend is someone who knows all about you and still loves you. Elbert Hubbard. Whether you're returning to school after treatment or navigating life with a chronic condition, finding people who truly understand what you're going through can make all the difference.`;
             const audioUri = await generateSpeech(text, selectedVoice);
             if (audioUri) {
-                const { sound: newSound } = await Audio.Sound.createAsync(
-                    { uri: audioUri },
-                    { shouldPlay: true }
-                );
-                setPageSound(newSound);
-                newSound.setOnPlaybackStatusUpdate((status) => {
-                    if (status.isLoaded && status.didJustFinish) {
-                        setIsPageSpeaking(false);
-                        newSound.setPositionAsync(0);
-                    }
-                });
+                pagePlayer.replace(audioUri);
+                pagePlayer.play();
             } else {
                 setIsPageSpeaking(false);
             }
@@ -710,13 +710,13 @@ export default function FindingSupportScreen() {
     // Card TTS
     const handleCardSpeak = async () => {
         if (isCardSpeaking) {
-            if (cardSound) await cardSound.pauseAsync();
+            cardPlayer.pause();
             setIsCardSpeaking(false);
             return;
         }
         setIsCardSpeaking(true);
-        if (cardSound) {
-            await cardSound.playAsync();
+        if (cardPlayerStatus.isLoaded) {
+            cardPlayer.play();
             return;
         }
         if (!expandedCard) return;
@@ -725,17 +725,8 @@ export default function FindingSupportScreen() {
             const text = `${expandedCard.front}. ${expandedCard.back}`;
             const audioUri = await generateSpeech(text, selectedVoice);
             if (audioUri) {
-                const { sound: newSound } = await Audio.Sound.createAsync(
-                    { uri: audioUri },
-                    { shouldPlay: true }
-                );
-                setCardSound(newSound);
-                newSound.setOnPlaybackStatusUpdate((status) => {
-                    if (status.isLoaded && status.didJustFinish) {
-                        setIsCardSpeaking(false);
-                        newSound.setPositionAsync(0);
-                    }
-                });
+                cardPlayer.replace(audioUri);
+                cardPlayer.play();
             } else {
                 setIsCardSpeaking(false);
             }
@@ -748,13 +739,7 @@ export default function FindingSupportScreen() {
     };
 
     const closeExpandedCard = async () => {
-        if (cardSound) {
-            try {
-                await cardSound.stopAsync();
-                await cardSound.unloadAsync();
-            } catch (_) { }
-            setCardSound(null);
-        }
+        cardPlayer.pause();
         setIsCardSpeaking(false);
         setExpandedCard(null);
     };
@@ -929,9 +914,9 @@ export default function FindingSupportScreen() {
                 </Animated.View>
 
                 {/* Recommendations */}
-                <RecommendationList 
-                  currentId="15" 
-                  currentTags={['social', 'friends', 'support', 'survivors', 'connections', 'peer']} 
+                <RecommendationList
+                    currentId="15"
+                    currentTags={['social', 'friends', 'support', 'survivors', 'connections', 'peer']}
                 />
             </ScrollView>
 

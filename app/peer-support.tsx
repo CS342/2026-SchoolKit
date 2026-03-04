@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { generateSpeech } from "../services/elevenLabs";
 import RNAnimated, {
   useSharedValue,
@@ -342,7 +342,8 @@ function BottomSheet({
   const bulletAnims = useRef<Animated.Value[]>([]).current;
 
   // TTS state for bottom sheet
-  const [sheetSound, setSheetSound] = useState<Audio.Sound | null>(null);
+  const sheetPlayer = useAudioPlayer();
+  const sheetPlayerStatus = useAudioPlayerStatus(sheetPlayer);
   const [isSheetSpeaking, setIsSheetSpeaking] = useState(false);
   const [isSheetLoadingAudio, setIsSheetLoadingAudio] = useState(false);
 
@@ -374,6 +375,13 @@ function BottomSheet({
       },
     })
   ).current;
+
+  useEffect(() => {
+    if (sheetPlayerStatus.isLoaded && sheetPlayerStatus.didJustFinish) {
+      setIsSheetSpeaking(false);
+      sheetPlayer.seekTo(0);
+    }
+  }, [sheetPlayerStatus.isLoaded, sheetPlayerStatus.didJustFinish, sheetPlayer]);
 
   useEffect(() => {
     if (visible && topic) {
@@ -415,11 +423,8 @@ function BottomSheet({
 
   const handleDismiss = useCallback(() => {
     // Stop audio on dismiss
-    if (sheetSound) {
-      sheetSound.unloadAsync();
-      setSheetSound(null);
-      setIsSheetSpeaking(false);
-    }
+    sheetPlayer.pause();
+    setIsSheetSpeaking(false);
 
     Animated.parallel([
       Animated.timing(translateY, {
@@ -436,21 +441,21 @@ function BottomSheet({
       setInternalVisible(false);
       onClose();
     });
-  }, [onClose, sheetSound]);
+  }, [onClose, sheetPlayer]);
 
   const handleSheetSpeak = async () => {
     if (!topic) return;
 
     if (isSheetSpeaking) {
-      if (sheetSound) await sheetSound.pauseAsync();
+      sheetPlayer.pause();
       setIsSheetSpeaking(false);
       return;
     }
 
     setIsSheetSpeaking(true);
 
-    if (sheetSound) {
-      await sheetSound.playAsync();
+    if (sheetPlayerStatus.isLoaded) {
+      sheetPlayer.play();
       return;
     }
 
@@ -461,17 +466,8 @@ function BottomSheet({
       const audioUri = await generateSpeech(textToSpeak, selectedVoice);
 
       if (audioUri) {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          { shouldPlay: true }
-        );
-        setSheetSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsSheetSpeaking(false);
-            newSound.setPositionAsync(0);
-          }
-        });
+        sheetPlayer.replace(audioUri);
+        sheetPlayer.play();
       } else {
         setIsSheetSpeaking(false);
       }
@@ -485,12 +481,9 @@ function BottomSheet({
 
   // Reset audio when topic changes
   useEffect(() => {
-    if (sheetSound) {
-      sheetSound.unloadAsync();
-      setSheetSound(null);
-      setIsSheetSpeaking(false);
-    }
-  }, [topic?.id]);
+    sheetPlayer.pause();
+    setIsSheetSpeaking(false);
+  }, [topic?.id, sheetPlayer]);
 
   if (!internalVisible || !topic) return null;
 
@@ -622,27 +615,29 @@ export default function PeerSupportScreen() {
   const [selectedTopic, setSelectedTopic] = useState<PeerTopic | null>(null);
 
   // TTS state for main page
-  const [pageSound, setPageSound] = useState<Audio.Sound | null>(null);
+  const pagePlayer = useAudioPlayer();
+  const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
   const [isPageSpeaking, setIsPageSpeaking] = useState(false);
   const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
 
   useEffect(() => {
-    return () => {
-      if (pageSound) pageSound.unloadAsync();
-    };
-  }, [pageSound]);
+    if (pagePlayerStatus.isLoaded && pagePlayerStatus.didJustFinish) {
+      setIsPageSpeaking(false);
+      pagePlayer.seekTo(0);
+    }
+  }, [pagePlayerStatus.isLoaded, pagePlayerStatus.didJustFinish, pagePlayer]);
 
   const handlePageSpeak = async () => {
     if (isPageSpeaking) {
-      if (pageSound) await pageSound.pauseAsync();
+      pagePlayer.pause();
       setIsPageSpeaking(false);
       return;
     }
 
     setIsPageSpeaking(true);
 
-    if (pageSound) {
-      await pageSound.playAsync();
+    if (pagePlayerStatus.isLoaded) {
+      pagePlayer.play();
       return;
     }
 
@@ -652,17 +647,8 @@ export default function PeerSupportScreen() {
       const audioUri = await generateSpeech(textToSpeak, selectedVoice);
 
       if (audioUri) {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          { shouldPlay: true }
-        );
-        setPageSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsPageSpeaking(false);
-            newSound.setPositionAsync(0);
-          }
-        });
+        pagePlayer.replace(audioUri);
+        pagePlayer.play();
       } else {
         setIsPageSpeaking(false);
       }
@@ -711,7 +697,7 @@ export default function PeerSupportScreen() {
       await Share.share({
         message: 'Check out "Encouraging Positive Peer Support" on SchoolKit — learn how to help peers support a returning student.',
       });
-    } catch {}
+    } catch { }
   };
 
   const handleTopicPress = (topic: PeerTopic) => {
@@ -792,9 +778,9 @@ export default function PeerSupportScreen() {
         </View>
 
         {/* Recommendations */}
-        <RecommendationList 
-          currentId="12" 
-          currentTags={['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion']} 
+        <RecommendationList
+          currentId="12"
+          currentTags={['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion']}
         />
       </ScrollView>
 

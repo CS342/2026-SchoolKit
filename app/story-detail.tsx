@@ -16,7 +16,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useAuth } from "../contexts/AuthContext";
 import { useStories, StoryComment } from "../contexts/StoriesContext";
 import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
@@ -219,7 +219,8 @@ export default function StoryDetailScreen() {
 
   const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
 
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -254,10 +255,11 @@ export default function StoryDetailScreen() {
   }, [story, user?.id, onboardingData?.role]);
 
   useEffect(() => {
-    return () => {
-      if (sound) sound.unloadAsync();
-    };
-  }, [sound]);
+    if (playerStatus.isLoaded && playerStatus.didJustFinish) {
+      setIsSpeaking(false);
+      player.seekTo(0);
+    }
+  }, [playerStatus.isLoaded, playerStatus.didJustFinish, player]);
 
   useEffect(() => {
     if (id) loadComments();
@@ -397,22 +399,16 @@ export default function StoryDetailScreen() {
   const handleSpeak = async () => {
     if (!story) return;
 
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
-
     if (isSpeaking) {
-      if (sound) await sound.pauseAsync();
+      player.pause();
       setIsSpeaking(false);
       return;
     }
 
     setIsSpeaking(true);
 
-    if (sound) {
-      await sound.playAsync();
+    if (playerStatus.isLoaded) {
+      player.play();
       return;
     }
 
@@ -422,17 +418,9 @@ export default function StoryDetailScreen() {
       const audioUri = await generateSpeech(textToSpeak, selectedVoice);
 
       if (audioUri) {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          { shouldPlay: true, rate: playbackRate, shouldCorrectPitch: true }
-        );
-        setSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsSpeaking(false);
-            newSound.setPositionAsync(0);
-          }
-        });
+        player.replace(audioUri);
+        player.playbackRate = playbackRate;
+        player.play();
       } else {
         setIsSpeaking(false);
       }
@@ -452,9 +440,7 @@ export default function StoryDetailScreen() {
     else nextRate = 1.0;
 
     setPlaybackRate(nextRate);
-    if (sound) {
-      await sound.setRateAsync(nextRate, true);
-    }
+    player.playbackRate = nextRate;
   };
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -559,12 +545,12 @@ export default function StoryDetailScreen() {
                 {isLoadingAudio
                   ? "Loading..."
                   : isSpeaking
-                  ? "Pause"
-                  : "Listen"}
+                    ? "Pause"
+                    : "Listen"}
               </Text>
             </TouchableOpacity>
 
-            {sound !== null && (
+            {playerStatus.isLoaded && (
               <TouchableOpacity
                 style={styles.speedBtn}
                 onPress={togglePlaybackRate}
@@ -635,12 +621,12 @@ export default function StoryDetailScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <RNAnimated.View style={{ transform: [{ scale: downloadScale }] }}>
-                <Ionicons
-                  name={downloaded ? "checkmark-circle" : "download-outline"}
-                  size={24}
-                  color={downloaded ? colors.primary : COLORS.textLight}
-                />
-              </RNAnimated.View>
+                  <Ionicons
+                    name={downloaded ? "checkmark-circle" : "download-outline"}
+                    size={24}
+                    color={downloaded ? colors.primary : COLORS.textLight}
+                  />
+                </RNAnimated.View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleBookmark}
@@ -688,9 +674,9 @@ export default function StoryDetailScreen() {
 
           {/* Recommendations */}
           {story && (
-            <RecommendationList 
-              currentId={story.id} 
-              currentTags={story.story_tags || []} 
+            <RecommendationList
+              currentId={story.id}
+              currentTags={story.story_tags || []}
             />
           )}
         </ScrollView>
@@ -720,32 +706,32 @@ export default function StoryDetailScreen() {
                 { paddingBottom: Math.max(insets.bottom, 12) },
               ]}
             >
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Offer support or share your thoughts..."
-              placeholderTextColor={COLORS.inputPlaceholder}
-              value={commentText}
-              onChangeText={setCommentText}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              onPress={handleSubmitComment}
-              disabled={!commentText.trim() || submitting}
-              style={styles.sendButton}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Ionicons
-                  name="send"
-                  size={22}
-                  color={commentText.trim() ? colors.primary : COLORS.textLight}
-                />
-              )}
-            </TouchableOpacity>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Offer support or share your thoughts..."
+                placeholderTextColor={COLORS.inputPlaceholder}
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                onPress={handleSubmitComment}
+                disabled={!commentText.trim() || submitting}
+                style={styles.sendButton}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons
+                    name="send"
+                    size={22}
+                    color={commentText.trim() ? colors.primary : COLORS.textLight}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
         )}
       </KeyboardAvoidingView>
 

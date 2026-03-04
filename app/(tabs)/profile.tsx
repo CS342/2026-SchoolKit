@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -272,6 +273,38 @@ export default function ProfileScreen() {
           </View>
         </AnimatedSection>
 
+        <AnimatedSection delay={420}>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+
+          <Pressable
+            onPress={() => router.push("/journal")}
+            style={({ pressed }) => [
+              styles.journalWidget,
+              shadows.card,
+              pressed && { transform: [{ scale: 0.98 }] }
+            ]}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.journalGlass}
+            >
+
+
+              <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
+                <Ionicons name="journal" size={28} color="#FFF" />
+              </View>
+              <View style={styles.journalInfo}>
+                <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+              </View>
+              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+              </View>
+            </LinearGradient>
+          </Pressable>
+        </AnimatedSection>
+
         <Animated.View style={[styles.footer, footerStyle]}>
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
@@ -400,4 +433,65 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
   },
+
+  journalWidget: {
+    marginHorizontal: 24,
+    borderRadius: 24,
+    marginBottom: 24,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)', // Primary color shadow -> back to white border
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  journalGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 16,
+  },
+  journalIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  journalInfo: {
+    flex: 1,
+  },
+  journalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  journalCount: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  journalArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  iconGlow: {
+    shadowColor: '#7B68EE',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 4,
+  }
 });

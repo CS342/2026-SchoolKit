@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { generateSpeech } from "../services/elevenLabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
@@ -600,13 +600,17 @@ export default function SchoolLifeBalanceScreen() {
     const [activeHandout, setActiveHandout] = useState<Handout | null>(null);
 
     // Audio
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const player = useAudioPlayer();
+    const playerStatus = useAudioPlayerStatus(player);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
     useEffect(() => {
-        return () => { if (sound) sound.unloadAsync(); };
-    }, [sound]);
+        if (playerStatus.isLoaded && playerStatus.didJustFinish) {
+            setIsSpeaking(false);
+            player.seekTo(0);
+        }
+    }, [playerStatus.isLoaded, playerStatus.didJustFinish]);
 
     const getCardColor = (id: string) => {
         const idx = CARDS.findIndex((c) => c.id === id);
@@ -614,36 +618,27 @@ export default function SchoolLifeBalanceScreen() {
     };
 
     const closeExpandedCard = async () => {
-        if (sound) {
-            try { await sound.stopAsync(); await sound.unloadAsync(); } catch (_) { }
-            setSound(null);
-        }
+        player.pause();
         setIsSpeaking(false);
         setExpandedCard(null);
     };
 
     const handleSpeak = async () => {
         if (isSpeaking) {
-            if (sound) await sound.pauseAsync();
+            player.pause();
             setIsSpeaking(false);
         } else {
             setIsSpeaking(true);
-            if (sound) {
-                await sound.playAsync();
+            if (playerStatus.isLoaded) {
+                player.play();
             } else if (expandedCard?.back) {
                 try {
                     setIsLoadingAudio(true);
                     const text = `${expandedCard.front}. ${expandedCard.back}`;
                     const audioUri = await generateSpeech(text, selectedVoice);
                     if (audioUri) {
-                        const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUri }, { shouldPlay: true });
-                        setSound(newSound);
-                        newSound.setOnPlaybackStatusUpdate((status) => {
-                            if (status.isLoaded && status.didJustFinish) {
-                                setIsSpeaking(false);
-                                newSound.setPositionAsync(0);
-                            }
-                        });
+                        player.replace(audioUri);
+                        player.play();
                     }
                 } catch (e) {
                     console.error("Audio error:", e);
@@ -744,9 +739,9 @@ export default function SchoolLifeBalanceScreen() {
                 </View>
 
                 {/* Recommendations */}
-                <RecommendationList 
-                  currentId="14" 
-                  currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']} 
+                <RecommendationList
+                    currentId="14"
+                    currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']}
                 />
             </ScrollView>
 
