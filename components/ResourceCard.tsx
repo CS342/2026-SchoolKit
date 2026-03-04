@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BookmarkButton } from './BookmarkButton';
 import { DownloadIndicator } from './DownloadIndicator';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   COLORS,
   SHADOWS,
@@ -60,8 +61,10 @@ export function ResourceCard({
       delay,
       withSpring(0, ANIMATION.springBouncy),
     );
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+  opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
   }, []);
+
+  const { isDark, colors } = useTheme();
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -80,7 +83,7 @@ export function ResourceCard({
 
   return (
     <Pressable onPress={handlePress}>
-      <Animated.View style={[styles.card, SHADOWS.card, cardStyle]}>
+      <Animated.View style={[styles.card, { backgroundColor: isDark ? colors.backgroundLight : COLORS.white, borderColor: isDark ? colors.borderCard : COLORS.borderCard }, SHADOWS.card, cardStyle]}>
         <LinearGradient
           colors={[...gradient] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
@@ -92,19 +95,19 @@ export function ResourceCard({
 
         {category ? (
           <View style={styles.content}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title, { color: colors.textDark }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.1) }]}>
               <Text style={[styles.categoryText, { color }]}>{category}</Text>
             </View>
           </View>
         ) : (
-          <Text style={styles.titleFull}>{title}</Text>
+          <Text style={[styles.titleFull, { color: colors.textDark }]}>{title}</Text>
         )}
 
         <View style={styles.actions}>
           {showDownloadIndicator && <DownloadIndicator resourceId={id} />}
           <BookmarkButton resourceId={id} color={color} size={22} />
-          <Ionicons name="chevron-forward" size={22} color={COLORS.textLight} />
+          <Ionicons name="chevron-forward" size={22} color={colors.textLight} />
         </View>
       </Animated.View>
     </Pressable>

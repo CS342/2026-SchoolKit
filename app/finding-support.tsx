@@ -23,6 +23,7 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -332,6 +333,7 @@ function ExpandedCardModal({
     isLoadingAudio: boolean;
     onToggleSpeak: () => void;
 }) {
+    const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.85)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
@@ -474,7 +476,7 @@ function ExpandedCardModal({
                                 modalStyles.card,
                                 {
                                     height: "100%",
-                                    backgroundColor: "#FFFFFF",
+                                    backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF",
                                     borderColor: color,
                                 },
                             ]}

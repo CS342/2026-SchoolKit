@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
@@ -54,6 +55,17 @@ function InnerLayout() {
 
 // Exporting RootLayout as default component
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Raleway_400Regular,
+    Raleway_500Medium,
+    Raleway_600SemiBold,
+    Raleway_400Regular_Italic,
+  });
+
+  if (!fontsLoaded) {
+      return null;
+  }
+
   return (
     <ThemeProvider>
       <AuthProvider>

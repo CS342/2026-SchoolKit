@@ -39,9 +39,8 @@ function TabLayoutInner() {
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'For You' }} />
-        <Tabs.Screen name="search" options={{ title: 'Search' }} />
+        <Tabs.Screen name="bookmarks" options={{ title: 'Library' }} />
         <Tabs.Screen name="stories" options={{ title: 'Stories' }} />
-        <Tabs.Screen name="bookmarks" options={{ title: 'Saved' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       </Tabs>
       <GearButton />

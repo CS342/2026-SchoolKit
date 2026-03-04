@@ -23,8 +23,10 @@ import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
+import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
 import { ReportStoryModal } from "../components/ReportStoryModal";
 import { RecommendationList } from "../components/RecommendationList";
+import { diffWords } from "diff";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const COMMENT_REMINDERS = [
@@ -205,17 +207,22 @@ export default function StoryDetailScreen() {
     downloadStory,
     removeStoryDownload,
   } = useStories();
-  const { colors, appStyles } = useTheme();
+  const { colors, appStyles, isDark } = useTheme();
+
+  const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
+  const isModeratorMode = Boolean(user?.email && MODERATOR_EMAILS.includes(user.email));
 
   const [comments, setComments] = useState<StoryComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isResponsesExpanded, setIsResponsesExpanded] = useState(false);
   const [postAnonymously, setPostAnonymously] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
   const downloadScale = useRef(new RNAnimated.Value(1)).current;
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showOriginalVersion, setShowOriginalVersion] = useState(false);
 
   const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
 
@@ -443,7 +450,7 @@ export default function StoryDetailScreen() {
     player.playbackRate = nextRate;
   };
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   if (!story || !canViewStory) {
     return (
@@ -513,64 +520,126 @@ export default function StoryDetailScreen() {
           <Text style={styles.meta}>{metaLine}</Text>
 
           {/* Title */}
-          <Text style={styles.storyTitle}>{story.title}</Text>
+          {isModeratorMode && story.status === 'pending' && story.previous_title ? (
+            <Text style={styles.storyTitle}>
+              {diffWords(story.previous_title, story.title).map((part, i) => {
+                if (part.removed) return null;
+                return (
+                  <Text key={i} style={part.added ? { color: colors.primary, fontWeight: '800', backgroundColor: colors.primary + '20' } : undefined}>
+                    {part.value}
+                  </Text>
+                );
+              })}
+            </Text>
+          ) : (
+            <Text style={styles.storyTitle}>{story.title}</Text>
+          )}
 
           {/* Audio Player Container */}
-          <View style={styles.audioControlsRow}>
-            <TouchableOpacity
-              style={[styles.listenBtn, isSpeaking && styles.listenBtnPlaying]}
-              onPress={handleSpeak}
-              disabled={isLoadingAudio}
-            >
-              {isLoadingAudio ? (
-                <ActivityIndicator
-                  size="small"
-                  color={isSpeaking ? COLORS.white : colors.primary}
-                  style={{ marginRight: 6 }}
-                />
-              ) : (
-                <Ionicons
-                  name={isSpeaking ? "pause" : "play"}
-                  size={16}
-                  color={isSpeaking ? COLORS.white : colors.primary}
-                  style={{ marginRight: 6 }}
-                />
-              )}
-              <Text
-                style={[
-                  styles.listenBtnText,
-                  isSpeaking && { color: COLORS.white },
-                ]}
-              >
-                {isLoadingAudio
-                  ? "Loading..."
-                  : isSpeaking
-                    ? "Pause"
-                    : "Listen"}
-              </Text>
-            </TouchableOpacity>
-
-            {playerStatus.isLoaded && (
+          {!(isModeratorMode && story.status === 'pending') && (
+            <View style={styles.audioControlsRow}>
               <TouchableOpacity
-                style={styles.speedBtn}
-                onPress={togglePlaybackRate}
+                style={[styles.listenBtn, isSpeaking && styles.listenBtnPlaying]}
+                onPress={handleSpeak}
+                disabled={isLoadingAudio}
               >
-                <Text style={styles.speedBtnText}>{playbackRate}x</Text>
+                {isLoadingAudio ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={isSpeaking ? COLORS.white : colors.primary}
+                    style={{ marginRight: 6 }}
+                  />
+                ) : (
+                  <Ionicons
+                    name={isSpeaking ? "pause" : "play"}
+                    size={16}
+                    color={isSpeaking ? COLORS.white : colors.primary}
+                    style={{ marginRight: 6 }}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.listenBtnText,
+                    isSpeaking && { color: COLORS.white },
+                  ]}
+                >
+                  {isLoadingAudio
+                    ? "Loading..."
+                    : isSpeaking
+                      ? "Pause"
+                      : "Listen"}
+                </Text>
               </TouchableOpacity>
-            )}
-          </View>
+
+              {playerStatus.isLoaded && (
+                <TouchableOpacity
+                  style={styles.speedBtn}
+                  onPress={togglePlaybackRate}
+                >
+                  <Text style={styles.speedBtnText}>{playbackRate}x</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
 
           {/* Body */}
-          <Text style={styles.storyBody}>{story.body}</Text>
+          {isModeratorMode && story.status === 'pending' && story.previous_body ? (
+            <Text style={styles.storyBody}>
+              {diffWords(story.previous_body, story.body).map((part, i) => {
+                if (part.removed) return null;
+                return (
+                  <Text key={i} style={part.added ? { color: colors.primary, fontWeight: '600', backgroundColor: colors.primary + '20' } : undefined}>
+                    {part.value}
+                  </Text>
+                );
+              })}
+            </Text>
+          ) : (
+            <Text style={styles.storyBody}>{story.body}</Text>
+          )}
+
+          {/* Show Original Toggle (Moderator Only) */}
+          {isModeratorMode && story.status === 'pending' && (story.previous_body || story.previous_title) && (
+            <View style={{ marginTop: 20 }}>
+              <TouchableOpacity
+                onPress={() => setShowOriginalVersion(!showOriginalVersion)}
+                style={styles.showOriginalBtn}
+              >
+                <Ionicons name={showOriginalVersion ? "eye-off-outline" : "eye-outline"} size={16} color={colors.primary} />
+                <Text style={[styles.showOriginalBtnText, { color: colors.primary }]}>
+                  {showOriginalVersion ? "Hide original version" : "View entire original version"}
+                </Text>
+              </TouchableOpacity>
+
+              {showOriginalVersion && (
+                <View style={[styles.previousVersionContainer, { backgroundColor: isDark ? colors.borderCard : '#F9F9FB', borderColor: colors.borderCard }]}>
+                  <Text style={styles.previousVersionTitleText}>Original Submitted Version</Text>
+                  {story.previous_title && (
+                    <Text style={[styles.storyTitle, { fontSize: 18, color: COLORS.textLight, marginBottom: 8 }]}>
+                      {story.previous_title}
+                    </Text>
+                  )}
+                  {story.previous_body && (
+                    <Text style={[styles.storyBody, { color: COLORS.textMuted }]}>
+                      {story.previous_body}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Tags */}
           {story.story_tags && story.story_tags.length > 0 && (
             <View style={styles.tagsContainer}>
-              {story.story_tags.map(tag => (
-                <View key={tag} style={styles.tagBadge}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
+              {story.story_tags.map(tag => {
+                const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+                return (
+                  <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
+                    <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                  </View>
+                );
+              })}
             </View>
           )}
 
@@ -581,108 +650,127 @@ export default function StoryDetailScreen() {
             </Text>
           )}
 
-          {/* Action bar */}
-          <View style={styles.actionBar}>
-            <View style={styles.actionLeft}>
-              {/* Like */}
-              <TouchableOpacity
-                onPress={handleLike}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.actionItem}
-              >
-                <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
-                  <Ionicons
-                    name={liked ? "heart" : "heart-outline"}
-                    size={24}
-                    color={liked ? "#E53935" : COLORS.textLight}
-                  />
-                </RNAnimated.View>
-                <Text
-                  style={[styles.actionText, liked && { color: "#E53935" }]}
-                >
-                  {story.like_count}
-                </Text>
-              </TouchableOpacity>
+          {/* Extraneous stuff hidden for moderators */}
+          {!(isModeratorMode && story.status === 'pending') && (
+            <>
+              {/* Action bar */}
+              <View style={styles.actionBar}>
+                <View style={styles.actionLeft}>
+                  {/* Like */}
+                  <TouchableOpacity
+                    onPress={handleLike}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.actionItem}
+                  >
+                    <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
+                      <Ionicons
+                        name={liked ? "heart" : "heart-outline"}
+                        size={24}
+                        color={liked ? "#E53935" : COLORS.textLight}
+                      />
+                    </RNAnimated.View>
+                    <Text
+                      style={[styles.actionText, liked && { color: "#E53935" }]}
+                    >
+                      {story.like_count}
+                    </Text>
+                  </TouchableOpacity>
 
-              {/* Comments count */}
-              <View style={styles.actionItem}>
+                  {/* Comments count */}
+                  <View style={styles.actionItem}>
+                    <Ionicons
+                      name="chatbubble-outline"
+                      size={22}
+                      color={COLORS.textLight}
+                    />
+                    <Text style={styles.actionText}>{comments.length}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.actionRight}>
+                  <TouchableOpacity
+                    onPress={handleDownload}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <RNAnimated.View style={{ transform: [{ scale: downloadScale }] }}>
+                      <Ionicons
+                        name={downloaded ? "checkmark-circle" : "download-outline"}
+                        size={24}
+                        color={downloaded ? colors.primary : COLORS.textLight}
+                      />
+                    </RNAnimated.View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleBookmark}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <RNAnimated.View
+                      style={{ transform: [{ scale: bookmarkScale }] }}
+                    >
+                      <Ionicons
+                        name={bookmarked ? "bookmark" : "bookmark-outline"}
+                        size={24}
+                        color={bookmarked ? colors.primary : COLORS.textLight}
+                      />
+                    </RNAnimated.View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Comments section */}
+              <Pressable
+                style={styles.commentsHeader}
+                onPress={() => setIsResponsesExpanded(!isResponsesExpanded)}
+              >
+                <Text style={styles.commentsTitle}>
+                  {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Response' : 'Responses'}` : 'Responses'}
+                </Text>
                 <Ionicons
-                  name="chatbubble-outline"
-                  size={22}
+                  name={isResponsesExpanded ? "chevron-up" : "chevron-down"}
+                  size={20}
                   color={COLORS.textLight}
                 />
-                <Text style={styles.actionText}>{comments.length}</Text>
-              </View>
-            </View>
+              </Pressable>
 
-            <View style={styles.actionRight}>
-              <TouchableOpacity
-                onPress={handleDownload}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <RNAnimated.View style={{ transform: [{ scale: downloadScale }] }}>
-                  <Ionicons
-                    name={downloaded ? "checkmark-circle" : "download-outline"}
-                    size={24}
-                    color={downloaded ? colors.primary : COLORS.textLight}
-                  />
-                </RNAnimated.View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleBookmark}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <RNAnimated.View
-                  style={{ transform: [{ scale: bookmarkScale }] }}
-                >
-                  <Ionicons
-                    name={bookmarked ? "bookmark" : "bookmark-outline"}
-                    size={24}
-                    color={bookmarked ? colors.primary : COLORS.textLight}
-                  />
-                </RNAnimated.View>
-              </TouchableOpacity>
-            </View>
-          </View>
+              {isResponsesExpanded && (
+                <View style={styles.commentsListContainer}>
+                  {commentsLoading ? (
+                    <ActivityIndicator
+                      style={{ marginTop: 20 }}
+                      color={colors.primary}
+                    />
+                  ) : comments.length === 0 ? (
+                    <Text style={styles.noComments}>
+                      {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
+                    </Text>
+                  ) : (
+                    comments.map((comment) => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        isOwn={user?.id === comment.author_id}
+                        isLiked={isCommentLiked(comment.id)}
+                        onDelete={() => handleDeleteComment(comment.id)}
+                        onLike={() => handleLikeComment(comment.id)}
+                      />
+                    ))
+                  )}
+                </View>
+              )}
 
-          {/* Comments section */}
-          <Text style={styles.commentsTitle}>
-            {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Response' : 'Responses'}` : 'Responses'}
-          </Text>
-
-          {commentsLoading ? (
-            <ActivityIndicator
-              style={{ marginTop: 20 }}
-              color={colors.primary}
-            />
-          ) : comments.length === 0 ? (
-            <Text style={styles.noComments}>
-              {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
-            </Text>
-          ) : (
-            comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                isOwn={user?.id === comment.author_id}
-                isLiked={isCommentLiked(comment.id)}
-                onDelete={() => handleDeleteComment(comment.id)}
-                onLike={() => handleLikeComment(comment.id)}
-              />
-            ))
-          )}
-
-          {/* Recommendations */}
-          {story && (
-            <RecommendationList
-              currentId={story.id}
-              currentTags={story.story_tags || []}
-            />
+              {/* Recommendations */}
+              {story && (
+                <RecommendationList
+                  currentId={story.id}
+                  currentTags={story.story_tags || []}
+                />
+              )}
+            </>
           )}
         </ScrollView>
 
         {/* Comment input */}
-        {!isAnonymous && (
+        {!(isModeratorMode && story.status === 'pending') && !isAnonymous && (
           <View style={styles.commentInputWrapper}>
             <View style={styles.anonRow}>
               <Pressable
@@ -749,7 +837,7 @@ export default function StoryDetailScreen() {
   );
 }
 
-const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
+const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -783,6 +871,30 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
       letterSpacing: -0.3,
       marginBottom: 14,
     },
+    previousVersionContainer: {
+      padding: 16,
+      borderRadius: 12,
+      marginTop: 12,
+      borderWidth: 1,
+    },
+    previousVersionTitleText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: COLORS.textLight,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 12,
+    },
+    showOriginalBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      gap: 6,
+    },
+    showOriginalBtnText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
     lookingForText: {
       fontSize: 12,
       fontStyle: "italic",
@@ -802,17 +914,13 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
       marginTop: 16,
     },
     tagBadge: {
-      backgroundColor: c.appBackground,
       paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: c.borderCard,
+      paddingVertical: 5,
+      borderRadius: 100,
     },
     tagText: {
       fontSize: 12,
       fontWeight: '600',
-      color: c.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
@@ -883,11 +991,23 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT) =>
       fontWeight: "500",
       color: COLORS.textLight,
     },
+    commentsHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 28,
+      marginBottom: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+    },
     commentsTitle: {
-      fontSize: 15,
+      fontSize: 16,
       fontWeight: "700",
       color: c.textDark,
-      marginBottom: 4,
+    },
+    commentsListContainer: {
+      paddingHorizontal: 4,
+      paddingBottom: 20,
     },
     noComments: {
       fontSize: 14,

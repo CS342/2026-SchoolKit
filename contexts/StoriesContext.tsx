@@ -27,6 +27,8 @@ export interface Story {
   target_audiences?: string[];
   story_tags?: string[];
   reports?: { reason: string; details: string | null; created_at: string }[];
+  previous_title?: string;
+  previous_body?: string;
 }
 
 export interface StoryComment {
@@ -232,6 +234,8 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             target_audiences: parsedTargetAudiences,
             story_tags: parsedStoryTags,
             reports: [],
+            previous_title: s.previous_title,
+            previous_body: s.previous_body,
           };
         });
 
@@ -505,6 +509,8 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
 
       if (isResubmitting) {
         updates.rejected_norms = [];
+        updates.previous_title = originalStory?.title;
+        updates.previous_body = originalStory?.body;
       }
 
       const { data, error } = await supabase
@@ -525,6 +531,8 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         status: data.status,
         attempt_count: data.attempt_count,
         rejected_norms: data.rejected_norms || [],
+        previous_title: data.previous_title,
+        previous_body: data.previous_body,
       };
 
       setStories(prev => {

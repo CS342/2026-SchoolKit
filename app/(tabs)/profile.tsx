@@ -230,7 +230,6 @@ export default function ProfileScreen() {
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
         <Text style={appStyles.tabHeaderTitle}>Profile</Text>
-        <Text style={appStyles.tabHeaderSubtitle}>Manage your information</Text>
       </View>
 
       <ScrollView

@@ -9,6 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +23,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { CommunityNormsModal } from '../components/CommunityNormsModal';
 import { StoryStartersModal } from '../components/StoryStartersModal';
 import { TopicTagsModal } from '../components/TopicTagsModal';
+import { TAG_COLORS, DEFAULT_TAG_COLOR } from '../components/StoryCard';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -51,7 +55,7 @@ export default function CreateStoryScreen() {
   const existingStory = isEditing ? stories.find(s => s.id === editId) : null;
 
   // Make sure the user's own group is in the initial target audiences
-  const initialAudiences = existingStory?.target_audiences || ['Students', 'Parents', 'School Staff'];
+  const initialAudiences = [...(existingStory?.target_audiences || ['Students', 'Parents', 'School Staff'])];
   if (userGroup && !initialAudiences.includes(userGroup)) {
     initialAudiences.push(userGroup);
   }
@@ -64,8 +68,10 @@ export default function CreateStoryScreen() {
   const [storyTags, setStoryTags] = useState<string[]>(existingStory?.story_tags || []);
   const [submitting, setSubmitting] = useState(false);
   const [showNorms, setShowNorms] = useState(false);
+  const [normsMode, setNormsMode] = useState<'view' | 'submit'>('submit');
   const [showStarters, setShowStarters] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [initialState] = useState({
     title: existingStory?.title || '',
@@ -82,10 +88,17 @@ export default function CreateStoryScreen() {
     if (body !== initialState.body) return true;
     if (postAnonymously !== initialState.postAnonymously) return true;
     
-    // Check arrays
-    if (lookingFor.length !== initialState.lookingFor.length || !lookingFor.every(v => initialState.lookingFor.includes(v))) return true;
-    if (targetAudiences.length !== initialState.targetAudiences.length || !targetAudiences.every(v => initialState.targetAudiences.includes(v))) return true;
-    if (storyTags.length !== initialState.storyTags.length || !storyTags.every(v => initialState.storyTags.includes(v))) return true;
+    // Check arrays safely
+    const safeLookingFor = lookingFor || [];
+    const safeTargetAudiences = targetAudiences || [];
+    const safeStoryTags = storyTags || [];
+    const safeInitialLookingFor = initialState.lookingFor || [];
+    const safeInitialTargetAudiences = initialState.targetAudiences || [];
+    const safeInitialStoryTags = initialState.storyTags || [];
+
+    if (safeLookingFor.length !== safeInitialLookingFor.length || !safeLookingFor.every(v => safeInitialLookingFor.includes(v))) return true;
+    if (safeTargetAudiences.length !== safeInitialTargetAudiences.length || !safeTargetAudiences.every(v => safeInitialTargetAudiences.includes(v))) return true;
+    if (safeStoryTags.length !== safeInitialStoryTags.length || !safeStoryTags.every(v => safeInitialStoryTags.includes(v))) return true;
     
     return false;
   }, [isEditing, title, body, postAnonymously, lookingFor, targetAudiences, storyTags, initialState]);
@@ -93,12 +106,29 @@ export default function CreateStoryScreen() {
   const isExhausted = isEditing && existingStory?.status === 'rejected' && (existingStory?.attempt_count || 0) >= 2;
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !submitting && !isExhausted && hasMadeChanges;
 
+  const getAudienceHint = () => {
+    const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+    const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
+    const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
+    if (hasAll || tags.length === 0) return '';
+    if (tags.length === 1) return `For ${tags[0]}`;
+    if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
+    return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
+  };
+  const audienceHint = getAudienceHint();
+
   const handlePreSubmit = () => {
     if (!canSubmit) return;
     if (isAnonymous) {
       Alert.alert('Sign In Required', 'You need to create an account to share stories.');
       return;
     }
+    setNormsMode('submit');
+    setShowNorms(true);
+  };
+
+  const handleViewNorms = () => {
+    setNormsMode('view');
     setShowNorms(true);
   };
 
@@ -116,7 +146,15 @@ export default function CreateStoryScreen() {
     setSubmitting(false);
 
     if (result) {
-      router.back();
+      if (!isEditing || (isEditing && existingStory?.status === 'rejected')) {
+        Alert.alert(
+          'Story Submitted',
+          'Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      } else {
+        router.back();
+      }
     } else {
       Alert.alert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
     }
@@ -134,11 +172,24 @@ export default function CreateStoryScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={appStyles.editScrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ScrollView
+          contentContainerStyle={appStyles.editScrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+        <Pressable style={styles.topicReminder} onPress={handleViewNorms}>
+          <Ionicons name="school-outline" size={16} color="#5C5C8A" />
+          <Text style={styles.topicReminderText}>Stories must relate to school and cancer.</Text>
+          <View style={styles.topicReminderLink}>
+            <Text style={styles.topicReminderLinkText}>Review norms</Text>
+            <Ionicons name="chevron-forward" size={13} color="#5C5C8A" />
+          </View>
+        </Pressable>
+
         {isEditing && existingStory?.status === 'rejected' && existingStory.rejected_norms && existingStory.rejected_norms.length > 0 && (
           <View style={styles.normsContainer}>
             <View style={styles.normsHeader}>
@@ -172,12 +223,36 @@ export default function CreateStoryScreen() {
           editable={!isExhausted}
         />
         <View style={styles.titleRow}>
-          <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={styles.startersBtn}>
-            <Ionicons name="sparkles" size={16} color={colors.primary} />
-            <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
+          <Pressable onPress={() => !isExhausted && setShowSettingsModal(true)} style={styles.startersBtn}>
+            <Ionicons name="options-outline" size={16} color={colors.primary} />
+            <Text style={[styles.startersText, { color: colors.primary }]}>Add tags and change audience</Text>
           </Pressable>
           <Text style={styles.charCount}>{title.length}/120</Text>
         </View>
+
+        {/* Selected settings preview area */}
+        { (!isExhausted && (storyTags.length > 0 || audienceHint !== '')) && (
+          <View style={styles.previewContainer}>
+            {audienceHint !== '' && (
+              <Text style={styles.audiencePreviewText}>
+                {audienceHint}
+              </Text>
+            )}
+            
+            {storyTags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {storyTags.map(tag => {
+                  const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+                  return (
+                    <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
+                      <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
 
         <TextInput
           style={[styles.bodyInput, isExhausted && { backgroundColor: colors.backgroundLight, color: COLORS.textMuted }]}
@@ -190,94 +265,21 @@ export default function CreateStoryScreen() {
           editable={!isExhausted}
         />
 
-        {/* Content Tags via Dropdown/Modal */}
-        <Text style={styles.sectionHeading}>Topic Tags</Text>
-        <Pressable 
-          style={styles.tagsDropdownBtn}
-          onPress={() => !isExhausted && setShowTagsModal(true)}
-        >
-          <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
-            {storyTags.length > 0 
-              ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
-              : "Select topic tags..."}
-          </Text>
-          <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
-        </Pressable>
-        
-        {storyTags.length > 0 && (
-          <View style={styles.selectedTagsContainer}>
-            {storyTags.map((tag) => (
-              <View key={tag} style={styles.selectedTagChip}>
-                <Text style={styles.selectedTagText}>{tag}</Text>
-                {!isExhausted && (
-                  <Pressable 
-                    onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
-                    hitSlop={8}
-                    style={{ marginLeft: 4 }}
-                  >
-                    <Ionicons name="close-circle" size={16} color={colors.primary} />
-                  </Pressable>
-                )}
-              </View>
-            ))}
-          </View>
+        {body.trim().length === 0 && (
+          <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={[styles.startersBtn, { marginTop: 12, alignSelf: 'flex-start' }]}>
+            <Ionicons name="sparkles" size={16} color={colors.primary} />
+            <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
+          </Pressable>
         )}
 
-        {/* Looking For Chips */}
-        <Text style={styles.sectionHeading}>I'm looking for...</Text>
-        <View style={styles.chipGroup}>
-          {['Advice', 'Support', 'Listening ear', 'Just sharing'].map((option) => {
-            const isSelected = lookingFor.includes(option);
-            return (
-              <Pressable
-                key={option}
-                style={[styles.chip, isSelected && styles.chipSelected, isExhausted && { opacity: 0.6 }]}
-                onPress={() => {
-                  if (isExhausted) return;
-                  if (isSelected) {
-                    setLookingFor(lookingFor.filter(o => o !== option));
-                  } else {
-                    setLookingFor([...lookingFor, option]);
-                  }
-                }}
-              >
-                <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                  {option}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Target Audience Chips */}
-        <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Share with...</Text>
-        <View style={styles.chipGroup}>
-          {['Students', 'Parents', 'School Staff'].map((option) => {
-            const isSelected = targetAudiences.includes(option);
-            return (
-              <Pressable
-                key={option}
-                style={[styles.chip, isSelected && styles.chipSelected, isExhausted && { opacity: 0.6 }]}
-                onPress={() => {
-                  if (isExhausted) return;
-                  if (option === userGroup) {
-                    Alert.alert('Required', `As a signed-in member of this community, you must share your story with ${option}.`);
-                    return;
-                  }
-                  if (isSelected) {
-                    setTargetAudiences(targetAudiences.filter(o => o !== option));
-                  } else {
-                    setTargetAudiences([...targetAudiences, option]);
-                  }
-                }}
-              >
-                <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                  {option}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Looking For preview area */}
+        { (!isExhausted && lookingFor.length > 0) && (
+          <View style={styles.lookingForPreview}>
+            <Text style={styles.lookingForText}>
+              Looking for: {lookingFor.join(' · ')}
+            </Text>
+          </View>
+        )}
 
         {/* Anonymous toggle */}
         <View style={styles.anonymousRow}>
@@ -344,13 +346,149 @@ export default function CreateStoryScreen() {
             </Pressable>
           )}
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={showSettingsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowSettingsModal(false)} />
+          <View style={[styles.settingsModalContent, { paddingBottom: Math.max(insets.bottom + 20, 20) }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Story Settings</Text>
+              <Pressable onPress={() => setShowSettingsModal(false)} hitSlop={10} style={styles.modalDoneBtn}>
+                <Text style={styles.modalDoneBtnText}>Done</Text>
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.settingsScroll}>
+              
+              {/* Content Tags via Dropdown/Modal */}
+              <Text style={styles.sectionHeading}>Topic Tags</Text>
+              <Pressable 
+                style={styles.tagsDropdownBtn}
+                onPress={() => !isExhausted && setShowTagsModal(true)}
+              >
+                <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
+                  {storyTags.length > 0 
+                    ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
+                    : "Select topic tags..."}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
+              </Pressable>
+              
+              {storyTags.length > 0 && (
+                <View style={styles.selectedTagsContainer}>
+                  {storyTags.map((tag) => {
+                    const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+                    return (
+                      <View key={tag} style={[styles.selectedTagChip, { backgroundColor: color.bg }]}>
+                        <Text style={[styles.selectedTagText, { color: color.text }]}>{tag}</Text>
+                        {!isExhausted && (
+                          <Pressable
+                            onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
+                            hitSlop={8}
+                            style={{ marginLeft: 4 }}
+                          >
+                            <Ionicons name="close-circle" size={16} color={color.text} />
+                          </Pressable>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Looking For Chips */}
+              <Text style={styles.sectionHeading}>I'm looking for...</Text>
+              <View style={styles.chipGroup}>
+                {['Advice', 'Warmth + Support', 'Listening Ear', 'Just Sharing'].map((option) => {
+                  const isSelected = lookingFor.includes(option);
+                  return (
+                    <Pressable
+                      key={option}
+                      style={[styles.chip, isSelected && styles.chipSelected, isExhausted && { opacity: 0.6 }]}
+                      onPress={() => {
+                        if (isExhausted) return;
+                        if (isSelected) {
+                          setLookingFor(lookingFor.filter(o => o !== option));
+                        } else {
+                          setLookingFor([...lookingFor, option]);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                        {option}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Target Audience Chips */}
+              <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Share with...</Text>
+              <View style={styles.chipGroup}>
+                {['Students', 'Parents', 'School Staff'].map((option) => {
+                  const isSelected = targetAudiences.includes(option);
+                  return (
+                    <Pressable
+                      key={option}
+                      style={[styles.chip, isSelected && styles.chipSelected, isExhausted && { opacity: 0.6 }]}
+                      onPress={() => {
+                        if (isExhausted) return;
+                        if (option === userGroup) {
+                          Alert.alert('Required', `As a signed-in member of this community, you must share your story with ${option}.`);
+                          return;
+                        }
+                        if (isSelected) {
+                          setTargetAudiences(targetAudiences.filter(o => o !== option));
+                        } else {
+                          setTargetAudiences([...targetAudiences, option]);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                        {option}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+
+        {/* Render TopicTagsModal within SettingsModal without creating a new React Native Modal */}
+        <TopicTagsModal
+          visible={showTagsModal}
+          useModal={false}
+          onClose={() => setShowTagsModal(false)}
+          selectedTags={storyTags}
+          onToggleTag={(tag) => {
+            setStoryTags(prev => {
+              if (prev.includes(tag)) return prev.filter(t => t !== tag);
+              if (prev.length >= 3) return prev;
+              return [...prev, tag];
+            });
+          }}
+          maxTags={3}
+          onClearAll={() => setStoryTags([])}
+        />
+      </Modal>
 
       <CommunityNormsModal
           visible={showNorms}
           onClose={() => setShowNorms(false)}
-          mode="submit"
-          onAgree={handleFinalSubmit}
+          mode={normsMode}
+          onAgree={normsMode === 'submit' ? handleFinalSubmit : undefined}
       />
 
       <StoryStartersModal
@@ -361,17 +499,6 @@ export default function CreateStoryScreen() {
         }}
       />
 
-      <TopicTagsModal
-        visible={showTagsModal}
-        onClose={() => setShowTagsModal(false)}
-        selectedTags={storyTags}
-        onToggleTag={(tag) => {
-          setStoryTags(prev => 
-            prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-          );
-        }}
-        onClearAll={() => setStoryTags([])}
-      />
     </View>
   );
 }
@@ -520,17 +647,13 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     selectedTagChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.primary + '15',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 100,
-      borderWidth: 1,
-      borderColor: c.primary + '30',
     },
     selectedTagText: {
       fontSize: 13,
       fontWeight: '600',
-      color: c.primary,
     },
     normsContainer: {
       backgroundColor: COLORS.error + '10',
@@ -622,5 +745,102 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       fontSize: 16,
       fontWeight: '700',
       color: c.white,
+    },
+    topicReminder: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#EEEEF6',
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 20,
+      gap: 7,
+    },
+    topicReminderText: {
+      flex: 1,
+      fontSize: 13,
+      color: '#5C5C8A',
+      fontWeight: '500',
+    },
+    topicReminderLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    topicReminderLinkText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#5C5C8A',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+      justifyContent: "flex-end",
+    },
+    settingsModalContent: {
+      backgroundColor: c.white,
+      borderTopLeftRadius: RADII.cardLarge || 24,
+      borderTopRightRadius: RADII.cardLarge || 24,
+      paddingTop: 24,
+      paddingHorizontal: 20,
+      maxHeight: "85%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 16,
+    },
+    modalTitle: {
+      ...TYPOGRAPHY.h2,
+      color: c.textDark,
+    },
+    modalDoneBtn: {
+      backgroundColor: c.primary + "15",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 16,
+    },
+    modalDoneBtnText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: c.primary,
+    },
+    settingsScroll: {
+      marginBottom: 10,
+    },
+    previewContainer: {
+      marginBottom: 20,
+      marginTop: -8,
+    },
+    audiencePreviewText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: c.textLight,
+      marginBottom: 6,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tagBadge: {
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      borderRadius: 100,
+    },
+    tagText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    lookingForPreview: {
+      marginTop: 8,
+      paddingHorizontal: 4,
+    },
+    lookingForText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: '#8E8E93',
+      fontStyle: 'italic',
     },
   });

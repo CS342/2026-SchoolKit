@@ -37,7 +37,7 @@ export function AIGenerateModal({
   canvasSize,
   onDesignGenerated,
 }: AIGenerateModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { generate, isGenerating, error, clearError } = useAIGenerate();
 
   const [step, setStep] = useState<Step>('mode');
@@ -140,7 +140,7 @@ export function AIGenerateModal({
   };
 
   const modalStyle: React.CSSProperties = {
-    backgroundColor: colors.white,
+    backgroundColor: isDark ? colors.backgroundLight : colors.white,
     borderRadius: 20,
     padding: 32,
     width: step === 'mode' ? 520 : 560,
@@ -382,7 +382,7 @@ export function AIGenerateModal({
                     borderRadius: 8,
                     border: 'none',
                     backgroundColor:
-                      inputTab === tab ? colors.white : 'transparent',
+                      inputTab === tab ? (isDark ? colors.backgroundLight : colors.white) : 'transparent',
                     boxShadow:
                       inputTab === tab ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                     cursor: 'pointer',

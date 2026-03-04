@@ -19,9 +19,8 @@ const TAB_ICONS: Record<string, {
   inactive: keyof typeof Ionicons.glyphMap;
 }> = {
   index:     { active: 'home',         inactive: 'home-outline' },
-  search:    { active: 'search',       inactive: 'search-outline' },
   stories:   { active: 'chatbubbles', inactive: 'chatbubbles-outline' },
-  bookmarks: { active: 'bookmark',    inactive: 'bookmark-outline' },
+  bookmarks: { active: 'layers',      inactive: 'layers-outline' },
   profile:   { active: 'person',      inactive: 'person-outline' },
 };
 
