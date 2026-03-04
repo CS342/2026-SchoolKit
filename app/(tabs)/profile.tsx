@@ -7,13 +7,11 @@ import {
   Pressable,
   Alert,
   Image,
-  Modal,
-  ActivityIndicator,
-  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,11 +20,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Audio } from "expo-av";
 import { useOnboarding } from "../../contexts/OnboardingContext";
-import { useAuth } from "../../contexts/AuthContext";
-import { ALL_RESOURCES } from "../../constants/resources";
-import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
   RADII,
   SIZING,
@@ -122,194 +116,13 @@ function AnimatedSection({
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-function VoiceSelectorModal({
-  visible,
-  onClose,
-  selectedVoice,
-  onSelectVoice,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  selectedVoice: string;
-  onSelectVoice: (voiceId: string) => void;
-}) {
-  const [sound, setSound] = React.useState<Audio.Sound | null>(null);
-  const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { colors, shadows } = useTheme();
-
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
-
-  const handlePlaySample = async (voiceId: string, name: string) => {
-    try {
-      if (playingVoiceId === voiceId) {
-        // Stop if currently playing this voice
-        if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-          setSound(null);
-          setPlayingVoiceId(null);
-        }
-        return;
-      }
-
-      // Stop previous
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-        setPlayingVoiceId(null);
-      }
-
-      setIsLoading(true);
-      setPlayingVoiceId(voiceId);
-
-      const text = `The quick brown fox jumps over the lazy dog.`;
-      const uri = await generateSpeech(text, voiceId);
-
-      if (uri) {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri },
-            { shouldPlay: true }
-        );
-        setSound(newSound);
-        newSound.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded && status.didJustFinish) {
-                setPlayingVoiceId(null);
-            }
-        });
-      } else {
-          setPlayingVoiceId(null);
-      }
-    } catch (e) {
-      console.error("Error playing sample", e);
-      setPlayingVoiceId(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Group voices by accent
-  const voicesByAccent = React.useMemo(() => {
-    const groups: Record<string, typeof VOICE_META[string][]> = {};
-    Object.values(VOICE_META).forEach((voice) => {
-      const accent = voice.accent || 'Other';
-      if (!groups[accent]) groups[accent] = [];
-      groups[accent].push(voice);
-    });
-    return groups;
-  }, []);
-
-  const accentOrder = ['American', 'British', 'Australian'];
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-            <View style={styles.modalBackdrop} />
-         </Pressable>
-         <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Choose a Voice</Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Select a companion for your journey</Text>
-
-            <ScrollView style={styles.voiceScroll} showsVerticalScrollIndicator={false}>
-              {accentOrder.map((accent) => {
-                const voices = voicesByAccent[accent];
-                if (!voices || voices.length === 0) return null;
-                return (
-                  <View key={accent}>
-                    <Text style={[styles.accentLabel, { color: colors.textLight }]}>{accent}</Text>
-                    <View style={styles.voiceList}>
-                      {voices.map((voice) => {
-                        const isSelected = selectedVoice === voice.id;
-                        const isPlaying = playingVoiceId === voice.id;
-
-                        return (
-                          <Pressable
-                              key={voice.id}
-                              style={[
-                                  styles.voiceCard,
-                                  { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
-                                  shadows.card,
-                                  isSelected && { backgroundColor: colors.backgroundLight }
-                              ]}
-                              onPress={() => onSelectVoice(voice.id)}
-                          >
-                              {voice.image ? (
-                                <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
-                              ) : (
-                                <View style={[styles.voiceAvatar, { backgroundColor: voice.color, alignItems: 'center', justifyContent: 'center' }]}>
-                                  <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                                </View>
-                              )}
-                              <View style={styles.voiceInfo}>
-                                  <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
-                                  <Text style={[styles.voiceDesc, { color: isSelected ? colors.primary : colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voice.description}</Text>
-                              </View>
-
-                              <Pressable
-                                  style={[
-                                      styles.playButton,
-                                      { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }
-                                  ]}
-                                  onPress={(e) => {
-                                      e.stopPropagation();
-                                      handlePlaySample(voice.id, voice.name);
-                                  }}
-                              >
-                                  {isLoading && isPlaying ? (
-                                      <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
-                                  ) : (
-                                      <Ionicons
-                                          name={isPlaying ? "stop" : "play"}
-                                          size={16}
-                                          color={isPlaying ? '#FFFFFF' : colors.primary}
-                                      />
-                                  )}
-                              </Pressable>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-
-            <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={onClose}>
-                <Text style={styles.closeButtonText}>Done</Text>
-            </Pressable>
-         </View>
-      </View>
-    </Modal>
-  );
-}
 
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
   const theme = useTheme();
-  const { colors, shadows, appStyles, isDark, themePreference, setThemePreference } = theme;
-  const {
-    data,
-    resetOnboarding,
-    updateProfilePicture,
-    downloadAllResources,
-    downloads,
-    selectedVoice,
-    updateVoice,
-  } = useOnboarding();
-
-
-  // Modal State
-  const [isVoiceModalVisible, setIsVoiceModalVisible] = React.useState(false);
-  const [isAppearanceModalVisible, setIsAppearanceModalVisible] = React.useState(false);
+  const { colors, shadows, appStyles } = theme;
+  const { data, updateProfilePicture } = useOnboarding();
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -412,67 +225,11 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleRetakeSurvey = () => {
-    Alert.alert("Retake Survey", "This will reset your profile. Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Retake",
-        style: "destructive",
-        onPress: () => {
-          resetOnboarding();
-          router.replace("/onboarding/step1");
-        },
-      },
-    ]);
-  };
-
-  const handleDownloadAll = () => {
-    const allDownloaded = downloads.length >= ALL_RESOURCES.length;
-    if (allDownloaded) {
-      Alert.alert("Already Downloaded", "All resources are already available offline.");
-    } else {
-      Alert.alert("Download All Resources", "This will save all resources for offline access.", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Download All",
-          onPress: async () => {
-            await downloadAllResources();
-            Alert.alert("Success", "All resources are now available offline!");
-          },
-        },
-      ]);
-    }
-  };
-
-  const handleAppearance = () => {
-    setIsAppearanceModalVisible(true);
-  };
-
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-            router.replace("/welcome");
-          } catch (err: any) {
-            Alert.alert("Sign Out Failed", err.message || "Something went wrong.");
-          }
-        },
-      },
-    ]);
-  };
-
-  const appearanceLabel = themePreference === 'system' ? 'System' : themePreference === 'light' ? 'Light' : 'Dark';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
         <Text style={appStyles.tabHeaderTitle}>Profile</Text>
-        <Text style={appStyles.tabHeaderSubtitle}>Manage your information</Text>
       </View>
 
       <ScrollView
@@ -515,122 +272,42 @@ export default function ProfileScreen() {
           </View>
         </AnimatedSection>
 
-        <AnimatedSection delay={460}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>GENERAL</Text>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow
-              icon="moon-outline"
-              label="Appearance"
-              value={appearanceLabel}
-              onPress={handleAppearance}
-              theme={theme}
-            />
-            <SettingRow
-              icon="mic-outline"
-              label="Voice"
-              value={Object.values(VOICE_META).find((meta) => meta.id === selectedVoice)?.name || 'Peter'}
-              onPress={() => setIsVoiceModalVisible(true)}
-              theme={theme}
-            />
-            {Platform.OS === 'web' && (
-              <SettingRow
-                icon="color-palette-outline"
-                label="Design Editor"
-                value="Create visuals"
-                onPress={() => router.push('/(editor)/designs')}
-                theme={theme}
-              />
-            )}
-            <SettingRow
-              icon="cloud-download-outline"
-              label="Download All"
-              value={
-                downloads.length >= ALL_RESOURCES.length
-                  ? "All saved"
-                  : `${downloads.length}/${ALL_RESOURCES.length}`
-              }
-              onPress={handleDownloadAll}
-              theme={theme}
-            />
-            <SettingRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
-            <SettingRow icon="information-circle-outline" label="About SchoolKit" onPress={() => router.push('/about')} theme={theme} />
-            <SettingRow icon="help-circle-outline" label="Frequently Asked Questions" onPress={() => router.push('/help-support?section=faq')} theme={theme} />
-            <SettingRow icon="chatbubble-ellipses-outline" label="Share Feedback" onPress={() => router.push('/help-support?section=feedback')} isLast theme={theme} />
-          </View>
-        </AnimatedSection>
+        <AnimatedSection delay={420}>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
 
-        <AnimatedSection delay={580}>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow icon="log-out-outline" label="Sign Out" onPress={handleSignOut} tint={colors.error} isLast theme={theme} />
-          </View>
+          <Pressable
+            onPress={() => router.push("/journal")}
+            style={({ pressed }) => [
+              styles.journalWidget,
+              shadows.card,
+              pressed && { transform: [{ scale: 0.98 }] }
+            ]}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.journalGlass}
+            >
+
+
+              <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
+                <Ionicons name="journal" size={28} color="#FFF" />
+              </View>
+              <View style={styles.journalInfo}>
+                <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+              </View>
+              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+              </View>
+            </LinearGradient>
+          </Pressable>
         </AnimatedSection>
 
         <Animated.View style={[styles.footer, footerStyle]}>
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
-
-      {/* Appearance Modal */}
-      <Modal visible={isAppearanceModalVisible} transparent animationType="fade" onRequestClose={() => setIsAppearanceModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAppearanceModalVisible(false)}>
-            <View style={styles.modalBackdrop} />
-          </Pressable>
-          <View style={[styles.modalContent, { backgroundColor: colors.appBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Appearance</Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>Choose your preferred theme</Text>
-            <View style={{ gap: 10, marginBottom: 20 }}>
-              {([
-                { key: 'system' as const, label: 'System', icon: 'phone-portrait-outline' as const, desc: 'Match device settings' },
-                { key: 'light' as const, label: 'Light', icon: 'sunny-outline' as const, desc: 'Always use light mode' },
-                { key: 'dark' as const, label: 'Dark', icon: 'moon-outline' as const, desc: 'Always use dark mode' },
-              ]).map((option) => {
-                const isSelected = themePreference === option.key;
-                return (
-                  <Pressable
-                    key={option.key}
-                    style={[
-                      styles.voiceCard,
-                      { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' },
-                      shadows.card,
-                      isSelected && { backgroundColor: colors.backgroundLight },
-                    ]}
-                    onPress={() => {
-                      setThemePreference(option.key);
-                      setIsAppearanceModalVisible(false);
-                    }}
-                  >
-                    <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 20 }]}>
-                      <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
-                    </View>
-                    <View style={styles.voiceInfo}>
-                      <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{option.label}</Text>
-                      <Text style={[styles.voiceDesc, { color: colors.textLight }]}>{option.desc}</Text>
-                    </View>
-                    {isSelected && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Pressable style={[styles.closeButton, { backgroundColor: colors.primary }]} onPress={() => setIsAppearanceModalVisible(false)}>
-              <Text style={styles.closeButtonText}>Done</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Voice Selection Modal */}
-      <VoiceSelectorModal
-        visible={isVoiceModalVisible}
-        onClose={() => setIsVoiceModalVisible(false)}
-        selectedVoice={selectedVoice}
-        onSelectVoice={(voiceId) => {
-            updateVoice(voiceId);
-            setIsVoiceModalVisible(false);
-        }}
-      />
     </View>
   );
 }
@@ -756,93 +433,64 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // ── Modal ─────────────────────────────────────
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalBackdrop: {
-    flex: 1,
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: SPACING.screenPadding,
-    paddingBottom: 40,
-    maxHeight: "85%",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-    textAlign: "center",
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    textAlign: "center",
+  journalWidget: {
+    marginHorizontal: 24,
+    borderRadius: 24,
     marginBottom: 24,
-  },
-  voiceScroll: {
-    marginBottom: 16,
-  },
-  accentLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 16,
-    marginLeft: 4,
-  },
-  voiceList: {
-    gap: 10,
-    marginBottom: 8,
-  },
-  voiceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 16,
+    overflow: 'hidden',
     borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)', // Primary color shadow -> back to white border
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
   },
-  voiceAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    marginRight: 12,
+  journalGlass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 16,
   },
-  voiceInitial: {
+  journalIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  journalInfo: {
+    flex: 1,
+  },
+  journalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  voiceInfo: {
-    flex: 1,
-  },
-  voiceName: {
-    fontSize: 16,
-    fontWeight: "600",
     marginBottom: 2,
   },
-  voiceDesc: {
-    fontSize: 13,
+  journalCount: {
+    fontSize: 14,
+    fontWeight: '500',
   },
-  playButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
+  journalArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
-  closeButton: {
-    paddingVertical: 14,
-    borderRadius: 100,
-    alignItems: "center",
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  iconGlow: {
+    shadowColor: '#7B68EE',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 4,
+  }
 });

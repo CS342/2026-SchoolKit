@@ -12,11 +12,16 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const DEFAULT_COLOR = '#7B68EE';
 
-// Only these DB/design-editor pages are shown in the library.
-// Add titles here as pages are finished and ready.
+// DB/design-editor pages with these titles appear in the main library.
+// All other DB pages are still fetched but shown only in the Design Generated tab.
 const APPROVED_DB_TITLES = new Set([
   'feeling sick? here\'s what to do',
 ]);
+
+// Override icon/color for specific approved pages (overrides whatever is stored in the DB).
+const APPROVED_DB_OVERRIDES: Record<string, { icon?: string; color?: string }> = {
+  'feeling sick? here\'s what to do': { icon: 'thermometer-outline', color: '#0EA5E9' },
+};
 
 /**
  * Fetches resources from Supabase and merges with the hardcoded resource list.
@@ -45,16 +50,21 @@ export function useResources() {
       );
 
       const dbResources: Resource[] = data
-        .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()) && APPROVED_DB_TITLES.has(r.title.toLowerCase()))
-        .map((r) => ({
-          id: r.id,
-          title: r.title,
-          category: r.category,
-          tags: [r.category.toLowerCase()],
-          icon: r.icon,
-          color: CATEGORY_COLORS[r.category] || DEFAULT_COLOR,
-          route: r.design_id ? `/design-view/${r.design_id}` : undefined,
-        }));
+        .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()))
+        .map((r) => {
+          const override = APPROVED_DB_OVERRIDES[r.title.toLowerCase()] ?? {};
+          return {
+            id: r.id,
+            title: r.title,
+            category: r.category,
+            tags: [r.category.toLowerCase()],
+            icon: override.icon ?? r.icon,
+            color: override.color ?? CATEGORY_COLORS[r.category] ?? DEFAULT_COLOR,
+            route: r.design_id ? `/design-view/${r.design_id}` : undefined,
+            // Pages not in the approved list only appear in the Design Generated tab
+            designOnly: !APPROVED_DB_TITLES.has(r.title.toLowerCase()),
+          };
+        });
 
       setResources([...ALL_RESOURCES, ...dbResources]);
     } catch {

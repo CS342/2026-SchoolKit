@@ -14,13 +14,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { generateSpeech } from "../services/elevenLabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
 import { BookmarkButton } from "../components/BookmarkButton";
+import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -307,6 +309,7 @@ function ExpandedCardModal({
     isLoadingAudio: boolean;
     onToggleSpeak: () => void;
 }) {
+    const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
@@ -379,7 +382,7 @@ function ExpandedCardModal({
 
                     {/* Back */}
                     <Animated.View style={[styles.expandedCardShadow, styles.expandedCardBackSide, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, height: cardHeight }]}>
-                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: "#FFFFFF", borderColor: color }]}>
+                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
                             <View style={styles.expandedCardInner}>
                                 <View style={styles.factHeader}>
                                     <View>
@@ -419,6 +422,7 @@ function ExpandedCardModal({
 
 // ─── Handout Modal ────────────────────────────────────────────────────────────
 function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: () => void }) {
+    const { isDark, colors } = useTheme();
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const backdropAnim = useRef(new Animated.Value(0)).current;
     const [internalVisible, setInternalVisible] = useState(false);
@@ -460,7 +464,7 @@ function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: 
                     <Animated.View style={[handoutStyles.backdrop, { opacity: backdropAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }) }]} />
                 </Pressable>
 
-                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }] }]}>
+                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}>
                     {/* Handle bar */}
                     <View style={handoutStyles.handleArea}>
                         <View style={handoutStyles.handle} />
@@ -599,13 +603,17 @@ export default function SchoolLifeBalanceScreen() {
     const [activeHandout, setActiveHandout] = useState<Handout | null>(null);
 
     // Audio
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const player = useAudioPlayer();
+    const playerStatus = useAudioPlayerStatus(player);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
     useEffect(() => {
-        return () => { if (sound) sound.unloadAsync(); };
-    }, [sound]);
+        if (playerStatus.isLoaded && playerStatus.didJustFinish) {
+            setIsSpeaking(false);
+            player.seekTo(0);
+        }
+    }, [playerStatus.isLoaded, playerStatus.didJustFinish]);
 
     const getCardColor = (id: string) => {
         const idx = CARDS.findIndex((c) => c.id === id);
@@ -613,36 +621,27 @@ export default function SchoolLifeBalanceScreen() {
     };
 
     const closeExpandedCard = async () => {
-        if (sound) {
-            try { await sound.stopAsync(); await sound.unloadAsync(); } catch (_) { }
-            setSound(null);
-        }
+        player.pause();
         setIsSpeaking(false);
         setExpandedCard(null);
     };
 
     const handleSpeak = async () => {
         if (isSpeaking) {
-            if (sound) await sound.pauseAsync();
+            player.pause();
             setIsSpeaking(false);
         } else {
             setIsSpeaking(true);
-            if (sound) {
-                await sound.playAsync();
+            if (playerStatus.isLoaded) {
+                player.play();
             } else if (expandedCard?.back) {
                 try {
                     setIsLoadingAudio(true);
                     const text = `${expandedCard.front}. ${expandedCard.back}`;
                     const audioUri = await generateSpeech(text, selectedVoice);
                     if (audioUri) {
-                        const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUri }, { shouldPlay: true });
-                        setSound(newSound);
-                        newSound.setOnPlaybackStatusUpdate((status) => {
-                            if (status.isLoaded && status.didJustFinish) {
-                                setIsSpeaking(false);
-                                newSound.setPositionAsync(0);
-                            }
-                        });
+                        player.replace(audioUri);
+                        player.play();
                     }
                 } catch (e) {
                     console.error("Audio error:", e);
@@ -741,6 +740,12 @@ export default function SchoolLifeBalanceScreen() {
                         ))}
                     </View>
                 </View>
+
+                {/* Recommendations */}
+                <RecommendationList
+                    currentId="14"
+                    currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']}
+                />
             </ScrollView>
 
             {/* Expanded card modal */}

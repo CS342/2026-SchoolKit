@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import RNAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,6 +27,7 @@ import RNAnimated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTTS } from "../hooks/useTTS";
 import { TTSButton } from "../components/TTSButton";
+import { RecommendationList } from "../components/RecommendationList";
 import {
   COLORS,
   TYPOGRAPHY,
@@ -36,6 +37,7 @@ import {
   BORDERS,
   ANIMATION,
 } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -209,11 +211,14 @@ function BottomSheet({
   section: SectionData | null;
   onClose: () => void;
 }) {
+  const { isDark, colors } = useTheme();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
   const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
 
   const maxBullets = 6;
   while (bulletAnims.length < maxBullets) {
@@ -277,6 +282,7 @@ function BottomSheet({
 
   const handleDismiss = useCallback(() => {
     stop();
+    player.pause();
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SHEET_HEIGHT,
@@ -296,11 +302,6 @@ function BottomSheet({
 
   const handleSpeak = async () => {
     if (!section) return;
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
     speak(`${section.title}. ${section.items.join(". ")}`);
   };
 
@@ -331,7 +332,7 @@ function BottomSheet({
 
         {/* Sheet */}
         <Animated.View
-          style={[sheetStyles.sheet, { transform: [{ translateY }] }]}
+          style={[sheetStyles.sheet, { transform: [{ translateY }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}
         >
           {/* Drag handle */}
           <View {...panResponder.panHandlers} style={sheetStyles.handleArea}>
@@ -567,6 +568,8 @@ const accordionStyles = StyleSheet.create({
 function AccordionSection({ section }: { section: SectionData }) {
   const [expanded, setExpanded] = useState(false);
   const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const player = useAudioPlayer();
+  const playerStatus = useAudioPlayerStatus(player);
 
   const handlePress = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -575,11 +578,6 @@ function AccordionSection({ section }: { section: SectionData }) {
   };
 
   const handleSpeak = async () => {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
     speak(`${section.title}. ${section.items.join(". ")}`);
   };
 
@@ -840,6 +838,12 @@ export default function SchoolNurseScreen() {
         <RNAnimated.View style={accordionStyle}>
           <AccordionSection section={ACCORDION_SECTION} />
         </RNAnimated.View>
+
+        {/* Recommendations */}
+        <RecommendationList
+          currentId="13"
+          currentTags={['school', 'nurse', 'health', 'medicine', 'support', 'back to school']}
+        />
       </ScrollView>
 
       {/* Bottom sheet */}

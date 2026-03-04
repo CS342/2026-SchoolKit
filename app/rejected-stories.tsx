@@ -29,7 +29,7 @@ export default function RejectedStoriesScreen() {
         <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={appStyles.editHeaderTitle}>Rejected Stories</Text>
+        <Text style={appStyles.editHeaderTitle}>Needs Revision</Text>
         <View style={{ width: 40 }} />
       </View>
 

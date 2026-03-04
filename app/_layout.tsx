@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
@@ -7,6 +8,7 @@ import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { OfflineProvider } from '../contexts/OfflineContext';
 import { StoriesProvider } from '../contexts/StoriesContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { JournalProvider } from '../contexts/JournalContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 
 function InnerLayout() {
@@ -14,25 +16,25 @@ function InnerLayout() {
 
   const navigationTheme = isDark
     ? {
-        ...DarkTheme,
-        colors: {
-          ...DarkTheme.colors,
-          background: colors.appBackground,
-          card: colors.white,
-          text: colors.textDark,
-          primary: colors.primary,
-        },
-      }
+      ...DarkTheme,
+      colors: {
+        ...DarkTheme.colors,
+        background: colors.appBackground,
+        card: colors.white,
+        text: colors.textDark,
+        primary: colors.primary,
+      },
+    }
     : {
-        ...DefaultTheme,
-        colors: {
-          ...DefaultTheme.colors,
-          background: colors.appBackground,
-          card: colors.white,
-          text: colors.textDark,
-          primary: colors.primary,
-        },
-      };
+      ...DefaultTheme,
+      colors: {
+        ...DefaultTheme.colors,
+        background: colors.appBackground,
+        card: colors.white,
+        text: colors.textDark,
+        primary: colors.primary,
+      },
+    };
 
   return (
     <NavThemeProvider value={navigationTheme}>
@@ -53,13 +55,26 @@ function InnerLayout() {
 
 // Exporting RootLayout as default component
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Raleway_400Regular,
+    Raleway_500Medium,
+    Raleway_600SemiBold,
+    Raleway_400Regular_Italic,
+  });
+
+  if (!fontsLoaded) {
+      return null;
+  }
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <OfflineProvider>
           <OnboardingProvider>
             <StoriesProvider>
-              <InnerLayout />
+              <JournalProvider>
+                <InnerLayout />
+              </JournalProvider>
             </StoriesProvider>
           </OnboardingProvider>
         </OfflineProvider>

@@ -13,28 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
-
-const AVAILABLE_TOPICS = [
-  'What you might experience',
-  'Friends and social life',
-  'Dealing with feelings',
-  'Keeping up with school during treatment',
-  'Getting back to school after treatment',
-  'Coping with stress and emotions',
-  'Supporting my child during treatment',
-  'Becoming a strong advocate for my child',
-  'Collaborating with the school team',
-  'Working with healthcare providers',
-  'Easing the financial burden',
-  'Caregiving through cultural or language barriers',
-  'Supporting students during treatment',
-  'Helping students transition back to school',
-  'Fostering emotional and physical safety',
-  'Working with families and medical teams',
-  'Understanding What Cancer Is and Isn\'t',
-];
-
-const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
+import { PAGE_TOPICS } from '../constants/resources';
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
   const opacity = useSharedValue(0);
@@ -92,13 +71,14 @@ export default function EditTopicsScreen() {
         </Text>
 
         <View style={styles.cardsContainer}>
-          {AVAILABLE_TOPICS.map((topic, index) => (
-            <AnimatedCardWrapper key={topic} index={index}>
+          {PAGE_TOPICS.map((topic, index) => (
+            <AnimatedCardWrapper key={topic.label} index={index}>
               <SelectableCard
-                title={topic}
-                color={TOPIC_COLORS[index % TOPIC_COLORS.length]}
-                selected={selectedTopics.includes(topic)}
-                onPress={() => toggleTopic(topic)}
+                title={topic.label}
+                color={topic.color}
+                icon={topic.icon as any}
+                selected={selectedTopics.includes(topic.label)}
+                onPress={() => toggleTopic(topic.label)}
                 multiSelect={true}
               />
             </AnimatedCardWrapper>
