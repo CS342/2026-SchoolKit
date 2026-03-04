@@ -57,7 +57,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
     : [];
 
   const handleStageClick = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<any>) => {
       const clickedOnEmpty =
         e.target === e.target.getStage() ||
         e.target.attrs.id === 'canvas-background' ||
@@ -343,88 +343,88 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
             borderRadius: 2,
           }}
         >
-        <Layer>
-          {/* Canvas background */}
-          <Rect
-            id="canvas-background"
-            x={0}
-            y={0}
-            width={canvas.width}
-            height={canvas.height}
-            fill={canvas.background}
-          />
-
-          {/* Grid overlay */}
-          {showGrid && (
-            <GridOverlay
+          <Layer>
+            {/* Canvas background */}
+            <Rect
+              id="canvas-background"
+              x={0}
+              y={0}
               width={canvas.width}
               height={canvas.height}
-              gridSize={gridSize}
+              fill={canvas.background}
             />
-          )}
 
-          {editingComponentId && editingComponent ? (
-            <>
-              {/* Dimmed top-level objects */}
-              {objects
-                .filter((o) => o.visible && o.id !== editingComponentId)
-                .map((obj) => (
-                  <CanvasObject
-                    key={obj.id}
-                    object={obj}
-                    isSelected={false}
-                  />
-                ))}
-
-              {/* Dimming overlay */}
-              <Rect
-                id="dimming-overlay"
-                x={0}
-                y={0}
+            {/* Grid overlay */}
+            {showGrid && (
+              <GridOverlay
                 width={canvas.width}
                 height={canvas.height}
-                fill="rgba(0,0,0,0.3)"
+                gridSize={gridSize}
               />
+            )}
 
-              {/* Active group children — rendered as editable objects */}
-              {groupChildren.filter((c) => c.visible).map((child) => (
-                <EditableChildObject
-                  key={child.id}
-                  object={child}
-                  parentX={editingComponent.x}
-                  parentY={editingComponent.y}
-                  isSelected={selectedIds.includes(child.id)}
+            {editingComponentId && editingComponent ? (
+              <>
+                {/* Dimmed top-level objects */}
+                {objects
+                  .filter((o) => o.visible && o.id !== editingComponentId)
+                  .map((obj) => (
+                    <CanvasObject
+                      key={obj.id}
+                      object={obj}
+                      isSelected={false}
+                    />
+                  ))}
+
+                {/* Dimming overlay */}
+                <Rect
+                  id="dimming-overlay"
+                  x={0}
+                  y={0}
+                  width={canvas.width}
+                  height={canvas.height}
+                  fill="rgba(0,0,0,0.3)"
                 />
-              ))}
 
-              <SelectionTransformer stageRef={stageRef} />
-
-              {/* Snap guides */}
-              <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
-            </>
-          ) : (
-            <>
-              {/* Render all visible objects in order (index = z-order) */}
-              {objects
-                .filter((o) => o.visible)
-                .map((obj) => (
-                  <CanvasObject
-                    key={obj.id}
-                    object={obj}
-                    isSelected={selectedIds.includes(obj.id)}
-                    onSnapGuidesChange={handleSnapGuidesChange}
-                    onSnapGuidesEnd={handleSnapGuidesEnd}
+                {/* Active group children — rendered as editable objects */}
+                {groupChildren.filter((c) => c.visible).map((child) => (
+                  <EditableChildObject
+                    key={child.id}
+                    object={child}
+                    parentX={editingComponent.x}
+                    parentY={editingComponent.y}
+                    isSelected={selectedIds.includes(child.id)}
                   />
                 ))}
 
-              {/* Transformer for selected objects */}
-              <SelectionTransformer stageRef={stageRef} />
+                <SelectionTransformer stageRef={stageRef} />
 
-              {/* Snap guides */}
-              <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
-            </>
-          )}
-        </Layer>
+                {/* Snap guides */}
+                <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
+              </>
+            ) : (
+              <>
+                {/* Render all visible objects in order (index = z-order) */}
+                {objects
+                  .filter((o) => o.visible)
+                  .map((obj) => (
+                    <CanvasObject
+                      key={obj.id}
+                      object={obj}
+                      isSelected={selectedIds.includes(obj.id)}
+                      onSnapGuidesChange={handleSnapGuidesChange}
+                      onSnapGuidesEnd={handleSnapGuidesEnd}
+                    />
+                  ))}
+
+                {/* Transformer for selected objects */}
+                <SelectionTransformer stageRef={stageRef} />
+
+                {/* Snap guides */}
+                <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
+              </>
+            )}
+          </Layer>
         </Stage>
 
         {/* Drag handle to extend canvas height */}
@@ -499,7 +499,7 @@ function EditableChildObject({
   const snapToGridEnabled = useEditorStore((s) => s.snapToGrid);
   const gridSize = useEditorStore((s) => s.gridSize);
 
-  const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleClick = (e: Konva.KonvaEventObject<any>) => {
     if (activeTool !== 'select') return;
     e.cancelBubble = true;
     const isShift = e.evt.shiftKey;

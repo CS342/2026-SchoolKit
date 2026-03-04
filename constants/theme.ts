@@ -88,7 +88,7 @@ export const GRADIENTS_DARK = {
   disabledButton: ['#2A2845', '#252540'] as const,
 };
 
-export type ThemeGradients = typeof GRADIENTS_LIGHT;
+export type ThemeGradients = typeof GRADIENTS_LIGHT | typeof GRADIENTS_DARK;
 
 // ─── Shadow Palettes ─────────────────────────────────────────────
 

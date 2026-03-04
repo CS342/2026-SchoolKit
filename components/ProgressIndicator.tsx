@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ProgressStatus } from '../contexts/OnboardingContext';
 import { COLORS } from '../constants/onboarding-theme';
+
+export type ProgressStatus = 'not_started' | 'started' | 'completed';
 
 interface ProgressIndicatorProps {
   status: ProgressStatus | null;

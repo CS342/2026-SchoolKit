@@ -1,0 +1,104 @@
+app/(tabs)/profile.tsx(153,57): error TS2345: Argument of type '"/onboarding"' is not assignable to parameter of type '"/understanding-cancer" | "/peer-support" | "/school-nurse" | "/school-life-balance" | "/finding-support" | "/" | RelativePathString | ExternalPathString | ... 192 more ... | { ...; }'.
+app/(tabs)/profile.tsx(336,14): error TS2304: Cannot find name 'Platform'.
+app/(tabs)/profile.tsx(400,8): error TS2304: Cannot find name 'Modal'.
+app/(tabs)/profile.tsx(401,29): error TS2339: Property 'modalOverlay' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(403,33): error TS2339: Property 'modalBackdrop' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(405,32): error TS2339: Property 'modalContent' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(406,34): error TS2339: Property 'modalTitle' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(407,34): error TS2339: Property 'modalSubtitle' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(419,30): error TS2339: Property 'voiceCard' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(429,42): error TS2339: Property 'voiceAvatar' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(432,41): error TS2339: Property 'voiceInfo' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(433,44): error TS2339: Property 'voiceName' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(434,44): error TS2339: Property 'voiceDesc' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(443,39): error TS2339: Property 'closeButton' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(444,35): error TS2339: Property 'closeButtonText' does not exist on type '{ container: { flex: number; }; scroll: { paddingBottom: number; }; identity: { alignItems: "center"; paddingTop: number; paddingBottom: number; }; avatar: { width: number; height: number; borderRadius: number; alignItems: "center"; justifyContent: "center"; overflow: "hidden"; }; ... 24 more ...; iconGlow: { ...; }...'.
+app/(tabs)/profile.tsx(448,9): error TS2304: Cannot find name 'Modal'.
+app/(tabs)/profile.tsx(451,8): error TS2304: Cannot find name 'VoiceSelectorModal'.
+app/(tabs)/profile.tsx(455,25): error TS7006: Parameter 'voiceId' implicitly has an 'any' type.
+app/understanding-cancer.tsx(830,9): error TS2304: Cannot find name 'sound'.
+app/understanding-cancer.tsx(831,13): error TS2304: Cannot find name 'sound'.
+app/understanding-cancer.tsx(832,13): error TS2304: Cannot find name 'sound'.
+app/understanding-cancer.tsx(833,7): error TS2304: Cannot find name 'setSound'.
+components/ProgressIndicator.tsx(4,10): error TS2305: Module '"../contexts/OnboardingContext"' has no exported member 'ProgressStatus'.
+components/StoryCard.tsx(294,24): error TS2551: Property 'likes_count' does not exist on type 'Story'. Did you mean 'like_count'?
+components/ui/collapsible.tsx(7,10): error TS2305: Module '"@/constants/theme"' has no exported member 'Colors'.
+contexts/ThemeContext.tsx(50,35): error TS2345: Argument of type '() => { colors: { primary: string; textDark: string; textMuted: string; textLight: string; border: string; borderCard: string; backgroundLight: string; disabledText: string; white: string; studentK8: string; ... 22 more ...; successText: string; }; ... 7 more ...; setThemePreference: (pref: ThemePreference) => void; }' is not assignable to parameter of type '() => AppTheme'.
+  Call signature return types '{ colors: { primary: string; textDark: string; textMuted: string; textLight: string; border: string; borderCard: string; backgroundLight: string; disabledText: string; white: string; studentK8: string; ... 22 more ...; successText: string; }; ... 7 more ...; setThemePreference: (pref: ThemePreference) => void; }' and 'AppTheme' are incompatible.
+    The types of 'gradients' are incompatible between these types.
+      Type '{ screenBackground: readonly ["#F8F5FF", "#FFFFFF", "#FFF5FA"]; disabledButton: readonly ["#D8D0E8", "#D0C8E0"]; } | { screenBackground: readonly ["#1A1830", "#121220", "#1A1528"]; disabledButton: readonly ["#2A2845", "#252540"]; }' is not assignable to type '{ screenBackground: readonly ["#F8F5FF", "#FFFFFF", "#FFF5FA"]; disabledButton: readonly ["#D8D0E8", "#D0C8E0"]; }'.
+        Type '{ screenBackground: readonly ["#1A1830", "#121220", "#1A1528"]; disabledButton: readonly ["#2A2845", "#252540"]; }' is not assignable to type '{ screenBackground: readonly ["#F8F5FF", "#FFFFFF", "#FFF5FA"]; disabledButton: readonly ["#D8D0E8", "#D0C8E0"]; }'.
+          Type at position 0 in source is not compatible with type at position 0 in target.
+            The types of 'screenBackground' are incompatible between these types.
+              Type '"#1A1830"' is not assignable to type '"#F8F5FF"'.
+features/design-editor/components/CanvasObject.tsx(278,10): error TS2322: Type '{ onDblClick: (e: KonvaEventObject<MouseEvent, Node<NodeConfig>>) => void; shadowColor?: undefined; shadowOffsetX?: undefined; ... 29 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; } | { ...; }' is not assignable to type 'IntrinsicAttributes & TextConfig & KonvaNodeEvents & ClassAttributes<Text>'.
+  Type '{ onDblClick: (e: KonvaEventObject<MouseEvent, Node<NodeConfig>>) => void; shadowColor?: undefined; shadowOffsetX?: undefined; shadowOffsetY?: undefined; ... 28 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+    Types of property 'onTap' are incompatible.
+      Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+        Types of parameters 'e' and 'evt' are incompatible.
+          Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+            Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(358,10): error TS2322: Type '{ points: number[]; stroke: string; strokeWidth: number; hitStrokeWidth: number; lineCap: "butt" | "round" | "square"; lineJoin: "round" | "miter" | "bevel"; dash: number[] | undefined; id: string; ... 9 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(376,10): error TS2322: Type '{ shadowColor?: undefined; shadowOffsetX?: undefined; shadowOffsetY?: undefined; shadowBlur?: undefined; shadowEnabled?: undefined; stroke: string | undefined; strokeWidth: number; dash: number[] | undefined; ... 16 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; } | { ...; } | { ...; } | { ...; }' is not assignable to type 'IntrinsicAttributes & StarConfig & KonvaNodeEvents & ClassAttributes<Star>'.
+  Type '{ shadowColor?: undefined; shadowOffsetX?: undefined; shadowOffsetY?: undefined; shadowBlur?: undefined; shadowEnabled?: undefined; stroke: string | undefined; strokeWidth: number; dash: number[] | undefined; ... 16 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+    Types of property 'onTap' are incompatible.
+      Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+        Types of parameters 'e' and 'evt' are incompatible.
+          Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+            Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(401,10): error TS2322: Type '{ shadowColor?: undefined; shadowOffsetX?: undefined; shadowOffsetY?: undefined; shadowBlur?: undefined; shadowEnabled?: undefined; stroke: string | undefined; strokeWidth: number; dash: number[] | undefined; ... 15 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; } | { ...; } | { ...; } | { ...; }' is not assignable to type 'IntrinsicAttributes & LineConfig & KonvaNodeEvents & ClassAttributes<Line<LineConfig>>'.
+  Type '{ shadowColor?: undefined; shadowOffsetX?: undefined; shadowOffsetY?: undefined; shadowBlur?: undefined; shadowEnabled?: undefined; stroke: string | undefined; strokeWidth: number; dash: number[] | undefined; ... 15 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+    Types of property 'onTap' are incompatible.
+      Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+        Types of parameters 'e' and 'evt' are incompatible.
+          Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+            Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(419,10): error TS2322: Type '{ points: number[]; stroke: string; strokeWidth: number; pointerLength: number; pointerWidth: number; fill: string; hitStrokeWidth: number; dash: number[] | undefined; lineCap: "butt" | "round" | "square" | undefined; ... 11 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(439,10): error TS2322: Type '{ children: Element[]; width: number; height: number; id: string; x: number; y: number; rotation: number; opacity: number; draggable: boolean; onClick: (e: KonvaEventObject<MouseEvent, Node<NodeConfig>>) => void; onTap: (e: KonvaEventObject<...>) => void; onDragMove: (e: KonvaEventObject<...>) => void; onDragEnd: (e...' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/CanvasObject.tsx(502,7): error TS2322: Type '(e: KonvaEventObject<MouseEvent, Node<NodeConfig>>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+  Types of parameters 'e' and 'evt' are incompatible.
+    Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+      Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/EditorCanvas.tsx(340,11): error TS2322: Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+  Types of parameters 'e' and 'evt' are incompatible.
+    Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+      Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/EditorCanvas.tsx(586,10): error TS2322: Type '{ width: number; height: number; fill: string; stroke: string | undefined; strokeWidth: number; cornerRadius: number; dash: number[] | undefined; lineCap: "butt" | "round" | "square" | undefined; ... 11 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/EditorCanvas.tsx(601,10): error TS2322: Type '{ radiusX: number; radiusY: number; fill: string; stroke: string | undefined; strokeWidth: number; dash: number[] | undefined; lineCap: "butt" | "round" | "square" | undefined; lineJoin: "round" | ... 2 more ... | undefined; ... 10 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/EditorCanvas.tsx(615,10): error TS2322: Type '{ text: string; fontSize: number; fontFamily: string; fontStyle: "normal" | "bold" | "italic" | "bold italic"; fill: string; align: "center" | "left" | "right" | "justify"; width: number; ... 19 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.
+features/design-editor/components/EditorCanvas.tsx(639,10): error TS2322: Type '{ points: number[]; stroke: string; strokeWidth: number; hitStrokeWidth: number; lineCap: "butt" | "round" | "square"; lineJoin: "round" | "miter" | "bevel"; dash: number[] | undefined; id: string; ... 9 more ...; onTransformEnd: (e: KonvaEventObject<...>) => void; }' is not assignable to type 'KonvaNodeEvents'.
+  Types of property 'onTap' are incompatible.
+    Type '(e: Konva.KonvaEventObject<MouseEvent>) => void' is not assignable to type '(evt: KonvaEventObject<TouchEvent, Node<NodeConfig>>) => void'.
+      Types of parameters 'e' and 'evt' are incompatible.
+        Type 'KonvaEventObject<TouchEvent, Node<NodeConfig>>' is not assignable to type 'KonvaEventObject<MouseEvent, Node<NodeConfig>>'.
+          Type 'TouchEvent' is missing the following properties from type 'MouseEvent': button, buttons, clientX, clientY, and 15 more.

@@ -7,6 +7,8 @@ import {
   Pressable,
   Alert,
   Image,
+  Platform,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -150,7 +152,7 @@ export default function ProfileScreen() {
       "This will guide you through the initial setup again.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Proceed", onPress: () => { router.push('/onboarding'); } }
+        { text: "Proceed", onPress: () => { router.push('/onboarding' as any); } }
       ]
     );
   };
@@ -448,7 +450,7 @@ export default function ProfileScreen() {
       </Modal>
 
       {/* Voice Selection Modal */}
-      <VoiceSelectorModal
+      {/* <VoiceSelectorModal
         visible={isVoiceModalVisible}
         onClose={() => setIsVoiceModalVisible(false)}
         selectedVoice={selectedVoice}
@@ -457,7 +459,7 @@ export default function ProfileScreen() {
           fireEvent('voice_changed');
           setIsVoiceModalVisible(false);
         }}
-      />
+      /> */}
     </View>
   );
 }
@@ -642,5 +644,64 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 4,
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    padding: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 48,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  voiceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  voiceAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  voiceName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  voiceDesc: {
+    fontSize: 13,
+  },
+  closeButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });

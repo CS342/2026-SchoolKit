@@ -112,7 +112,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
   const objects = useEditorStore((s) => s.objects);
   const canvas = useEditorStore((s) => s.canvas);
 
-  const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleClick = (e: Konva.KonvaEventObject<any>) => {
     if (activeTool !== 'select') return;
     e.cancelBubble = true;
 
@@ -128,7 +128,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
     }
   };
 
-  const handleDblClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleDblClick = (e: Konva.KonvaEventObject<any>) => {
     if (object.type === 'interactive') {
       e.cancelBubble = true;
       const firstGroup = object.groups[0];
@@ -485,7 +485,7 @@ function InteractiveCanvasObject({
 }: {
   object: InteractiveComponentObject;
   commonProps: Record<string, unknown>;
-  onDblClick: (e: Konva.KonvaEventObject<MouseEvent>) => void;
+  onDblClick: (e: Konva.KonvaEventObject<any>) => void;
 }) {
   const defaultGroup = object.groups[0];
   const visibleChildIds = defaultGroup ? defaultGroup.objectIds : [];

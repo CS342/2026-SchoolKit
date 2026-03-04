@@ -827,10 +827,8 @@ export default function UnderstandingCancerScreen() {
     if (selectedVoice === voiceId) return;
 
     // Stop current audio
-    if (sound) {
-      await sound.stopAsync();
-      await sound.unloadAsync();
-      setSound(null);
+    if (player) {
+      player.pause();
     }
     setIsSpeaking(false);
   };
