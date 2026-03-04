@@ -7,6 +7,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Image } from 'expo-image';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
@@ -92,6 +93,7 @@ export default function VoiceSelectionScreen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 6 : 5, total: isStudent ? 6 : 5 }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 6 : 5}
@@ -186,6 +188,7 @@ export default function VoiceSelectionScreen() {
           </Pressable>
         </View>
       </View>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

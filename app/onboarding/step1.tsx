@@ -12,6 +12,7 @@ import Animated, {
 import { useAuth } from '../../contexts/AuthContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
@@ -69,6 +70,7 @@ export default function Step1Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={{ current: 1, total: 5 }}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -117,6 +119,7 @@ export default function Step1Screen() {
           <View style={SHARED_STYLES.skipPlaceholder} />
         </Animated.View>
       </KeyboardAvoidingView>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

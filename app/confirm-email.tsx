@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 import { GRADIENTS, ANIMATION, COLORS, SHARED_STYLES } from '../constants/onboarding-theme';
 
@@ -41,6 +42,7 @@ export default function ConfirmEmailScreen() {
 
   return (
     <DecorativeBackground variant="confirm" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="confirm">
       <View style={styles.container}>
         <View style={styles.content}>
           <Animated.View style={[styles.iconCircle, iconStyle]}>
@@ -65,6 +67,7 @@ export default function ConfirmEmailScreen() {
           <View style={SHARED_STYLES.skipPlaceholder} />
         </Animated.View>
       </View>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }
