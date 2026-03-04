@@ -291,7 +291,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
                 <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? '#E53935' : colors.textLight} />
               </RNAnimated.View>
               <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
-                {story.likes_count || 0}
+                {story.like_count || 0}
               </Text>
             </TouchableOpacity>
 

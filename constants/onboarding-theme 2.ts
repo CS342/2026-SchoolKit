@@ -147,10 +147,10 @@ export const ANIMATION = {
 };
 
 export const TYPOGRAPHY = {
-  display: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -1, fontFamily: 'Raleway_600SemiBold' },
-  h1: { fontSize: 30, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  h2: { fontSize: 24, fontWeight: '700' as const, fontFamily: 'Raleway_600SemiBold' },
-  h3: { fontSize: 22, fontWeight: '700' as const, fontFamily: 'Raleway_600SemiBold' },
+  display: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -1, fontFamily: 'Raleway_800ExtraBold' },
+  h1: { fontSize: 30, fontWeight: '800' as const, fontFamily: 'Raleway_800ExtraBold' },
+  h2: { fontSize: 24, fontWeight: '700' as const, fontFamily: 'Raleway_700Bold' },
+  h3: { fontSize: 22, fontWeight: '700' as const, fontFamily: 'Raleway_700Bold' },
   bodyLarge: { fontSize: 18, fontWeight: '600' as const },
   body: { fontSize: 18, fontWeight: '600' as const },
   bodySmall: { fontSize: 16, fontWeight: '600' as const },
@@ -158,10 +158,10 @@ export const TYPOGRAPHY = {
   button: { fontSize: 19, fontWeight: '800' as const },
   buttonSmall: { fontSize: 18, fontWeight: '700' as const },
   input: { fontSize: 22, fontWeight: '700' as const },
-  screenTitle: { fontSize: 38, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  sectionTitle: { fontSize: 28, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  emptyTitle: { fontSize: 26, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  editTitle: { fontSize: 24, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
+  screenTitle: { fontSize: 38, fontWeight: '800' as const, fontFamily: 'Raleway_800ExtraBold' },
+  sectionTitle: { fontSize: 28, fontWeight: '800' as const, fontFamily: 'Raleway_800ExtraBold' },
+  emptyTitle: { fontSize: 26, fontWeight: '800' as const, fontFamily: 'Raleway_800ExtraBold' },
+  editTitle: { fontSize: 24, fontWeight: '800' as const, fontFamily: 'Raleway_800ExtraBold' },
   bodyDescription: { fontSize: 17, fontWeight: '500' as const },
   labelSmall: { fontSize: 15, fontWeight: '600' as const },
 };
@@ -207,7 +207,7 @@ export const SHARED_STYLES = StyleSheet.create({
     color: '#2D2D44',
     marginBottom: 8,
     textAlign: 'center',
-    fontFamily: 'Raleway_600SemiBold',
+    fontFamily: 'Raleway_800ExtraBold',
   },
   pageSubtitle: {
     fontSize: 18,
@@ -264,7 +264,7 @@ export function makeSharedStyles(c: typeof COLORS) {
       color: c.textDark,
       marginBottom: 8,
       textAlign: 'center',
-      fontFamily: 'Raleway_600SemiBold',
+      fontFamily: 'Raleway_800ExtraBold',
     },
     pageSubtitle: {
       fontSize: 18,
@@ -387,7 +387,7 @@ export const APP_STYLES = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: COLORS.textDark,
-    fontFamily: 'Raleway_600SemiBold',
+    fontFamily: 'Raleway_800ExtraBold',
   },
   editBackButton: {
     width: 40,
@@ -484,7 +484,7 @@ export const APP_STYLES = StyleSheet.create({
     marginTop: 24,
     marginBottom: 14,
     textAlign: 'center',
-    fontFamily: 'Raleway_600SemiBold',
+    fontFamily: 'Raleway_800ExtraBold',
   },
   emptyText: {
     fontSize: 18,
@@ -551,7 +551,7 @@ export function makeAppStyles(c: typeof COLORS) {
       fontSize: 24,
       fontWeight: '800',
       color: c.textDark,
-      fontFamily: 'Raleway_600SemiBold',
+      fontFamily: 'Raleway_800ExtraBold',
     },
     editBackButton: {
       width: 40,
@@ -645,7 +645,7 @@ export function makeAppStyles(c: typeof COLORS) {
       marginTop: 24,
       marginBottom: 14,
       textAlign: 'center',
-      fontFamily: 'Raleway_600SemiBold',
+      fontFamily: 'Raleway_800ExtraBold',
     },
     emptyText: {
       fontSize: 18,
