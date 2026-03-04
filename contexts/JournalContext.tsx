@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+
+export const MAX_NOTEBOOKS = 20;
+export const MAX_PAGES = 50;
+export const MAX_IMAGES_PER_PAGE = 5;
 
 export interface PathData {
     path: string;
@@ -26,23 +31,35 @@ export interface JournalNotebook {
     title: string;
     coverId: string;
     paperId: string;
-    pages: JournalPage[]; // source of truth
+    pages: JournalPage[];
     createdAt: number;
     updatedAt: number;
-    // Legacy support
-    textEntry?: string;
-    paths?: PathData[];
 }
 
 interface JournalContextType {
     notebooks: JournalNotebook[];
-    createNotebook: (title: string, coverId: string, paperId: string) => string;
+    createNotebook: (title: string, coverId: string, paperId: string) => string | null;
     updateNotebook: (id: string, updates: Partial<JournalNotebook>) => void;
     deleteNotebook: (id: string) => void;
     getNotebook: (id: string) => JournalNotebook | undefined;
 }
 
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
+
+const deletePageImages = async (page: JournalPage) => {
+    for (const img of page.images) {
+        if (img.uri.startsWith(FileSystem.documentDirectory || '')) {
+            try {
+                const info = await FileSystem.getInfoAsync(img.uri);
+                if (info.exists) {
+                    await FileSystem.deleteAsync(img.uri, { idempotent: true });
+                }
+            } catch {
+                // Ignore cleanup errors
+            }
+        }
+    }
+};
 
 export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notebooks, setNotebooks] = useState<JournalNotebook[]>([]);
@@ -57,31 +74,30 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const data = await AsyncStorage.getItem('@schoolkit_journals');
             if (data) {
                 const parsed: JournalNotebook[] = JSON.parse(data);
-                // Migration: Ensure all notebooks have the 'pages' property
                 const migrated = parsed.map(n => {
-                    if (!n.pages) {
-                        return {
-                            ...n,
-                            pages: [{
-                                textEntry: n.textEntry || '',
-                                paths: n.paths || [],
-                                images: []
-                            }]
-                        };
+                    const notebook = { ...n } as any;
+                    // Migration: Ensure all notebooks have the 'pages' property
+                    if (!notebook.pages) {
+                        notebook.pages = [{
+                            textEntry: notebook.textEntry || '',
+                            paths: notebook.paths || [],
+                            images: []
+                        }];
+                    } else {
+                        notebook.pages = notebook.pages.map((p: any) => ({
+                            textEntry: p.textEntry || '',
+                            paths: p.paths || [],
+                            images: p.images || []
+                        }));
                     }
-                    if (n.pages) {
-                        return {
-                            ...n,
-                            pages: n.pages.map(p => ({
-                                textEntry: p.textEntry || '',
-                                paths: p.paths || [],
-                                images: p.images || []
-                            }))
-                        };
-                    }
-                    return n;
+                    // Strip legacy fields
+                    delete notebook.textEntry;
+                    delete notebook.paths;
+                    return notebook as JournalNotebook;
                 });
                 setNotebooks(migrated);
+                // Re-save cleaned data
+                await AsyncStorage.setItem('@schoolkit_journals', JSON.stringify(migrated));
             }
             setIsLoaded(true);
         } catch (e) {
@@ -93,13 +109,16 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const saveNotebooks = async (newNotebooks: JournalNotebook[]) => {
         try {
             await AsyncStorage.setItem('@schoolkit_journals', JSON.stringify(newNotebooks));
-            setNotebooks(newNotebooks); // Update state directly
+            setNotebooks(newNotebooks);
         } catch (e) {
             console.error('Failed to save notebooks', e);
         }
     };
 
-    const createNotebook = (title: string, coverId: string, paperId: string) => {
+    const createNotebook = (title: string, coverId: string, paperId: string): string | null => {
+        if (notebooks.length >= MAX_NOTEBOOKS) {
+            return null;
+        }
         const newNotebook: JournalNotebook = {
             id: Date.now().toString(),
             title,
@@ -122,7 +141,6 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 }
                 return n;
             });
-            // Fire and forget save logic, to avoid waiting on async storage
             AsyncStorage.setItem('@schoolkit_journals', JSON.stringify(updated)).catch((e) =>
                 console.error('Failed to auto-save notebooks', e)
             );
@@ -131,6 +149,13 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     const deleteNotebook = (id: string) => {
+        const notebook = notebooks.find(n => n.id === id);
+        if (notebook) {
+            // Clean up persisted images
+            for (const page of notebook.pages) {
+                deletePageImages(page);
+            }
+        }
         const updated = notebooks.filter(n => n.id !== id);
         saveNotebooks(updated);
     };
@@ -139,10 +164,17 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return notebooks.find(n => n.id === id);
     };
 
-    if (!isLoaded) return null;
+    // Provide empty-state context while loading to avoid flash
+    const contextValue: JournalContextType = {
+        notebooks,
+        createNotebook,
+        updateNotebook,
+        deleteNotebook,
+        getNotebook,
+    };
 
     return (
-        <JournalContext.Provider value={{ notebooks, createNotebook, updateNotebook, deleteNotebook, getNotebook }}>
+        <JournalContext.Provider value={contextValue}>
             {children}
         </JournalContext.Provider>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, Platform, ScrollView, Image, TouchableOpacity, Share, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator, Platform, ScrollView, TouchableOpacity, Share, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
 import { DownloadButton } from '../../components/DownloadButton';
-import { COLORS, SHADOWS } from '../../constants/onboarding-theme';
+import { COLORS } from '../../constants/onboarding-theme';
 import type { DesignDocument } from '../../features/design-editor/types/document';
 import { RuntimeRenderer } from '../../features/design-editor/components/runtime/RuntimeRenderer';
 
@@ -304,48 +304,9 @@ export default function DesignViewPage() {
     );
   }
 
-  // Check if design has interactive components
-  const hasInteractive = design.doc.objects.some((o) => o.type === 'interactive');
+  // On mobile, always use RuntimeRenderer — it handles both static and interactive designs
   const screenWidth = Dimensions.get('window').width;
 
-  // On mobile with interactive components, use RuntimeRenderer
-  if (hasInteractive) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 16,
-            paddingTop: insets.top + 10,
-            paddingBottom: 12,
-            backgroundColor: colors.white,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.borderCard,
-          }}
-        >
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
-            <Ionicons name="arrow-back" size={24} color={colors.textDark} />
-          </TouchableOpacity>
-          <Text
-            style={{
-              flex: 1,
-              fontSize: 17,
-              fontWeight: '600',
-              color: colors.textDark,
-              marginLeft: 12,
-            }}
-            numberOfLines={1}
-          >
-            {design.title}
-          </Text>
-        </View>
-        <RuntimeRenderer doc={design.doc} width={screenWidth} />
-      </View>
-    );
-  }
-
-  // On mobile, show the thumbnail image with details
   return (
     <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
       <View
@@ -376,48 +337,7 @@ export default function DesignViewPage() {
           {design.title}
         </Text>
       </View>
-
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        {design.thumbnail_url ? (
-          <Image
-            source={{ uri: design.thumbnail_url }}
-            style={{
-              width: '100%',
-              aspectRatio: design.doc.canvas.width / design.doc.canvas.height,
-              borderRadius: 12,
-              backgroundColor: colors.backgroundLight,
-            }}
-            resizeMode="contain"
-          />
-        ) : (
-          <View
-            style={{
-              width: '100%',
-              aspectRatio: 16 / 9,
-              borderRadius: 12,
-              backgroundColor: colors.backgroundLight,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Ionicons name="image-outline" size={48} color={colors.textLight} />
-            <Text style={{ marginTop: 8, color: colors.textLight, fontSize: 13 }}>
-              View this design in a web browser for the full experience
-            </Text>
-          </View>
-        )}
-
-        <Text
-          style={{
-            fontSize: 13,
-            color: colors.textLight,
-            marginTop: 12,
-            textAlign: 'center',
-          }}
-        >
-          by {design.owner_name}
-        </Text>
-      </ScrollView>
+      <RuntimeRenderer doc={design.doc} width={screenWidth} />
     </View>
   );
 }

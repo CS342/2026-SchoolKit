@@ -27,10 +27,10 @@ const ACCENT_SWATCHES = [
 const STYLE_OPTIONS = ['Modern', 'Playful', 'Minimal', 'Bold'];
 
 const EXAMPLE_PROMPTS = [
-  'A colorful welcome slide for new students',
-  'A clean infographic about healthy eating habits',
-  'An announcement for the school science fair',
-  'A motivational quote card with warm colors',
+  '10 myth vs fact flip cards about nutrition',
+  'A pastel card grid about study tips with badges',
+  'A carousel walkthrough of the water cycle with 5 steps',
+  'An info page about stress management with expandable sections',
 ];
 
 const EDIT_EXAMPLE_PROMPTS = [

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, Modal, TextInput, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,9 +33,35 @@ export default function JournalLibraryScreen() {
     };
 
     const confirmRename = () => {
-        if (renameId && newName.trim()) {
-            updateNotebook(renameId, { title: newName.trim() });
-            setRenameId(null);
+        if (!renameId) return;
+        const trimmed = newName.trim();
+        if (!trimmed) {
+            Alert.alert("Invalid Name", "Notebook title cannot be empty.");
+            return;
+        }
+        updateNotebook(renameId, { title: trimmed.slice(0, 40) });
+        setRenameId(null);
+    };
+
+    const handleExport = async (notebook: JournalNotebook) => {
+        let content = `${notebook.title}\n${'='.repeat(notebook.title.length)}\n\n`;
+        notebook.pages.forEach((page, i) => {
+            content += `--- Page ${i + 1} ---\n`;
+            if (page.textEntry.trim()) {
+                content += page.textEntry.trim() + "\n";
+            }
+            if (page.paths.length > 0) {
+                content += `[${page.paths.length} drawing stroke${page.paths.length !== 1 ? 's' : ''}]\n`;
+            }
+            if (page.images.length > 0) {
+                content += `[${page.images.length} image${page.images.length !== 1 ? 's' : ''}]\n`;
+            }
+            content += "\n";
+        });
+        try {
+            await Share.share({ message: content });
+        } catch {
+            // User cancelled
         }
     };
 
@@ -80,6 +106,7 @@ export default function JournalLibraryScreen() {
                                                 "What would you like to do?",
                                                 [
                                                     { text: "Rename", onPress: () => startRename(notebook) },
+                                                    { text: "Export", onPress: () => handleExport(notebook) },
                                                     { text: "Delete", style: "destructive", onPress: () => handleDelete(notebook) },
                                                     { text: "Cancel", style: "cancel" }
                                                 ]
@@ -148,6 +175,7 @@ export default function JournalLibraryScreen() {
                             onChangeText={setNewName}
                             autoFocus
                             placeholder="Notebook Title"
+                            maxLength={40}
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity style={styles.modalBtn} onPress={() => setRenameId(null)}>
@@ -180,10 +208,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingBottom: 0,
-        zIndex: 1, // books stay above the plank edge
+        zIndex: 1,
     },
     notebookCard: {
-        width: '30%', // roughly fits 3 with spacing
+        width: '30%',
         aspectRatio: 0.75,
         borderRadius: 8,
         borderTopRightRadius: 10,
@@ -286,7 +314,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 4,
         borderBottomRightRadius: 4,
         position: 'relative',
-        top: -4, // tuck slightly under books
+        top: -4,
         zIndex: 0,
     },
     shelfEdge: {
