@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
@@ -54,6 +55,7 @@ export default function Step3Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 4 : 3, total: isStudent ? 6 : 5 }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 4 : 3}
@@ -107,6 +109,7 @@ export default function Step3Screen() {
           </Pressable>
         </View>
       </View>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

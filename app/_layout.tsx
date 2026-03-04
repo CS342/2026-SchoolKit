@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
+import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_700Bold, Raleway_800ExtraBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
@@ -65,6 +65,8 @@ export default function RootLayout() {
     Raleway_400Regular,
     Raleway_500Medium,
     Raleway_600SemiBold,
+    Raleway_700Bold,
+    Raleway_800ExtraBold,
     Raleway_400Regular_Italic,
   });
 

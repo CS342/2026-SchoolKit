@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
@@ -130,6 +131,7 @@ export default function Step2Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={{ current: 2, total: 5 }}>
       <View style={styles.container}>
         <OnboardingHeader currentStep={2} totalSteps={5} />
 
@@ -164,6 +166,7 @@ export default function Step2Screen() {
           <View style={SHARED_STYLES.skipPlaceholder} />
         </View>
       </View>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

@@ -18,6 +18,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS } from '../constants/onboarding-theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
@@ -153,6 +154,7 @@ export default function AuthScreen() {
 
   return (
     <DecorativeBackground variant="auth" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="auth">
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -357,6 +359,7 @@ export default function AuthScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

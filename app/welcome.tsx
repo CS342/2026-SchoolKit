@@ -12,6 +12,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../components/AuthWebWrapper';
 
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHADOWS, SHARED_STYLES } from '../constants/onboarding-theme';
 
@@ -84,6 +85,7 @@ export default function WelcomeScreen() {
     <TouchableWithoutFeedback onPress={!animDone ? skipToEnd : undefined}>
       <View style={styles.flex}>
         <DecorativeBackground variant="welcome" gradientColors={GRADIENTS.welcomeHero}>
+          <AuthWebWrapper variant="welcome">
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={[iconStyle, styles.logoContainer]}>
@@ -143,6 +145,7 @@ export default function WelcomeScreen() {
             </Pressable>
             <View style={SHARED_STYLES.skipPlaceholder} />
           </Animated.View>
+          </AuthWebWrapper>
         </DecorativeBackground>
       </View>
     </TouchableWithoutFeedback>

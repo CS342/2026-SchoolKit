@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
+import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
@@ -76,6 +77,7 @@ export default function Step4Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 5 : 4, total: isStudent ? 6 : 5 }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 5 : 4}
@@ -126,6 +128,7 @@ export default function Step4Screen() {
           </Pressable>
         </View>
       </View>
+      </AuthWebWrapper>
     </DecorativeBackground>
   );
 }

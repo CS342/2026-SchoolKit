@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,6 @@ import {
   Pressable,
   Alert,
   Image,
-  Platform,
-  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,10 +21,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../contexts/OnboardingContext";
-import { useAuth } from "../../contexts/AuthContext";
-import { useAccomplishments } from "../../contexts/AccomplishmentContext";
-import { ALL_RESOURCES } from "../../constants/resources";
-import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
   RADII,
   SIZING,
@@ -36,62 +30,30 @@ import {
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { AppTheme } from "../../constants/theme";
+import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../../components/StoryCard";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function SettingRow({
-  icon,
-  label,
-  value,
-  onPress,
-  isLast = false,
-  tint,
-  theme,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value?: string;
-  onPress: () => void;
-  isLast?: boolean;
-  tint?: string;
-  theme: AppTheme;
-}) {
-  const scale = useSharedValue(1);
-  const { colors } = theme;
+function AnimatedBubble({ children, delay, onPress, style }: { children: React.ReactNode, delay: number, onPress: () => void, style: any }) {
+  const scale = useSharedValue(0.5);
+  const opacity = useSharedValue(0);
 
-  const pressStyle = useAnimatedStyle(() => ({
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
+    scale.value = withDelay(delay, withSpring(1, ANIMATION.springBouncy));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
     transform: [{ scale: scale.value }],
   }));
 
   return (
     <AnimatedPressable
       onPress={onPress}
-      onPressIn={() => {
-        scale.value = withTiming(0.98, { duration: 80 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, ANIMATION.springBouncy);
-      }}
-      style={[styles.row, pressStyle]}
+      style={({ pressed }: any) => [style, animatedStyle, pressed && { opacity: 0.8 }]}
     >
-      <View style={[styles.rowIconWrap, { backgroundColor: tint || colors.backgroundLight }]}>
-        <Ionicons
-          name={icon}
-          size={18}
-          color={tint ? '#FFFFFF' : colors.primary}
-        />
-      </View>
-      <View style={[styles.rowBody, !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderCard }]}>
-        <Text style={[styles.rowLabel, { color: colors.textDark }]}>{label}</Text>
-        <View style={styles.rowRight}>
-          {value ? (
-            <Text style={[styles.rowValue, { color: colors.textLight }]}>
-              {value}
-            </Text>
-          ) : null}
-          <Ionicons name="chevron-forward" size={18} color={colors.indicatorInactive} />
-        </View>
-      </View>
+      {children}
     </AnimatedPressable>
   );
 }
@@ -124,12 +86,27 @@ function AnimatedSection({
 
 
 export default function ProfileScreen() {
+  const [isTopicsExpanded, setIsTopicsExpanded] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const { colors, shadows, appStyles, isDark } = theme;
-  const { data, updateProfilePicture } = useOnboarding();
-  const { fireEvent } = useAccomplishments();
+  const { colors, shadows, appStyles } = theme;
+  const { data, updateProfilePicture, updateTopics } = useOnboarding();
+
+  const handleRemoveTopic = (topicToRemove: string) => {
+    const newTopics = data.topics.filter(t => t !== topicToRemove);
+    updateTopics(newTopics);
+  };
+  
+  const getRoleColor = () => {
+    switch (data.role) {
+      case "student-k8": return colors.studentK8 || colors.primary;
+      case "student-hs": return colors.studentHS || colors.primary;
+      case "parent": return colors.parent || colors.primary;
+      case "staff": return colors.staff || colors.primary;
+      default: return colors.primary;
+    }
+  };
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -235,7 +212,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
-      <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
+      <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10, zIndex: 10 }]}>
         <Text style={appStyles.tabHeaderTitle}>Profile</Text>
       </View>
 
@@ -262,45 +239,71 @@ export default function ProfileScreen() {
           </Pressable>
 
           <Animated.View style={[styles.identityText, nameStyle]}>
-            <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
-            <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-              <Text style={[styles.rolePillText, { color: colors.primary }]}>{getRoleDisplayName()}</Text>
-            </View>
+            <Pressable onPress={() => router.push("/edit-name")} hitSlop={10}>
+               <View style={styles.nameUnderline}>
+                 <Text style={[styles.userName, { color: colors.textDark, marginBottom: 0 }]}>{data.name}</Text>
+               </View>
+            </Pressable>
           </Animated.View>
         </View>
 
         <AnimatedSection delay={320}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>PROFILE</Text>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => router.push("/edit-name")} theme={theme} />
-            <SettingRow icon="school-outline" label="Role" value={getRoleDisplayName()} onPress={() => router.push("/edit-role")} theme={theme} />
-            <SettingRow icon="book-outline" label="School Status" value={getSchoolStatusText()} onPress={() => router.push("/edit-school-status")} theme={theme} />
-            <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => router.push("/edit-topics")} isLast theme={theme} />
+          <View style={styles.bubblesContainer}>
+            <View style={styles.bubbleRow}>
+              <AnimatedBubble 
+                delay={400}
+                onPress={() => router.push("/edit-role")}
+                style={[styles.bubblyPill, { backgroundColor: getRoleColor() + '33' }]}
+              >
+                <Text style={[styles.bubblyPillText, { color: getRoleColor() }]}>{getRoleDisplayName()}</Text>
+              </AnimatedBubble>
+
+              <AnimatedBubble 
+                delay={480}
+                onPress={() => router.push("/edit-school-status")}
+                style={[styles.bubblyPill, { backgroundColor: colors.accent + '33' }]}
+              >
+                <Text style={[styles.bubblyPillText, { color: colors.accent }]}>{getSchoolStatusText()}</Text>
+              </AnimatedBubble>
+            </View>
+
+            <View style={styles.topicsSection}>
+               <Pressable 
+                  style={styles.topicsHeaderRow} 
+                  onPress={() => setIsTopicsExpanded(!isTopicsExpanded)}
+                  hitSlop={10}
+                >
+                  <Text style={[styles.topicsLabel, { color: colors.textDark }]}>Topics</Text>
+                  <Ionicons name={isTopicsExpanded ? "chevron-up" : "chevron-down"} size={22} color={colors.textLight} />
+               </Pressable>
+               
+               {isTopicsExpanded && (
+                 <View style={styles.topicsList}>
+                   {data.topics.map(topic => {
+                     const color = TAG_COLORS[topic] ?? DEFAULT_TAG_COLOR;
+                     return (
+                       <View key={topic} style={[styles.topicBubble, { backgroundColor: color.bg }]}>
+                         <Text style={[styles.topicBubbleText, { color: color.text }]}>{topic}</Text>
+                         <Pressable onPress={() => handleRemoveTopic(topic)} hitSlop={10} style={styles.topicRemoveBtn}>
+                           <Ionicons name="close" size={16} color={color.text} />
+                         </Pressable>
+                       </View>
+                     );
+                   })}
+                   <Pressable 
+                     onPress={() => router.push("/edit-topics")} 
+                     style={({pressed}) => [styles.addTopicBtn, { backgroundColor: colors.backgroundLight }, pressed && { opacity: 0.8 }]}
+                   >
+                     <Ionicons name="add" size={20} color={colors.primary} />
+                   </Pressable>
+                 </View>
+               )}
+            </View>
           </View>
         </AnimatedSection>
 
-        <AnimatedSection delay={460}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow
-              icon="leaf-outline"
-              label="Knowledge Tree"
-              value="Explore concepts"
-              onPress={() => router.push('/knowledge-tree' as any)}
-              theme={theme}
-            />
-            <SettingRow
-              icon="extension-puzzle-outline"
-              label="My Puzzles"
-              value="View accomplishments"
-              onPress={() => router.push('/accomplishments' as any)}
-              isLast
-              theme={theme}
-            />
-          </View>
-        </AnimatedSection>
 
-        <AnimatedSection delay={500}>
+        <AnimatedSection delay={420}>
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
 
           <Pressable
@@ -336,7 +339,6 @@ export default function ProfileScreen() {
           <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
         </Animated.View>
       </ScrollView>
-      {/* Modals removed to settings sheet */}
     </View>
   );
 }
@@ -392,14 +394,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: 8,
   },
-  rolePill: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 100,
-  },
-  rolePillText: {
-    fontSize: 13,
-    fontWeight: "600",
+  nameUnderline: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#E8E0F0',
+    paddingBottom: 2,
+    marginBottom: 4,
   },
   sectionLabel: {
     fontSize: 13,
@@ -408,50 +407,68 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: SPACING.screenPadding + 4,
   },
-  groupCard: {
-    marginHorizontal: SPACING.screenPadding,
-    borderRadius: 16,
-    marginBottom: 24,
+  bubblesContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 40,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingLeft: 14,
-    paddingRight: 16,
-    minHeight: 52,
+  bubbleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+    marginBottom: 32,
   },
-  rowIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+  bubblyPill: {
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 100,
   },
-  rowBody: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginLeft: 12,
-    paddingVertical: 14,
-  },
-  rowLabel: {
+  bubblyPillText: {
     fontSize: 16,
-    fontWeight: "500",
-    flexShrink: 0,
+    fontWeight: '800',
   },
-  rowRight: {
-    flexDirection: "row",
-    alignItems: "center",
+  topicsSection: {
+    alignItems: 'stretch',
+  },
+  topicsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
+  topicsLabel: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  topicsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  topicBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+    paddingRight: 8,
+    paddingVertical: 8,
+    borderRadius: 100,
     gap: 4,
-    flexShrink: 1,
-    marginLeft: 12,
   },
-  rowValue: {
-    fontSize: 15,
-    fontWeight: "400",
-    flexShrink: 1,
-    textAlign: "right",
+  topicBubbleText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  topicRemoveBtn: {
+    padding: 2,
+  },
+  addTopicBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
     alignItems: "center",
@@ -521,64 +538,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    padding: 24,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 48,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  voiceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-  },
-  voiceAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  voiceInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  voiceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  voiceDesc: {
-    fontSize: 13,
-  },
-  closeButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  closeButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  }
 });
