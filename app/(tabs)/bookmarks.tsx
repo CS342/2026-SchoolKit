@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   Pressable,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,8 +38,6 @@ import {
   BORDERS,
 } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Design'] as const;
 type CategoryTab = (typeof CATEGORIES)[number];
@@ -94,6 +91,8 @@ export default function LibraryScreen() {
   const { stories, storyBookmarks, downloadedStories } = useStories();
   const { resources } = useResources();
 
+  const [segmentContainerWidth, setSegmentContainerWidth] = useState(0);
+
   const headerOpacity = useSharedValue(0);
   useEffect(() => {
     headerOpacity.value = withTiming(1, { duration: 400 });
@@ -103,7 +102,9 @@ export default function LibraryScreen() {
   const headerStyle = useAnimatedStyle(() => ({ opacity: headerOpacity.value }));
 
   const SEGMENT_COUNT = 3;
-  const SEGMENT_WIDTH = (SCREEN_WIDTH - SPACING.screenPadding * 2 - 8) / SEGMENT_COUNT;
+  const SEGMENT_WIDTH = segmentContainerWidth > 0
+    ? (segmentContainerWidth - 8) / SEGMENT_COUNT
+    : 0;
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorPosition.value * SEGMENT_WIDTH }],
@@ -228,7 +229,10 @@ export default function LibraryScreen() {
 
         {/* 3-segment toggle */}
         <View style={styles.segmentContainer}>
-          <View style={[styles.segmentBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)' }]}>
+          <View
+            style={[styles.segmentBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)' }]}
+            onLayout={(e) => setSegmentContainerWidth(e.nativeEvent.layout.width)}
+          >
             <Animated.View style={[styles.segmentIndicator, { width: SEGMENT_WIDTH, backgroundColor: colors.white }, indicatorStyle]} />
             {(['all', 'saved', 'downloaded'] as SegmentType[]).map(seg => (
               <TouchableOpacity
