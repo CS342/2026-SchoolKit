@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { BookmarkButton } from '../../components/BookmarkButton';
 import { DownloadButton } from '../../components/DownloadButton';
 import { COLORS } from '../../constants/onboarding-theme';
@@ -58,7 +59,7 @@ interface DesignData {
 }
 
 export default function DesignViewPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, resourceId } = useLocalSearchParams<{ id: string; resourceId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -71,6 +72,30 @@ export default function DesignViewPage() {
   const [viewportHeight, setViewportHeight] = useState(
     Platform.OS === 'web' ? window.innerHeight : 0,
   );
+
+  const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+
+  // 10-second timer for "opened" tracking
+  useEffect(() => {
+    if (!resourceId) return;
+    const timer = setTimeout(() => {
+      fireResourceOpened(resourceId);
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [resourceId, fireResourceOpened]);
+
+  // Common scroll handler for tracking bottom hit
+  const handleScroll = (e: any) => {
+    if (scrolledToEnd || !resourceId) return;
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    if (layoutMeasurement && contentOffset && contentSize) {
+      if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+        setScrolledToEnd(true);
+        fireResourceScrolledToEnd(resourceId);
+      }
+    }
+  };
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -185,10 +210,10 @@ export default function DesignViewPage() {
         await Share.share({
           message: `Check out "${design.title}" on SchoolKit`,
         });
-      } catch {}
+      } catch { }
     };
 
-    const resourceId = id || '';
+    const finalResourceId = resourceId || id || '';
 
     return (
       <View style={{ flex: 1, height: viewportHeight }}>
@@ -227,8 +252,8 @@ export default function DesignViewPage() {
             >
               <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
             </TouchableOpacity>
-            <DownloadButton resourceId={resourceId} size={24} />
-            <BookmarkButton resourceId={resourceId} color={colors.primary} size={26} />
+            <DownloadButton resourceId={finalResourceId} size={24} />
+            <BookmarkButton resourceId={finalResourceId} color={colors.primary} size={26} />
           </View>
         </View>
 
@@ -236,6 +261,8 @@ export default function DesignViewPage() {
           /* HTML/CSS-based renderer for documents with interactive components */
           <ScrollView
             style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
             contentContainerStyle={{
               minHeight: '100%',
               justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
@@ -272,6 +299,8 @@ export default function DesignViewPage() {
           /* Konva-based renderer for static-only documents */
           <ScrollView
             style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
             contentContainerStyle={{
               minHeight: '100%',
               justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
@@ -337,7 +366,12 @@ export default function DesignViewPage() {
           {design.title}
         </Text>
       </View>
-      <RuntimeRenderer doc={design.doc} width={screenWidth} />
+      <RuntimeRenderer
+        doc={design.doc}
+        width={screenWidth}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
+      />
     </View>
   );
 }

@@ -13,9 +13,11 @@ import { RuntimeQuiz } from './RuntimeQuiz';
 interface RuntimeRendererProps {
   doc: DesignDocument;
   width: number;
+  onScroll?: (e: any) => void;
+  scrollEventThrottle?: number;
 }
 
-export function RuntimeRenderer({ doc, width }: RuntimeRendererProps) {
+export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle }: RuntimeRendererProps) {
   const scale = width / doc.canvas.width;
   const scaledHeight = doc.canvas.height * scale;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -30,6 +32,8 @@ export function RuntimeRenderer({ doc, width }: RuntimeRendererProps) {
       contentContainerStyle={{
         minHeight: scaledHeight,
       }}
+      onScroll={onScroll}
+      scrollEventThrottle={scrollEventThrottle}
     >
       <Animated.View style={{ opacity: fadeAnim }}>
         <View

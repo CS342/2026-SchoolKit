@@ -67,7 +67,7 @@ export function useResources() {
             tags: [r.category.toLowerCase()],
             icon: override.icon ?? r.icon ?? 'document-text-outline',
             color: override.color ?? CATEGORY_COLORS[r.category] ?? DEFAULT_COLOR,
-            route: r.design_id ? `/design-view/${r.design_id}` : undefined,
+            route: r.design_id ? `/design-view/${r.design_id}?resourceId=${r.id}` : undefined,
             // Pages not in the approved list only appear in the Design Generated tab
             designOnly: !APPROVED_DB_TITLES.has(r.title.toLowerCase()),
           };

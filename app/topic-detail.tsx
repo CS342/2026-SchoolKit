@@ -35,7 +35,7 @@ export default function TopicDetailScreen() {
             .single();
 
           if (resource?.design_id) {
-            router.replace(`/design-view/${resource.design_id}` as any);
+            router.replace(`/design-view/${resource.design_id}?resourceId=${id}` as any);
             return;
           }
         }
@@ -50,7 +50,7 @@ export default function TopicDetailScreen() {
             .limit(1);
 
           if (designs && designs.length > 0) {
-            router.replace(`/design-view/${designs[0].id}` as any);
+            router.replace(`/design-view/${designs[0].id}?resourceId=${id}` as any);
             return;
           }
 
@@ -64,7 +64,7 @@ export default function TopicDetailScreen() {
             .limit(1);
 
           if (anyDesigns && anyDesigns.length > 0) {
-            router.replace(`/design-view/${anyDesigns[0].id}` as any);
+            router.replace(`/design-view/${anyDesigns[0].id}?resourceId=${id}` as any);
             return;
           }
         }
