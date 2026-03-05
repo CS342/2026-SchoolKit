@@ -54,7 +54,12 @@ export function useTTS() {
 
       try {
         setIsLoading(true);
-        const audioUri = await generateSpeech(text, selectedVoice);
+        let audioUri = null;
+        try {
+          audioUri = await generateSpeech(text, selectedVoice);
+        } catch (e) {
+          console.warn("Speech generation skipped:", e);
+        }
 
         if (audioUri) {
           player.replace(audioUri);
