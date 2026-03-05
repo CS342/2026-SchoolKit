@@ -23,6 +23,7 @@ import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -602,6 +603,25 @@ export default function SchoolLifeBalanceScreen() {
     const [expandedColor, setExpandedColor] = useState("#7EC8E3");
     const [activeHandout, setActiveHandout] = useState<Handout | null>(null);
 
+    const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+    const [scrolledToEnd, setScrolledToEnd] = useState(false);
+    const resourceId = "14"; // Juggling Life ID
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fireResourceOpened(resourceId);
+        }, 10_000);
+        return () => clearTimeout(timer);
+    }, [fireResourceOpened]);
+
+    const handleScroll = ({ nativeEvent }: any) => {
+        const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+        if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+            setScrolledToEnd(true);
+            fireResourceScrolledToEnd(resourceId);
+        }
+    };
+
     // Audio
     const player = useAudioPlayer();
     const playerStatus = useAudioPlayerStatus(player);
@@ -685,6 +705,8 @@ export default function SchoolLifeBalanceScreen() {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={100}
             >
                 {/* Title */}
                 <Text style={styles.pageTitle}>

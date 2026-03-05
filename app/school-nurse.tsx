@@ -38,6 +38,7 @@ import {
   ANIMATION,
 } from "../constants/onboarding-theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -760,6 +761,25 @@ export default function SchoolNurseScreen() {
   const insets = useSafeAreaInsets();
   const [activeSection, setActiveSection] = useState<SectionData | null>(null);
 
+  const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const resourceId = "13"; // School Nurse ID
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fireResourceOpened(resourceId);
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [fireResourceOpened]);
+
+  const handleScroll = ({ nativeEvent }: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (!scrolledToEnd && layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+      setScrolledToEnd(true);
+      fireResourceScrolledToEnd(resourceId);
+    }
+  };
+
   const headerAnim = useSharedValue(0);
   const videoAnim = useSharedValue(0);
   const cardsAnim = useSharedValue(0);
@@ -805,6 +825,8 @@ export default function SchoolNurseScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
       >
         {/* Title + subtitle */}
         <RNAnimated.View style={headerStyle}>

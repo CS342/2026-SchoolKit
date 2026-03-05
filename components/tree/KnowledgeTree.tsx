@@ -52,6 +52,8 @@ const ICON_CHARS: Record<string, string> = {
   'megaphone': String.fromCodePoint(62542),
   'people-circle': String.fromCodePoint(62624),
   'information-circle': String.fromCodePoint(62360),
+  'thermometer': String.fromCodePoint(62846),
+  'thermometer-outline': String.fromCodePoint(62847),
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -224,12 +226,13 @@ function Leaf({
   return (
     <>
       <AnimatedG animatedProps={animatedProps}>
-        <Circle cx={cx} cy={cy} r={LEAF_R} fill={bgColor} />
+        <Circle cx={cx} cy={cy} r={LEAF_R} fill={bgColor} onPress={onPress} />
         {/* Icon via Ionicons font — infinite resolution */}
         <SvgText
           x={cx} y={cy}
           textAnchor="middle" alignmentBaseline="central"
           fontFamily="Ionicons" fontSize={18} fill="#FFFFFF"
+          onPress={onPress}
         >
           {ICON_CHARS[resource.icon] ?? ''}
         </SvgText>
