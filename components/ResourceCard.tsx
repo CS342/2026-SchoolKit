@@ -64,7 +64,7 @@ export function ResourceCard({
   opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
   }, []);
 
-  const { isDark, colors } = useTheme();
+  const { isDark, colors, fontScale } = useTheme();
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -95,13 +95,13 @@ export function ResourceCard({
 
         {category ? (
           <View style={styles.content}>
-            <Text style={[styles.title, { color: colors.textDark }]}>{title}</Text>
+            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.1) }]}>
-              <Text style={[styles.categoryText, { color }]}>{category}</Text>
+              <Text style={[styles.categoryText, { color, fontSize: Math.round(14 * fontScale) }]}>{category}</Text>
             </View>
           </View>
         ) : (
-          <Text style={[styles.titleFull, { color: colors.textDark }]}>{title}</Text>
+          <Text style={[styles.titleFull, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
         )}
 
         <View style={styles.actions}>

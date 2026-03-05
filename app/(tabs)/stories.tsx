@@ -179,8 +179,8 @@ export default function StoriesScreen() {
     setRefreshing(false);
   };
 
-  const { isDark } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+  const { isDark, fontScale } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
   return (
     <View style={styles.container}>
@@ -674,9 +674,11 @@ export default function StoriesScreen() {
 
 const makeStyles = (
   c: typeof import("../../constants/theme").COLORS_LIGHT,
-  isDark: boolean
-) =>
-  StyleSheet.create({
+  isDark: boolean,
+  fontScale = 1
+) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: c.appBackground,
@@ -684,7 +686,7 @@ const makeStyles = (
 
     // ── Header ──────────────────────────────────────────────
     headerSubtitle: {
-      fontSize: 12,
+      fontSize: fs(12),
       color: COLORS.textLight,
       fontWeight: "400",
       marginTop: 2,
@@ -749,7 +751,7 @@ const makeStyles = (
     },
     searchInput: {
       flex: 1,
-      fontSize: 15,
+      fontSize: fs(15),
       color: c.textDark,
       paddingVertical: 0,
     },
@@ -814,7 +816,7 @@ const makeStyles = (
       borderWidth: 1.5,
     },
     filterBadgeText: {
-      fontSize: 8,
+      fontSize: fs(8),
       fontWeight: "bold",
       color: COLORS.primary,
     },
@@ -832,7 +834,7 @@ const makeStyles = (
       marginBottom: 8,
     },
     modModeBarText: {
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: COLORS.primary,
       flex: 1,
@@ -844,7 +846,7 @@ const makeStyles = (
       borderRadius: 100,
     },
     modModeCountText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontWeight: "600",
       color: COLORS.primary,
     },
@@ -871,7 +873,7 @@ const makeStyles = (
       backgroundColor: COLORS.primary + "15",
     },
     sortText: {
-      fontSize: 14,
+      fontSize: fs(14),
       fontWeight: "600",
       color: COLORS.textLight,
     },
@@ -893,7 +895,7 @@ const makeStyles = (
       borderRadius: 8,
     },
     offlineBannerText: {
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: "#5C5C8A",
     },
@@ -915,7 +917,7 @@ const makeStyles = (
     },
     pendingBannerText: {
       flex: 1,
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: "#E65100",
     },
@@ -952,12 +954,12 @@ const makeStyles = (
       backgroundColor: COLORS.error,
     },
     rejectedBannerText: {
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: COLORS.error,
     },
     rejectedBannerAction: {
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: COLORS.error,
     },
@@ -991,3 +993,4 @@ const makeStyles = (
       justifyContent: "center",
     },
   });
+}

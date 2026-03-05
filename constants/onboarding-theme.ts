@@ -247,7 +247,8 @@ export const SHARED_STYLES = StyleSheet.create({
   },
 });
 
-export function makeSharedStyles(c: typeof COLORS) {
+export function makeSharedStyles(c: typeof COLORS, fontScale = 1) {
+  const fs = (size: number) => Math.round(size * fontScale);
   return StyleSheet.create({
     pageIconCircle: {
       width: 80,
@@ -259,7 +260,7 @@ export function makeSharedStyles(c: typeof COLORS) {
       marginBottom: 20,
     },
     pageTitle: {
-      fontSize: 30,
+      fontSize: fs(30),
       fontWeight: '800',
       color: c.textDark,
       marginBottom: 8,
@@ -267,7 +268,7 @@ export function makeSharedStyles(c: typeof COLORS) {
       fontFamily: 'Raleway_600SemiBold',
     },
     pageSubtitle: {
-      fontSize: 18,
+      fontSize: fs(18),
       fontWeight: '600',
       color: c.textLight,
       textAlign: 'center',
@@ -504,7 +505,8 @@ export const APP_STYLES = StyleSheet.create({
   },
 });
 
-export function makeAppStyles(c: typeof COLORS) {
+export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
+  const fs = (size: number) => Math.round(size * fontScale);
   return StyleSheet.create({
     tabHeader: {
       paddingHorizontal: 24,
@@ -520,14 +522,14 @@ export function makeAppStyles(c: typeof COLORS) {
       elevation: 5,
     },
     tabHeaderTitle: {
-      fontSize: 30,
+      fontSize: fs(30),
       fontWeight: '800',
       color: c.textDark,
       marginBottom: 6,
       fontFamily: 'Raleway_800ExtraBold',
     },
     tabHeaderSubtitle: {
-      fontSize: 18,
+      fontSize: fs(18),
       fontWeight: '600',
       color: c.textMuted,
     },
@@ -639,7 +641,7 @@ export function makeAppStyles(c: typeof COLORS) {
       elevation: 4,
     },
     emptyTitle: {
-      fontSize: 26,
+      fontSize: fs(26),
       fontWeight: '800',
       color: c.textDark,
       marginTop: 24,
@@ -648,11 +650,11 @@ export function makeAppStyles(c: typeof COLORS) {
       fontFamily: 'Raleway_600SemiBold',
     },
     emptyText: {
-      fontSize: 18,
+      fontSize: fs(18),
       fontWeight: '500',
       color: c.textMuted,
       textAlign: 'center',
-      lineHeight: 26,
+      lineHeight: fs(26),
     },
     checkmarkCircle: {
       width: 34,
