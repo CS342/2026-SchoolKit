@@ -344,7 +344,7 @@ export default function KnowledgeTree({ isResourceFullyViewed, isDark: isDark, r
       zoomTx.value = withSpring(targetTx * ZOOM_SCALE, SPRING_SMOOTH);
       zoomTy.value = withSpring(targetTy * ZOOM_SCALE, SPRING_SMOOTH);
     }
-  }, [expandedSection, SCALE, RENDER_W, RENDER_H, SECTION_CENTROIDS]);
+  }, [expandedSection, SCALE, RENDER_W, RENDER_H, SECTION_CENTROIDS, SECTIONS]);
 
   const navigateToLeaf = useCallback((sectionIdx: number, leafIdx: number) => {
     const resource = SECTIONS[sectionIdx]?.leaves[leafIdx]?.resource;
@@ -354,7 +354,7 @@ export default function KnowledgeTree({ isResourceFullyViewed, isDark: isDark, r
     } else {
       router.push({ pathname: '/topic-detail', params: { title: resource.title, id: resource.id } } as any);
     }
-  }, [router]);
+  }, [router, SECTIONS]);
 
   const handleBackgroundPress = useCallback(() => {
     if (!expandedSection) return;

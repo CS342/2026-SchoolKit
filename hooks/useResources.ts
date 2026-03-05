@@ -74,6 +74,7 @@ export function useResources() {
         });
 
       console.log('useResources: Successfully fetched', dbResources.length, 'resources from DB. Merging with ALL_RESOURCES...');
+      console.log('DEBUG_DB_RESOURCES', JSON.stringify(dbResources, null, 2));
       setResources([...ALL_RESOURCES, ...dbResources]);
     } catch {
       setResources(ALL_RESOURCES);
