@@ -75,6 +75,17 @@ export default function DesignViewPage() {
 
   const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [layoutHeight, setLayoutHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  // Auto-complete scroll requirement if content is smaller than screen
+  useEffect(() => {
+    if (!resourceId || scrolledToEnd || layoutHeight === 0 || contentHeight === 0) return;
+    if (layoutHeight >= contentHeight - 40) {
+      setScrolledToEnd(true);
+      fireResourceScrolledToEnd(resourceId);
+    }
+  }, [layoutHeight, contentHeight, resourceId, scrolledToEnd, fireResourceScrolledToEnd]);
 
   // 10-second timer for "opened" tracking
   useEffect(() => {
@@ -258,11 +269,12 @@ export default function DesignViewPage() {
         </View>
 
         {webHasInteractive ? (
-          /* HTML/CSS-based renderer for documents with interactive components */
           <ScrollView
             style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
             onScroll={handleScroll}
             scrollEventThrottle={100}
+            onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
+            onContentSizeChange={(_, h) => setContentHeight(h)}
             contentContainerStyle={{
               minHeight: '100%',
               justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
@@ -296,11 +308,12 @@ export default function DesignViewPage() {
             </div>
           </ScrollView>
         ) : (
-          /* Konva-based renderer for static-only documents */
           <ScrollView
             style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
             onScroll={handleScroll}
             scrollEventThrottle={100}
+            onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
+            onContentSizeChange={(_, h) => setContentHeight(h)}
             contentContainerStyle={{
               minHeight: '100%',
               justifyContent: scaledHeight <= (viewportHeight - 100) ? 'center' : 'flex-start',
@@ -371,6 +384,8 @@ export default function DesignViewPage() {
         width={screenWidth}
         onScroll={handleScroll}
         scrollEventThrottle={100}
+        onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => setContentHeight(h)}
       />
     </View>
   );

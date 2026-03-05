@@ -15,9 +15,11 @@ interface RuntimeRendererProps {
   width: number;
   onScroll?: (e: any) => void;
   scrollEventThrottle?: number;
+  onLayout?: (e: any) => void;
+  onContentSizeChange?: (w: number, h: number) => void;
 }
 
-export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle }: RuntimeRendererProps) {
+export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onLayout, onContentSizeChange }: RuntimeRendererProps) {
   const scale = width / doc.canvas.width;
   const scaledHeight = doc.canvas.height * scale;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -34,6 +36,8 @@ export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle }: R
       }}
       onScroll={onScroll}
       scrollEventThrottle={scrollEventThrottle}
+      onLayout={onLayout}
+      onContentSizeChange={onContentSizeChange}
     >
       <Animated.View style={{ opacity: fadeAnim }}>
         <View

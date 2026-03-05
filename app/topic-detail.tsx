@@ -78,6 +78,16 @@ export default function TopicDetailScreen() {
   }, [id, title]);
 
   const resourceId = id || title || '';
+  const [layoutHeight, setLayoutHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (!resourceId || scrolledToEnd || layoutHeight === 0 || contentHeight === 0) return;
+    if (layoutHeight >= contentHeight - 40) {
+      setScrolledToEnd(true);
+      fireResourceScrolledToEnd(resourceId);
+    }
+  }, [layoutHeight, contentHeight, resourceId, scrolledToEnd, fireResourceScrolledToEnd]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,7 +146,13 @@ export default function TopicDetailScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} onScroll={handleScroll} scrollEventThrottle={100}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
+        onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => setContentHeight(h)}
+      >
         <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
             <Ionicons name="book" size={40} color={color} />
