@@ -251,6 +251,8 @@ export const CARD_COLORS_DARK = [
 
 // ─── Full Theme Type ─────────────────────────────────────────────
 
+export type TextSizePreference = 'small' | 'default' | 'large';
+
 export type AppTheme = {
   colors: ThemeColors;
   gradients: ThemeGradients;
@@ -261,4 +263,7 @@ export type AppTheme = {
   decorativeShapes: Record<string, DecorativeShape[]>;
   themePreference: 'system' | 'light' | 'dark';
   setThemePreference: (pref: 'system' | 'light' | 'dark') => void;
+  textSizePreference: TextSizePreference;
+  setTextSizePreference: (pref: TextSizePreference) => void;
+  fontScale: number;
 };

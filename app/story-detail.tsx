@@ -208,7 +208,7 @@ export default function StoryDetailScreen() {
     downloadStory,
     removeStoryDownload,
   } = useStories();
-  const { colors, appStyles, isDark } = useTheme();
+  const { colors, appStyles, isDark, fontScale } = useTheme();
   const { fireEvent } = useAccomplishments();
 
   const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
@@ -460,7 +460,7 @@ export default function StoryDetailScreen() {
     player.playbackRate = nextRate;
   };
 
-  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+  const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
   if (!story || !canViewStory) {
     return (
@@ -847,8 +847,9 @@ export default function StoryDetailScreen() {
   );
 }
 
-const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark: boolean) =>
-  StyleSheet.create({
+const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark: boolean, fontScale = 1) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: c.white,
@@ -868,16 +869,16 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       color: c.textMuted,
     },
     meta: {
-      fontSize: 12,
+      fontSize: fs(12),
       color: COLORS.textLight,
       fontWeight: "400",
       marginBottom: 10,
     },
     storyTitle: {
-      fontSize: 22,
+      fontSize: fs(22),
       fontWeight: "700",
       color: c.textDark,
-      lineHeight: 29,
+      lineHeight: fs(29),
       letterSpacing: -0.3,
       marginBottom: 14,
     },
@@ -888,7 +889,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       borderWidth: 1,
     },
     previousVersionTitleText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontWeight: '600',
       color: COLORS.textLight,
       textTransform: 'uppercase',
@@ -902,20 +903,20 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       gap: 6,
     },
     showOriginalBtnText: {
-      fontSize: 14,
+      fontSize: fs(14),
       fontWeight: '600',
     },
     lookingForText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontStyle: "italic",
       color: c.textLight,
       marginTop: 12,
     },
     storyBody: {
-      fontSize: 16,
+      fontSize: fs(16),
       fontWeight: "400",
       color: c.textDark,
-      lineHeight: 26,
+      lineHeight: fs(26),
     },
     tagsContainer: {
       flexDirection: 'row',
@@ -929,7 +930,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       borderRadius: 100,
     },
     tagText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontWeight: '600',
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -952,7 +953,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       backgroundColor: c.primary,
     },
     listenBtnText: {
-      fontSize: 14,
+      fontSize: fs(14),
       fontWeight: "700",
       color: c.primary,
     },
@@ -965,7 +966,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       borderColor: c.borderCard,
     },
     speedBtnText: {
-      fontSize: 13,
+      fontSize: fs(13),
       fontWeight: "600",
       color: c.textMuted,
     },
@@ -997,7 +998,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       gap: 20,
     },
     actionText: {
-      fontSize: 14,
+      fontSize: fs(14),
       fontWeight: "500",
       color: COLORS.textLight,
     },
@@ -1011,7 +1012,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       paddingHorizontal: 4,
     },
     commentsTitle: {
-      fontSize: 16,
+      fontSize: fs(16),
       fontWeight: "700",
       color: c.textDark,
     },
@@ -1020,7 +1021,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       paddingBottom: 20,
     },
     noComments: {
-      fontSize: 14,
+      fontSize: fs(14),
       color: c.textLight,
       paddingVertical: 20,
     },
@@ -1031,7 +1032,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       paddingTop: 8,
     },
     reminderText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontStyle: 'italic',
       color: c.textLight,
       textAlign: 'center',
@@ -1052,7 +1053,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 10,
-      fontSize: 15,
+      fontSize: fs(15),
       fontWeight: "400",
       color: c.textDark,
       borderWidth: StyleSheet.hairlineWidth,
@@ -1084,8 +1085,9 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
       borderColor: COLORS.primary + "40",
     },
     anonToggleText: {
-      fontSize: 12,
+      fontSize: fs(12),
       fontWeight: "500",
       color: COLORS.textLight,
     },
   });
+};

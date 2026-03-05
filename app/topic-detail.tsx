@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { supabase } from '../lib/supabase';
+import { useTheme } from '../contexts/ThemeContext';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
@@ -18,9 +19,11 @@ export default function TopicDetailScreen() {
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
   const { isSpeaking, isLoading, speak } = useTTS();
+  const { fontScale } = useTheme();
   const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [checkingDesign, setCheckingDesign] = useState(true);
+  const styles = useMemo(() => makeStyles(fontScale), [fontScale]);
 
   // Check if this topic has a published custom design and redirect to the design viewer
   useEffect(() => {
@@ -187,111 +190,116 @@ export default function TopicDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.appBackgroundAlt,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 3,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  shareButton: {
-    padding: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
-  },
-  titleCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADII.cardLarge,
-    padding: 28,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: COLORS.borderCard,
-    alignItems: 'center',
-    ...SHADOWS.cardLarge,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    textAlign: 'center',
-    lineHeight: 34,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginBottom: 16,
-  },
-  description: {
-    ...TYPOGRAPHY.bodyDescription,
-    color: COLORS.textMuted,
-    lineHeight: 26,
-  },
-  resourceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: COLORS.borderCard,
-    ...SHADOWS.card,
-  },
-  resourceIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  resourceContent: {
-    flex: 1,
-  },
-  resourceTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginBottom: 4,
-  },
-  resourceSubtitle: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textLight,
-  },
-});
+const makeStyles = (fontScale = 1) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: COLORS.appBackgroundAlt,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 20,
+      backgroundColor: COLORS.white,
+      borderBottomWidth: 3,
+      shadowColor: COLORS.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    backButton: {
+      padding: 4,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    shareButton: {
+      padding: 8,
+    },
+    scrollContent: {
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 40,
+    },
+    titleCard: {
+      backgroundColor: COLORS.white,
+      borderRadius: RADII.cardLarge,
+      padding: 28,
+      marginBottom: 24,
+      borderWidth: 2,
+      borderColor: COLORS.borderCard,
+      alignItems: 'center',
+      ...SHADOWS.cardLarge,
+    },
+    iconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 20,
+    },
+    title: {
+      fontSize: fs(26),
+      fontWeight: '800',
+      color: COLORS.textDark,
+      textAlign: 'center',
+      lineHeight: fs(34),
+    },
+    section: {
+      marginBottom: 32,
+    },
+    sectionTitle: {
+      fontSize: fs(22),
+      fontWeight: '800',
+      color: COLORS.textDark,
+      marginBottom: 16,
+    },
+    description: {
+      ...TYPOGRAPHY.bodyDescription,
+      fontSize: fs(TYPOGRAPHY.bodyDescription.fontSize ?? 17),
+      color: COLORS.textMuted,
+      lineHeight: fs(26),
+    },
+    resourceItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: COLORS.white,
+      padding: 20,
+      borderRadius: 20,
+      marginBottom: 12,
+      borderWidth: 2,
+      borderColor: COLORS.borderCard,
+      ...SHADOWS.card,
+    },
+    resourceIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 16,
+    },
+    resourceContent: {
+      flex: 1,
+    },
+    resourceTitle: {
+      fontSize: fs(18),
+      fontWeight: '700',
+      color: COLORS.textDark,
+      marginBottom: 4,
+    },
+    resourceSubtitle: {
+      ...TYPOGRAPHY.labelSmall,
+      fontSize: fs(TYPOGRAPHY.labelSmall.fontSize ?? 15),
+      color: COLORS.textLight,
+    },
+  });
+};
