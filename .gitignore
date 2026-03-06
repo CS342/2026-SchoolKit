@@ -31,3 +31,5 @@ yarn-error.*
 
 # TypeScript
 *.tsbuildinfo
+.vercel
+.env*.local

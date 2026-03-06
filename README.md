@@ -11,7 +11,7 @@ Young cancer survivors returning to school need coordinated academic and social 
 ## Download / Access
 
 - **iOS:** Download via [TestFlight](https://testflight.apple.com/) (invite required)
-- **Web:** Access the web version at the hosted URL or run it locally (see [Getting Started](#getting-started))
+- **Web:** Access the live web version at [https://schoolkit-five.vercel.app](https://schoolkit-five.vercel.app)
 
 ## Getting Started
 
