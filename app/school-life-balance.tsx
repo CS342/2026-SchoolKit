@@ -603,7 +603,7 @@ export default function SchoolLifeBalanceScreen() {
     const [expandedColor, setExpandedColor] = useState("#7EC8E3");
     const [activeHandout, setActiveHandout] = useState<Handout | null>(null);
 
-    const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+    const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
     const [scrolledToEnd, setScrolledToEnd] = useState(false);
     const resourceId = "14"; // Juggling Life ID
 
@@ -683,6 +683,7 @@ export default function SchoolLifeBalanceScreen() {
             await Share.share({
                 message: 'Check out "Best Practices for Juggling School and Life" on SchoolKit — practical tips for balancing school, work, and home responsibilities.',
             });
+            fireEvent('resource_shared');
         } catch { }
     };
 

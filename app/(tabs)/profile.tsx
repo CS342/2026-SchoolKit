@@ -281,23 +281,62 @@ export default function ProfileScreen() {
 
         <AnimatedSection delay={460}>
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow
-              icon="leaf-outline"
-              label="Knowledge Tree"
-              value="Explore concepts"
-              onPress={() => router.push('/knowledge-tree' as any)}
-              theme={theme}
-            />
-            <SettingRow
-              icon="extension-puzzle-outline"
-              label="My Puzzles"
-              value="View accomplishments"
-              onPress={() => router.push('/accomplishments' as any)}
-              isLast
-              theme={theme}
-            />
-          </View>
+          
+          <Pressable
+            onPress={() => router.push('/knowledge-tree' as any)}
+            style={({ pressed }) => [
+              styles.journalWidget,
+              { marginBottom: 16 },
+              shadows.card,
+              pressed && { transform: [{ scale: 0.98 }] }
+            ]}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.journalGlass}
+            >
+              <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
+                <Ionicons name="leaf" size={28} color="#FFF" />
+              </View>
+              <View style={styles.journalInfo}>
+                <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
+                <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
+              </View>
+              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                <Ionicons name="arrow-forward" size={18} color="#10B981" />
+              </View>
+            </LinearGradient>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/accomplishments' as any)}
+            style={({ pressed }) => [
+              styles.journalWidget,
+              { marginBottom: 24 },
+              shadows.card,
+              pressed && { transform: [{ scale: 0.98 }] }
+            ]}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.journalGlass}
+            >
+              <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
+                <Ionicons name="extension-puzzle" size={28} color="#FFF" />
+              </View>
+              <View style={styles.journalInfo}>
+                <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
+                <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
+              </View>
+              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
+              </View>
+            </LinearGradient>
+          </Pressable>
         </AnimatedSection>
 
         <AnimatedSection delay={500}>

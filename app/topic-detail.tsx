@@ -20,7 +20,7 @@ export default function TopicDetailScreen() {
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
   const { isSpeaking, isLoading, speak } = useTTS();
   const { fontScale } = useTheme();
-  const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
+  const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [checkingDesign, setCheckingDesign] = useState(true);
   const styles = useMemo(() => makeStyles(fontScale), [fontScale]);
@@ -121,6 +121,7 @@ export default function TopicDetailScreen() {
       await Share.share({
         message: `Check out "${title}" on SchoolKit — a resource to help students and families navigate school during cancer treatment.`,
       });
+      fireEvent('resource_shared');
     } catch { }
   };
 

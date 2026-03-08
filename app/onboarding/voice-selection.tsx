@@ -71,7 +71,6 @@ export default function VoiceSelectionScreen() {
 
   const handleContinue = () => {
     updateVoice(selectedVoice);
-    fireEvent('voice_changed');
     completeOnboarding();
     router.replace('/loading');
   };

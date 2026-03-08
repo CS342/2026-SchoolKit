@@ -3,23 +3,23 @@
 // Conditions are NEVER shown to users — pieces appear as serendipitous surprises.
 
 export type PieceEvent =
-  | 'onboarding_complete'
-  | 'resource_read_30s'
+  | 'resource_completed'
+  | 'resource_shared'
   | 'tts_played'
   | 'resource_bookmarked'
   | 'profile_tab_visited'
   | 'all_tabs_visited'
   | 'search_performed'
-  | 'peer_support_read_30s'
-  | 'cancer_info_read_30s'
-  | 'voice_changed'
+  | 'peer_support_read_10s'
+  | 'cancer_info_read_10s'
+  | 'accomplishments_viewed'
   | 'about_opened'
   | 'resources_10pct'
   | 'resources_50pct'
   | 'resources_100pct'
   | 'resources_5_bookmarked'
   | 'resources_3_downloaded'
-  | 'story_read_30s'
+  | 'story_read_10s'
   | 'stories_3_bookmarked'
   | 'story_created'
   | 'story_commented';
@@ -86,20 +86,20 @@ export const CHAPTERS: ChapterDefinition[] = [
       {
         id: 'ch1_p1',
         chapterId: 'chapter_1',
-        event: 'onboarding_complete',
+        event: 'resource_completed',
         gridPosition: { row: 1, col: 1 }, // center
         edges: { top: 'tab', right: 'tab', bottom: 'tab', left: 'tab' },
-        name: 'Finished setting up',
-        description: 'You took your first step — and that\'s everything. Welcome to SchoolKit.',
+        name: 'Read to the end',
+        description: 'You read an entire resource. Every word matters.',
       },
       {
         id: 'ch1_p2',
         chapterId: 'chapter_1',
-        event: 'resource_read_30s',
+        event: 'resource_shared',
         gridPosition: { row: 0, col: 1 }, // north — bottom connects to center's top tab
         edges: { top: 'flat', right: 'flat', bottom: 'blank', left: 'flat' },
-        name: 'Read a full resource page',
-        description: 'You sat with something new. Curiosity is a kind of courage.',
+        name: 'Shared a resource',
+        description: 'You thought of someone else. That\'s how support grows.',
       },
       {
         id: 'ch1_p3',
@@ -171,7 +171,7 @@ export const CHAPTERS: ChapterDefinition[] = [
       {
         id: 'ch2_p3',
         chapterId: 'chapter_2',
-        event: 'peer_support_read_30s',
+        event: 'peer_support_read_10s',
         gridPosition: { row: 0, col: 2 },
         // left←blank (ch2_p2 right→tab), bottom→tab (ch2_p6 top←blank)
         edges: { top: 'flat', right: 'flat', bottom: 'tab', left: 'blank' },
@@ -181,7 +181,7 @@ export const CHAPTERS: ChapterDefinition[] = [
       {
         id: 'ch2_p4',
         chapterId: 'chapter_2',
-        event: 'cancer_info_read_30s',
+        event: 'cancer_info_read_10s',
         gridPosition: { row: 1, col: 0 },
         // top←blank (ch2_p1 bottom→tab), right→blank (ch2_p5 left←tab)
         edges: { top: 'blank', right: 'blank', bottom: 'flat', left: 'flat' },
@@ -191,12 +191,12 @@ export const CHAPTERS: ChapterDefinition[] = [
       {
         id: 'ch2_p5',
         chapterId: 'chapter_2',
-        event: 'voice_changed',
+        event: 'accomplishments_viewed',
         gridPosition: { row: 1, col: 1 },
         // top←tab (ch2_p2 bottom→blank), left←tab (ch2_p4 right→blank), right→tab (ch2_p6 left←blank)
         edges: { top: 'tab', right: 'tab', bottom: 'flat', left: 'tab' },
-        name: 'Chose your reading voice',
-        description: 'You found a voice that feels right. You deserve to be heard.',
+        name: 'Looked back at your journey',
+        description: 'You viewed your accomplishments. That\'s worth celebrating.',
       },
       {
         id: 'ch2_p6',
@@ -297,7 +297,7 @@ export const CHAPTERS: ChapterDefinition[] = [
       {
         id: 'ch4_p1',
         chapterId: 'chapter_4',
-        event: 'story_read_30s',
+        event: 'story_read_10s',
         gridPosition: { row: 0, col: 0 },
         // right→tab (ch4_p2 left←blank), bottom→tab (ch4_p3 top←blank)
         edges: { top: 'flat', right: 'tab', bottom: 'tab', left: 'flat' },

@@ -726,7 +726,7 @@ export default function UnderstandingCancerScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setTimeSpent10s(true);
-      fireEvent('cancer_info_read_30s');
+      fireEvent('cancer_info_read_10s');
       fireResourceOpened('11'); // resource ID 11 = Understanding Cancer
     }, 10_000);
     return () => clearTimeout(timer);
@@ -844,6 +844,7 @@ export default function UnderstandingCancerScreen() {
       await Share.share({
         message: 'Check out "Understanding What Cancer Is and Isn\'t" on SchoolKit — learn the facts and bust common myths about cancer.',
       });
+      fireEvent('resource_shared');
     } catch { }
   };
 

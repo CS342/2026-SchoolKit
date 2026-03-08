@@ -622,7 +622,7 @@ export default function PeerSupportScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setTimeSpent10s(true);
-      fireEvent('peer_support_read_30s');
+      fireEvent('peer_support_read_10s');
       fireResourceOpened('12'); // resource ID 12 = Peer Support
     }, 10_000);
     return () => clearTimeout(timer);
@@ -724,6 +724,7 @@ export default function PeerSupportScreen() {
       await Share.share({
         message: 'Check out "Encouraging Positive Peer Support" on SchoolKit — learn how to help peers support a returning student.',
       });
+      fireEvent('resource_shared');
     } catch { }
   };
 

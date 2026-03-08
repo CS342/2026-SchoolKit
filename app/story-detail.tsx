@@ -216,7 +216,7 @@ export default function StoryDetailScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (id) fireEvent('story_read_30s');
+      if (id) fireEvent('story_read_10s');
     }, 10_000);
     return () => clearTimeout(timer);
   }, [id]);

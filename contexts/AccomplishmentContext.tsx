@@ -187,8 +187,11 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
       scrolledToEndIdsRef.current.add(resourceId);
       setScrolledToEndIds(new Set(scrolledToEndIdsRef.current));
       persistState();
+      
+      // Fire event for reading a resource completely (formerly the early onboarding piece)
+      fireEvent('resource_completed');
     }
-  }, [persistState]);
+  }, [fireEvent, persistState]);
 
   // ── Resource opened tracking (unique resource IDs) ───────────────────────
   const fireResourceOpened = useCallback((resourceId: string) => {
@@ -199,9 +202,6 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
       setOpenedResourceIds(new Set(openedResourceIdsRef.current));
       persistState();
     }
-
-    // Always fire generic resource_read_30s (idempotent — only unlocks piece once)
-    fireEvent('resource_read_30s');
 
     // Check percentage thresholds
     const size = openedResourceIdsRef.current.size;
@@ -230,11 +230,6 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
 
   // ── Watch-based milestone detection (reads from parent contexts) ──────────
   // These only run after hydration to avoid false re-triggers on initial load
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (onboardingData.isCompleted) fireEvent('onboarding_complete');
-  }, [isHydrated, onboardingData.isCompleted]);
-
   useEffect(() => {
     if (!isHydrated) return;
     if (bookmarks.length >= 5) fireEvent('resources_5_bookmarked');

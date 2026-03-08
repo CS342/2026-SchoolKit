@@ -24,7 +24,7 @@ import ChapterCard from '../components/puzzle/ChapterCard';
 export default function AccomplishmentsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { visibleChapterIds, earnedPieceIds } = useAccomplishments();
+  const { visibleChapterIds, earnedPieceIds, fireEvent } = useAccomplishments();
 
   const visibleChapters = CHAPTERS.filter(c => visibleChapterIds.has(c.id));
   const totalEarned = earnedPieceIds.size;
@@ -54,6 +54,11 @@ export default function AccomplishmentsScreen() {
       emptyY.value = withDelay(160, withSpring(0, ANIMATION.springSmooth));
     }
   }, [hasAny]);
+
+  // Fire event when page is visited
+  useEffect(() => {
+    fireEvent('accomplishments_viewed');
+  }, [fireEvent]);
 
   const emptyStyle = useAnimatedStyle(() => ({
     opacity: emptyOpacity.value,
