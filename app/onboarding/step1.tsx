@@ -16,12 +16,15 @@ import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 export default function Step1Screen() {
   const router = useRouter();
   const { updateName } = useOnboarding();
   const { isAnonymous, signOut } = useAuth();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [name, setName] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -70,7 +73,7 @@ export default function Step1Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 1, total: 5 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: 1, total: 5, label: 'Your name' }}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -82,20 +85,20 @@ export default function Step1Screen() {
           onBack={handleBack}
         />
 
-        <View style={styles.content}>
-          <Animated.View style={[SHARED_STYLES.pageIconCircle, iconStyle]}>
-            <Ionicons name="person-circle-outline" size={48} color={COLORS.primary} />
+        <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, alignItems: 'center' }]}>
+          <Animated.View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
+            <Ionicons name="person-circle-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
           </Animated.View>
 
           <Animated.Text style={[SHARED_STYLES.pageTitle, titleStyle]}>
             What's your name?
           </Animated.Text>
 
-          <Animated.Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 32 }, subtitleStyle]}>
+          <Animated.Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }, subtitleStyle]}>
             Let's personalize your experience
           </Animated.Text>
 
-          <Animated.View style={[styles.inputContainer, inputStyle]}>
+          <Animated.View style={[styles.inputContainer, isWebDesktop && { maxWidth: 480 }, inputStyle]}>
             <TextInput
               style={[styles.input, inputFocused && styles.inputFocused]}
               value={name}
@@ -108,8 +111,19 @@ export default function Step1Screen() {
               onSubmitEditing={handleContinue}
             />
           </Animated.View>
+
+          {isWebDesktop && (
+            <Animated.View style={[{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }, buttonStyle]}>
+              <PrimaryButton
+                title="Continue"
+                onPress={handleContinue}
+                disabled={!name.trim()}
+              />
+            </Animated.View>
+          )}
         </View>
 
+        {!isWebDesktop && (
         <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
           <PrimaryButton
             title="Continue"
@@ -118,6 +132,7 @@ export default function Step1Screen() {
           />
           <View style={SHARED_STYLES.skipPlaceholder} />
         </Animated.View>
+        )}
       </KeyboardAvoidingView>
       </AuthWebWrapper>
     </DecorativeBackground>

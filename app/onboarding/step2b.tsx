@@ -16,6 +16,7 @@ import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, SHADOWS, ANIMATION, COLORS, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface GradeOption {
@@ -104,6 +105,8 @@ function GradeCell({
 export default function Step2bScreen() {
   const router = useRouter();
   const { data, updateGradeLevel } = useOnboarding();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
@@ -127,17 +130,17 @@ export default function Step2bScreen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 3, total: 6 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: 3, total: 6, label: 'Grade level' }}>
       <View style={styles.container}>
         <OnboardingHeader currentStep={3} totalSteps={6} />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <View style={SHARED_STYLES.pageIconCircle}>
-              <Ionicons name="ribbon-outline" size={48} color={COLORS.primary} />
+          <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, alignItems: 'center' }]}>
+            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="ribbon-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
             </View>
 
             <Text style={SHARED_STYLES.pageTitle}>{isParentOrStaff ? "Select child's grade" : 'What grade are you in?'}</Text>
@@ -156,9 +159,23 @@ export default function Step2bScreen() {
                 />
               ))}
             </View>
+
+            {isWebDesktop && (
+              <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
+                <PrimaryButton
+                  title="Continue"
+                  onPress={handleContinue}
+                  disabled={!selectedGrade}
+                />
+                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         </ScrollView>
 
+        {!isWebDesktop && (
         <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
@@ -169,6 +186,7 @@ export default function Step2bScreen() {
             <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>

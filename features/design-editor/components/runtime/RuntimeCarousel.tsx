@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Animated, Text, PanResponder } from 'react-native';
 import type { InteractiveComponentObject, CarouselConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
@@ -13,7 +13,10 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
   const [isPaused, setIsPaused] = useState(false);
   const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const pauseAutoPlay = () => {
+  const activeSlideRef = useRef(activeSlide);
+  activeSlideRef.current = activeSlide;
+
+  const pauseAutoPlay = useCallback(() => {
     if (config.pauseOnInteraction !== false) {
       setIsPaused(true);
       if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
@@ -21,19 +24,34 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
         setIsPaused(false);
       }, config.resumeDelay ?? 3000);
     }
-  };
+  }, [config.pauseOnInteraction, config.resumeDelay]);
+
+  const goToSlide = useCallback((index: number) => {
+    const current = activeSlideRef.current;
+    const direction = index > current ? 1 : -1;
+    const slideOffset = object.width * 0.3;
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
+      Animated.timing(translateAnim, { toValue: -direction * slideOffset, duration: config.transitionDuration / 2, useNativeDriver: true }),
+    ]).start(() => {
+      setActiveSlide(index);
+      translateAnim.setValue(direction * slideOffset);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: config.transitionDuration / 2, useNativeDriver: true }),
+        Animated.timing(translateAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [object.width, config.transitionDuration, fadeAnim, translateAnim]);
 
   useEffect(() => {
     if (config.autoPlay && slideGroups.length > 1 && !isPaused) {
       const timer = setInterval(() => {
-        goToSlide((activeSlide + 1) % slideGroups.length);
+        goToSlide((activeSlideRef.current + 1) % slideGroups.length);
       }, config.autoPlayInterval);
       return () => clearInterval(timer);
     }
-  }, [config.autoPlay, config.autoPlayInterval, activeSlide, slideGroups.length, isPaused]);
-
-  const activeSlideRef = useRef(activeSlide);
-  activeSlideRef.current = activeSlide;
+  }, [config.autoPlay, config.autoPlayInterval, slideGroups.length, isPaused, goToSlide]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -51,23 +69,6 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
       },
     }),
   ).current;
-
-  const goToSlide = (index: number) => {
-    const direction = index > activeSlide ? 1 : -1;
-    const slideOffset = object.width * 0.3;
-
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
-      Animated.timing(translateAnim, { toValue: -direction * slideOffset, duration: config.transitionDuration / 2, useNativeDriver: true }),
-    ]).start(() => {
-      setActiveSlide(index);
-      translateAnim.setValue(direction * slideOffset);
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: config.transitionDuration / 2, useNativeDriver: true }),
-        Animated.timing(translateAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
-      ]).start();
-    });
-  };
 
   const currentGroup = slideGroups[activeSlide];
   const visibleChildren = currentGroup
@@ -95,7 +96,7 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
       {config.showArrows && slideGroups.length > 1 && (
         <>
           <TouchableOpacity
-            onPress={() => goToSlide((activeSlide - 1 + slideGroups.length) % slideGroups.length)}
+            onPress={() => goToSlide((activeSlideRef.current - 1 + slideGroups.length) % slideGroups.length)}
             style={{
               position: 'absolute', left: 8, top: '45%',
               width: 32, height: 32, borderRadius: 16,
@@ -107,7 +108,7 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
             <Text style={{ color: config.arrowColor ?? '#374151', fontSize: 16, fontWeight: '600' }}>‹</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => goToSlide((activeSlide + 1) % slideGroups.length)}
+            onPress={() => goToSlide((activeSlideRef.current + 1) % slideGroups.length)}
             style={{
               position: 'absolute', right: 8, top: '45%',
               width: 32, height: 32, borderRadius: 16,

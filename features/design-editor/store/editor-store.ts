@@ -220,11 +220,12 @@ export const useEditorStore = create<EditorState>()(
       duplicateObjects: (ids) =>
         set(
           produce((state: EditorState) => {
+            let counter = 0;
             const copies = state.objects
               .filter((o) => ids.includes(o.id))
               .map((o) => ({
                 ...JSON.parse(JSON.stringify(o)),
-                id: `obj_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                id: `obj_${Date.now()}_${counter++}_${Math.random().toString(36).slice(2, 8)}`,
                 x: o.x + 20,
                 y: o.y + 20,
                 name: `${o.name} copy`,
@@ -301,9 +302,10 @@ export const useEditorStore = create<EditorState>()(
       pasteObjects: (objs) =>
         set(
           produce((state: EditorState) => {
+            let counter = 0;
             const newObjs = objs.map((o) => ({
               ...JSON.parse(JSON.stringify(o)),
-              id: `obj_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              id: `obj_${Date.now()}_${counter++}_${Math.random().toString(36).slice(2, 8)}`,
             }));
             state.objects.push(...newObjs);
             state.selectedIds = newObjs.map((o: DesignObject) => o.id);

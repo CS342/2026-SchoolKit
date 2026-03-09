@@ -19,9 +19,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
-import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS } from '../constants/onboarding-theme';
+import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS, SHARED_STYLES } from '../constants/onboarding-theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
+import { useResponsive } from '../hooks/useResponsive';
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -44,6 +45,8 @@ function getPasswordStrength(password: string) {
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { signUp, signInWithPassword, signInAnonymously, resetPassword } = useAuth();
   const [isSignUp, setIsSignUp] = useState(mode !== 'signin');
@@ -184,48 +187,63 @@ export default function AuthScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Gradient Header Banner */}
-          <LinearGradient
-            colors={[...GRADIENTS.authHeader]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.headerBanner, { paddingTop: insets.top + 2 }]}
-          >
-            <View style={styles.headerDecorativeCircle} />
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              {Array.from({ length: 20 }, (_, i) => {
-                const size = 30 + i * 3;
-                const opacity = 0.5 - i * 0.024;
-                return (
-                  <View
-                    key={i}
-                    style={{
-                      position: 'absolute' as const,
-                      width: size,
-                      height: size,
-                      borderRadius: size / 2,
-                      backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
-                    }}
-                  />
-                );
-              })}
-              <Image
-                source={require('../assets/images/SchoolKit-transparent.png')}
-                style={{ width: 56, height: 56, resizeMode: 'contain' }}
-              />
+          <View style={isWebDesktop ? { maxWidth: 480, width: '100%', alignSelf: 'center' as const, paddingHorizontal: 24 } : undefined}>
+          {/* Gradient Header Banner (mobile only) / Icon + Title (desktop) */}
+          {isWebDesktop ? (
+            <View style={{ alignItems: 'center' as const, paddingTop: 48 }}>
+              <View style={[SHARED_STYLES.pageIconCircle, { width: 96, height: 96, borderRadius: 48 }]}>
+                <Ionicons name={isSignUp ? 'person-add-outline' : 'lock-closed-outline'} size={56} color={COLORS.primary} />
+              </View>
+              <Text style={SHARED_STYLES.pageTitle}>
+                {isSignUp ? 'Create your account' : 'Welcome back'}
+              </Text>
+              <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
+                {isSignUp ? 'Join SchoolKit to get started' : 'Sign in to continue your journey'}
+              </Text>
             </View>
-            <Text style={styles.headerTitle}>SchoolKit</Text>
-            <Text style={styles.headerSubtitle}>
-              {isSignUp ? 'Create your account' : 'Welcome back'}
-            </Text>
-          </LinearGradient>
+          ) : (
+            <LinearGradient
+              colors={[...GRADIENTS.authHeader]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.headerBanner, { paddingTop: insets.top + 2 }]}
+            >
+              <View style={styles.headerDecorativeCircle} />
+              <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                {Array.from({ length: 20 }, (_, i) => {
+                  const size = 30 + i * 3;
+                  const opacity = 0.5 - i * 0.024;
+                  return (
+                    <View
+                      key={i}
+                      style={{
+                        position: 'absolute' as const,
+                        width: size,
+                        height: size,
+                        borderRadius: size / 2,
+                        backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
+                      }}
+                    />
+                  );
+                })}
+                <Image
+                  source={require('../assets/images/SchoolKit-transparent.png')}
+                  style={{ width: 56, height: 56, resizeMode: 'contain' }}
+                />
+              </View>
+              <Text style={styles.headerTitle}>SchoolKit</Text>
+              <Text style={styles.headerSubtitle}>
+                {isSignUp ? 'Create your account' : 'Welcome back'}
+              </Text>
+            </LinearGradient>
+          )}
 
           {/* Form Card */}
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, isWebDesktop && { backgroundColor: 'transparent', borderRadius: 0, padding: 0, marginHorizontal: 0, marginTop: 0, shadowOpacity: 0, elevation: 0 }]}>
             {/* Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
@@ -374,20 +392,21 @@ export default function AuthScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.divider}>
+          <View style={[styles.divider, isWebDesktop && { marginHorizontal: 0 }]}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
 
           <TouchableOpacity
-            style={styles.guestButton}
+            style={[styles.guestButton, isWebDesktop && { marginHorizontal: 0 }]}
             onPress={handleContinueAsGuest}
             activeOpacity={0.8}
           >
             <Ionicons name="person-outline" size={20} color={COLORS.textMuted} style={{ marginRight: 8 }} />
             <Text style={styles.guestButtonText}>Continue as Guest</Text>
           </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
       </AuthWebWrapper>

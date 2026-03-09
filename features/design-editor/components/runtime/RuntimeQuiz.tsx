@@ -13,6 +13,12 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
   const questionChildren = object.children.filter((c) => questionGroup?.objectIds.includes(c.id));
   const feedbackChildren = object.children.filter((c) => feedbackGroup?.objectIds.includes(c.id));
 
+  // Derive touch targets from actual child positions sorted by Y, skipping the
+  // first child (usually the question text). Each option child defines its own
+  // bounds via x/y/width/height from the design data.
+  const sortedChildren = [...questionChildren].sort((a, b) => a.y - b.y);
+  const optionChildren = sortedChildren.length > 1 ? sortedChildren.slice(1) : [];
+
   if (showFeedback && config.showFeedback) {
     const isCorrect = selectedIndex === config.correctIndex;
     return (
@@ -67,27 +73,31 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
         <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
       ))}
 
-      {/* Overlay invisible touch targets on the option areas */}
-      {config.options.map((option, i) => (
-        <TouchableOpacity
-          key={i}
-          onPress={() => {
-            setSelectedIndex(i);
-            setShowFeedback(true);
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Option ${i + 1}: ${option}`}
-          style={{
-            position: 'absolute',
-            left: 20,
-            top: 80 + i * 52,
-            width: object.width - 40,
-            height: 44,
-            borderRadius: 12,
-            backgroundColor: selectedIndex === i ? (config.optionHighlight ?? 'rgba(123,104,238,0.1)') : 'transparent',
-          }}
-        />
-      ))}
+      {/* Overlay touch targets aligned with actual option children */}
+      {config.options.map((option, i) => {
+        const child = optionChildren[i];
+        if (!child) return null;
+        return (
+          <TouchableOpacity
+            key={i}
+            onPress={() => {
+              setSelectedIndex(i);
+              setShowFeedback(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Option ${i + 1}: ${option}`}
+            style={{
+              position: 'absolute',
+              left: child.x,
+              top: child.y,
+              width: child.width,
+              height: child.height,
+              borderRadius: 12,
+              backgroundColor: selectedIndex === i ? (config.optionHighlight ?? 'rgba(123,104,238,0.1)') : 'transparent',
+            }}
+          />
+        );
+      })}
     </View>
   );
 }

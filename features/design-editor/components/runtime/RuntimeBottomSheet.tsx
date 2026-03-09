@@ -71,9 +71,10 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
     }
   };
 
+  // Translate by full sheet height to fully hide below the container bottom
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [sheetHeight, 0],
+    outputRange: [object.height, 0],
   });
 
   const isOpen = openSheetIndex !== null;

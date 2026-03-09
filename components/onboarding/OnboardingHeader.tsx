@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ProgressBar } from './ProgressBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '../../hooks/useResponsive';
 import { COLORS, TYPOGRAPHY, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface OnboardingHeaderProps {
@@ -24,6 +25,7 @@ interface OnboardingHeaderProps {
 export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack, rightAction, showBackOnFirstStep = false }: OnboardingHeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isWeb, isMobile } = useResponsive();
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(0);
 
@@ -36,6 +38,35 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
+
+  const isWebDesktop = isWeb && !isMobile;
+
+  // On web desktop, render only a minimal "Back" link (stepper bar handles progress)
+  if (isWebDesktop) {
+    const showBack = currentStep > 1 || showBackOnFirstStep;
+    return (
+      <View style={webStyles.container}>
+        {showBack ? (
+          <Pressable
+            onPress={onBack ?? (() => router.back())}
+            style={webStyles.backLink}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={18} color={COLORS.textMuted} />
+            <Text style={webStyles.backText}>Back</Text>
+          </Pressable>
+        ) : (
+          <View style={{ height: 20 }} />
+        )}
+        {showHelper && (
+          <Text style={webStyles.helperText}>
+            You can change or update any of this later.
+          </Text>
+        )}
+      </View>
+    );
+  }
 
   return (
     <Animated.View style={[styles.container, { paddingTop: insets.top + 10 }, entranceStyle]}>
@@ -109,6 +140,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
     paddingHorizontal: 40,
+    fontStyle: 'italic',
+    fontWeight: '500',
+  },
+});
+
+const webStyles = StyleSheet.create({
+  container: {
+    paddingTop: 16,
+    paddingBottom: 8,
+    paddingHorizontal: 32,
+    maxWidth: 960,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(123,104,238,0.06)',
+  },
+  backText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginLeft: 4,
+  },
+  helperText: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    color: COLORS.textLight,
+    textAlign: 'center',
+    marginTop: 8,
     fontStyle: 'italic',
     fontWeight: '500',
   },

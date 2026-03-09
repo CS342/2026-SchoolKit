@@ -14,6 +14,7 @@ import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
 
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, ANIMATION, COLORS, RADII, SHARED_STYLES } from '../../constants/onboarding-theme';
 import { PAGE_TOPICS } from '../../constants/resources';
 
@@ -49,6 +50,8 @@ function CounterPill({ count }: { count: number }) {
 export default function Step4Screen() {
   const router = useRouter();
   const { data, updateTopics, completeOnboarding } = useOnboarding();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
@@ -77,7 +80,7 @@ export default function Step4Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 5 : 4, total: isStudent ? 6 : 5 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 5 : 4, total: isStudent ? 6 : 5, label: 'Topics' }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 5 : 4}
@@ -85,12 +88,12 @@ export default function Step4Screen() {
         />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <View style={SHARED_STYLES.pageIconCircle}>
-              <Ionicons name="sparkles-outline" size={48} color={COLORS.primary} />
+          <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48 }]}>
+            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="sparkles-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
             </View>
 
             <Text style={[SHARED_STYLES.pageTitle, { lineHeight: 36 }]}>What would you like support with?</Text>
@@ -100,22 +103,38 @@ export default function Step4Screen() {
 
             <CounterPill count={selectedTopics.length} />
 
-            <View style={styles.topicsContainer}>
+            <View style={[styles.topicsContainer, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
               {availableTopics.map((topic) => (
-                <SelectableCard
-                  key={topic.label}
-                  title={topic.label}
-                  selected={selectedTopics.includes(topic.label)}
-                  onPress={() => toggleTopic(topic.label)}
-                  multiSelect
-                  color={topic.color}
-                  icon={topic.icon as any}
-                />
+                <View key={topic.label} style={isWebDesktop ? { width: '48%' } : undefined}>
+                  <SelectableCard
+                    title={topic.label}
+                    selected={selectedTopics.includes(topic.label)}
+                    onPress={() => toggleTopic(topic.label)}
+                    multiSelect
+                    color={topic.color}
+                    icon={topic.icon as any}
+                  />
+                </View>
               ))}
             </View>
+
+            {isWebDesktop && (
+              <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
+                <PrimaryButton
+                  title="Get Started"
+                  onPress={handleFinish}
+                  disabled={selectedTopics.length === 0}
+                  icon="arrow-forward"
+                />
+                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         </ScrollView>
 
+        {!isWebDesktop && (
         <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Get Started"
@@ -127,6 +146,7 @@ export default function Step4Screen() {
             <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>

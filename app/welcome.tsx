@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -13,11 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
+import { useResponsive } from '../hooks/useResponsive';
 
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHADOWS, SHARED_STYLES } from '../constants/onboarding-theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [animDone, setAnimDone] = useState(false);
 
@@ -111,25 +114,25 @@ export default function WelcomeScreen() {
                 })}
                 <Image
                   source={require('../assets/images/SchoolKit-transparent.png')}
-                  style={{ width: 180, height: 180, resizeMode: 'contain' }}
+                  style={{ width: isWebDesktop ? 220 : 180, height: isWebDesktop ? 220 : 180, resizeMode: 'contain' }}
                 />
               </Animated.View>
 
               <View style={{ height: 40 }} />
 
-              <Animated.Text style={[styles.title, titleStyle]}>
+              <Animated.Text style={[styles.title, isWebDesktop && { fontSize: 56, letterSpacing: -1.5 }, titleStyle]}>
                 SchoolKit
               </Animated.Text>
 
               <View style={styles.gap8} />
 
-              <Animated.Text style={[styles.tagline, taglineStyle]}>
+              <Animated.Text style={[styles.tagline, isWebDesktop && { fontSize: 22 }, taglineStyle]}>
                 Support for every school journey
               </Animated.Text>
             </View>
           </View>
 
-          <Animated.View style={[SHARED_STYLES.buttonContainer, buttonAnimStyle]}>
+          <Animated.View style={[SHARED_STYLES.buttonContainer, isWebDesktop && { maxWidth: 400, alignSelf: 'center', width: '100%' }, buttonAnimStyle]}>
             <Pressable
               onPress={handleGetStarted}
               onPressIn={() => {
@@ -139,12 +142,17 @@ export default function WelcomeScreen() {
                 buttonScale.value = withSpring(1, ANIMATION.springBouncy);
               }}
             >
-              <View style={styles.button}>
-                <Text style={styles.buttonText}>Get Started</Text>
+              <View style={[styles.button, isWebDesktop && styles.buttonWeb]}>
+                <Text style={[styles.buttonText, isWebDesktop && { fontSize: 22 }]}>Get Started</Text>
+                {isWebDesktop && <Ionicons name="arrow-forward" size={20} color={COLORS.primary} style={{ marginLeft: 8 }} />}
               </View>
             </Pressable>
             <View style={SHARED_STYLES.skipPlaceholder} />
           </Animated.View>
+
+          {isWebDesktop && (
+            <Text style={styles.webFooter}>Stanford Byers Center for Biodesign</Text>
+          )}
           </AuthWebWrapper>
         </DecorativeBackground>
       </View>
@@ -187,15 +195,37 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 32,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
   },
+  buttonWeb: {
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(123,104,238,0.1)',
+      },
+    }),
+  },
   buttonText: {
     fontSize: 20,
     fontWeight: '800',
     color: COLORS.primary,
+  },
+  webFooter: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.45)',
+    textAlign: 'center',
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
   },
 });

@@ -12,10 +12,13 @@ import Animated, {
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
+import { useResponsive } from '../hooks/useResponsive';
 import { GRADIENTS, ANIMATION, COLORS, SHARED_STYLES } from '../constants/onboarding-theme';
 
 export default function ConfirmEmailScreen() {
   const router = useRouter();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const iconOpacity = useSharedValue(0);
   const iconScale = useSharedValue(0.8);
@@ -44,28 +47,37 @@ export default function ConfirmEmailScreen() {
     <DecorativeBackground variant="confirm" gradientColors={GRADIENTS.screenBackground}>
       <AuthWebWrapper variant="confirm">
       <View style={styles.container}>
-        <View style={styles.content}>
-          <Animated.View style={[styles.iconCircle, iconStyle]}>
-            <Ionicons name="mail-outline" size={48} color={COLORS.primary} />
+        <View style={[styles.content, isWebDesktop && { paddingTop: 48, maxWidth: 480, width: '100%', alignSelf: 'center' as const }]}>
+          <Animated.View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
+            <Ionicons name="mail-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
           </Animated.View>
 
-          <Animated.Text style={[styles.title, titleStyle]}>
+          <Animated.Text style={[SHARED_STYLES.pageTitle, titleStyle]}>
             Check your email
           </Animated.Text>
 
-          <Animated.Text style={[styles.subtitle, subtitleStyle]}>
+          <Animated.Text style={[SHARED_STYLES.pageSubtitle, subtitleStyle]}>
             We sent a verification link to your email.{'\n'}
             Tap the link to confirm your account, then sign in.
           </Animated.Text>
         </View>
 
-        <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
-          <PrimaryButton
-            title="Go to Sign In"
-            onPress={() => router.replace('/auth?mode=signin')}
-          />
-          <View style={SHARED_STYLES.skipPlaceholder} />
-        </Animated.View>
+        {isWebDesktop ? (
+          <Animated.View style={[{ maxWidth: 400, width: '100%', alignSelf: 'center' as const, marginTop: 32, marginBottom: 40, gap: 4 }, buttonStyle]}>
+            <PrimaryButton
+              title="Go to Sign In"
+              onPress={() => router.replace('/auth?mode=signin')}
+            />
+          </Animated.View>
+        ) : (
+          <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
+            <PrimaryButton
+              title="Go to Sign In"
+              onPress={() => router.replace('/auth?mode=signin')}
+            />
+            <View style={SHARED_STYLES.skipPlaceholder} />
+          </Animated.View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>
@@ -81,29 +93,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 120,
     alignItems: 'center',
-  },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.backgroundLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 16,
   },
 });

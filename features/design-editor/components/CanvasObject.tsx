@@ -96,11 +96,13 @@ function applyTextTransform(text: string, transform?: string): string {
 
 function BlurredRect({ blurRadius, ...props }: any) {
   const ref = useRef<Konva.Rect>(null);
+  // Stringify all props to detect any change (gradient, shadow, stroke, etc.)
+  const propsKey = JSON.stringify(props);
   useEffect(() => {
     if (ref.current && blurRadius > 0) {
       ref.current.cache();
     }
-  }, [blurRadius, props.width, props.height, props.fill]);
+  }, [blurRadius, propsKey]);
   if (blurRadius > 0) {
     return <Rect ref={ref} {...props} filters={[Konva.Filters.Blur]} blurRadius={blurRadius} />;
   }
@@ -109,11 +111,12 @@ function BlurredRect({ blurRadius, ...props }: any) {
 
 function BlurredEllipse({ blurRadius, ...props }: any) {
   const ref = useRef<Konva.Ellipse>(null);
+  const propsKey = JSON.stringify(props);
   useEffect(() => {
     if (ref.current && blurRadius > 0) {
       ref.current.cache();
     }
-  }, [blurRadius, props.radiusX, props.radiusY, props.fill]);
+  }, [blurRadius, propsKey]);
   if (blurRadius > 0) {
     return <Ellipse ref={ref} {...props} filters={[Konva.Filters.Blur]} blurRadius={blurRadius} />;
   }

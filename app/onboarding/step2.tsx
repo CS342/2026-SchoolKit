@@ -17,6 +17,7 @@ import { AuthWebWrapper } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 interface RoleOption {
@@ -114,6 +115,8 @@ function RoleCard({
 export default function Step2Screen() {
   const router = useRouter();
   const { updateRole } = useOnboarding();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
@@ -131,32 +134,48 @@ export default function Step2Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 2, total: 5 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: 2, total: 5, label: 'About you' }}>
       <View style={styles.container}>
         <OnboardingHeader currentStep={2} totalSteps={5} />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <Text style={SHARED_STYLES.pageTitle}>Tell us about yourself</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 28 }]}>Choose the option that best describes you</Text>
+          <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, paddingBottom: 0, alignItems: 'center' }]}>
+            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="people-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            </View>
 
-            <View style={styles.options}>
+            <Text style={SHARED_STYLES.pageTitle}>Tell us about yourself</Text>
+            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>Choose the option that best describes you</Text>
+
+            <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16, width: '100%' }]}>
               {ROLES.map((option, index) => (
-                <RoleCard
-                  key={option.role}
-                  option={option}
-                  isSelected={selectedRole === option.role}
-                  onPress={() => setSelectedRole(option.role)}
-                  index={index}
-                />
+                <View key={option.role} style={isWebDesktop ? { width: '48%' } : undefined}>
+                  <RoleCard
+                    option={option}
+                    isSelected={selectedRole === option.role}
+                    onPress={() => setSelectedRole(option.role)}
+                    index={index}
+                  />
+                </View>
               ))}
             </View>
+
+            {isWebDesktop && (
+              <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
+                <PrimaryButton
+                  title="Continue"
+                  onPress={handleContinue}
+                  disabled={!selectedRole}
+                />
+              </View>
+            )}
           </View>
         </ScrollView>
 
+        {!isWebDesktop && (
         <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
@@ -165,6 +184,7 @@ export default function Step2Screen() {
           />
           <View style={SHARED_STYLES.skipPlaceholder} />
         </View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>

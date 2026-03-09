@@ -723,6 +723,7 @@ function QuizProperties({
 }) {
   const { colors } = useTheme();
   return (
+    <>
     <Section title="Quiz Settings">
       <div style={{ marginBottom: 8 }}>
         <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
@@ -874,33 +875,34 @@ function QuizProperties({
         </>
       )}
 
-      <Section title="Quiz Styling">
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-          <ColorInputInline
-            label="Correct Color"
-            value={config.correctColor ?? '#22C55E'}
-            onChange={(v) => onUpdate({ correctColor: v })}
-          />
-          <ColorInputInline
-            label="Incorrect Color"
-            value={config.incorrectColor ?? '#EF4444'}
-            onChange={(v) => onUpdate({ incorrectColor: v })}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <ColorInputInline
-            label="Button Color"
-            value={config.buttonColor ?? '#7B68EE'}
-            onChange={(v) => onUpdate({ buttonColor: v })}
-          />
-          <ColorInputInline
-            label="Option Highlight"
-            value={config.optionHighlight ?? 'rgba(123,104,238,0.1)'}
-            onChange={(v) => onUpdate({ optionHighlight: v })}
-          />
-        </div>
-      </Section>
     </Section>
+    <Section title="Quiz Styling">
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <ColorInputInline
+          label="Correct Color"
+          value={config.correctColor ?? '#22C55E'}
+          onChange={(v) => onUpdate({ correctColor: v })}
+        />
+        <ColorInputInline
+          label="Incorrect Color"
+          value={config.incorrectColor ?? '#EF4444'}
+          onChange={(v) => onUpdate({ incorrectColor: v })}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <ColorInputInline
+          label="Button Color"
+          value={config.buttonColor ?? '#7B68EE'}
+          onChange={(v) => onUpdate({ buttonColor: v })}
+        />
+        <ColorInputInline
+          label="Option Highlight"
+          value={config.optionHighlight ?? 'rgba(123,104,238,0.1)'}
+          onChange={(v) => onUpdate({ optionHighlight: v })}
+        />
+      </div>
+    </Section>
+    </>
   );
 }
 

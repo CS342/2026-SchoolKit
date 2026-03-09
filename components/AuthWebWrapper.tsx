@@ -4,11 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useResponsive } from '../hooks/useResponsive';
 import { useTheme } from '../contexts/ThemeContext';
-import { GRADIENTS, COLORS } from '../constants/onboarding-theme';
+import { COLORS, GRADIENTS } from '../constants/onboarding-theme';
 
 interface StepInfo {
   current: number;
   total: number;
+  label?: string;
 }
 
 interface AuthWebWrapperProps {
@@ -26,122 +27,88 @@ const STEP_LABELS = [
   'Voice',
 ];
 
-function BrandPanel({ variant, step }: { variant: string; step?: StepInfo }) {
+/**
+ * Horizontal stepper bar for onboarding steps (web desktop only).
+ * Frosted glass effect, logo left, step circles center, step label right.
+ */
+function WebStepperBar({ step }: { step: StepInfo }) {
   return (
-    <LinearGradient
-      colors={[...GRADIENTS.welcomeHero]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0.3, y: 1 }}
-      style={brandStyles.container}
-    >
-      {/* Decorative circles */}
-      <View style={brandStyles.circle1} />
-      <View style={brandStyles.circle2} />
-      <View style={brandStyles.circle3} />
-
-      <View style={brandStyles.content}>
-        <View style={brandStyles.logoArea}>
-          <View style={brandStyles.logoGlow}>
-            {Array.from({ length: 15 }, (_, i) => {
-              const size = 60 + i * 4;
-              const opacity = 0.35 - i * 0.022;
-              return (
-                <View
-                  key={i}
-                  style={{
-                    position: 'absolute' as const,
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                    backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.02)})`,
-                  }}
-                />
-              );
-            })}
-            <Image
-              source={require('../assets/images/SchoolKit-transparent.png')}
-              style={{ width: 80, height: 80, resizeMode: 'contain' }}
-            />
-          </View>
-          <Text style={brandStyles.appName}>SchoolKit</Text>
-          <Text style={brandStyles.tagline}>Support for every school journey</Text>
+    <View style={stepperStyles.bar}>
+      <View style={stepperStyles.inner}>
+        {/* Left: Logo + brand name */}
+        <View style={stepperStyles.brand}>
+          <Image
+            source={require('../assets/images/SchoolKit-transparent.png')}
+            style={stepperStyles.logo}
+          />
+          <Text style={stepperStyles.brandName}>SchoolKit</Text>
         </View>
 
-        {/* Step progress for onboarding */}
-        {variant === 'onboarding' && step && (
-          <View style={brandStyles.stepsContainer}>
-            {Array.from({ length: step.total }, (_, i) => {
-              const stepNum = i + 1;
-              const isActive = stepNum === step.current;
-              const isComplete = stepNum < step.current;
-              return (
-                <View key={i} style={brandStyles.stepRow}>
+        {/* Center: Step circles with connecting lines */}
+        <View style={stepperStyles.stepsRow}>
+          {Array.from({ length: step.total }, (_, i) => {
+            const stepNum = i + 1;
+            const isActive = stepNum === step.current;
+            const isComplete = stepNum < step.current;
+
+            return (
+              <React.Fragment key={i}>
+                {i > 0 && (
                   <View
                     style={[
-                      brandStyles.stepDot,
-                      isComplete && brandStyles.stepDotComplete,
-                      isActive && brandStyles.stepDotActive,
+                      stepperStyles.connector,
+                      isComplete && stepperStyles.connectorComplete,
                     ]}
+                  />
+                )}
+                {isComplete ? (
+                  <LinearGradient
+                    colors={[...GRADIENTS.primaryButton]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={stepperStyles.circleComplete}
                   >
-                    {isComplete ? (
-                      <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                    ) : (
-                      <Text
-                        style={[
-                          brandStyles.stepDotText,
-                          (isActive || isComplete) && brandStyles.stepDotTextActive,
-                        ]}
-                      >
-                        {stepNum}
-                      </Text>
-                    )}
-                  </View>
-                  {i < step.total - 1 && (
-                    <View
-                      style={[
-                        brandStyles.stepLine,
-                        isComplete && brandStyles.stepLineComplete,
-                      ]}
-                    />
-                  )}
-                  <Text
+                    <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+                  </LinearGradient>
+                ) : (
+                  <View
                     style={[
-                      brandStyles.stepLabel,
-                      isActive && brandStyles.stepLabelActive,
-                      isComplete && brandStyles.stepLabelComplete,
+                      stepperStyles.circle,
+                      isActive && stepperStyles.circleActive,
                     ]}
                   >
-                    {STEP_LABELS[i] || `Step ${stepNum}`}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
+                    <Text
+                      style={[
+                        stepperStyles.circleText,
+                        isActive && stepperStyles.circleTextActive,
+                      ]}
+                    >
+                      {stepNum}
+                    </Text>
+                  </View>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </View>
 
-        {/* Contextual message for non-onboarding */}
-        {variant === 'auth' && (
-          <Text style={brandStyles.contextMessage}>
-            Join thousands of students, parents, and educators on their school journey.
+        {/* Right: Current step label */}
+        <View style={stepperStyles.labelContainer}>
+          <Text style={stepperStyles.stepLabel}>
+            {step.label || STEP_LABELS[step.current - 1] || `Step ${step.current}`}
           </Text>
-        )}
-        {variant === 'confirm' && (
-          <View style={brandStyles.confirmIcon}>
-            <Ionicons name="mail-outline" size={48} color="rgba(255,255,255,0.8)" />
-            <Text style={brandStyles.contextMessage}>Almost there!</Text>
-          </View>
-        )}
+        </View>
       </View>
-
-      {/* Bottom decorative text */}
-      <Text style={brandStyles.footerText}>Stanford Byers Center for Biodesign</Text>
-    </LinearGradient>
+    </View>
   );
 }
 
 /**
  * Wrapper for auth & onboarding pages.
- * On web desktop/tablet: split layout with branded left panel + content right.
+ * On web desktop:
+ *   - welcome: pass-through (gradient fills entire screen from DecorativeBackground)
+ *   - auth/confirm: centered card with logo top bar on gradient background
+ *   - onboarding: horizontal stepper bar at top + wide centered content
  * On mobile: pass-through (no-op).
  */
 export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrapperProps) {
@@ -153,191 +120,205 @@ export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrap
     return <>{children}</>;
   }
 
-  return (
-    <View style={splitStyles.wrapper}>
-      <View style={splitStyles.leftPanel}>
-        <BrandPanel variant={variant} step={step} />
-      </View>
-      <View
-        style={[
-          splitStyles.rightPanel,
-          {
-            backgroundColor: isDark ? '#1C1C2E' : '#FFFFFF',
-          },
-        ]}
-      >
-        <View style={splitStyles.rightContent}>
+  // Welcome: full-bleed pass-through (DecorativeBackground handles gradient)
+  if (variant === 'welcome') {
+    return <>{children}</>;
+  }
+
+  // Auth / Confirm: same layout as onboarding with logo-only top bar
+  if (variant === 'auth' || variant === 'confirm') {
+    return (
+      <View style={onboardingStyles.wrapper}>
+        {/* Logo-only top bar (no stepper) */}
+        <View style={stepperStyles.bar}>
+          <View style={[stepperStyles.inner, { justifyContent: 'center' }]}>
+            <View style={stepperStyles.brand}>
+              <Image
+                source={require('../assets/images/SchoolKit-transparent.png')}
+                style={stepperStyles.logo}
+              />
+              <Text style={stepperStyles.brandName}>SchoolKit</Text>
+            </View>
+          </View>
+        </View>
+        {/* Background orbs */}
+        <View style={onboardingStyles.bgLayer}>
+          <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb1]} />
+          <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb2]} />
+          <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb3]} />
+        </View>
+        <View style={onboardingStyles.contentArea}>
           {children}
         </View>
+      </View>
+    );
+  }
+
+  // Onboarding: stepper bar at top + wide centered content
+  return (
+    <View style={onboardingStyles.wrapper}>
+      {step && <WebStepperBar step={step} />}
+      {/* Subtle radial gradient background */}
+      <View style={onboardingStyles.bgLayer}>
+        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb1]} />
+        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb2]} />
+        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb3]} />
+      </View>
+      <View style={onboardingStyles.contentArea}>
+        {children}
       </View>
     </View>
   );
 }
 
-const splitStyles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  leftPanel: {
-    width: '38%',
-    minWidth: 320,
-    maxWidth: 480,
-  },
-  rightPanel: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rightContent: {
-    width: '100%',
-    maxWidth: 540,
-    flex: 1,
-  },
-});
-
-const brandStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 60,
-    justifyContent: 'center',
-  },
-  logoArea: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logoGlow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-    fontFamily: 'Raleway_600SemiBold',
-  },
-  tagline: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  stepsContainer: {
-    paddingLeft: 24,
-    gap: 0,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 0,
-    position: 'relative',
-    height: 44,
-  },
-  stepDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  stepDotActive: {
-    backgroundColor: '#FFFFFF',
+/* ─── Stepper bar styles (frosted glass) ──────────── */
+const stepperStyles = StyleSheet.create({
+  bar: {
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(123,104,238,0.08)',
     ...Platform.select({
       web: {
-        boxShadow: '0 0 16px rgba(255,255,255,0.4)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: '0 1px 24px rgba(123,104,238,0.06)',
       },
     }),
   },
-  stepDotComplete: {
-    backgroundColor: 'rgba(255,255,255,0.6)',
+  inner: {
+    maxWidth: 960,
+    width: '100%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    paddingVertical: 18,
   },
-  stepDotText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.5)',
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 150,
   },
-  stepDotTextActive: {
+  logo: {
+    width: 34,
+    height: 34,
+    resizeMode: 'contain',
+  },
+  brandName: {
+    fontSize: 19,
+    fontWeight: '800',
     color: COLORS.primary,
+    marginLeft: 10,
+    letterSpacing: -0.4,
+    fontFamily: 'Raleway_600SemiBold',
   },
-  stepLine: {
-    position: 'absolute',
-    left: 13,
-    top: 36,
-    width: 2,
-    height: 16,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  stepsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-  stepLineComplete: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+  connector: {
+    height: 2,
+    width: 36,
+    backgroundColor: 'rgba(123,104,238,0.12)',
+    borderRadius: 1,
+    marginHorizontal: 4,
+  },
+  connectorComplete: {
+    backgroundColor: COLORS.primary,
+  },
+  circle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0EEF9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  circleActive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: COLORS.primary,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 0 0 4px rgba(123,104,238,0.12), 0 0 20px rgba(123,104,238,0.18)`,
+      },
+    }),
+  },
+  circleComplete: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 8px rgba(123,104,238,0.25)',
+      },
+    }),
+  },
+  circleText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'rgba(0,0,0,0.3)',
+  },
+  circleTextActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
+  },
+  labelContainer: {
+    minWidth: 150,
+    alignItems: 'flex-end',
   },
   stepLabel: {
-    marginLeft: 14,
-    fontSize: 15,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.45)',
-  },
-  stepLabelActive: {
-    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
+    color: COLORS.textMuted,
+    letterSpacing: 0.2,
   },
-  stepLabelComplete: {
-    color: 'rgba(255,255,255,0.7)',
+});
+
+/* ─── Onboarding layout styles ────────────────────── */
+const onboardingStyles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#F8F7FF',
   },
-  contextMessage: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 16,
+  bgLayer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
   },
-  confirmIcon: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  footerText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.35)',
-    textAlign: 'center',
-    paddingBottom: 24,
-  },
-  // Decorative circles
-  circle1: {
+  bgOrb: {
     position: 'absolute',
-    top: -60,
-    right: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 9999,
   },
-  circle2: {
-    position: 'absolute',
-    bottom: 100,
-    left: -50,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+  bgOrb1: {
+    width: 600,
+    height: 600,
+    top: -200,
+    right: -200,
+    backgroundColor: 'rgba(123,104,238,0.04)',
   },
-  circle3: {
-    position: 'absolute',
+  bgOrb2: {
+    width: 500,
+    height: 500,
+    bottom: -150,
+    left: -200,
+    backgroundColor: 'rgba(196,92,214,0.03)',
+  },
+  bgOrb3: {
+    width: 300,
+    height: 300,
     top: '40%',
-    right: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    left: '50%',
+    backgroundColor: 'rgba(14,165,233,0.025)',
+  },
+  contentArea: {
+    flex: 1,
   },
 });

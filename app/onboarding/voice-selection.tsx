@@ -13,11 +13,14 @@ import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { VOICE_META, generateSpeech, VoiceData } from '../../services/elevenLabs';
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS } from '../../constants/onboarding-theme';
 
 export default function VoiceSelectionScreen() {
   const router = useRouter();
   const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding } = useOnboarding();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
   const { fireEvent } = useAccomplishments();
   const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || '21m00Tcm4TlvDq8ikWAM'); // Default to Rachel if none
 
@@ -95,7 +98,7 @@ export default function VoiceSelectionScreen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 6 : 5, total: isStudent ? 6 : 5 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 6 : 5, total: isStudent ? 6 : 5, label: 'Voice' }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 6 : 5}
@@ -103,12 +106,12 @@ export default function VoiceSelectionScreen() {
         />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <View style={SHARED_STYLES.pageIconCircle}>
-              <Ionicons name="mic-outline" size={48} color={COLORS.primary} />
+          <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48 }]}>
+            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="mic-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
             </View>
 
             <Text style={SHARED_STYLES.pageTitle}>Choose your guide</Text>
@@ -122,64 +125,78 @@ export default function VoiceSelectionScreen() {
               return (
                 <View key={accent} style={styles.section}>
                   <Text style={styles.accentLabel}>{accent}</Text>
-                  <View style={styles.voiceList}>
+                  <View style={[styles.voiceList, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }]}>
                     {voices.map((voice) => {
                       const isSelected = selectedVoice === voice.id;
                       const isPlaying = playingVoiceId === voice.id;
 
                       return (
-                        <Pressable
-                          key={voice.id}
-                          style={[
-                            styles.voiceCard,
-                            isSelected && styles.voiceCardSelected,
-                            !isSelected && SHADOWS.card,
-                          ]}
-                          onPress={() => setSelectedVoice(voice.id)}
-                        >
-                          {voice.image ? (
-                            <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
-                          ) : (
-                            <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
-                              <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                            </View>
-                          )}
-
-                          <View style={styles.voiceInfo}>
-                            <Text style={[styles.voiceName, isSelected && { color: COLORS.primary }]}>{voice.name}</Text>
-                            <Text style={styles.voiceDesc}>{voice.description}</Text>
-                          </View>
-
+                        <View key={voice.id} style={isWebDesktop ? { width: '31%' } : undefined}>
                           <Pressable
                             style={[
-                              styles.playButton,
-                              isPlaying ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.backgroundLight }
+                              styles.voiceCard,
+                              isSelected && styles.voiceCardSelected,
+                              !isSelected && SHADOWS.card,
                             ]}
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handlePlaySample(voice.id, voice.name);
-                            }}
+                            onPress={() => setSelectedVoice(voice.id)}
                           >
-                            {isSampleLoading && isPlaying ? (
-                              <ActivityIndicator size="small" color="#FFFFFF" />
+                            {voice.image ? (
+                              <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
                             ) : (
-                              <Ionicons
-                                name={isPlaying ? "stop" : "play"}
-                                size={16}
-                                color={isPlaying ? '#FFFFFF' : COLORS.primary}
-                              />
+                              <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
+                                <Text style={styles.voiceInitial}>{voice.initial}</Text>
+                              </View>
                             )}
+
+                            <View style={styles.voiceInfo}>
+                              <Text style={[styles.voiceName, isSelected && { color: COLORS.primary }]}>{voice.name}</Text>
+                              <Text style={styles.voiceDesc}>{voice.description}</Text>
+                            </View>
+
+                            <Pressable
+                              style={[
+                                styles.playButton,
+                                isPlaying ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.backgroundLight }
+                              ]}
+                              onPress={(e) => {
+                                e.stopPropagation();
+                                handlePlaySample(voice.id, voice.name);
+                              }}
+                            >
+                              {isSampleLoading && isPlaying ? (
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                              ) : (
+                                <Ionicons
+                                  name={isPlaying ? "stop" : "play"}
+                                  size={16}
+                                  color={isPlaying ? '#FFFFFF' : COLORS.primary}
+                                />
+                              )}
+                            </Pressable>
                           </Pressable>
-                        </Pressable>
+                        </View>
                       );
                     })}
                   </View>
                 </View>
               );
             })}
+
+            {isWebDesktop && (
+              <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
+                <PrimaryButton
+                  title="Continue"
+                  onPress={handleContinue}
+                />
+                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         </ScrollView>
 
+        {!isWebDesktop && (
         <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
@@ -189,6 +206,7 @@ export default function VoiceSelectionScreen() {
             <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>

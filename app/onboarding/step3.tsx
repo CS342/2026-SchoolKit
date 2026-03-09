@@ -9,6 +9,7 @@ import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
 
+import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, COLORS, SHARED_STYLES } from '../../constants/onboarding-theme';
 
 const SCHOOL_STATUS_OPTIONS: {
@@ -26,6 +27,8 @@ const SCHOOL_STATUS_OPTIONS: {
 export default function Step3Screen() {
   const router = useRouter();
   const { data, updateSchoolStatuses } = useOnboarding();
+  const { isWeb, isMobile } = useResponsive();
+  const isWebDesktop = isWeb && !isMobile;
 
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
 
@@ -55,22 +58,20 @@ export default function Step3Screen() {
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 4 : 3, total: isStudent ? 6 : 5 }}>
+      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 4 : 3, total: isStudent ? 6 : 5, label: 'School journey' }}>
       <View style={styles.container}>
         <OnboardingHeader
           currentStep={isStudent ? 4 : 3}
           totalSteps={isStudent ? 6 : 5}
-          showHelper
-          rightAction={null}
         />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <View style={SHARED_STYLES.pageIconCircle}>
-              <Ionicons name="compass-outline" size={48} color={COLORS.primary} />
+          <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, paddingBottom: 0 }]}>
+            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="compass-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
             </View>
 
             <Text style={SHARED_STYLES.pageTitle}>{title}</Text>
@@ -82,22 +83,37 @@ export default function Step3Screen() {
               <Text style={SHARED_STYLES.badgeText}>Select all that apply</Text>
             </View>
 
-            <View style={styles.options}>
+            <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
               {SCHOOL_STATUS_OPTIONS.map((option) => (
-                <SelectableCard
-                  key={option.value}
-                  title={option.label}
-                  selected={selectedStatuses.includes(option.value)}
-                  onPress={() => toggleStatus(option.value)}
-                  multiSelect
-                  color={option.color}
-                  icon={option.icon}
-                />
+                <View key={option.value} style={isWebDesktop ? { width: '48%' } : undefined}>
+                  <SelectableCard
+                    title={option.label}
+                    selected={selectedStatuses.includes(option.value)}
+                    onPress={() => toggleStatus(option.value)}
+                    multiSelect
+                    color={option.color}
+                    icon={option.icon}
+                  />
+                </View>
               ))}
             </View>
+
+            {isWebDesktop && (
+              <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
+                <PrimaryButton
+                  title="Continue"
+                  onPress={handleContinue}
+                  disabled={selectedStatuses.length === 0}
+                />
+                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
+                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         </ScrollView>
 
+        {!isWebDesktop && (
         <View style={SHARED_STYLES.buttonContainer}>
           <PrimaryButton
             title="Continue"
@@ -108,6 +124,7 @@ export default function Step3Screen() {
             <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
           </Pressable>
         </View>
+        )}
       </View>
       </AuthWebWrapper>
     </DecorativeBackground>

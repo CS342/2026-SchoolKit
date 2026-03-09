@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { Paths, File as FSFile } from 'expo-file-system';
 
 export const MAX_NOTEBOOKS = 20;
@@ -48,6 +49,7 @@ interface JournalContextType {
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
 
 const deletePageImages = (page: JournalPage) => {
+    if (Platform.OS === 'web') return;
     const docUri = Paths.document.uri;
     for (const img of page.images) {
         if (img.uri.startsWith(docUri)) {

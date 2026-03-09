@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, Animated, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, ScrollView, Animated, NativeSyntheticEvent, NativeScrollEvent, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { DesignDocument, DesignObject, InteractiveComponentObject, StaticDesignObject, GradientConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
@@ -57,7 +57,7 @@ export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onL
             height: doc.canvas.height,
             backgroundColor: doc.canvas.background,
             transform: [{ scale }],
-            transformOrigin: 'top left',
+            ...(Platform.OS === 'web' ? { transformOrigin: 'top left' } as any : {}),
           }}
         >
           {doc.canvas.backgroundGradient && (
