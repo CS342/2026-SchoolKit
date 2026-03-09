@@ -18,6 +18,7 @@ export const ALL_RESOURCES: Resource[] = [
   { id: '13', abbr: 'School Nurse', shortDescription: 'The school nurse is your ally.', title: 'The School Nurse: Your Ally at School', category: 'School', tags: ['school', 'nurse', 'health', 'medicine', 'support', 'back to school'], icon: 'medkit', color: '#EF4444', route: '/school-nurse' },
   { id: '14', abbr: 'Juggling Life', shortDescription: 'Best practices for juggling school and life.', title: 'Best Practices for Juggling School and Life', category: 'School', tags: ['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization'], icon: 'trophy', color: '#F97316', route: '/school-life-balance' },
   { id: '15', abbr: 'Find People', shortDescription: 'How to find people who understand your journey.', title: 'How to Find People Who Understand Your Journey', category: 'Social', tags: ['social', 'friends', 'support', 'survivors', 'connections', 'peer'], icon: 'compass', color: '#10B981', route: '/finding-support' },
+  { id: '16', abbr: 'Coping Away', shortDescription: 'Tips for staying connected and making your hospital room feel more like home.', title: 'Coping When Away From Home', category: 'Family', tags: ['home', 'hospital', 'coping', 'family', 'comfort', 'connected', 'homesick'], icon: 'home', color: '#E8734A', route: '/coping-away-from-home' },
 ];
 
 export const ALL_RESOURCE_IDS = ALL_RESOURCES.map(r => r.id);
@@ -30,6 +31,7 @@ export const PAGE_TOPICS: { label: string; icon: string; color: string }[] = [
   { label: 'Best Practices for Juggling School and Life', icon: 'trophy', color: '#F97316' },
   { label: 'How to Find People Who Understand Your Journey', icon: 'compass', color: '#10B981' },
   { label: "Feeling Sick? Here's What to Do", icon: 'thermometer-outline', color: '#0EA5E9' },
+  { label: "Coping When Away From Home", icon: 'home', color: '#E8734A' },
 ];
 
 export const RESOURCE_CATEGORIES = ['School', 'Social', 'Health', 'Family', 'Emotions'] as const;
