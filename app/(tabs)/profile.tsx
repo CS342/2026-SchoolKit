@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccomplishments } from "../../contexts/AccomplishmentContext";
+import { useStories } from "../../contexts/StoriesContext";
 import { ALL_RESOURCES } from "../../constants/resources";
 import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
@@ -128,8 +129,14 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { colors, shadows, appStyles, isDark } = theme;
-  const { data, updateProfilePicture } = useOnboarding();
+  const { data, updateProfilePicture, bookmarks } = useOnboarding();
+  const { user } = useAuth();
+  const { stories, storyBookmarks } = useStories();
   const { fireEvent } = useAccomplishments();
+
+  const myStoriesCount = stories.filter(s => s.author_id === user?.id).length;
+  const savedCount = bookmarks.length + storyBookmarks.length;
+  const [showEditProfile, setShowEditProfile] = React.useState(false);
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -179,7 +186,7 @@ export default function ProfileScreen() {
       'current-treatment': 'Currently in school',
       'returning-after-treatment': 'Taking a break from school',
       'supporting-student': 'Planning to return to school soon',
-      'special-needs': 'Home/hospital school',
+      'special-needs': 'Home Hospital Education',
     };
     return data.schoolStatuses.map((s) => labels[s] ?? s.replace(/-/g, " ")).join(", ");
   };
@@ -243,6 +250,12 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        <LinearGradient
+          colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.identityCard}
+        >
         <View style={styles.identity}>
           <Pressable onPress={handleProfilePicture}>
             <Animated.View style={avatarStyle}>
@@ -266,18 +279,55 @@ export default function ProfileScreen() {
             <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
               <Text style={[styles.rolePillText, { color: colors.primary }]}>{getRoleDisplayName()}</Text>
             </View>
+            {getSchoolStatusText() !== 'Not set' && (
+              <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
+                <Text style={[styles.rolePillText, { color: colors.primary }]}>{getSchoolStatusText()}</Text>
+              </View>
+            )}
+            <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={() => setShowEditProfile(true)}
+              style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
+            >
+              <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+              <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+            </Pressable>
           </Animated.View>
         </View>
+        </LinearGradient>
 
-        <AnimatedSection delay={320}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>PROFILE</Text>
-          <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-            <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => router.push("/edit-name")} theme={theme} />
-            <SettingRow icon="school-outline" label="Role" value={getRoleDisplayName()} onPress={() => router.push("/edit-role")} theme={theme} />
-            <SettingRow icon="book-outline" label="School Status" value={getSchoolStatusText()} onPress={() => router.push("/edit-school-status")} theme={theme} />
-            <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => router.push("/edit-topics")} isLast theme={theme} />
+        {/* Edit Profile Modal */}
+        <Modal
+          visible={showEditProfile}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowEditProfile(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setShowEditProfile(false)} />
+            <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 16 }]}>
+              <View style={[styles.editModalHandle, { backgroundColor: colors.borderCard }]} />
+              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Edit Profile</Text>
+              <View style={[styles.groupCard, { backgroundColor: colors.appBackground, marginHorizontal: 0, marginBottom: 0 }]}>
+                <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
+                <SettingRow icon="school-outline" label="Role" value={getRoleDisplayName()} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
+                <SettingRow icon="book-outline" label="School Status" value={getSchoolStatusText()} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
+                <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
+              </View>
+            </View>
           </View>
-        </AnimatedSection>
+        </Modal>
 
         <AnimatedSection delay={460}>
           <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
@@ -387,6 +437,14 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 48,
   },
+  identityCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(123,104,238,0.12)',
+  },
   identity: {
     alignItems: "center",
     paddingTop: 32,
@@ -439,6 +497,88 @@ const styles = StyleSheet.create({
   rolePillText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  schoolStatusText: {
+    fontSize: 13,
+    fontWeight: "400",
+    marginTop: 8,
+    textAlign: "center",
+    paddingHorizontal: 24,
+  },
+  topicsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 16,
+  },
+  topicChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 100,
+  },
+  topicChipText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 32,
+  },
+  statItem: {
+    alignItems: "center",
+    gap: 2,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+  },
+  editProfileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  editProfileBtnText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  editModalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  editModalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  editModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+    paddingLeft: 4,
   },
   sectionLabel: {
     fontSize: 13,

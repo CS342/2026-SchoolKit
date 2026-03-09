@@ -18,7 +18,7 @@ const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
   { value: 'current-treatment', label: 'Currently in school' },
   { value: 'returning-after-treatment', label: 'Taking a break from school' },
   { value: 'supporting-student', label: 'Planning to return to school soon' },
-  { value: 'special-needs', label: 'Home/hospital school' },
+  { value: 'special-needs', label: 'Home Hospital Education' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
