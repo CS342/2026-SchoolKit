@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -9,11 +9,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { getRoleDisplayName } from '../../utils/profile';
+import { getRoleDisplayName, getSchoolStatusText } from '../../utils/profile';
 import { ResourceCard } from '../../components/ResourceCard';
+import { WebResourceTile, WEB_GRID_GAP, WEB_GRID_COLS } from '../../components/WebResourceTile';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-
 import { useResources } from '../../hooks/useResources';
+import { useResponsive } from '../../hooks/useResponsive';
 import {
   TYPOGRAPHY,
   SIZING,
@@ -28,6 +29,14 @@ export default function ForYouScreen() {
 
   const { resources } = useResources();
   const { colors, appStyles, sharedStyles } = useTheme();
+  const { isWeb, isDesktop } = useResponsive();
+  const isWebDesktop = isWeb && isDesktop;
+
+  const [gridWidth, setGridWidth] = useState(0);
+  const tileSize = gridWidth > 0
+    ? Math.floor((gridWidth - WEB_GRID_GAP * (WEB_GRID_COLS - 1)) / WEB_GRID_COLS)
+    : 0;
+
   const headerOpacity = useSharedValue(0);
 
   useEffect(() => {
@@ -38,7 +47,6 @@ export default function ForYouScreen() {
     opacity: headerOpacity.value,
   }));
 
-
   const handleTopicPress = (topic: string, route?: string) => {
     if (route) {
       router.push(route as any);
@@ -47,22 +55,42 @@ export default function ForYouScreen() {
     }
   };
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors, isWebDesktop), [colors, isWebDesktop]);
 
   return (
     <View style={styles.container}>
       <Animated.View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }, headerStyle]}>
         <View style={styles.headerRow}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            {data.profilePicture ? (
+              <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
+            ) : (
+              <Text style={[styles.avatarInitial, { color: '#FFF' }]}>
+                {data.name.charAt(0).toUpperCase()}
+              </Text>
+            )}
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={[appStyles.tabHeaderSubtitle, { marginBottom: 4 }]}>Welcome back,</Text>
             <Text style={[appStyles.tabHeaderTitle, { marginBottom: 12 }]}>{data.name}!</Text>
           </View>
         </View>
-        <View style={[sharedStyles.badge, styles.roleBadge]}>
-          <Ionicons name="person-circle-outline" size={16} color={colors.primary} />
-          <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>
-            {getRoleDisplayName(data.role, 'User')}
-          </Text>
+        <View style={styles.badgeRow}>
+          <View style={[sharedStyles.badge, styles.roleBadge]}>
+            <Ionicons name="person-circle-outline" size={16} color={colors.primary} />
+            <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>
+              {getRoleDisplayName(data.role, 'User')}
+            </Text>
+          </View>
+          {(() => {
+            const schoolStatus = getSchoolStatusText(data.schoolStatuses);
+            return schoolStatus !== 'Not set' ? (
+              <View style={[sharedStyles.badge, styles.roleBadge]}>
+                <Ionicons name="school-outline" size={16} color={colors.primary} />
+                <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>{schoolStatus}</Text>
+              </View>
+            ) : null;
+          })()}
         </View>
       </Animated.View>
 
@@ -73,12 +101,27 @@ export default function ForYouScreen() {
         <Text style={styles.sectionTitle}>Your Support Topics</Text>
 
         {data.topics.length > 0 ? (
-          <View style={styles.topicsContainer}>
+          <View
+            style={styles.topicsContainer}
+            onLayout={isWebDesktop ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
+          >
             {data.topics.map((topic, index) => {
               const resource = resources.find(r => r.title === topic);
               const color = resource?.color || colors.primary;
               const icon = resource?.icon || 'bookmarks';
-              return (
+
+              return isWebDesktop && tileSize > 0 ? (
+                <WebResourceTile
+                  key={index}
+                  id={resource?.id || topic}
+                  title={topic}
+                  icon={icon}
+                  color={color}
+                  category={resource?.category}
+                  onPress={() => handleTopicPress(topic, resource?.route)}
+                  tileSize={tileSize}
+                />
+              ) : (
                 <ResourceCard
                   key={index}
                   id={resource?.id || topic}
@@ -111,7 +154,7 @@ export default function ForYouScreen() {
   );
 }
 
-const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT) =>
+const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT, isWebDesktop: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -119,8 +162,32 @@ const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT) =>
     },
     headerRow: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 14,
+      marginBottom: 4,
+    },
+    avatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      flexShrink: 0,
+    },
+    avatarImage: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+    },
+    avatarInitial: {
+      fontSize: 20,
+      fontWeight: '700',
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap' as const,
+      gap: 8,
     },
     roleBadge: {
       flexDirection: 'row',
@@ -141,9 +208,9 @@ const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT) =>
       color: c.textDark,
       marginBottom: SPACING.sectionGap,
     },
-    topicsContainer: {
-      gap: SPACING.itemGap,
-    },
+    topicsContainer: isWebDesktop
+      ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
+      : { gap: SPACING.itemGap },
     emptyContainer: {
       alignItems: 'center',
       paddingVertical: 60,

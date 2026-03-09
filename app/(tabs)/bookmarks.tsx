@@ -37,7 +37,9 @@ import {
   RADII,
   BORDERS,
 } from '../../constants/onboarding-theme';
+import { WebResourceTile, WEB_GRID_GAP, WEB_GRID_COLS } from '../../components/WebResourceTile';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Design'] as const;
 type CategoryTab = (typeof CATEGORIES)[number];
@@ -73,6 +75,7 @@ function AnimatedSection({ children, delay }: { children: React.ReactNode; delay
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
+
 export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -86,6 +89,11 @@ export default function LibraryScreen() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
 
   const indicatorPosition = useSharedValue(0);
+
+  const { isWeb, isDesktop } = useResponsive();
+  const isWebDesktop = isWeb && isDesktop;
+  const [gridWidth, setGridWidth] = useState(0);
+  const tileSize = gridWidth > 0 ? Math.floor((gridWidth - WEB_GRID_GAP * (WEB_GRID_COLS - 1)) / WEB_GRID_COLS) : 0;
 
   const { bookmarksWithTimestamps, downloads = [] } = useOnboarding();
   const { stories, storyBookmarks, downloadedStories } = useStories();
@@ -193,7 +201,7 @@ export default function LibraryScreen() {
     }
   };
 
-  const styles = useMemo(() => makeStyles(colors, shadows), [colors, shadows]);
+  const styles = useMemo(() => makeStyles(colors, shadows, isWebDesktop), [colors, shadows, isWebDesktop]);
 
   return (
     <View style={styles.container}>
@@ -330,21 +338,38 @@ export default function LibraryScreen() {
             </AnimatedSection>
 
             {allFilteredResources.length > 0 ? (
-              <View style={styles.resourcesContainer}>
+              <View
+                style={styles.resourcesContainer}
+                onLayout={isWebDesktop ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
+              >
                 {allFilteredResources.map((resource, index) => (
-                  <ResourceCard
-                    key={resource.id}
-                    id={resource.id}
-                    title={resource.title}
-                    category={resource.category}
-                    icon={resource.icon}
-                    color={resource.color}
-                    onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                    index={index}
-                    showDownloadIndicator
-                    animationBaseDelay={200}
-                    staggerDelay={ANIMATION.fastStaggerDelay}
-                  />
+                  isWebDesktop && tileSize > 0 ? (
+                    <WebResourceTile
+                      key={resource.id}
+                      id={resource.id}
+                      title={resource.title}
+                      category={resource.category}
+                      icon={resource.icon}
+                      color={resource.color}
+                      onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                      tileSize={tileSize}
+                      showDownloadIndicator
+                    />
+                  ) : (
+                    <ResourceCard
+                      key={resource.id}
+                      id={resource.id}
+                      title={resource.title}
+                      category={resource.category}
+                      icon={resource.icon}
+                      color={resource.color}
+                      onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                      index={index}
+                      showDownloadIndicator
+                      animationBaseDelay={200}
+                      staggerDelay={ANIMATION.fastStaggerDelay}
+                    />
+                  )
                 ))}
               </View>
             ) : (
@@ -387,17 +412,31 @@ export default function LibraryScreen() {
                   )}
                   <View style={styles.resourcesContainer}>
                     {bookmarkedResources.map((resource, index) => (
-                      <ResourceCard
-                        key={resource.id}
-                        id={resource.id}
-                        title={resource.title}
-                        category={resource.category}
-                        icon={resource.icon}
-                        color={resource.color}
-                        onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                        index={index}
-                        showDownloadIndicator
-                      />
+                      isWebDesktop && tileSize > 0 ? (
+                        <WebResourceTile
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          category={resource.category}
+                          icon={resource.icon}
+                          color={resource.color}
+                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                          tileSize={tileSize}
+                          showDownloadIndicator
+                        />
+                      ) : (
+                        <ResourceCard
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          category={resource.category}
+                          icon={resource.icon}
+                          color={resource.color}
+                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                          index={index}
+                          showDownloadIndicator
+                        />
+                      )
                     ))}
                   </View>
                 </View>
@@ -442,17 +481,31 @@ export default function LibraryScreen() {
                   )}
                   <View style={styles.resourcesContainer}>
                     {downloadedResources.map((resource, index) => (
-                      <ResourceCard
-                        key={`dl-${resource.id}`}
-                        id={resource.id}
-                        title={resource.title}
-                        category={resource.category}
-                        icon={resource.icon}
-                        color={resource.color}
-                        onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                        index={index}
-                        showDownloadIndicator
-                      />
+                      isWebDesktop && tileSize > 0 ? (
+                        <WebResourceTile
+                          key={`dl-${resource.id}`}
+                          id={resource.id}
+                          title={resource.title}
+                          category={resource.category}
+                          icon={resource.icon}
+                          color={resource.color}
+                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                          tileSize={tileSize}
+                          showDownloadIndicator
+                        />
+                      ) : (
+                        <ResourceCard
+                          key={`dl-${resource.id}`}
+                          id={resource.id}
+                          title={resource.title}
+                          category={resource.category}
+                          icon={resource.icon}
+                          color={resource.color}
+                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+                          index={index}
+                          showDownloadIndicator
+                        />
+                      )
                     ))}
                   </View>
                 </View>
@@ -483,7 +536,7 @@ export default function LibraryScreen() {
 type C = typeof import('../../constants/theme').COLORS_LIGHT;
 type S = typeof import('../../constants/theme').SHADOWS_LIGHT;
 
-const makeStyles = (c: C, s: S) =>
+const makeStyles = (c: C, s: S, isWebDesktop = false) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -613,7 +666,9 @@ const makeStyles = (c: C, s: S) =>
       fontWeight: '700',
       marginBottom: 12,
     },
-    resourcesContainer: { gap: SPACING.itemGap },
+    resourcesContainer: isWebDesktop
+      ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
+      : { gap: SPACING.itemGap },
     emptyContainer: {
       alignItems: 'center',
       paddingVertical: 60,

@@ -36,6 +36,7 @@ import {
   ANIMATION,
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useResponsive } from "../../hooks/useResponsive";
 import type { AppTheme } from "../../constants/theme";
 import { getRoleDisplayName, getSchoolStatusText } from "../../utils/profile";
 
@@ -135,6 +136,9 @@ export default function ProfileScreen() {
   const { stories, storyBookmarks } = useStories();
   const { fireEvent } = useAccomplishments();
 
+  const { isWeb, isDesktop } = useResponsive();
+  const isWebDesktop = isWeb && isDesktop;
+
   const myStoriesCount = stories.filter(s => s.author_id === user?.id).length;
   const savedCount = bookmarks.length + storyBookmarks.length;
   const [showEditProfile, setShowEditProfile] = React.useState(false);
@@ -225,66 +229,9 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={isWebDesktop ? styles.scrollWeb : styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.identityCard}
-        >
-        <View style={styles.identity}>
-          <Pressable onPress={handleProfilePicture}>
-            <Animated.View style={avatarStyle}>
-              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                {data.profilePicture ? (
-                  <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
-                ) : (
-                  <Text style={styles.avatarInitial}>
-                    {data.name.charAt(0).toUpperCase()}
-                  </Text>
-                )}
-              </View>
-              <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
-                <Ionicons name="camera" size={14} color="#FFFFFF" />
-              </View>
-            </Animated.View>
-          </Pressable>
-
-          <Animated.View style={[styles.identityText, nameStyle]}>
-            <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
-            <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-              <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
-            </View>
-            {schoolStatusText !== 'Not set' && (
-              <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
-                <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
-              </View>
-            )}
-            <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={() => setShowEditProfile(true)}
-              style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
-            >
-              <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
-              <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
-            </Pressable>
-          </Animated.View>
-        </View>
-        </LinearGradient>
-
         {/* Edit Profile Modal */}
         <Modal
           visible={showEditProfile}
@@ -307,101 +254,319 @@ export default function ProfileScreen() {
           </View>
         </Modal>
 
-        <AnimatedSection delay={460}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
-          
-          <Pressable
-            onPress={() => router.push('/knowledge-tree' as any)}
-            style={({ pressed }) => [
-              styles.journalWidget,
-              { marginBottom: 16 },
-              shadows.card,
-              pressed && { transform: [{ scale: 0.98 }] }
-            ]}
-          >
+        {isWebDesktop ? (
+          <View style={styles.webColumns}>
+            <View style={styles.webLeft}>
+              <LinearGradient
+                colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.identityCard}
+              >
+                <View style={styles.identity}>
+                  <Pressable onPress={handleProfilePicture}>
+                    <Animated.View style={avatarStyle}>
+                      <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                        {data.profilePicture ? (
+                          <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
+                        ) : (
+                          <Text style={styles.avatarInitial}>
+                            {data.name.charAt(0).toUpperCase()}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                        <Ionicons name="camera" size={14} color="#FFFFFF" />
+                      </View>
+                    </Animated.View>
+                  </Pressable>
+
+                  <Animated.View style={[styles.identityText, nameStyle]}>
+                    <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
+                    <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                      <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
+                    </View>
+                    {schoolStatusText !== 'Not set' && (
+                      <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
+                        <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
+                      </View>
+                    )}
+                    <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
+                      <View style={styles.statItem}>
+                        <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+                      </View>
+                      <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
+                      <View style={styles.statItem}>
+                        <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+                      </View>
+                    </View>
+
+                    <Pressable
+                      onPress={() => setShowEditProfile(true)}
+                      style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
+                    >
+                      <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+                    </Pressable>
+                  </Animated.View>
+                </View>
+              </LinearGradient>
+            </View>
+
+            <View style={styles.webRight}>
+              <AnimatedSection delay={460}>
+                <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
+
+                <Pressable
+                  onPress={() => router.push('/knowledge-tree' as any)}
+                  style={({ pressed }) => [
+                    styles.journalWidget,
+                    { marginBottom: 16 },
+                    shadows.card,
+                    pressed && { transform: [{ scale: 0.98 }] }
+                  ]}
+                >
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.journalGlass}
+                  >
+                    <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
+                      <Ionicons name="leaf" size={28} color="#FFF" />
+                    </View>
+                    <View style={styles.journalInfo}>
+                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
+                      <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
+                    </View>
+                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                      <Ionicons name="arrow-forward" size={18} color="#10B981" />
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push('/accomplishments' as any)}
+                  style={({ pressed }) => [
+                    styles.journalWidget,
+                    { marginBottom: 24 },
+                    shadows.card,
+                    pressed && { transform: [{ scale: 0.98 }] }
+                  ]}
+                >
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.journalGlass}
+                  >
+                    <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
+                      <Ionicons name="extension-puzzle" size={28} color="#FFF" />
+                    </View>
+                    <View style={styles.journalInfo}>
+                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
+                      <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
+                    </View>
+                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                      <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </AnimatedSection>
+
+              <AnimatedSection delay={500}>
+                <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+
+                <Pressable
+                  onPress={() => router.push("/journal")}
+                  style={({ pressed }) => [
+                    styles.journalWidget,
+                    shadows.card,
+                    pressed && { transform: [{ scale: 0.98 }] }
+                  ]}
+                >
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.journalGlass}
+                  >
+                    <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
+                      <Ionicons name="journal" size={28} color="#FFF" />
+                    </View>
+                    <View style={styles.journalInfo}>
+                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+                    </View>
+                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                      <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </AnimatedSection>
+
+              <Animated.View style={[styles.footer, footerStyle]}>
+                <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+              </Animated.View>
+            </View>
+          </View>
+        ) : (
+          <>
             <LinearGradient
-              colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+              colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.journalGlass}
+              style={styles.identityCard}
             >
-              <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
-                <Ionicons name="leaf" size={28} color="#FFF" />
-              </View>
-              <View style={styles.journalInfo}>
-                <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
-                <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
-              </View>
-              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
-                <Ionicons name="arrow-forward" size={18} color="#10B981" />
-              </View>
+            <View style={styles.identity}>
+              <Pressable onPress={handleProfilePicture}>
+                <Animated.View style={avatarStyle}>
+                  <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                    {data.profilePicture ? (
+                      <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
+                    ) : (
+                      <Text style={styles.avatarInitial}>
+                        {data.name.charAt(0).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                    <Ionicons name="camera" size={14} color="#FFFFFF" />
+                  </View>
+                </Animated.View>
+              </Pressable>
+
+              <Animated.View style={[styles.identityText, nameStyle]}>
+                <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
+                <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                  <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
+                </View>
+                {schoolStatusText !== 'Not set' && (
+                  <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
+                    <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
+                  </View>
+                )}
+                <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={() => setShowEditProfile(true)}
+                  style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
+                >
+                  <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+                </Pressable>
+              </Animated.View>
+            </View>
             </LinearGradient>
-          </Pressable>
 
-          <Pressable
-            onPress={() => router.push('/accomplishments' as any)}
-            style={({ pressed }) => [
-              styles.journalWidget,
-              { marginBottom: 24 },
-              shadows.card,
-              pressed && { transform: [{ scale: 0.98 }] }
-            ]}
-          >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.journalGlass}
-            >
-              <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
-                <Ionicons name="extension-puzzle" size={28} color="#FFF" />
-              </View>
-              <View style={styles.journalInfo}>
-                <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
-                <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
-              </View>
-              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
-                <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </AnimatedSection>
+            <AnimatedSection delay={460}>
+              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
 
-        <AnimatedSection delay={500}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+              <Pressable
+                onPress={() => router.push('/knowledge-tree' as any)}
+                style={({ pressed }) => [
+                  styles.journalWidget,
+                  { marginBottom: 16 },
+                  shadows.card,
+                  pressed && { transform: [{ scale: 0.98 }] }
+                ]}
+              >
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.journalGlass}
+                >
+                  <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
+                    <Ionicons name="leaf" size={28} color="#FFF" />
+                  </View>
+                  <View style={styles.journalInfo}>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
+                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
+                  </View>
+                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <Ionicons name="arrow-forward" size={18} color="#10B981" />
+                  </View>
+                </LinearGradient>
+              </Pressable>
 
-          <Pressable
-            onPress={() => router.push("/journal")}
-            style={({ pressed }) => [
-              styles.journalWidget,
-              shadows.card,
-              pressed && { transform: [{ scale: 0.98 }] }
-            ]}
-          >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.journalGlass}
-            >
+              <Pressable
+                onPress={() => router.push('/accomplishments' as any)}
+                style={({ pressed }) => [
+                  styles.journalWidget,
+                  { marginBottom: 24 },
+                  shadows.card,
+                  pressed && { transform: [{ scale: 0.98 }] }
+                ]}
+              >
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.journalGlass}
+                >
+                  <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
+                    <Ionicons name="extension-puzzle" size={28} color="#FFF" />
+                  </View>
+                  <View style={styles.journalInfo}>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
+                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
+                  </View>
+                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            </AnimatedSection>
+
+            <AnimatedSection delay={500}>
+              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+
+              <Pressable
+                onPress={() => router.push("/journal")}
+                style={({ pressed }) => [
+                  styles.journalWidget,
+                  shadows.card,
+                  pressed && { transform: [{ scale: 0.98 }] }
+                ]}
+              >
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.journalGlass}
+                >
 
 
-              <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
-                <Ionicons name="journal" size={28} color="#FFF" />
-              </View>
-              <View style={styles.journalInfo}>
-                <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
-              </View>
-              <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
-                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </AnimatedSection>
+                  <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
+                    <Ionicons name="journal" size={28} color="#FFF" />
+                  </View>
+                  <View style={styles.journalInfo}>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+                  </View>
+                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            </AnimatedSection>
 
-        <Animated.View style={[styles.footer, footerStyle]}>
-          <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-        </Animated.View>
+            <Animated.View style={[styles.footer, footerStyle]}>
+              <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+            </Animated.View>
+          </>
+        )}
       </ScrollView>
       {/* Modals removed to settings sheet */}
     </View>
@@ -686,5 +851,20 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  scrollWeb: {
+    paddingBottom: 48,
+  },
+  webColumns: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 24,
+    gap: 24,
+  },
+  webLeft: {
+    width: 300,
+  },
+  webRight: {
+    flex: 1,
   },
 });
