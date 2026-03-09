@@ -8,6 +8,7 @@ import {
     Animated,
     Dimensions,
     Modal,
+    Platform,
     Pressable,
     Share,
     ActivityIndicator,
@@ -416,14 +417,8 @@ function ExpandedCardModal({
         outputRange: [CARD_HEIGHT_FRONT, CARD_HEIGHT_BACK],
     });
 
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="none"
-            onRequestClose={handleClose}
-        >
-            <View style={modalStyles.overlay}>
+    const content = (
+        <View style={modalStyles.overlay} pointerEvents="box-none">
                 <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
                     <Animated.View
                         style={[modalStyles.backdrop, { opacity: opacityAnim }]}
@@ -543,6 +538,15 @@ function ExpandedCardModal({
                     </Animated.View>
                 </Animated.View>
             </View>
+    );
+
+    if (Platform.OS === 'web') {
+        if (!visible) return null;
+        return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{content}</View>;
+    }
+    return (
+        <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
+            {content}
         </Modal>
     );
 }
@@ -553,7 +557,7 @@ const modalStyles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.5)",
     },
-    container: { width: SCREEN_WIDTH - 48, maxHeight: SCREEN_HEIGHT * 0.72 },
+    container: { width: '88%', maxWidth: 560, maxHeight: SCREEN_HEIGHT * 0.72 },
     cardShadow: {
         width: "100%",
         shadowColor: "#000",
@@ -777,21 +781,6 @@ export default function FindingSupportScreen() {
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <TouchableOpacity
-                        onPress={handlePageSpeak}
-                        style={{ padding: 4 }}
-                        accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}
-                    >
-                        {isPageLoadingAudio ? (
-                            <ActivityIndicator size="small" color={COLORS.studentK8} />
-                        ) : (
-                            <Ionicons
-                                name={isPageSpeaking ? "pause-circle" : "volume-high"}
-                                size={28}
-                                color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted}
-                            />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
                         onPress={handleShare}
                         style={{ padding: 4 }}
                         accessibilityLabel="Share"
@@ -811,6 +800,13 @@ export default function FindingSupportScreen() {
                 <Animated.View
                     style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}
                 >
+                    <TouchableOpacity onPress={handlePageSpeak} style={{ position: 'absolute', top: 10, right: 0, padding: 4, zIndex: 1 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
+                        {isPageLoadingAudio ? (
+                            <ActivityIndicator size="small" color={COLORS.studentK8} />
+                        ) : (
+                            <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={24} color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted} />
+                        )}
+                    </TouchableOpacity>
                     <Text style={styles.pageTitle}>
                         How to Find People Who <Text style={{ color: "#7B68EE" }}>Understand</Text> Your Journey
                     </Text>

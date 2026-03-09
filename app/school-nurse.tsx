@@ -13,6 +13,7 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  Share,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +29,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTTS } from "../hooks/useTTS";
 import { TTSButton } from "../components/TTSButton";
 import { RecommendationList } from "../components/RecommendationList";
+import { BookmarkButton } from "../components/BookmarkButton";
+import { DownloadButton } from "../components/DownloadButton";
 import {
   COLORS,
   TYPOGRAPHY,
@@ -308,14 +311,8 @@ function BottomSheet({
 
   if (!internalVisible || !section) return null;
 
-  return (
-    <Modal
-      transparent
-      visible={internalVisible}
-      animationType="none"
-      onRequestClose={handleDismiss}
-    >
-      <View style={sheetStyles.overlay}>
+  const sheetContent = (
+    <View style={sheetStyles.overlay} pointerEvents="box-none">
         {/* Backdrop */}
         <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss}>
           <Animated.View
@@ -410,6 +407,14 @@ function BottomSheet({
           </ScrollView>
         </Animated.View>
       </View>
+  );
+
+  if (Platform.OS === 'web') {
+    return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{sheetContent}</View>;
+  }
+  return (
+    <Modal transparent visible={internalVisible} animationType="none" onRequestClose={handleDismiss}>
+      {sheetContent}
     </Modal>
   );
 }
@@ -778,6 +783,15 @@ export default function SchoolNurseScreen() {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: "Check out this resource on SchoolKit: The School Nurse — Your Ally at School",
+        title: "The School Nurse: Your Ally at School",
+      });
+    } catch {}
+  };
+
   const headerAnim = useSharedValue(0);
   const videoAnim = useSharedValue(0);
   const cardsAnim = useSharedValue(0);
@@ -818,6 +832,13 @@ export default function SchoolNurseScreen() {
         >
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+            <Ionicons name="share-outline" size={28} color="#6B6B85" />
+          </TouchableOpacity>
+          <DownloadButton resourceId="13" size={28} color="#EF4444" />
+          <BookmarkButton resourceId="13" size={28} color="#EF4444" />
+        </View>
       </View>
 
       <ScrollView
@@ -884,6 +905,7 @@ const styles = StyleSheet.create({
   navHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: SPACING.screenPadding,
     paddingBottom: 10,
     backgroundColor: COLORS.appBackground,

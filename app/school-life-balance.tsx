@@ -8,6 +8,7 @@ import {
     Animated,
     Dimensions,
     Modal,
+    Platform,
     Pressable,
     Share,
     ActivityIndicator,
@@ -357,66 +358,74 @@ function ExpandedCardModal({
     const cardHeight = flipAnim.interpolate({ inputRange: [0, 1], outputRange: [FRONT_HEIGHT, BACK_HEIGHT] });
     const underlineWidth = underlineAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
+    const content = (
+        <View style={styles.modalOverlay} pointerEvents="box-none">
+            <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+                <Animated.View style={[styles.modalBackdrop, { opacity: opacityAnim }]} />
+            </Pressable>
+
+            <Animated.View style={[styles.expandedCardContainer, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
+                {/* Front */}
+                <Animated.View style={[styles.expandedCardShadow, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity, height: cardHeight }]}>
+                    <View style={[styles.expandedCard, { height: "100%", backgroundColor: color, borderColor: color }]}>
+                        <View style={styles.expandedCardInnerFront}>
+                            <Ionicons name={item.icon as any} size={48} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
+                            <Text style={styles.expandedFrontTitle}>{item.front}</Text>
+                            <Text style={styles.flipHint}>Flip for tips →</Text>
+                        </View>
+                        <View style={styles.expandedCardLines}>
+                            <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.4)" }]} />
+                            <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.3)" }]} />
+                            <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
+                        </View>
+                    </View>
+                </Animated.View>
+
+                {/* Back */}
+                <Animated.View style={[styles.expandedCardShadow, styles.expandedCardBackSide, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, height: cardHeight }]}>
+                    <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
+                        <View style={styles.expandedCardInner}>
+                            <View style={styles.factHeader}>
+                                <View>
+                                    <Text style={[styles.factBigText, { color }]}>Tips</Text>
+                                    <Animated.View style={{ height: 4, backgroundColor: color, width: underlineWidth, borderRadius: 2, marginTop: 2 }} />
+                                </View>
+                                <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    {isLoadingAudio ? (
+                                        <ActivityIndicator size="small" color={color} />
+                                    ) : (
+                                        <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+
+                            <Text style={[styles.backCardTitle, { color }]}>{item.front}</Text>
+
+                            <ScrollView style={styles.backContentScroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+                                {item.back.split("\n\n").map((para, idx) => (
+                                    <Text key={idx} style={styles.backParagraph}>{para}</Text>
+                                ))}
+                            </ScrollView>
+                        </View>
+
+                        <View style={styles.expandedCardLines}>
+                            <View style={[styles.cardLine, { backgroundColor: color + "40" }]} />
+                            <View style={[styles.cardLine, { backgroundColor: color + "30" }]} />
+                            <View style={[styles.cardLine, { backgroundColor: color + "20" }]} />
+                        </View>
+                    </View>
+                </Animated.View>
+            </Animated.View>
+        </View>
+    );
+
+    if (Platform.OS === 'web') {
+        if (!visible) return null;
+        return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{content}</View>;
+    }
     return (
         <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
-            <View style={styles.modalOverlay}>
-                <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
-                    <Animated.View style={[styles.modalBackdrop, { opacity: opacityAnim }]} />
-                </Pressable>
-
-                <Animated.View style={[styles.expandedCardContainer, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
-                    {/* Front */}
-                    <Animated.View style={[styles.expandedCardShadow, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity, height: cardHeight }]}>
-                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: color, borderColor: color }]}>
-                            <View style={styles.expandedCardInnerFront}>
-                                <Ionicons name={item.icon as any} size={48} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
-                                <Text style={styles.expandedFrontTitle}>{item.front}</Text>
-                                <Text style={styles.flipHint}>Flip for tips →</Text>
-                            </View>
-                            <View style={styles.expandedCardLines}>
-                                <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.4)" }]} />
-                                <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.3)" }]} />
-                                <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
-                            </View>
-                        </View>
-                    </Animated.View>
-
-                    {/* Back */}
-                    <Animated.View style={[styles.expandedCardShadow, styles.expandedCardBackSide, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, height: cardHeight }]}>
-                        <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
-                            <View style={styles.expandedCardInner}>
-                                <View style={styles.factHeader}>
-                                    <View>
-                                        <Text style={[styles.factBigText, { color }]}>Tips</Text>
-                                        <Animated.View style={{ height: 4, backgroundColor: color, width: underlineWidth, borderRadius: 2, marginTop: 2 }} />
-                                    </View>
-                                    <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                                        {isLoadingAudio ? (
-                                            <ActivityIndicator size="small" color={color} />
-                                        ) : (
-                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
-
-                                <Text style={[styles.backCardTitle, { color }]}>{item.front}</Text>
-
-                                <ScrollView style={styles.backContentScroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                                    {item.back.split("\n\n").map((para, idx) => (
-                                        <Text key={idx} style={styles.backParagraph}>{para}</Text>
-                                    ))}
-                                </ScrollView>
-                            </View>
-
-                            <View style={styles.expandedCardLines}>
-                                <View style={[styles.cardLine, { backgroundColor: color + "40" }]} />
-                                <View style={[styles.cardLine, { backgroundColor: color + "30" }]} />
-                                <View style={[styles.cardLine, { backgroundColor: color + "20" }]} />
-                            </View>
-                        </View>
-                    </Animated.View>
-                </Animated.View>
-            </View>
+            {content}
         </Modal>
     );
 }
@@ -458,9 +467,8 @@ function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: 
 
     if (!internalVisible || !handout) return null;
 
-    return (
-        <Modal transparent visible={internalVisible} animationType="none" onRequestClose={handleClose}>
-            <View style={handoutStyles.overlay}>
+    const handoutContent = (
+        <View style={handoutStyles.overlay} pointerEvents="box-none">
                 <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
                     <Animated.View style={[handoutStyles.backdrop, { opacity: backdropAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }) }]} />
                 </Pressable>
@@ -542,6 +550,14 @@ function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: 
                     </ScrollView>
                 </Animated.View>
             </View>
+    );
+
+    if (Platform.OS === 'web') {
+        return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{handoutContent}</View>;
+    }
+    return (
+        <Modal transparent visible={internalVisible} animationType="none" onRequestClose={handleClose}>
+            {handoutContent}
         </Modal>
     );
 }
@@ -695,13 +711,6 @@ export default function SchoolLifeBalanceScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleSpeak} style={{ padding: 4 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
-                        {isLoadingAudio ? (
-                            <ActivityIndicator size="small" color="#7B68EE" />
-                        ) : (
-                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
-                        )}
-                    </TouchableOpacity>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>
@@ -717,10 +726,19 @@ export default function SchoolLifeBalanceScreen() {
                 scrollEventThrottle={100}
             >
                 {/* Title */}
-                <Text style={styles.pageTitle}>
-                    Best Practices for Juggling{"\n"}
-                    <Text style={{ color: "#7B68EE" }}>School and Life</Text>
-                </Text>
+                <View style={{ position: 'relative' }}>
+                    <TouchableOpacity onPress={handleSpeak} style={{ position: 'absolute', top: 0, right: 0, padding: 4, zIndex: 1 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
+                        {isLoadingAudio ? (
+                            <ActivityIndicator size="small" color="#7B68EE" />
+                        ) : (
+                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={24} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
+                        )}
+                    </TouchableOpacity>
+                    <Text style={styles.pageTitle}>
+                        Best Practices for Juggling{"\n"}
+                        <Text style={{ color: "#7B68EE" }}>School and Life</Text>
+                    </Text>
+                </View>
 
                 {/* Subtitle */}
                 <Text style={styles.subtitleText}>
@@ -893,7 +911,7 @@ const styles = StyleSheet.create({
     // Modal
     modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
     modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
-    expandedCardContainer: { width: SCREEN_WIDTH - 48, maxHeight: SCREEN_HEIGHT * 0.7 },
+    expandedCardContainer: { width: '88%', maxWidth: 560, maxHeight: SCREEN_HEIGHT * 0.7 },
     expandedCardShadow: {
         width: "100%",
         shadowColor: "#000",

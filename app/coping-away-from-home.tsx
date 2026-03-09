@@ -337,12 +337,6 @@ export default function CopingAwayFromHomeScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }}>
-                        {isPageLoadingAudio
-                            ? <ActivityIndicator size="small" color={PAGE_COLOR} />
-                            : <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? PAGE_COLOR : "#6B6B85"} />
-                        }
-                    </TouchableOpacity>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>
@@ -355,6 +349,12 @@ export default function CopingAwayFromHomeScreen() {
 
                 {/* Title */}
                 <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
+                    <TouchableOpacity onPress={handlePageSpeak} style={{ position: 'absolute', top: 10, right: 0, padding: 4, zIndex: 1 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
+                        {isPageLoadingAudio
+                            ? <ActivityIndicator size="small" color={PAGE_COLOR} />
+                            : <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={24} color={isPageSpeaking ? PAGE_COLOR : "#6B6B85"} />
+                        }
+                    </TouchableOpacity>
                     <Text style={styles.pageTitle}>
                         Coping When <Text style={{ color: PAGE_COLOR }}>Away From Home</Text>
                     </Text>

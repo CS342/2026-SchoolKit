@@ -32,10 +32,10 @@ function TabLayoutInner() {
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        tabBar={(props) => <CustomTabBar {...props} />}
+        tabBar={(props) => useSidebar ? null : <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarPosition: useSidebar ? 'left' : 'bottom',
+          tabBarPosition: 'bottom',
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'For You' }} />

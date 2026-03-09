@@ -14,9 +14,13 @@ import { AccomplishmentProvider } from '../contexts/AccomplishmentContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 import PieceRevealOverlay from '../components/puzzle/PieceRevealOverlay';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { PersistentSidebar } from '../components/PersistentSidebar';
+import { useResponsive } from '../hooks/useResponsive';
 
 function InnerLayout() {
   const { isDark, colors } = useTheme();
+  const { isWeb, isDesktop, isTablet } = useResponsive();
+  const isWebDesktop = isWeb && (isDesktop || isTablet);
 
   const navigationTheme = isDark
     ? {
@@ -40,22 +44,36 @@ function InnerLayout() {
       },
     };
 
+  const stack = (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(editor)" />
+      <Stack.Screen name="share/[token]" />
+      <Stack.Screen name="design-view/[id]" />
+      <Stack.Screen name="auth" />
+      <Stack.Screen name="accomplishments" />
+      <Stack.Screen name="chapter-detail" />
+    </Stack>
+  );
+
   return (
     <NavThemeProvider value={navigationTheme}>
-      <View style={{ flex: 1 }}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(editor)" />
-          <Stack.Screen name="share/[token]" />
-          <Stack.Screen name="design-view/[id]" />
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="accomplishments" />
-          <Stack.Screen name="chapter-detail" />
-        </Stack>
-        <PieceRevealOverlay />
-      </View>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <OfflineBanner />
+      {isWebDesktop ? (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <PersistentSidebar />
+          <View style={{ flex: 1 }}>
+            {stack}
+            <PieceRevealOverlay />
+          </View>
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          {stack}
+          <PieceRevealOverlay />
+        </View>
+      )}
     </NavThemeProvider>
   );
 }

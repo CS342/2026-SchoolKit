@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Modal,
+  Platform,
   Pressable,
   Share,
   NativeSyntheticEvent,
@@ -494,19 +495,13 @@ function ExpandedCardModal({
 
   const backTextFontSize = item ? getFontSize(item.back || "") : 20;
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
-          <Animated.View
-            style={[styles.modalBackdrop, { opacity: opacityAnim }]}
-          />
-        </Pressable>
+  const content = (
+    <View style={styles.modalOverlay} pointerEvents="box-none">
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
+        <Animated.View
+          style={[styles.modalBackdrop, { opacity: opacityAnim }]}
+        />
+      </Pressable>
 
         <Animated.View
           style={[
@@ -707,6 +702,25 @@ function ExpandedCardModal({
           </View>
         </Animated.View>
       </View>
+  );
+
+  if (Platform.OS === 'web') {
+    if (!visible) return null;
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+    >
+      {content}
     </Modal>
   );
 }
@@ -1083,7 +1097,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   expandedCardContainer: {
-    width: SCREEN_WIDTH - 48,
+    width: '88%',
+    maxWidth: 560,
     maxHeight: SCREEN_HEIGHT * 0.7,
   },
 

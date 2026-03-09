@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Modal,
+  Platform,
   Pressable,
   PanResponder,
   Share,
@@ -488,9 +489,8 @@ function BottomSheet({
 
   if (!internalVisible || !topic) return null;
 
-  return (
-    <Modal transparent visible={internalVisible} animationType="none" onRequestClose={handleDismiss}>
-      <View style={styles.sheetOverlay}>
+  const sheetContent = (
+    <View style={styles.sheetOverlay} pointerEvents="box-none">
         {/* Backdrop */}
         <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss}>
           <Animated.View
@@ -604,6 +604,14 @@ function BottomSheet({
           </ScrollView>
         </Animated.View>
       </View>
+  );
+
+  if (Platform.OS === 'web') {
+    return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{sheetContent}</View>;
+  }
+  return (
+    <Modal transparent visible={internalVisible} animationType="none" onRequestClose={handleDismiss}>
+      {sheetContent}
     </Modal>
   );
 }
@@ -744,13 +752,6 @@ export default function PeerSupportScreen() {
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
-            {isPageLoadingAudio ? (
-              <ActivityIndicator size="small" color={COLORS.studentK8} />
-            ) : (
-              <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted} />
-            )}
-          </TouchableOpacity>
           <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={28} color={COLORS.textMuted} />
           </TouchableOpacity>
@@ -767,6 +768,14 @@ export default function PeerSupportScreen() {
       >
         {/* Page Title */}
         <RNAnimated.View style={titleStyle}>
+          <TTSButton
+            isSpeaking={isPageSpeaking}
+            isLoading={isPageLoadingAudio}
+            onPress={handlePageSpeak}
+            size={24}
+            activeColor={COLORS.studentK8}
+            style={{ position: 'absolute', top: 10, right: 0 }}
+          />
           <Text style={styles.pageTitle}>
             Encouraging{"\n"}
             <Text style={{ color: COLORS.studentK8 }}>Positive Peer</Text>

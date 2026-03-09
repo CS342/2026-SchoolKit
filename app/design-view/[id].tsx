@@ -58,6 +58,15 @@ interface DesignData {
   owner_name: string;
 }
 
+const SIDEBAR_WIDTH = 240;
+
+function getContentWidth() {
+  if (Platform.OS !== 'web') return 0;
+  const w = window.innerWidth;
+  // Sidebar is shown when window is >= 768px (tablet+)
+  return w >= 768 ? w - SIDEBAR_WIDTH : w;
+}
+
 export default function DesignViewPage() {
   const { id, resourceId } = useLocalSearchParams<{ id: string; resourceId?: string }>();
   const router = useRouter();
@@ -66,9 +75,7 @@ export default function DesignViewPage() {
   const [design, setDesign] = useState<DesignData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewportWidth, setViewportWidth] = useState(
-    Platform.OS === 'web' ? window.innerWidth : 0,
-  );
+  const [viewportWidth, setViewportWidth] = useState(getContentWidth);
   const [viewportHeight, setViewportHeight] = useState(
     Platform.OS === 'web' ? window.innerHeight : 0,
   );
@@ -111,7 +118,7 @@ export default function DesignViewPage() {
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const handleResize = () => {
-      setViewportWidth(window.innerWidth);
+      setViewportWidth(getContentWidth());
       setViewportHeight(window.innerHeight);
     };
     window.addEventListener('resize', handleResize);

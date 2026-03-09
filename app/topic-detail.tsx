@@ -141,7 +141,6 @@ export default function TopicDetailScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
-          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={24} activeColor={color} />
           <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
@@ -158,6 +157,7 @@ export default function TopicDetailScreen() {
         onContentSizeChange={(_, h) => setContentHeight(h)}
       >
         <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
+          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={22} activeColor={color} style={{ position: 'absolute', top: 16, right: 16 }} />
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
             <Ionicons name="book" size={40} color={color} />
           </View>
