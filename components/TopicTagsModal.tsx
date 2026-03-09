@@ -275,9 +275,5 @@ function makeStyles(c: AppTheme["colors"], isDark: boolean) {
       opacity: 0.5,
       backgroundColor: isDark ? c.appBackground : "#F8F8FA",
     },
-    optionTextSelected: {
-      color: c.primary,
-      fontWeight: "600",
-    },
   });
 }

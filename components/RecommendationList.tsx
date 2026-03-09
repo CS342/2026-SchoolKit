@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ALL_RESOURCES, Resource } from '../constants/resources';
-import { COLORS, TYPOGRAPHY, SHADOWS, RADII, withOpacity } from '../constants/onboarding-theme';
+import { COLORS, TYPOGRAPHY, RADII } from '../constants/onboarding-theme';
 import { AppTheme } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -101,10 +101,12 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
           if (rec.type === 'story') {
             const story = rec.item as Story;
             return (
-              <Pressable 
-                key={`story-${story.id}`} 
+              <Pressable
+                key={`story-${story.id}`}
                 style={styles.card}
                 onPress={() => router.push(`/story-detail?id=${story.id}` as any)}
+                accessibilityRole="button"
+                accessibilityLabel={`Read story: ${story.title}`}
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name="book-outline" size={16} color={COLORS.primary} style={styles.icon} />
@@ -122,10 +124,12 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
           } else {
             const resource = rec.item as Resource;
             return (
-              <Pressable 
-                key={`resource-${resource.id}`} 
+              <Pressable
+                key={`resource-${resource.id}`}
                 style={styles.card}
                 onPress={() => router.push(resource.route as any)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open resource: ${resource.title}`}
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name={resource.icon as any} size={16} color={resource.color} style={styles.icon} />

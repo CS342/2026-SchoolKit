@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, RADII } from '../constants/onboarding-theme';
+import { COLORS, RADII } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { AppTheme } from '../constants/theme';
 import { PrimaryButton } from './onboarding/PrimaryButton';

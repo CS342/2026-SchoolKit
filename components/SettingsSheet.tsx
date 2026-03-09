@@ -218,6 +218,13 @@ function VoiceView({
     }
   }, [playerStatus.didJustFinish, playerStatus.isLoaded]);
 
+  // Stop audio when leaving VoiceView
+  useEffect(() => {
+    return () => {
+      player.pause();
+    };
+  }, [player]);
+
   const handlePlaySample = async (voiceId: string) => {
     try {
       if (playingVoiceId === voiceId) {

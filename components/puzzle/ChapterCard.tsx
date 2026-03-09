@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChapterDefinition } from '../../constants/accomplishments';
 import { ANIMATION, COLORS, RADII, SHADOWS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import PuzzleGrid from './PuzzleGrid';
 
 interface ChapterCardProps {
@@ -20,6 +21,7 @@ interface ChapterCardProps {
 }
 
 export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }: ChapterCardProps) {
+  const { colors } = useTheme();
   const earnedCount = chapter.pieces.filter(p => earnedPieceIds.has(p.id)).length;
   const isComplete = earnedCount === chapter.pieceCount;
 
@@ -40,7 +42,7 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }:
 
   return (
     <TouchableOpacity activeOpacity={onPress ? 0.85 : 1} onPress={onPress} disabled={!onPress}>
-      <Animated.View style={[styles.card, animStyle]}>
+      <Animated.View style={[styles.card, { backgroundColor: colors.white }, animStyle]}>
         {/* Gradient header strip */}
         <LinearGradient
           colors={chapter.gradientColors}

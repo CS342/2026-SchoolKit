@@ -30,6 +30,11 @@ import { RecommendationList } from "../components/RecommendationList";
 import { diffWords } from "diff";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+const AUDIENCE_DISPLAY: Record<string, string> = {
+  'student-k8': 'Students', 'student-hs': 'Students',
+  'parent': 'Parents', 'staff': 'School Staff',
+  'Students': 'Students', 'Parents': 'Parents', 'School Staff': 'School Staff',
+};
 const COMMENT_REMINDERS = [
   "Remember: Lead with empathy.",
   "Thank you for supporting this author.",
@@ -46,7 +51,7 @@ function getLookingForText(lookingFor: string[]): string {
 
 function getAudienceHint(targetAudiences?: string[]): string {
   if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
-  const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
+  const tags = [...new Set(targetAudiences.map(a => AUDIENCE_DISPLAY[a]).filter(Boolean))];
   const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
   if (hasAll || tags.length === 0) return '';
   if (tags.length === 1) return `For ${tags[0]}`;

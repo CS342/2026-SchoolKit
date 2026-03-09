@@ -47,6 +47,8 @@ export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }
       activeOpacity={0.7}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      accessibilityRole="button"
+      accessibilityState={{ selected: bookmarked }}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Ionicons

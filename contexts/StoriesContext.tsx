@@ -757,7 +757,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
 
     const liked = storyLikes.includes(storyId);
     const currentCount = stories.find(s => s.id === storyId)?.like_count || 0;
-    const newCount = liked ? Math.max(0, currentCount - 1) : currentCount + 1;
+    const optimisticCount = liked ? Math.max(0, currentCount - 1) : currentCount + 1;
 
     // Optimistic update
     if (liked) {
@@ -766,7 +766,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       setStoryLikes(prev => [storyId, ...prev]);
     }
     setStories(prev => prev.map(s =>
-      s.id === storyId ? { ...s, like_count: newCount } : s
+      s.id === storyId ? { ...s, like_count: optimisticCount } : s
     ));
 
     try {
@@ -783,8 +783,16 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           .insert({ user_id: user.id, story_id: storyId });
         if (error && error.code !== '23505') throw error;
       }
-      // Sync likes_count back to stories table
-      await supabase.from('stories').update({ likes_count: newCount }).eq('id', storyId);
+      // Get actual count from DB to avoid race conditions
+      const { count } = await supabase
+        .from('story_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('story_id', storyId);
+      const actualCount = count ?? optimisticCount;
+      await supabase.from('stories').update({ likes_count: actualCount }).eq('id', storyId);
+      setStories(prev => prev.map(s =>
+        s.id === storyId ? { ...s, like_count: actualCount } : s
+      ));
     } catch (error) {
       console.error('Error toggling like:', error);
       // Revert

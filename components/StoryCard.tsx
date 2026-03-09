@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -27,10 +27,15 @@ interface StoryCardProps {
 }
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
+const AUDIENCE_DISPLAY: Record<string, string> = {
+  'student-k8': 'Students', 'student-hs': 'Students',
+  'parent': 'Parents', 'staff': 'School Staff',
+  'Students': 'Students', 'Parents': 'Parents', 'School Staff': 'School Staff',
+};
 
 function getAudienceHint(targetAudiences?: string[]): string {
   if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
-  const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
+  const tags = [...new Set(targetAudiences.map(a => AUDIENCE_DISPLAY[a]).filter(Boolean))];
   const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
   if (hasAll || tags.length === 0) return '';
   if (tags.length === 1) return `For ${tags[0]}`;

@@ -228,9 +228,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfilePicture = async (uri: string | null) => {
-    console.log('updateProfilePicture called with:', uri?.substring(0, 50));
-    console.log('user id:', user?.id);
-
     // If we have a new image, upload it to Supabase Storage
     let publicUrl = uri;
 
@@ -238,12 +235,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       try {
         const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
         const fileName = `${user.id}/avatar.${fileExt}`;
-        console.log('Uploading to:', fileName);
 
         // Fetch the image and convert to ArrayBuffer (works better in RN)
         const response = await fetch(uri);
         const arrayBuffer = await response.arrayBuffer();
-        console.log('ArrayBuffer size:', arrayBuffer.byteLength);
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -253,18 +248,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
           throw uploadError;
         }
-
-        console.log('Upload successful!');
 
         const { data: urlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(fileName);
 
         publicUrl = urlData.publicUrl;
-        console.log('Public URL:', publicUrl);
       } catch (error) {
         // Fall back to local URI if upload fails
         publicUrl = uri;

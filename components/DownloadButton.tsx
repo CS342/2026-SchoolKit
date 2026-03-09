@@ -44,6 +44,8 @@ export function DownloadButton({ resourceId, size = 24, color = COLORS.primary }
       activeOpacity={0.7}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       accessibilityLabel={downloaded ? 'Remove download' : 'Download'}
+      accessibilityRole="button"
+      accessibilityState={{ selected: downloaded }}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Ionicons
