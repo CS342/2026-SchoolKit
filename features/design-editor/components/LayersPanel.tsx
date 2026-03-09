@@ -108,6 +108,26 @@ export function LayersPanel() {
                   flexShrink: 0,
                 }}
               >
+                {/* Lock toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateObject(obj.id, { locked: !obj.locked });
+                  }}
+                  title={obj.locked ? 'Unlock' : 'Lock'}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    padding: '2px 4px',
+                    opacity: obj.locked ? 0.8 : 0.3,
+                    color: obj.locked ? colors.primary : colors.textDark,
+                  }}
+                >
+                  {obj.locked ? '🔒' : '🔓'}
+                </button>
+
                 {/* Visibility toggle */}
                 <button
                   onClick={(e) => {

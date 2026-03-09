@@ -10,9 +10,10 @@ interface EditorToolbarProps {
   onPublish: () => void;
   onPreview: () => void;
   onAIGenerate: () => void;
+  onShowShortcuts?: () => void;
 }
 
-export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview, onAIGenerate }: EditorToolbarProps) {
+export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview, onAIGenerate, onShowShortcuts }: EditorToolbarProps) {
   const router = useRouter();
   const { colors } = useTheme();
   const title = useEditorStore((s) => s.title);
@@ -306,6 +307,30 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
       >
         Publish
       </button>
+
+      {/* Shortcuts help */}
+      {onShowShortcuts && (
+        <button
+          onClick={onShowShortcuts}
+          title="Keyboard shortcuts (?)"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            border: `1px solid ${colors.borderCard}`,
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 700,
+            color: colors.textLight,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ?
+        </button>
+      )}
 
       {/* Preview */}
       <button

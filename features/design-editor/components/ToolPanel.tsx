@@ -438,6 +438,8 @@ function SettingsFlyout({ colors }: { colors: any }) {
   const setSnapToGrid = useEditorStore((s) => s.setSnapToGrid);
   const snapToObjects = useEditorStore((s) => s.snapToObjects);
   const setSnapToObjects = useEditorStore((s) => s.setSnapToObjects);
+  const gridSize = useEditorStore((s) => s.gridSize);
+  const setGridSize = useEditorStore((s) => s.setGridSize);
 
   const toggles = [
     { label: 'Show Grid', value: showGrid, onChange: () => setShowGrid(!showGrid) },
@@ -489,6 +491,25 @@ function SettingsFlyout({ colors }: { colors: any }) {
           </button>
         </div>
       ))}
+
+      {/* Grid size slider */}
+      {showGrid && (
+        <div style={{ padding: '8px 8px 12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 12, color: colors.textLight }}>Grid Size</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textDark }}>{gridSize}px</span>
+          </div>
+          <input
+            type="range"
+            min={5}
+            max={50}
+            step={5}
+            value={gridSize}
+            onChange={(e) => setGridSize(Number(e.target.value))}
+            style={{ width: '100%', accentColor: colors.primary }}
+          />
+        </div>
+      )}
     </div>
   );
 }

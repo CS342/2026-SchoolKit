@@ -52,6 +52,8 @@ interface EditorState {
   updateObject: (id: string, changes: Partial<DesignObject>) => void;
   deleteObjects: (ids: string[]) => void;
   reorderObject: (id: string, newIndex: number) => void;
+  moveToFront: (ids: string[]) => void;
+  moveToBack: (ids: string[]) => void;
   duplicateObjects: (ids: string[]) => void;
 
   setSelection: (ids: string[]) => void;
@@ -192,6 +194,26 @@ export const useEditorStore = create<EditorState>()(
               state.objects.splice(newIndex, 0, obj);
               state.isDirty = true;
             }
+          }),
+        ),
+
+      moveToFront: (ids) =>
+        set(
+          produce((state: EditorState) => {
+            const toMove = state.objects.filter((o) => ids.includes(o.id));
+            if (toMove.length === 0) return;
+            state.objects = [...state.objects.filter((o) => !ids.includes(o.id)), ...toMove];
+            state.isDirty = true;
+          }),
+        ),
+
+      moveToBack: (ids) =>
+        set(
+          produce((state: EditorState) => {
+            const toMove = state.objects.filter((o) => ids.includes(o.id));
+            if (toMove.length === 0) return;
+            state.objects = [...toMove, ...state.objects.filter((o) => !ids.includes(o.id))];
+            state.isDirty = true;
           }),
         ),
 

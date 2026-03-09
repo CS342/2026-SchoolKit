@@ -43,6 +43,8 @@ export function EditorShell({
   const [rightPanel, setRightPanel] = useState<'properties' | 'layers'>(
     'properties',
   );
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const deleteObjects = useEditorStore((s) => s.deleteObjects);
@@ -56,6 +58,8 @@ export function EditorShell({
   const enterComponent = useEditorStore((s) => s.enterComponent);
   const deleteChildObjects = useEditorStore((s) => s.deleteChildObjects);
   const pasteObjects = useEditorStore((s) => s.pasteObjects);
+  const moveToFront = useEditorStore((s) => s.moveToFront);
+  const moveToBack = useEditorStore((s) => s.moveToBack);
   const isPreviewMode = useEditorStore((s) => s.isPreviewMode);
   const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
   const canvas = useEditorStore((s) => s.canvas);
@@ -67,6 +71,11 @@ export function EditorShell({
 
   const { saveNow } = useAutoSave(stageRef);
   const { uploadImage } = useDesignAssets();
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 1500);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -115,7 +124,10 @@ export function EditorShell({
       // Duplicate
       if (isMeta && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
-        if (selectedIds.length > 0) duplicateObjects(selectedIds);
+        if (selectedIds.length > 0) {
+          duplicateObjects(selectedIds);
+          showToast(`Duplicated ${selectedIds.length} object${selectedIds.length > 1 ? 's' : ''}`);
+        }
         return;
       }
 
@@ -176,6 +188,22 @@ export function EditorShell({
         return;
       }
 
+      // Bring to front (Cmd+])
+      if (isMeta && e.key === ']' && selectedIds.length > 0) {
+        e.preventDefault();
+        moveToFront(selectedIds);
+        showToast('Moved to front');
+        return;
+      }
+
+      // Send to back (Cmd+[)
+      if (isMeta && e.key === '[' && selectedIds.length > 0) {
+        e.preventDefault();
+        moveToBack(selectedIds);
+        showToast('Moved to back');
+        return;
+      }
+
       // Escape — exit component or clear selection
       if (e.key === 'Escape') {
         if (editingComponentId) {
@@ -199,25 +227,14 @@ export function EditorShell({
 
       // Tool shortcuts
       if (!isMeta) {
-        switch (e.key.toLowerCase()) {
-          case 'v':
-            setActiveTool('select');
-            break;
-          case 'r':
-            setActiveTool('rect');
-            break;
-          case 'e':
-            setActiveTool('ellipse');
-            break;
-          case 't':
-            setActiveTool('text');
-            break;
-          case 'l':
-            setActiveTool('line');
-            break;
-          case 'p':
-            setPreviewMode(!isPreviewMode);
-            break;
+        switch (e.key) {
+          case 'v': case 'V': setActiveTool('select'); break;
+          case 'r': case 'R': setActiveTool('rect'); break;
+          case 'e': case 'E': setActiveTool('ellipse'); break;
+          case 't': case 'T': setActiveTool('text'); break;
+          case 'l': case 'L': setActiveTool('line'); break;
+          case 'p': case 'P': setPreviewMode(!isPreviewMode); break;
+          case '?': setShowShortcuts(true); break;
         }
       }
     };
@@ -238,8 +255,11 @@ export function EditorShell({
     enterComponent,
     deleteChildObjects,
     pasteObjects,
+    moveToFront,
+    moveToBack,
     isPreviewMode,
     setPreviewMode,
+    showToast,
   ]);
 
   const handleImageUpload = useCallback(
@@ -267,6 +287,7 @@ export function EditorShell({
         onPublish={() => setShowPublish(true)}
         onPreview={() => setPreviewMode(true)}
         onAIGenerate={() => setShowAIGenerate(true)}
+        onShowShortcuts={() => setShowShortcuts(true)}
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
@@ -369,6 +390,121 @@ export function EditorShell({
 
       {isPreviewMode && (
         <PreviewOverlay onClose={() => setPreviewMode(false)} />
+      )}
+
+      {/* Toast notification */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            color: '#fff',
+            padding: '8px 20px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 500,
+            zIndex: 9999,
+            animation: 'fade-in-up 0.2s ease-out',
+            pointerEvents: 'none',
+          }}
+        >
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Keyboard shortcuts modal */}
+      {showShortcuts && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9998,
+          }}
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: 16,
+              padding: 24,
+              width: 420,
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: colors.textDark }}>Keyboard Shortcuts</h3>
+              <button
+                onClick={() => setShowShortcuts(false)}
+                style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: colors.textLight }}
+              >
+                ×
+              </button>
+            </div>
+            {[
+              ['Tools', [
+                ['V', 'Select tool'],
+                ['R', 'Rectangle tool'],
+                ['E', 'Ellipse tool'],
+                ['T', 'Text tool'],
+                ['L', 'Line tool'],
+                ['P', 'Toggle preview'],
+              ]],
+              ['Edit', [
+                ['⌘ Z', 'Undo'],
+                ['⌘ ⇧ Z', 'Redo'],
+                ['⌘ D', 'Duplicate'],
+                ['⌘ A', 'Select all'],
+                ['⌘ C', 'Copy'],
+                ['⌘ X', 'Cut'],
+                ['⌘ V', 'Paste'],
+                ['⌘ S', 'Save'],
+                ['Delete', 'Delete selected'],
+              ]],
+              ['Layers', [
+                ['⌘ ]', 'Bring to front'],
+                ['⌘ [', 'Send to back'],
+              ]],
+              ['Navigation', [
+                ['Enter', 'Edit component'],
+                ['Escape', 'Exit / deselect'],
+                ['?', 'Show shortcuts'],
+              ]],
+            ].map(([section, shortcuts]) => (
+              <div key={section as string} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: colors.textLight, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+                  {section as string}
+                </div>
+                {(shortcuts as string[][]).map(([key, desc]) => (
+                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13 }}>
+                    <span style={{ color: colors.textDark }}>{desc}</span>
+                    <kbd style={{
+                      backgroundColor: colors.backgroundLight,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: colors.textDark,
+                      border: `1px solid ${colors.borderCard}`,
+                      fontFamily: 'monospace',
+                    }}>
+                      {key}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* CSS for spinner + generation progress animations */}
