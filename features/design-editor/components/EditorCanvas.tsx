@@ -351,7 +351,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
               y={0}
               width={canvas.width}
               height={canvas.height}
-              fill={canvas.background}
+              fill={canvas.backgroundGradient ? undefined : canvas.background}
               {...(canvas.backgroundGradient ? getCanvasGradientProps(canvas.backgroundGradient, canvas.width, canvas.height) : {})}
             />
 

@@ -25,11 +25,12 @@ function NumberInput({
     <div style={{ flex: 1 }}>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: colors.textLight,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'block',
-          marginBottom: 3,
+          marginBottom: 4,
+          letterSpacing: 0.3,
         }}
       >
         {label}
@@ -43,13 +44,23 @@ function NumberInput({
         onChange={(e) => onChange(Number(e.target.value))}
         style={{
           width: '100%',
-          padding: '6px 8px',
+          padding: '5px 8px',
           borderRadius: 6,
           border: `1px solid ${colors.borderCard}`,
-          fontSize: 13,
+          fontSize: 12,
           color: colors.textDark,
           backgroundColor: colors.appBackground,
           boxSizing: 'border-box',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          outline: 'none',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = colors.primary;
+          e.target.style.boxShadow = `0 0 0 2px ${colors.primary}22`;
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = colors.borderCard;
+          e.target.style.boxShadow = 'none';
         }}
       />
     </div>
@@ -76,11 +87,12 @@ function RangeInput({
     <div style={{ flex: 1 }}>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: colors.textLight,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'block',
-          marginBottom: 3,
+          marginBottom: 4,
+          letterSpacing: 0.3,
         }}
       >
         {label}
@@ -101,11 +113,14 @@ function RangeInput({
         />
         <span
           style={{
-            fontSize: 12,
+            fontSize: 11,
             color: colors.textDark,
             fontFamily: 'monospace',
             minWidth: 32,
             textAlign: 'right',
+            backgroundColor: colors.appBackground,
+            padding: '2px 6px',
+            borderRadius: 4,
           }}
         >
           {Math.round(value * 100)}%
@@ -131,11 +146,12 @@ function TextInput({
     <div style={{ flex: 1 }}>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: colors.textLight,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'block',
-          marginBottom: 3,
+          marginBottom: 4,
+          letterSpacing: 0.3,
         }}
       >
         {label}
@@ -147,13 +163,23 @@ function TextInput({
         onChange={(e) => onChange(e.target.value)}
         style={{
           width: '100%',
-          padding: '6px 8px',
+          padding: '5px 8px',
           borderRadius: 6,
           border: `1px solid ${colors.borderCard}`,
-          fontSize: 13,
+          fontSize: 12,
           color: colors.textDark,
           backgroundColor: colors.appBackground,
           boxSizing: 'border-box',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          outline: 'none',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = colors.primary;
+          e.target.style.boxShadow = `0 0 0 2px ${colors.primary}22`;
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = colors.borderCard;
+          e.target.style.boxShadow = 'none';
         }}
       />
     </div>
@@ -170,15 +196,17 @@ function ColorInput({
   onChange: (v: string) => void;
 }) {
   const { colors } = useTheme();
+  const [showPresets, setShowPresets] = useState(false);
   return (
     <div style={{ flex: 1 }}>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: colors.textLight,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'block',
-          marginBottom: 3,
+          marginBottom: 4,
+          letterSpacing: 0.3,
         }}
       >
         {label}
@@ -188,25 +216,39 @@ function ColorInput({
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '4px 8px',
+          padding: '3px 8px',
           borderRadius: 6,
           border: `1px solid ${colors.borderCard}`,
           backgroundColor: colors.appBackground,
+          transition: 'border-color 0.15s',
         }}
       >
-        <input
-          type="color"
-          value={value || '#000000'}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            width: 22,
-            height: 22,
-            padding: 0,
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 5,
+              backgroundColor: value || '#000000',
+              border: `1px solid ${colors.borderCard}`,
+              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)',
+            }}
+          />
+          <input
+            type="color"
+            value={value || '#000000'}
+            onChange={(e) => onChange(e.target.value)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 20,
+              height: 20,
+              opacity: 0,
+              cursor: 'pointer',
+            }}
+          />
+        </div>
         <input
           type="text"
           value={value || ''}
@@ -216,33 +258,68 @@ function ColorInput({
             flex: 1,
             border: 'none',
             background: 'none',
-            fontSize: 12,
+            fontSize: 11,
             color: colors.textDark,
             outline: 'none',
             fontFamily: 'monospace',
+            minWidth: 0,
           }}
         />
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 8,
+            color: colors.textLight,
+            padding: '2px',
+            lineHeight: 1,
+          }}
+          title="Color presets"
+        >
+          {showPresets ? '▲' : '▼'}
+        </button>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-        {COLOR_PRESETS.map((preset) => (
-          <button
-            key={preset}
-            onClick={() => onChange(preset)}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 8,
-              backgroundColor: preset,
-              border: value?.toUpperCase() === preset.toUpperCase()
-                ? `2px solid ${colors.primary}`
-                : `1px solid ${colors.borderCard}`,
-              cursor: 'pointer',
-              padding: 0,
-              flexShrink: 0,
-            }}
-          />
-        ))}
-      </div>
+      {showPresets && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 3,
+            marginTop: 6,
+            padding: '6px',
+            backgroundColor: colors.appBackground,
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+          }}
+        >
+          {COLOR_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              onClick={() => { onChange(preset); setShowPresets(false); }}
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 4,
+                backgroundColor: preset,
+                border: value?.toUpperCase() === preset.toUpperCase()
+                  ? `2px solid ${colors.primary}`
+                  : `1px solid rgba(0,0,0,0.08)`,
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0,
+                transition: 'transform 0.1s',
+                boxShadow: value?.toUpperCase() === preset.toUpperCase()
+                  ? `0 0 0 2px ${colors.primary}33`
+                  : 'none',
+              }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.transform = 'scale(1.2)'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.transform = 'scale(1)'; }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -263,11 +340,12 @@ function SelectInput({
     <div style={{ flex: 1 }}>
       <label
         style={{
-          fontSize: 11,
+          fontSize: 10,
           color: colors.textLight,
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'block',
-          marginBottom: 3,
+          marginBottom: 4,
+          letterSpacing: 0.3,
         }}
       >
         {label}
@@ -277,13 +355,18 @@ function SelectInput({
         onChange={(e) => onChange(e.target.value)}
         style={{
           width: '100%',
-          padding: '6px 8px',
+          padding: '5px 8px',
           borderRadius: 6,
           border: `1px solid ${colors.borderCard}`,
-          fontSize: 13,
+          fontSize: 12,
           color: colors.textDark,
           backgroundColor: colors.appBackground,
+          transition: 'border-color 0.15s',
+          outline: 'none',
+          cursor: 'pointer',
         }}
+        onFocus={(e) => { e.target.style.borderColor = colors.primary; }}
+        onBlur={(e) => { e.target.style.borderColor = colors.borderCard; }}
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -311,16 +394,21 @@ function CheckboxInput({
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        fontSize: 13,
+        fontSize: 12,
         color: colors.textDark,
         cursor: 'pointer',
+        padding: '2px 0',
       }}
     >
       <input
         type="checkbox"
         checked={value}
         onChange={(e) => onChange(e.target.checked)}
-        style={{ accentColor: colors.primary }}
+        style={{
+          accentColor: colors.primary,
+          width: 14,
+          height: 14,
+        }}
       />
       {label}
     </label>
@@ -330,26 +418,62 @@ function CheckboxInput({
 function Section({
   title,
   children,
+  defaultOpen = true,
 }: {
   title: string;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
   const { colors } = useTheme();
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div
+    <div
+      style={{
+        marginBottom: 2,
+        borderBottom: `1px solid ${colors.borderCard}`,
+        paddingBottom: isOpen ? 12 : 0,
+      }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
         style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: colors.textLight,
-          textTransform: 'uppercase',
-          letterSpacing: 0.8,
-          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '8px 0',
+          border: 'none',
+          background: 'none',
+          cursor: 'pointer',
+          color: colors.textDark,
         }}
       >
-        {title}
-      </div>
-      {children}
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: 0.3,
+          }}
+        >
+          {title}
+        </span>
+        <span
+          style={{
+            fontSize: 9,
+            color: colors.textLight,
+            transition: 'transform 0.2s',
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+            lineHeight: 1,
+          }}
+        >
+          ▼
+        </span>
+      </button>
+      {isOpen && (
+        <div style={{ paddingTop: 2 }}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -514,7 +638,7 @@ export function PropertiesPanel() {
   return (
     <div
       style={{
-        width: 260,
+        width: 280,
         backgroundColor: colors.white,
         borderLeft: `1px solid ${colors.borderCard}`,
         display: 'flex',
@@ -526,6 +650,8 @@ export function PropertiesPanel() {
       <div
         style={{
           display: 'flex',
+          padding: '8px 10px 0',
+          gap: 4,
           borderBottom: `1px solid ${colors.borderCard}`,
         }}
       >
@@ -535,19 +661,22 @@ export function PropertiesPanel() {
             onClick={() => setActiveTab(tab)}
             style={{
               flex: 1,
-              padding: '10px 0',
+              padding: '7px 0 9px',
               border: 'none',
               backgroundColor: 'transparent',
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 600,
               color: activeTab === tab ? colors.primary : colors.textLight,
               borderBottom:
                 activeTab === tab ? `2px solid ${colors.primary}` : '2px solid transparent',
               cursor: 'pointer',
               textTransform: 'capitalize',
+              letterSpacing: 0.3,
+              transition: 'color 0.15s',
+              borderRadius: '6px 6px 0 0',
             }}
           >
-            {tab}
+            {tab === 'properties' ? 'Design' : 'Canvas'}
           </button>
         ))}
       </div>
@@ -556,7 +685,7 @@ export function PropertiesPanel() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: 14,
+          padding: '6px 14px 14px',
         }}
       >
         {activeTab === 'canvas' ? (
@@ -576,7 +705,7 @@ export function PropertiesPanel() {
             <div
               style={{
                 color: colors.textLight,
-                fontSize: 13,
+                fontSize: 12,
                 textAlign: 'center',
                 paddingTop: 20,
               }}
@@ -588,12 +717,14 @@ export function PropertiesPanel() {
           <div
             style={{
               color: colors.textLight,
-              fontSize: 13,
+              fontSize: 12,
               textAlign: 'center',
-              paddingTop: 40,
+              paddingTop: 48,
+              lineHeight: 1.5,
             }}
           >
-            Select an object to edit its properties
+            <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.4 }}>&#9670;</div>
+            Select an object to edit
           </div>
         )}
       </div>
@@ -905,17 +1036,26 @@ function GradientSection({
               }}
               style={{
                 width: '100%',
-                padding: '6px 0',
+                padding: '5px 0',
                 border: '1px dashed #E8E8F0',
                 borderRadius: 6,
                 backgroundColor: 'transparent',
                 cursor: 'pointer',
-                fontSize: 12,
+                fontSize: 11,
                 color: '#8E8EA8',
                 marginTop: 4,
+                transition: 'background-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.target as HTMLElement).style.backgroundColor = '#F8F8FC';
+                (e.target as HTMLElement).style.color = '#6B6B85';
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLElement).style.backgroundColor = 'transparent';
+                (e.target as HTMLElement).style.color = '#8E8EA8';
               }}
             >
-              + Add Color Stop
+              + Add Stop
             </button>
           )}
         </>
@@ -1095,16 +1235,26 @@ function TextProperties({
           }
           style={{
             width: '100%',
-            minHeight: 60,
-            padding: '8px',
+            minHeight: 56,
+            padding: '6px 8px',
             borderRadius: 6,
             border: `1px solid ${colors.borderCard}`,
-            fontSize: 13,
+            fontSize: 12,
             color: colors.textDark,
             backgroundColor: colors.appBackground,
             resize: 'vertical',
             fontFamily: 'inherit',
             boxSizing: 'border-box',
+            transition: 'border-color 0.15s, box-shadow 0.15s',
+            outline: 'none',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = colors.primary;
+            e.target.style.boxShadow = `0 0 0 2px ${colors.primary}22`;
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = colors.borderCard;
+            e.target.style.boxShadow = 'none';
           }}
         />
       </Section>
@@ -1581,14 +1731,24 @@ function BadgeProperties({
           onChange={(e) => onUpdate({ text: e.target.value } as any)}
           style={{
             width: '100%',
-            padding: '6px 8px',
+            padding: '5px 8px',
             borderRadius: 6,
             border: `1px solid ${colors.borderCard}`,
-            fontSize: 13,
+            fontSize: 12,
             color: colors.textDark,
             backgroundColor: colors.appBackground,
             boxSizing: 'border-box',
             marginBottom: 8,
+            transition: 'border-color 0.15s, box-shadow 0.15s',
+            outline: 'none',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = colors.primary;
+            e.target.style.boxShadow = `0 0 0 2px ${colors.primary}22`;
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = colors.borderCard;
+            e.target.style.boxShadow = 'none';
           }}
         />
         <div style={{ marginBottom: 6 }}>

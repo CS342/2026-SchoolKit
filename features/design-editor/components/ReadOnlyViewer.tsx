@@ -413,7 +413,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
               y={0}
               width={doc.canvas.width}
               height={doc.canvas.height}
-              fill={doc.canvas.background}
+              fill={doc.canvas.backgroundGradient ? undefined : doc.canvas.background}
               {...(doc.canvas.backgroundGradient ? getGradientFillProps(doc.canvas.backgroundGradient, doc.canvas.width, doc.canvas.height) : {})}
             />
             {doc.objects

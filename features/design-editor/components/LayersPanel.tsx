@@ -26,7 +26,7 @@ export function LayersPanel() {
   return (
     <div
       style={{
-        width: 260,
+        width: 240,
         backgroundColor: colors.white,
         borderLeft: `1px solid ${colors.borderCard}`,
         display: 'flex',
@@ -38,14 +38,26 @@ export function LayersPanel() {
         style={{
           padding: '10px 14px',
           borderBottom: `1px solid ${colors.borderCard}`,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 600,
-          color: colors.textLight,
-          textTransform: 'uppercase',
-          letterSpacing: 0.8,
+          color: colors.textDark,
+          letterSpacing: 0.3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        Layers ({objects.length})
+        <span>Layers</span>
+        <span style={{
+          fontSize: 10,
+          color: colors.textLight,
+          backgroundColor: colors.appBackground,
+          padding: '1px 6px',
+          borderRadius: 8,
+          fontWeight: 500,
+        }}>
+          {objects.length}
+        </span>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
