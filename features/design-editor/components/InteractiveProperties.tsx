@@ -476,6 +476,26 @@ function EntranceProperties({
           step={25}
         />
       </div>
+      {config.animation === 'bounce' && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <NumberInput
+            label="Spring Friction"
+            value={config.springFriction ?? 8}
+            onChange={(v) => onUpdate({ springFriction: v })}
+            min={1}
+            max={30}
+            step={1}
+          />
+          <NumberInput
+            label="Spring Tension"
+            value={config.springTension ?? 40}
+            onChange={(v) => onUpdate({ springTension: v })}
+            min={10}
+            max={200}
+            step={5}
+          />
+        </div>
+      )}
     </Section>
   );
 }
@@ -499,16 +519,37 @@ function CarouselProperties({
         />
       </div>
       {config.autoPlay && (
-        <div style={{ marginBottom: 8 }}>
-          <NumberInput
-            label="Interval (ms)"
-            value={config.autoPlayInterval}
-            onChange={(v) => onUpdate({ autoPlayInterval: v })}
-            min={1000}
-            max={10000}
-            step={500}
-          />
-        </div>
+        <>
+          <div style={{ marginBottom: 8 }}>
+            <NumberInput
+              label="Interval (ms)"
+              value={config.autoPlayInterval}
+              onChange={(v) => onUpdate({ autoPlayInterval: v })}
+              min={1000}
+              max={10000}
+              step={500}
+            />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <CheckboxInput
+              label="Pause on interaction"
+              value={config.pauseOnInteraction !== false}
+              onChange={(v) => onUpdate({ pauseOnInteraction: v })}
+            />
+          </div>
+          {config.pauseOnInteraction !== false && (
+            <div style={{ marginBottom: 8 }}>
+              <NumberInput
+                label="Resume Delay (ms)"
+                value={config.resumeDelay ?? 3000}
+                onChange={(v) => onUpdate({ resumeDelay: v })}
+                min={1000}
+                max={10000}
+                step={500}
+              />
+            </div>
+          )}
+        </>
       )}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <CheckboxInput

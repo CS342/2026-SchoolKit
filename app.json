@@ -3,6 +3,7 @@
     "name": "SchoolKit",
     "slug": "schoolkit",
     "version": "1.0.0",
+    "scheme": "schoolkit",
     "orientation": "portrait",
     "icon": "./assets/images/SchoolKit.png",
     "userInterfaceStyle": "automatic",
@@ -12,12 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "assets/**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.schoolkit.app"
     },
     "android": {
+      "package": "com.schoolkit.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#ffffff"

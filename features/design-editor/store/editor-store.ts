@@ -59,6 +59,7 @@ interface EditorState {
 
   setCanvasSize: (width: number, height: number) => void;
   setCanvasBackground: (color: string) => void;
+  setCanvasGradient: (gradient: import('../types/document').GradientConfig | null) => void;
   extendCanvas: () => void;
 
   setActiveTool: (tool: ActiveTool) => void;
@@ -228,6 +229,14 @@ export const useEditorStore = create<EditorState>()(
         set(
           produce((state: EditorState) => {
             state.canvas.background = color;
+            state.isDirty = true;
+          }),
+        ),
+
+      setCanvasGradient: (gradient) =>
+        set(
+          produce((state: EditorState) => {
+            state.canvas.backgroundGradient = gradient;
             state.isDirty = true;
           }),
         ),

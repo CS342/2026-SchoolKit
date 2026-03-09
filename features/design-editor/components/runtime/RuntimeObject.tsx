@@ -29,6 +29,15 @@ function getGradientProps(gradient: GradientConfig) {
   };
 }
 
+function applyTextTransform(text: string, transform?: string): string {
+  switch (transform) {
+    case 'uppercase': return text.toUpperCase();
+    case 'lowercase': return text.toLowerCase();
+    case 'capitalize': return text.replace(/\b\w/g, (c) => c.toUpperCase());
+    default: return text;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObject; parentWidth: number }) {
@@ -72,7 +81,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         top: object.y,
         width: object.width,
         height: object.height,
-        borderRadius: object.width / 2,
+        borderRadius: 9999,
         opacity: object.opacity,
         borderWidth: object.strokeWidth || 0,
         borderColor: object.stroke || 'transparent',
@@ -97,7 +106,9 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       return <View style={{ ...baseStyle, backgroundColor: object.fill }} />;
     }
 
-    case 'text':
+    case 'text': {
+      const resolvedWeight = object.fontWeight ?? (object.fontStyle.includes('bold') ? '700' : '400');
+      const displayText = applyTextTransform(object.text, object.textTransform);
       return (
         <View
           style={{
@@ -119,7 +130,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               color: object.fill,
               fontSize: object.fontSize,
               fontFamily: object.fontFamily === 'Arial' ? undefined : object.fontFamily,
-              fontWeight: object.fontStyle.includes('bold') ? 'bold' : 'normal',
+              fontWeight: resolvedWeight,
               fontStyle: object.fontStyle.includes('italic') ? 'italic' : 'normal',
               textAlign: object.align,
               lineHeight: object.fontSize * object.lineHeight,
@@ -132,15 +143,21 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               textShadowRadius: object.shadow?.blur,
             }}
           >
-            {object.text}
+            {displayText}
           </Text>
         </View>
       );
+    }
 
-    case 'image':
+    case 'image': {
+      const imgCornerRadius = (object as any).cornerRadius ?? 0;
+      const imgObjectFit = (object as any).objectFit ?? 'cover';
+      const imgStroke = (object as any).stroke;
+      const imgStrokeWidth = (object as any).strokeWidth ?? 0;
+      const imgShadow = (object as any).shadow;
+      const resizeMode = imgObjectFit === 'contain' ? 'contain' : imgObjectFit === 'fill' ? 'stretch' : 'cover';
       return (
-        <Image
-          source={{ uri: object.src }}
+        <View
           style={{
             position: 'absolute',
             left: object.x,
@@ -148,11 +165,22 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             width: object.width,
             height: object.height,
             opacity: object.opacity,
+            borderRadius: imgCornerRadius,
+            overflow: 'hidden',
+            borderWidth: imgStrokeWidth || 0,
+            borderColor: imgStroke || 'transparent',
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
+            ...getShadowStyle(imgShadow),
           }}
-          resizeMode="cover"
-        />
+        >
+          <Image
+            source={{ uri: object.src }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode={resizeMode as any}
+          />
+        </View>
       );
+    }
 
     case 'line':
       return (
@@ -171,6 +199,8 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       );
 
     case 'badge': {
+      const badgeWeight = object.fontWeight ?? (object.fontStyle.includes('bold') ? '700' : '400');
+      const badgeText = applyTextTransform(object.text, object.textTransform);
       const badgeStyle = {
         position: 'absolute' as const,
         left: object.x,
@@ -192,7 +222,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         color: object.textColor,
         fontSize: object.fontSize,
         fontFamily: object.fontFamily === 'Arial' ? undefined : object.fontFamily,
-        fontWeight: object.fontStyle.includes('bold') ? ('bold' as const) : ('normal' as const),
+        fontWeight: badgeWeight as any,
         fontStyle: object.fontStyle.includes('italic') ? ('italic' as const) : ('normal' as const),
         textAlign: (object.align || 'center') as any,
         letterSpacing: object.letterSpacing || 0,
@@ -204,14 +234,14 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         return (
           <View style={badgeStyle}>
             <LinearGradient colors={gp.colors} start={gp.start} end={gp.end} style={StyleSheet.absoluteFill} />
-            <Text style={textStyle}>{object.text}</Text>
+            <Text style={textStyle}>{badgeText}</Text>
           </View>
         );
       }
 
       return (
         <View style={{ ...badgeStyle, backgroundColor: object.fill }}>
-          <Text style={textStyle}>{object.text}</Text>
+          <Text style={textStyle}>{badgeText}</Text>
         </View>
       );
     }

@@ -352,6 +352,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
               width={canvas.width}
               height={canvas.height}
               fill={canvas.background}
+              {...(canvas.backgroundGradient ? getCanvasGradientProps(canvas.backgroundGradient, canvas.width, canvas.height) : {})}
             />
 
             {/* Grid overlay */}
@@ -694,6 +695,37 @@ function EditableChildImage({
 }
 
 // ─── Grid Overlay ─────────────────────────────────────────────
+
+function getCanvasGradientProps(gradient: import('../types/document').GradientConfig, w: number, h: number) {
+  const colors = gradient.colors;
+  const stops: (number | string)[] = [];
+  for (let i = 0; i < colors.length; i++) {
+    stops.push(i / (colors.length - 1), colors[i]);
+  }
+  if (gradient.type === 'radial') {
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = Math.max(w, h) / 2;
+    return {
+      fillRadialGradientStartPoint: { x: cx, y: cy },
+      fillRadialGradientEndPoint: { x: cx, y: cy },
+      fillRadialGradientStartRadius: 0,
+      fillRadialGradientEndRadius: r,
+      fillRadialGradientColorStops: stops,
+    };
+  }
+  const angle = (gradient.angle ?? 0) * (Math.PI / 180);
+  const cx = w / 2;
+  const cy = h / 2;
+  const len = Math.max(w, h);
+  const dx = Math.cos(angle) * len / 2;
+  const dy = Math.sin(angle) * len / 2;
+  return {
+    fillLinearGradientStartPoint: { x: cx - dx, y: cy - dy },
+    fillLinearGradientEndPoint: { x: cx + dx, y: cy + dy },
+    fillLinearGradientColorStops: stops,
+  };
+}
 
 function GridOverlay({
   width,

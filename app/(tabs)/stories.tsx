@@ -387,7 +387,7 @@ export default function StoriesScreen() {
             const hasDot =
               option.id === "my-stories" &&
               rejectedCount > 0 &&
-              dismissedRejectedNotif;
+              !dismissedRejectedNotif;
 
             const content = (
               <>

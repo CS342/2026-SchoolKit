@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPEN_AI_MODERATION_KEY?.trim();
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim();
 
 export async function moderateContent(text: string): Promise<{ safe: boolean; reason?: string }> {
   if (!OPENAI_API_KEY) {

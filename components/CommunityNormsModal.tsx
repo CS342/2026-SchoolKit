@@ -152,7 +152,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1.5,
-    borderBottomColor: isDark ? c.borderCard : c.borderCard,
+    borderBottomColor: c.borderCard,
     backgroundColor: isDark ? c.backgroundLight : c.white,
   },
   headerTitle: {
@@ -233,7 +233,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     paddingHorizontal: 20,
     backgroundColor: isDark ? c.backgroundLight : c.white,
     borderTopWidth: 1.5,
-    borderTopColor: isDark ? c.borderCard : c.borderCard,
+    borderTopColor: c.borderCard,
   },
 });
 }

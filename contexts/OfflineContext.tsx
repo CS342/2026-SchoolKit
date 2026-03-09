@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
@@ -35,21 +36,25 @@ interface PendingChange {
 
 export function OfflineProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
+  const isOnlineRef = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   useEffect(() => {
     // Check initial network state
     NetInfo.fetch().then((state: NetInfoState) => {
-      setIsOnline(state.isConnected ?? true);
+      const connected = state.isConnected ?? true;
+      isOnlineRef.current = connected;
+      setIsOnline(connected);
       setIsLoading(false);
     });
 
     // Subscribe to network state changes
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-      const wasOffline = !isOnline;
+      const wasOffline = !isOnlineRef.current;
       const nowOnline = state.isConnected ?? true;
 
+      isOnlineRef.current = nowOnline;
       setIsOnline(nowOnline);
 
       // Auto-sync when coming back online
@@ -77,7 +82,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   };
 
   const syncPendingChanges = async () => {
-    if (!isOnline) return;
+    if (!isOnlineRef.current) return;
 
     try {
       const stored = await AsyncStorage.getItem(PENDING_CHANGES_KEY);

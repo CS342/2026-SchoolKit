@@ -37,6 +37,9 @@ export function PrimaryButton({ title, onPress, disabled = false, icon }: Primar
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      accessibilityLabel={title}
     >
       <Animated.View style={[animatedStyle, !disabled && SHADOWS.button]}>
         <LinearGradient

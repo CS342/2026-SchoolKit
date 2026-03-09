@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  cancelAnimation,
   runOnJS,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,6 +61,7 @@ export default function PieceDetailModal({
   }, [visible, piece?.id]);
 
   function handleDismiss() {
+    cancelAnimation(glowOpacity);
     scale.value = withTiming(0.85, { duration: 180 });
     opacity.value = withTiming(0, { duration: 180 }, (finished) => {
       if (finished) runOnJS(onDismiss)();

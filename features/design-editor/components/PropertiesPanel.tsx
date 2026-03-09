@@ -56,6 +56,65 @@ function NumberInput({
   );
 }
 
+function RangeInput({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 1,
+  step = 0.01,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+}) {
+  const { colors } = useTheme();
+  return (
+    <div style={{ flex: 1 }}>
+      <label
+        style={{
+          fontSize: 11,
+          color: colors.textLight,
+          fontWeight: 500,
+          display: 'block',
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          type="range"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => onChange(Number(e.target.value))}
+          style={{
+            flex: 1,
+            accentColor: colors.primary,
+            height: 4,
+          }}
+        />
+        <span
+          style={{
+            fontSize: 12,
+            color: colors.textDark,
+            fontFamily: 'monospace',
+            minWidth: 32,
+            textAlign: 'right',
+          }}
+        >
+          {Math.round(value * 100)}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ColorInput({
   label,
   value,
@@ -118,6 +177,26 @@ function ColorInput({
             fontFamily: 'monospace',
           }}
         />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+        {COLOR_PRESETS.map((preset) => (
+          <button
+            key={preset}
+            onClick={() => onChange(preset)}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: preset,
+              border: value?.toUpperCase() === preset.toUpperCase()
+                ? `2px solid ${colors.primary}`
+                : `1px solid ${colors.borderCard}`,
+              cursor: 'pointer',
+              padding: 0,
+              flexShrink: 0,
+            }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -229,6 +308,13 @@ function Section({
     </div>
   );
 }
+
+// ─── Color presets ────────────────────────────────────────────
+const COLOR_PRESETS = [
+  '#7B68EE', '#5B4BC7', '#0EA5E9', '#22C55E', '#F59E0B', '#EC4899',
+  '#EF4444', '#6366F1', '#2D2D44', '#6B6B85', '#8E8EA8', '#FFFFFF',
+  '#F0EBFF', '#FBF9FF', '#B5EAD7', '#FFDAC1', '#C7CEEA', '#FFB7B2',
+];
 
 // ─── Shared font options ──────────────────────────────────────
 const FONT_OPTIONS = [
@@ -474,6 +560,8 @@ function CanvasProperties() {
   const canvas = useEditorStore((s) => s.canvas);
   const setCanvasSize = useEditorStore((s) => s.setCanvasSize);
   const setCanvasBackground = useEditorStore((s) => s.setCanvasBackground);
+  const setCanvasGradient = useEditorStore((s) => s.setCanvasGradient);
+  const gradient = canvas.backgroundGradient;
 
   return (
     <>
@@ -501,6 +589,65 @@ function CanvasProperties() {
           value={canvas.background}
           onChange={setCanvasBackground}
         />
+      </Section>
+      <Section title="Background Gradient">
+        <div style={{ marginBottom: 8 }}>
+          <CheckboxInput
+            label="Enable gradient"
+            value={!!gradient}
+            onChange={(on) => {
+              if (on) {
+                setCanvasGradient({ type: 'linear', colors: ['#7B68EE', '#0EA5E9'], angle: 135 });
+              } else {
+                setCanvasGradient(null);
+              }
+            }}
+          />
+        </div>
+        {gradient && (
+          <>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <SelectInput
+                label="Type"
+                value={gradient.type}
+                options={[
+                  { value: 'linear', label: 'Linear' },
+                  { value: 'radial', label: 'Radial' },
+                ]}
+                onChange={(v) => setCanvasGradient({ ...gradient, type: v as 'linear' | 'radial' })}
+              />
+              {gradient.type === 'linear' && (
+                <NumberInput
+                  label="Angle"
+                  value={gradient.angle ?? 0}
+                  onChange={(v) => setCanvasGradient({ ...gradient, angle: v })}
+                  min={0}
+                  max={360}
+                />
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <ColorInput
+                label="Start"
+                value={gradient.colors[0] || '#7B68EE'}
+                onChange={(c) => {
+                  const colors = [...gradient.colors];
+                  colors[0] = c;
+                  setCanvasGradient({ ...gradient, colors });
+                }}
+              />
+              <ColorInput
+                label="End"
+                value={gradient.colors[1] || '#0EA5E9'}
+                onChange={(c) => {
+                  const colors = [...gradient.colors];
+                  colors[1] = c;
+                  setCanvasGradient({ ...gradient, colors });
+                }}
+              />
+            </div>
+          </>
+        )}
       </Section>
     </>
   );
@@ -551,15 +698,10 @@ function ObjectProperties({
             min={-360}
             max={360}
           />
-          <NumberInput
+          <RangeInput
             label="Opacity"
             value={object.opacity}
-            onChange={(opacity) =>
-              onUpdate({ opacity: Math.max(0, Math.min(1, opacity)) })
-            }
-            min={0}
-            max={1}
-            step={0.1}
+            onChange={(opacity) => onUpdate({ opacity })}
           />
         </div>
       </Section>
@@ -587,6 +729,10 @@ function ObjectProperties({
 
       {object.type === 'arrow' && (
         <ArrowProperties object={object} onUpdate={onUpdate} />
+      )}
+
+      {object.type === 'image' && (
+        <ImageProperties object={object} onUpdate={onUpdate} />
       )}
 
       {object.type === 'badge' && (
@@ -643,26 +789,62 @@ function GradientSection({
               />
             )}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <ColorInput
-              label="Start"
-              value={gradient.colors[0] || '#7B68EE'}
-              onChange={(c) => {
-                const colors = [...gradient.colors];
-                colors[0] = c;
+          {gradient.colors.map((color, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'flex-end' }}>
+              <ColorInput
+                label={i === 0 ? 'Start' : i === gradient.colors.length - 1 ? 'End' : `Stop ${i + 1}`}
+                value={color}
+                onChange={(c) => {
+                  const colors = [...gradient.colors];
+                  colors[i] = c;
+                  onUpdate({ gradient: { ...gradient, colors } } as any);
+                }}
+              />
+              {gradient.colors.length > 2 && (
+                <button
+                  onClick={() => {
+                    const colors = gradient.colors.filter((_, j) => j !== i);
+                    onUpdate({ gradient: { ...gradient, colors } } as any);
+                  }}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
+                    border: '1px solid #E8E8F0',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    color: '#EF4444',
+                    flexShrink: 0,
+                    marginBottom: 3,
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+          {gradient.colors.length < 4 && (
+            <button
+              onClick={() => {
+                const colors = [...gradient.colors, '#F59E0B'];
                 onUpdate({ gradient: { ...gradient, colors } } as any);
               }}
-            />
-            <ColorInput
-              label="End"
-              value={gradient.colors[1] || '#0EA5E9'}
-              onChange={(c) => {
-                const colors = [...gradient.colors];
-                colors[1] = c;
-                onUpdate({ gradient: { ...gradient, colors } } as any);
+              style={{
+                width: '100%',
+                padding: '6px 0',
+                border: '1px dashed #E8E8F0',
+                borderRadius: 6,
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                fontSize: 12,
+                color: '#8E8EA8',
+                marginTop: 4,
               }}
-            />
-          </div>
+            >
+              + Add Color Stop
+            </button>
+          )}
         </>
       )}
     </Section>
@@ -901,6 +1083,25 @@ function TextProperties({
             }
           />
           <SelectInput
+            label="Weight"
+            value={(object as any).fontWeight ?? ''}
+            options={[
+              { value: '', label: 'Auto' },
+              { value: '100', label: '100 Thin' },
+              { value: '200', label: '200 Extra Light' },
+              { value: '300', label: '300 Light' },
+              { value: '400', label: '400 Regular' },
+              { value: '500', label: '500 Medium' },
+              { value: '600', label: '600 Semi Bold' },
+              { value: '700', label: '700 Bold' },
+              { value: '800', label: '800 Extra Bold' },
+              { value: '900', label: '900 Black' },
+            ]}
+            onChange={(v) => onUpdate({ fontWeight: v || undefined } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <SelectInput
             label="Align"
             value={object.align}
             options={[
@@ -912,6 +1113,17 @@ function TextProperties({
             onChange={(align) =>
               onUpdate({ align } as Partial<DesignObject>)
             }
+          />
+          <SelectInput
+            label="Transform"
+            value={(object as any).textTransform ?? 'none'}
+            options={[
+              { value: 'none', label: 'None' },
+              { value: 'uppercase', label: 'UPPERCASE' },
+              { value: 'lowercase', label: 'lowercase' },
+              { value: 'capitalize', label: 'Capitalize' },
+            ]}
+            onChange={(v) => onUpdate({ textTransform: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
@@ -1229,6 +1441,56 @@ function ArrowProperties({
   );
 }
 
+function ImageProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'image' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const shadow = (object as any).shadow as import('../types/document').ShadowConfig | null | undefined;
+  return (
+    <>
+      <Section title="Image Style">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <NumberInput
+            label="Corner Radius"
+            value={(object as any).cornerRadius ?? 0}
+            onChange={(v) => onUpdate({ cornerRadius: v } as any)}
+            min={0}
+            max={200}
+          />
+          <SelectInput
+            label="Object Fit"
+            value={(object as any).objectFit ?? 'cover'}
+            options={[
+              { value: 'cover', label: 'Cover' },
+              { value: 'contain', label: 'Contain' },
+              { value: 'fill', label: 'Fill' },
+            ]}
+            onChange={(v) => onUpdate({ objectFit: v } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ColorInput
+            label="Stroke"
+            value={(object as any).stroke ?? ''}
+            onChange={(v) => onUpdate({ stroke: v } as any)}
+          />
+          <NumberInput
+            label="Stroke Width"
+            value={(object as any).strokeWidth ?? 0}
+            onChange={(v) => onUpdate({ strokeWidth: v } as any)}
+            min={0}
+            max={20}
+          />
+        </div>
+      </Section>
+      <ShadowSection shadow={shadow} onUpdate={onUpdate} />
+    </>
+  );
+}
+
 function BadgeProperties({
   object,
   onUpdate,
@@ -1276,6 +1538,35 @@ function BadgeProperties({
             label="Text Color"
             value={object.textColor}
             onChange={(v) => onUpdate({ textColor: v } as any)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <SelectInput
+            label="Weight"
+            value={(object as any).fontWeight ?? ''}
+            options={[
+              { value: '', label: 'Auto' },
+              { value: '100', label: '100 Thin' },
+              { value: '300', label: '300 Light' },
+              { value: '400', label: '400 Regular' },
+              { value: '500', label: '500 Medium' },
+              { value: '600', label: '600 Semi Bold' },
+              { value: '700', label: '700 Bold' },
+              { value: '800', label: '800 Extra Bold' },
+              { value: '900', label: '900 Black' },
+            ]}
+            onChange={(v) => onUpdate({ fontWeight: v || undefined } as any)}
+          />
+          <SelectInput
+            label="Transform"
+            value={(object as any).textTransform ?? 'none'}
+            options={[
+              { value: 'none', label: 'None' },
+              { value: 'uppercase', label: 'UPPERCASE' },
+              { value: 'lowercase', label: 'lowercase' },
+              { value: 'capitalize', label: 'Capitalize' },
+            ]}
+            onChange={(v) => onUpdate({ textTransform: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TouchableOpacity, Text, Animated } from 'react-native';
 import type { InteractiveComponentObject, TabsConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 
@@ -7,6 +7,15 @@ export function RuntimeTabs({ object }: { object: InteractiveComponentObject }) 
   const config = object.interactionConfig as TabsConfig;
   const tabGroups = object.groups.filter((g) => g.role.startsWith('tab-'));
   const [activeTab, setActiveTab] = useState(config.defaultTab);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const switchTab = (i: number) => {
+    if (i === activeTab) return;
+    Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }).start(() => {
+      setActiveTab(i);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 120, useNativeDriver: true }).start();
+    });
+  };
 
   const currentGroup = tabGroups[activeTab];
   const visibleChildren = currentGroup
@@ -28,7 +37,7 @@ export function RuntimeTabs({ object }: { object: InteractiveComponentObject }) 
         return (
           <TouchableOpacity
             key={group.role}
-            onPress={() => setActiveTab(i)}
+            onPress={() => switchTab(i)}
             style={{
               flex: 1,
               paddingVertical: 8,
@@ -74,11 +83,11 @@ export function RuntimeTabs({ object }: { object: InteractiveComponentObject }) 
       }}
     >
       {config.tabPosition === 'top' && tabBar}
-      <View style={{ flex: 1 }}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
         {visibleChildren.map((child) => (
           <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
         ))}
-      </View>
+      </Animated.View>
       {config.tabPosition === 'bottom' && tabBar}
     </View>
   );

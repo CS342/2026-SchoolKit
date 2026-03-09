@@ -259,7 +259,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isResourceFullyViewed = useCallback((id: string) =>
-    openedResourceIdsRef.current.has(id) && scrolledToEndIdsRef.current.has(id), [openedResourceIds, scrolledToEndIds]);
+    openedResourceIds.has(id) && scrolledToEndIds.has(id), [openedResourceIds, scrolledToEndIds]);
 
   const value: AccomplishmentContextType = {
     earnedPieceIds,

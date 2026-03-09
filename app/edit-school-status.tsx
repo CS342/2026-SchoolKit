@@ -12,7 +12,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding, SchoolStatus } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
-import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
+import { SPACING, ANIMATION } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
   { value: 'current-treatment', label: 'Currently in school' },
@@ -43,6 +44,7 @@ export default function EditSchoolStatusScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, updateSchoolStatuses } = useOnboarding();
+  const { colors, appStyles } = useTheme();
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>(data.schoolStatuses);
 
   const toggleStatus = (status: SchoolStatus) => {
@@ -59,20 +61,20 @@ export default function EditSchoolStatusScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[APP_STYLES.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton} accessibilityLabel="Go back">
-          <Ionicons name="chevron-back" size={22} color={COLORS.textDark} />
+    <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
+      <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+          <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={APP_STYLES.editHeaderTitle}>Edit School Status</Text>
-        <TouchableOpacity onPress={handleSave} style={APP_STYLES.editSaveButton}>
-          <Text style={APP_STYLES.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>Edit School Status</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton}>
+          <Text style={appStyles.editSaveText}>Save</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={APP_STYLES.editScrollContent}>
-        <Text style={styles.subtitle}>Select all that apply</Text>
-        <Text style={styles.selectedCount}>
+      <ScrollView contentContainerStyle={appStyles.editScrollContent}>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select all that apply</Text>
+        <Text style={[styles.selectedCount, { color: colors.primary }]}>
           {selectedStatuses.length} status{selectedStatuses.length !== 1 ? 'es' : ''} selected
         </Text>
 
@@ -96,18 +98,15 @@ export default function EditSchoolStatusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.appBackground,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textMuted,
     marginBottom: 12,
   },
   selectedCount: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.primary,
     marginBottom: SPACING.screenPadding,
   },
   cardsContainer: {

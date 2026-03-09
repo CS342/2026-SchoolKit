@@ -80,7 +80,7 @@ export default function TopicDetailScreen() {
     checkForDesign();
   }, [id, title]);
 
-  const resourceId = id || title || '';
+  const resourceId = id || '';
   const [layoutHeight, setLayoutHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
 
@@ -172,35 +172,14 @@ export default function TopicDetailScreen() {
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key Resources</Text>
-          <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
-              <Ionicons name="document-text" size={24} color={color} />
-            </View>
-            <View style={styles.resourceContent}>
-              <Text style={styles.resourceTitle}>Getting Started Guide</Text>
-              <Text style={styles.resourceSubtitle}>Learn the basics</Text>
-            </View>
+        <View style={[styles.section, { alignItems: 'center', paddingVertical: 32 }]}>
+          <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082), width: 64, height: 64, borderRadius: 32, marginBottom: 16 }]}>
+            <Ionicons name="construct-outline" size={32} color={color} />
           </View>
-          <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
-              <Ionicons name="people" size={24} color={color} />
-            </View>
-            <View style={styles.resourceContent}>
-              <Text style={styles.resourceTitle}>Community Support</Text>
-              <Text style={styles.resourceSubtitle}>Connect with others</Text>
-            </View>
-          </View>
-          <View style={styles.resourceItem}>
-            <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082) }]}>
-              <Ionicons name="bulb" size={24} color={color} />
-            </View>
-            <View style={styles.resourceContent}>
-              <Text style={styles.resourceTitle}>Tips & Strategies</Text>
-              <Text style={styles.resourceSubtitle}>Practical advice</Text>
-            </View>
-          </View>
+          <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Content Coming Soon</Text>
+          <Text style={[styles.description, { textAlign: 'center' }]}>
+            We're working on creating detailed resources for this topic. Check back soon!
+          </Text>
         </View>
       </ScrollView>
     </View>

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 110,
     borderWidth: 2,
-    opacity: 1.5, // stacks with outer
+    opacity: 0.15,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 80,
     borderWidth: 2,
-    opacity: 2.25,
+    opacity: 0.25,
   },
   pieceContainer: {
     alignItems: 'center',

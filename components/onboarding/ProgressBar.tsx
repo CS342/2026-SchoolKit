@@ -14,7 +14,7 @@ interface ProgressBarProps {
 }
 
 function Pill({ state }: { state: 'completed' | 'active' | 'inactive' }) {
-  const width = useSharedValue(state === 'active' ? 10 : 10);
+  const width = useSharedValue(10);
 
   useEffect(() => {
     width.value = withSpring(state === 'active' ? 28 : 10, ANIMATION.springSmooth);

@@ -45,7 +45,7 @@ export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const { signUp, signInWithPassword, signInAnonymously } = useAuth();
+  const { signUp, signInWithPassword, signInAnonymously, resetPassword } = useAuth();
   const [isSignUp, setIsSignUp] = useState(mode !== 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -132,6 +132,30 @@ export default function AuthScreen() {
         } else {
           router.replace('/');
         }
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Enter your email', 'Please enter your email address first, then tap Forgot Password.');
+      return;
+    }
+    if (!isValidEmail(email.trim())) {
+      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await resetPassword(email.trim());
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Check your email', 'If an account exists with that email, you will receive a password reset link.');
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Something went wrong.');
@@ -273,6 +297,13 @@ export default function AuthScreen() {
                   {passwordStrength.label}
                 </Text>
               </View>
+            )}
+
+            {/* Forgot Password */}
+            {!isSignUp && (
+              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
             )}
 
             {/* Confirm Password */}
@@ -465,6 +496,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     width: 80,
     textAlign: 'right',
+  },
+  forgotButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+    marginTop: -8,
+  },
+  forgotText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   submitContainer: {
     marginTop: 8,

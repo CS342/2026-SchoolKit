@@ -35,7 +35,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
   const [preference, setPreference] = useState<ThemePreference>('system');
   const [textSizePreference, setTextSizePref] = useState<TextSizePreference>('default');
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -44,7 +43,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     ]).then(([theme, textSize]) => {
       if (theme === 'light' || theme === 'dark' || theme === 'system') setPreference(theme);
       if (textSize === 'small' || textSize === 'default' || textSize === 'large') setTextSizePref(textSize);
-      setLoaded(true);
     });
   }, []);
 
@@ -88,8 +86,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       fontScale,
     };
   }, [isDark, preference, textSizePreference]);
-
-  if (!loaded) return null;
 
   return (
     <ThemeContext.Provider value={theme}>

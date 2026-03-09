@@ -218,16 +218,5 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     color: c.textLight,
     fontWeight: '500',
   },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADII.badgeSmall,
-    marginTop: 'auto',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
 });
 }

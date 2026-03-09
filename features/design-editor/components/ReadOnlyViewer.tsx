@@ -66,6 +66,26 @@ function getShadowProps(shadow: ShadowConfig | null | undefined) {
   };
 }
 
+// ─── Text helpers ─────────────────────────────────────────────
+
+function buildKonvaFontStyle(fontStyle: string, fontWeight?: string): string {
+  const isItalic = fontStyle.includes('italic');
+  const weight = fontWeight ?? (fontStyle.includes('bold') ? '700' : '400');
+  if (isItalic && weight !== '400') return `italic ${weight}`;
+  if (isItalic) return 'italic';
+  if (weight !== '400') return weight;
+  return 'normal';
+}
+
+function applyTextTransform(text: string, transform?: string): string {
+  switch (transform) {
+    case 'uppercase': return text.toUpperCase();
+    case 'lowercase': return text.toLowerCase();
+    case 'capitalize': return text.replace(/\b\w/g, (c) => c.toUpperCase());
+    default: return text;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export function ReadOnlyObject({ object }: { object: DesignObject }) {
@@ -116,10 +136,10 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
       return (
         <Text
           {...commonProps}
-          text={object.text}
+          text={applyTextTransform(object.text, object.textTransform)}
           fontSize={object.fontSize}
           fontFamily={object.fontFamily}
-          fontStyle={object.fontStyle}
+          fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
           fill={object.fill}
           align={object.align}
           width={object.width}
@@ -206,10 +226,10 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
             y={object.paddingY}
             width={object.width - object.paddingX * 2}
             height={object.height - object.paddingY * 2}
-            text={object.text}
+            text={applyTextTransform(object.text, object.textTransform)}
             fontSize={object.fontSize}
             fontFamily={object.fontFamily}
-            fontStyle={object.fontStyle}
+            fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
             fill={object.textColor}
             align="center"
             verticalAlign="middle"
@@ -394,6 +414,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
               width={doc.canvas.width}
               height={doc.canvas.height}
               fill={doc.canvas.background}
+              {...(doc.canvas.backgroundGradient ? getGradientFillProps(doc.canvas.backgroundGradient, doc.canvas.width, doc.canvas.height) : {})}
             />
             {doc.objects
               .filter((o) => o.visible)

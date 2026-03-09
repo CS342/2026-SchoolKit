@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Path, Circle, G, Text as SvgText, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -254,9 +254,9 @@ function Leaf({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type Props = { isResourceFullyViewed: (id: string) => boolean; isDark: boolean; resources: Resource[] };
+type Props = { isResourceFullyViewed: (id: string) => boolean; resources: Resource[] };
 
-export default function KnowledgeTree({ isResourceFullyViewed, isDark: isDark, resources }: Props) {
+export default function KnowledgeTree({ isResourceFullyViewed, resources }: Props) {
   const RENDER_W = SCREEN_WIDTH;
   const RENDER_H = RENDER_W * (ARTBOARD_H / ARTBOARD_W);
   const SCALE = RENDER_W / ARTBOARD_W;
@@ -438,9 +438,3 @@ export default function KnowledgeTree({ isResourceFullyViewed, isDark: isDark, r
     </View>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  // Legacy styles removed
-});

@@ -160,41 +160,16 @@ function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const isFocused = state.index === index;
           const label = descriptors[route.key].options.title ?? route.name;
 
-          const onPress = () => {
-            if (process.env.EXPO_OS === 'ios') {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }
-
-            fireTabVisited(route.name);
-
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.dispatch({
-                ...CommonActions.navigate(route.name, route.params),
-                target: state.key,
-              });
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
-
           return (
             <TabBarItem
               key={route.key}
               routeName={route.name}
               label={label}
               isFocused={isFocused}
-              onPress={() => handlePress(route, isFocused)}
+              onPress={() => {
+                fireTabVisited(route.name);
+                handlePress(route, isFocused);
+              }}
               onLongPress={() => handleLongPress(route)}
             />
           );

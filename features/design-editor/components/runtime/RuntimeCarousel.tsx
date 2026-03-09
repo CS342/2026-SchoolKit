@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, TouchableOpacity, Animated, Text } from 'react-native';
+import { View, TouchableOpacity, Animated, Text, PanResponder } from 'react-native';
 import type { InteractiveComponentObject, CarouselConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 import { SHADOWS } from '../../../../constants/onboarding-theme';
@@ -9,22 +9,64 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
   const slideGroups = object.groups.filter((g) => g.role.startsWith('slide-'));
   const [activeSlide, setActiveSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const translateAnim = useRef(new Animated.Value(0)).current;
+  const [isPaused, setIsPaused] = useState(false);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pauseAutoPlay = () => {
+    if (config.pauseOnInteraction !== false) {
+      setIsPaused(true);
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = setTimeout(() => {
+        setIsPaused(false);
+      }, config.resumeDelay ?? 3000);
+    }
+  };
 
   useEffect(() => {
-    if (config.autoPlay && slideGroups.length > 1) {
+    if (config.autoPlay && slideGroups.length > 1 && !isPaused) {
       const timer = setInterval(() => {
         goToSlide((activeSlide + 1) % slideGroups.length);
       }, config.autoPlayInterval);
       return () => clearInterval(timer);
     }
-  }, [config.autoPlay, config.autoPlayInterval, activeSlide, slideGroups.length]);
+  }, [config.autoPlay, config.autoPlayInterval, activeSlide, slideGroups.length, isPaused]);
+
+  const activeSlideRef = useRef(activeSlide);
+  activeSlideRef.current = activeSlide;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
+      onPanResponderRelease: (_, gestureState) => {
+        const threshold = object.width * 0.15;
+        if (gestureState.dx < -threshold && activeSlideRef.current < slideGroups.length - 1) {
+          pauseAutoPlay();
+          goToSlide(activeSlideRef.current + 1);
+        } else if (gestureState.dx > threshold && activeSlideRef.current > 0) {
+          pauseAutoPlay();
+          goToSlide(activeSlideRef.current - 1);
+        }
+      },
+    }),
+  ).current;
 
   const goToSlide = (index: number) => {
-    Animated.sequence([
+    const direction = index > activeSlide ? 1 : -1;
+    const slideOffset = object.width * 0.3;
+
+    Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: config.transitionDuration / 2, useNativeDriver: true }),
-    ]).start();
-    setTimeout(() => setActiveSlide(index), config.transitionDuration / 2);
+      Animated.timing(translateAnim, { toValue: -direction * slideOffset, duration: config.transitionDuration / 2, useNativeDriver: true }),
+    ]).start(() => {
+      setActiveSlide(index);
+      translateAnim.setValue(direction * slideOffset);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: config.transitionDuration / 2, useNativeDriver: true }),
+        Animated.timing(translateAnim, { toValue: 0, duration: config.transitionDuration / 2, useNativeDriver: true }),
+      ]).start();
+    });
   };
 
   const currentGroup = slideGroups[activeSlide];
@@ -34,6 +76,7 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
 
   return (
     <View
+      {...panResponder.panHandlers}
       style={{
         position: 'absolute',
         left: object.x,
@@ -43,7 +86,7 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
         overflow: 'hidden',
       }}
     >
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateX: translateAnim }] }}>
         {visibleChildren.map((child) => (
           <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
         ))}

@@ -11,6 +11,7 @@ interface AuthContextType {
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   linkEmailPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInAnonymously: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -65,6 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -86,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithPassword,
         linkEmailPassword,
         signInAnonymously,
+        resetPassword,
         signOut,
       }}
     >

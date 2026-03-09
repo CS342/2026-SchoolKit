@@ -13,6 +13,7 @@ import { JournalProvider } from '../contexts/JournalContext';
 import { AccomplishmentProvider } from '../contexts/AccomplishmentContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 import PieceRevealOverlay from '../components/puzzle/PieceRevealOverlay';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 function InnerLayout() {
   const { isDark, colors } = useTheme();
@@ -83,7 +84,9 @@ export default function RootLayout() {
               <StoriesProvider>
                 <JournalProvider>
                   <AccomplishmentProvider>
-                    <InnerLayout />
+                    <ErrorBoundary>
+                      <InnerLayout />
+                    </ErrorBoundary>
                   </AccomplishmentProvider>
                 </JournalProvider>
               </StoriesProvider>

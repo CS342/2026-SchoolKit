@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +27,13 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedReason(null);
+      setDetails('');
+    }
+  }, [visible]);
 
   const handleSubmit = () => {
     if (selectedReason) {

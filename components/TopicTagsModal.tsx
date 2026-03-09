@@ -265,10 +265,6 @@ function makeStyles(c: AppTheme["colors"], isDark: boolean) {
       borderColor: isDark ? c.borderCard : "#E5E5EA",
       backgroundColor: isDark ? c.backgroundLight : c.white,
     },
-    optionSelected: {
-      borderColor: c.primary,
-      backgroundColor: isDark ? c.primary + "15" : c.primary + "08",
-    },
     optionText: {
       flex: 1,
       fontSize: 16,

@@ -3,6 +3,7 @@ export interface CanvasConfig {
   width: number;
   height: number;
   background: string;
+  backgroundGradient?: GradientConfig | null;
 }
 
 // ─── Base Object ───────────────────────────────────────────────
@@ -71,12 +72,14 @@ export interface TextObject extends BaseObject {
   fontSize: number;
   fontFamily: string;
   fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
+  fontWeight?: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
   fill: string;
   align: 'left' | 'center' | 'right' | 'justify';
   lineHeight: number;
   shadow?: ShadowConfig | null;
   letterSpacing?: number;
   textDecoration?: string;
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   verticalAlign?: 'top' | 'middle' | 'bottom';
   padding?: number;
   fontVariant?: 'normal' | 'small-caps';
@@ -88,6 +91,11 @@ export interface ImageObject extends BaseObject {
   type: 'image';
   assetId: string;
   src: string;
+  cornerRadius?: number;
+  objectFit?: 'cover' | 'contain' | 'fill';
+  stroke?: string;
+  strokeWidth?: number;
+  shadow?: ShadowConfig | null;
 }
 
 export interface LineObject extends BaseObject {
@@ -145,6 +153,7 @@ export interface BadgeObject extends BaseObject {
   fontSize: number;
   fontFamily: string;
   fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
+  fontWeight?: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
   textColor: string;
   fill: string;
   cornerRadius: number;
@@ -154,6 +163,7 @@ export interface BadgeObject extends BaseObject {
   shadow?: ShadowConfig | null;
   letterSpacing?: number;
   textDecoration?: string;
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   align?: 'left' | 'center' | 'right' | 'justify';
   verticalAlign?: 'top' | 'middle' | 'bottom';
 }
@@ -191,6 +201,8 @@ export interface EntranceConfig {
   duration: number;
   staggerDelay: number;
   trigger: 'on-load' | 'on-scroll';
+  springFriction?: number;   // bounce only (default 8)
+  springTension?: number;    // bounce only (default 40)
 }
 
 export interface CarouselConfig {
@@ -199,6 +211,8 @@ export interface CarouselConfig {
   showDots: boolean;
   showArrows: boolean;
   transitionDuration: number;  // ms
+  pauseOnInteraction?: boolean;  // pause autoPlay on user interaction
+  resumeDelay?: number;          // ms before resuming autoPlay (default 3000)
 }
 
 export interface TabsConfig {

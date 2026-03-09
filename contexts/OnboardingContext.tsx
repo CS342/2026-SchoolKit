@@ -195,14 +195,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
     } catch (error) {
       console.error('Error updating profile:', error);
-      if (!isOnline) {
-        await queueOfflineChange({
-          type: 'profile_update',
-          payload: { user_id: user.id, ...updates },
-        });
-      } else {
-        throw error;
-      }
+      await queueOfflineChange({
+        type: 'profile_update',
+        payload: { user_id: user.id, ...updates },
+      });
     }
   };
 

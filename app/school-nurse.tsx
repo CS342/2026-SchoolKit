@@ -569,8 +569,6 @@ const accordionStyles = StyleSheet.create({
 function AccordionSection({ section }: { section: SectionData }) {
   const [expanded, setExpanded] = useState(false);
   const { isSpeaking, isLoading, speak, stop } = useTTS();
-  const player = useAudioPlayer();
-  const playerStatus = useAudioPlayerStatus(player);
 
   const handlePress = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

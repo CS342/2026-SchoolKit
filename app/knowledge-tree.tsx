@@ -67,7 +67,7 @@ export default function KnowledgeTreeScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <KnowledgeTree isResourceFullyViewed={isResourceFullyViewed} isDark={isDark} resources={resources} />
+        <KnowledgeTree isResourceFullyViewed={isResourceFullyViewed} resources={resources} />
       </ScrollView>
     </View>
   );

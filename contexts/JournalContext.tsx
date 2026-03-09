@@ -38,6 +38,7 @@ export interface JournalNotebook {
 
 interface JournalContextType {
     notebooks: JournalNotebook[];
+    isLoaded: boolean;
     createNotebook: (title: string, coverId: string, paperId: string) => string | null;
     updateNotebook: (id: string, updates: Partial<JournalNotebook>) => void;
     deleteNotebook: (id: string) => void;
@@ -166,6 +167,7 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Provide empty-state context while loading to avoid flash
     const contextValue: JournalContextType = {
         notebooks,
+        isLoaded,
         createNotebook,
         updateNotebook,
         deleteNotebook,

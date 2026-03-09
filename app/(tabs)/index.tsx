@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { getRoleDisplayName } from '../../utils/profile';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
@@ -37,22 +38,6 @@ export default function ForYouScreen() {
     opacity: headerOpacity.value,
   }));
 
-  const getRoleDisplayName = () => {
-    switch (data.role) {
-      case 'student-k8':
-        return 'Student (Middle School)';
-      case 'student-hs':
-        return 'Student (High School and up)';
-      case 'parent':
-        return 'Parent/Caregiver';
-      case 'staff':
-        return 'School Staff';
-      default:
-        return 'User';
-    }
-  };
-
-
 
   const handleTopicPress = (topic: string, route?: string) => {
     if (route) {
@@ -76,7 +61,7 @@ export default function ForYouScreen() {
         <View style={[sharedStyles.badge, styles.roleBadge]}>
           <Ionicons name="person-circle-outline" size={16} color={colors.primary} />
           <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>
-            {getRoleDisplayName()}
+            {getRoleDisplayName(data.role, 'User')}
           </Text>
         </View>
       </Animated.View>

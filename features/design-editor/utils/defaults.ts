@@ -103,6 +103,7 @@ export function createText(overrides?: Partial<TextObject>): TextObject {
     shadow: null,
     letterSpacing: 0,
     textDecoration: '',
+    textTransform: 'none',
     verticalAlign: 'top',
     padding: 0,
     fontVariant: 'normal',
@@ -132,6 +133,11 @@ export function createImage(
     locked: false,
     assetId,
     src,
+    cornerRadius: 0,
+    objectFit: 'cover',
+    stroke: '',
+    strokeWidth: 0,
+    shadow: null,
     ...overrides,
   };
 }
@@ -263,6 +269,7 @@ export function createBadge(overrides?: Partial<BadgeObject>): BadgeObject {
     shadow: null,
     letterSpacing: 0,
     textDecoration: '',
+    textTransform: 'none',
     align: 'center',
     verticalAlign: 'middle',
     ...overrides,

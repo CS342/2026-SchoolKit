@@ -54,21 +54,31 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
         fontSize: obj.fontSize,
         fontFamily: obj.fontFamily,
         fontStyle: obj.fontStyle.includes('italic') ? 'italic' : 'normal',
-        fontWeight: obj.fontStyle.includes('bold') ? 'bold' : 'normal',
+        fontWeight: obj.fontWeight ?? (obj.fontStyle.includes('bold') ? 'bold' : 'normal'),
         textAlign: obj.align as any,
         lineHeight: obj.lineHeight,
+        letterSpacing: obj.letterSpacing || undefined,
+        textTransform: (obj.textTransform && obj.textTransform !== 'none' ? obj.textTransform : undefined) as any,
         whiteSpace: 'pre-wrap',
         overflow: 'hidden',
         ...shadowStyle,
       };
 
-    case 'image':
+    case 'image': {
+      const imgFit = (obj as any).objectFit ?? 'cover';
       return {
         ...base,
         backgroundImage: `url(${obj.src})`,
-        backgroundSize: 'cover',
+        backgroundSize: imgFit === 'fill' ? '100% 100%' : imgFit,
         backgroundPosition: 'center',
+        borderRadius: (obj as any).cornerRadius ?? 0,
+        border: (obj as any).stroke && (obj as any).strokeWidth
+          ? `${(obj as any).strokeWidth}px solid ${(obj as any).stroke}`
+          : undefined,
+        overflow: 'hidden',
+        ...getShadowCSS(obj),
       };
+    }
 
     case 'line':
       return {

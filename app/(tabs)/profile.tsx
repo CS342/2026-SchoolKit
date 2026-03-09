@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import Constants from "expo-constants";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -27,7 +28,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 import { useStories } from "../../contexts/StoriesContext";
 import { ALL_RESOURCES } from "../../constants/resources";
-import { VOICES, VOICE_META, generateSpeech } from "../../services/elevenLabs";
 import {
   RADII,
   SIZING,
@@ -37,6 +37,7 @@ import {
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { AppTheme } from "../../constants/theme";
+import { getRoleDisplayName, getSchoolStatusText } from "../../utils/profile";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -165,31 +166,8 @@ export default function ProfileScreen() {
     opacity: footerOpacity.value,
   }));
 
-  const getRoleDisplayName = () => {
-    switch (data.role) {
-      case "student-k8":
-        return "Student (Middle School)";
-      case "student-hs":
-        return "Student (High School and up)";
-      case "parent":
-        return "Parent/Caregiver";
-      case "staff":
-        return "School Staff";
-      default:
-        return "Not set";
-    }
-  };
-
-  const getSchoolStatusText = () => {
-    if (data.schoolStatuses.length === 0) return "Not set";
-    const labels: Record<string, string> = {
-      'current-treatment': 'Currently in school',
-      'returning-after-treatment': 'Taking a break from school',
-      'supporting-student': 'Planning to return to school soon',
-      'special-needs': 'Home Hospital Education',
-    };
-    return data.schoolStatuses.map((s) => labels[s] ?? s.replace(/-/g, " ")).join(", ");
-  };
+  const roleDisplayName = getRoleDisplayName(data.role);
+  const schoolStatusText = getSchoolStatusText(data.schoolStatuses);
 
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -277,11 +255,11 @@ export default function ProfileScreen() {
           <Animated.View style={[styles.identityText, nameStyle]}>
             <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
             <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-              <Text style={[styles.rolePillText, { color: colors.primary }]}>{getRoleDisplayName()}</Text>
+              <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
             </View>
-            {getSchoolStatusText() !== 'Not set' && (
+            {schoolStatusText !== 'Not set' && (
               <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
-                <Text style={[styles.rolePillText, { color: colors.primary }]}>{getSchoolStatusText()}</Text>
+                <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
               </View>
             )}
             <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
@@ -321,8 +299,8 @@ export default function ProfileScreen() {
               <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Edit Profile</Text>
               <View style={[styles.groupCard, { backgroundColor: colors.appBackground, marginHorizontal: 0, marginBottom: 0 }]}>
                 <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
-                <SettingRow icon="school-outline" label="Role" value={getRoleDisplayName()} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
-                <SettingRow icon="book-outline" label="School Status" value={getSchoolStatusText()} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
+                <SettingRow icon="school-outline" label="Role" value={roleDisplayName} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
+                <SettingRow icon="book-outline" label="School Status" value={schoolStatusText} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
                 <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
               </View>
             </View>
@@ -422,7 +400,7 @@ export default function ProfileScreen() {
         </AnimatedSection>
 
         <Animated.View style={[styles.footer, footerStyle]}>
-          <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v1.0.0</Text>
+          <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
         </Animated.View>
       </ScrollView>
       {/* Modals removed to settings sheet */}
@@ -708,56 +686,5 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    padding: 24,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 48,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  voiceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-  },
-  voiceAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  voiceInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  voiceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  voiceDesc: {
-    fontSize: 13,
-  },
-  closeButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  closeButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
   },
 });

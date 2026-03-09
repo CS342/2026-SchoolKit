@@ -70,6 +70,28 @@ function getShadowProps(shadow: { color: string; offsetX: number; offsetY: numbe
   };
 }
 
+// ─── Text helpers ─────────────────────────────────────────────
+
+/** Build Konva fontStyle string with numeric weight support. */
+function buildKonvaFontStyle(fontStyle: string, fontWeight?: string): string {
+  const isItalic = fontStyle.includes('italic');
+  const weight = fontWeight ?? (fontStyle.includes('bold') ? '700' : '400');
+  // Konva expects fontStyle like "italic 700" or "600" or "italic bold"
+  if (isItalic && weight !== '400') return `italic ${weight}`;
+  if (isItalic) return 'italic';
+  if (weight !== '400') return weight;
+  return 'normal';
+}
+
+function applyTextTransform(text: string, transform?: string): string {
+  switch (transform) {
+    case 'uppercase': return text.toUpperCase();
+    case 'lowercase': return text.toLowerCase();
+    case 'capitalize': return text.replace(/\b\w/g, (c) => c.toUpperCase());
+    default: return text;
+  }
+}
+
 // ─── Blur component wrapper ───────────────────────────────────
 
 function BlurredRect({ blurRadius, ...props }: any) {
@@ -274,13 +296,15 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
 
     case 'text': {
       const shadowProps = getShadowProps(object.shadow);
+      const konvaFontStyle = buildKonvaFontStyle(object.fontStyle, object.fontWeight);
+      const displayText = applyTextTransform(object.text, object.textTransform);
       return (
         <Text
           {...commonProps}
-          text={object.text}
+          text={displayText}
           fontSize={object.fontSize}
           fontFamily={object.fontFamily}
-          fontStyle={object.fontStyle}
+          fontStyle={konvaFontStyle}
           fill={object.fill}
           align={object.align}
           width={object.width}
@@ -450,10 +474,10 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
             y={object.paddingY}
             width={object.width - object.paddingX * 2}
             height={object.height - object.paddingY * 2}
-            text={object.text}
+            text={applyTextTransform(object.text, object.textTransform)}
             fontSize={object.fontSize}
             fontFamily={object.fontFamily}
-            fontStyle={object.fontStyle}
+            fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
             fill={object.textColor}
             align={object.align ?? 'center'}
             verticalAlign={object.verticalAlign ?? 'middle'}
@@ -627,13 +651,15 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
     }
     case 'text': {
       const shadowProps = getShadowProps(object.shadow);
+      const childKonvaStyle = buildKonvaFontStyle(object.fontStyle, object.fontWeight);
+      const childDisplayText = applyTextTransform(object.text, object.textTransform);
       return (
         <Text
           {...commonProps}
-          text={object.text}
+          text={childDisplayText}
           fontSize={object.fontSize}
           fontFamily={object.fontFamily}
-          fontStyle={object.fontStyle}
+          fontStyle={childKonvaStyle}
           fill={object.fill}
           align={object.align}
           width={object.width}
@@ -743,10 +769,10 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
             y={object.paddingY}
             width={object.width - object.paddingX * 2}
             height={object.height - object.paddingY * 2}
-            text={object.text}
+            text={applyTextTransform(object.text, object.textTransform)}
             fontSize={object.fontSize}
             fontFamily={object.fontFamily}
-            fontStyle={object.fontStyle}
+            fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
             fill={object.textColor}
             align={object.align ?? 'center'}
             verticalAlign={object.verticalAlign ?? 'middle'}
@@ -806,6 +832,11 @@ function CanvasImageObject({
     img.src = object.src;
   }, [object.src]);
 
+  const cornerRadius = (object as any).cornerRadius ?? 0;
+  const shadowProps = getShadowProps((object as any).shadow);
+  const stroke = (object as any).stroke || undefined;
+  const strokeWidth = (object as any).strokeWidth ?? 0;
+
   if (!image) {
     return (
       <Rect
@@ -816,7 +847,42 @@ function CanvasImageObject({
         stroke="#CCCCCC"
         strokeWidth={1}
         dash={[4, 4]}
+        cornerRadius={cornerRadius}
       />
+    );
+  }
+
+  if (cornerRadius > 0) {
+    return (
+      <Group
+        {...commonProps}
+        clipFunc={(ctx: any) => {
+          ctx.beginPath();
+          ctx.moveTo(cornerRadius, 0);
+          ctx.arcTo(object.width, 0, object.width, object.height, cornerRadius);
+          ctx.arcTo(object.width, object.height, 0, object.height, cornerRadius);
+          ctx.arcTo(0, object.height, 0, 0, cornerRadius);
+          ctx.arcTo(0, 0, object.width, 0, cornerRadius);
+          ctx.closePath();
+        }}
+      >
+        <KonvaImage
+          image={image}
+          width={object.width}
+          height={object.height}
+          {...shadowProps}
+        />
+        {strokeWidth > 0 && (
+          <Rect
+            width={object.width}
+            height={object.height}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            cornerRadius={cornerRadius}
+            listening={false}
+          />
+        )}
+      </Group>
     );
   }
 
@@ -826,6 +892,9 @@ function CanvasImageObject({
       image={image}
       width={object.width}
       height={object.height}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      {...shadowProps}
     />
   );
 }

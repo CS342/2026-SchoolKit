@@ -12,7 +12,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
-import { COLORS, SPACING, ANIMATION, APP_STYLES } from '../constants/onboarding-theme';
+import { SPACING, ANIMATION } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const MIDDLE_SCHOOL_GRADES = [
   { value: '6', label: '6th Grade' },
@@ -58,6 +59,7 @@ export default function EditGradeLevelScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, updateGradeLevel } = useOnboarding();
+  const { colors, appStyles } = useTheme();
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
   const grades = (data.role === 'parent' || data.role === 'staff') ? PARENT_GRADES : data.role === 'student-k8' ? MIDDLE_SCHOOL_GRADES : HS_GRADES;
@@ -68,19 +70,19 @@ export default function EditGradeLevelScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[APP_STYLES.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={APP_STYLES.editBackButton} accessibilityLabel="Go back">
-          <Ionicons name="chevron-back" size={22} color={COLORS.textDark} />
+    <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
+      <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+          <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={APP_STYLES.editHeaderTitle}>Edit Grade Level</Text>
-        <TouchableOpacity onPress={handleSave} style={APP_STYLES.editSaveButton}>
-          <Text style={APP_STYLES.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>Edit Grade Level</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton}>
+          <Text style={appStyles.editSaveText}>Save</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={APP_STYLES.editScrollContent}>
-        <Text style={styles.subtitle}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
+      <ScrollView contentContainerStyle={appStyles.editScrollContent}>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
 
         <View style={styles.cardsContainer}>
           {grades.map((grade, index) => (
@@ -102,12 +104,10 @@ export default function EditGradeLevelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.appBackground,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textMuted,
     marginBottom: SPACING.screenPadding,
   },
   cardsContainer: {

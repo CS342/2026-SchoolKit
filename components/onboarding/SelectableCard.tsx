@@ -53,7 +53,12 @@ export function SelectableCard({
   };
 
   return (
-    <Pressable onPress={handlePress}>
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole={multiSelect ? "checkbox" : "radio"}
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+    >
       <Animated.View
         style={[
           styles.card,

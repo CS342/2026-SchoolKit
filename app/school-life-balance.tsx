@@ -695,6 +695,13 @@ export default function SchoolLifeBalanceScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <TouchableOpacity onPress={handleSpeak} style={{ padding: 4 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
+                        {isLoadingAudio ? (
+                            <ActivityIndicator size="small" color="#7B68EE" />
+                        ) : (
+                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
+                        )}
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>

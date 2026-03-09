@@ -413,18 +413,23 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
   const [isFocused, setIsFocused] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState(false);
 
   const handleSubmit = async () => {
     if (!feedbackText.trim() || isSubmitting) return;
     setIsSubmitting(true);
+    setSubmitError(false);
     try {
-      await supabase.from('user_questions').insert({ user_id: user?.id ?? null, question: feedbackText.trim(), role: data.role ?? null });
-    } catch { }
-    finally {
-      setIsSubmitting(false);
+      const { error } = await supabase.from('user_questions').insert({ user_id: user?.id ?? null, question: feedbackText.trim(), role: data.role ?? null });
+      if (error) throw error;
       setFeedbackText('');
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 3000);
+    } catch {
+      setSubmitError(true);
+      setTimeout(() => setSubmitError(false), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -445,6 +450,14 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
               <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>Thank you!</Text>
               <Text style={[styles.voiceDesc, { color: colors.textLight, textAlign: 'center', marginTop: 4 }]}>
                 We hope to add your suggestions to a future version of SchoolKit.
+              </Text>
+            </View>
+          ) : submitError ? (
+            <View style={styles.thankYou}>
+              <Ionicons name="alert-circle" size={44} color="#E74C3C" />
+              <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>Failed to send</Text>
+              <Text style={[styles.voiceDesc, { color: colors.textLight, textAlign: 'center', marginTop: 4 }]}>
+                Please check your connection and try again.
               </Text>
             </View>
           ) : (
