@@ -99,24 +99,24 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
             style={{
               position: 'absolute', left: 8, top: '45%',
               width: 32, height: 32, borderRadius: 16,
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              backgroundColor: config.arrowBgColor ?? 'rgba(255,255,255,0.9)',
               alignItems: 'center', justifyContent: 'center',
               ...SHADOWS.iconCircle,
             }}
           >
-            <Text style={{ color: '#374151', fontSize: 16, fontWeight: '600' }}>‹</Text>
+            <Text style={{ color: config.arrowColor ?? '#374151', fontSize: 16, fontWeight: '600' }}>‹</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => goToSlide((activeSlide + 1) % slideGroups.length)}
             style={{
               position: 'absolute', right: 8, top: '45%',
               width: 32, height: 32, borderRadius: 16,
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              backgroundColor: config.arrowBgColor ?? 'rgba(255,255,255,0.9)',
               alignItems: 'center', justifyContent: 'center',
               ...SHADOWS.iconCircle,
             }}
           >
-            <Text style={{ color: '#374151', fontSize: 16, fontWeight: '600' }}>›</Text>
+            <Text style={{ color: config.arrowColor ?? '#374151', fontSize: 16, fontWeight: '600' }}>›</Text>
           </TouchableOpacity>
         </>
       )}
@@ -124,7 +124,9 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
       {config.showDots && slideGroups.length > 1 && (
         <View
           style={{
-            position: 'absolute', bottom: 8, left: 0, right: 0,
+            position: 'absolute',
+            ...(config.dotPosition === 'top' ? { top: 8 } : { bottom: 8 }),
+            left: 0, right: 0,
             flexDirection: 'row', justifyContent: 'center', gap: 6,
           }}
         >
@@ -136,7 +138,9 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
                 width: i === activeSlide ? 16 : 8,
                 height: 8,
                 borderRadius: 4,
-                backgroundColor: i === activeSlide ? '#fff' : 'rgba(255,255,255,0.4)',
+                backgroundColor: i === activeSlide
+                  ? (config.dotActiveColor ?? '#fff')
+                  : (config.dotInactiveColor ?? 'rgba(255,255,255,0.4)'),
               }}
             />
           ))}

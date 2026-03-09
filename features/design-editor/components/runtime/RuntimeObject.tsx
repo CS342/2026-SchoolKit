@@ -56,11 +56,21 @@ function getBlendStyle(blendMode?: string): Record<string, any> {
   return { mixBlendMode: blendMode } as any;
 }
 
+function getBlurStyle(blur?: number): Record<string, any> {
+  if (!blur || blur <= 0) return {};
+  if (Platform.OS === 'web') {
+    return { filter: `blur(${blur}px)` } as any;
+  }
+  // Native doesn't support blur filter directly; would need BlurView
+  return {};
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObject; parentWidth: number }) {
   const a11y = getA11yProps(object);
   const blend = getBlendStyle(object.blendMode);
+  const blur = getBlurStyle((object as any).blur);
 
   switch (object.type) {
     case 'rect': {
@@ -77,6 +87,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
         ...blend,
+        ...blur,
       };
 
       if (object.gradient) {
@@ -110,6 +121,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
         ...blend,
+        ...blur,
       };
 
       if (object.gradient) {
@@ -198,6 +210,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
             ...getShadowStyle(imgShadow),
             ...blend,
+            ...blur,
           }}
           {...a11y}
         >

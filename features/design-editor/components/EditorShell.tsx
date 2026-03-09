@@ -12,6 +12,8 @@ import { PublishModal } from './PublishModal';
 import { GroupTabBar } from './GroupTabBar';
 import { PreviewOverlay } from './PreviewOverlay';
 import { AIGenerateModal } from './AIGenerateModal';
+import { ContextMenu } from './ContextMenu';
+import type { ContextMenuItem } from './ContextMenu';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useDesignAssets } from '../hooks/useDesignAssets';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -45,6 +47,7 @@ export function EditorShell({
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const deleteObjects = useEditorStore((s) => s.deleteObjects);
@@ -76,6 +79,88 @@ export function EditorShell({
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 1500);
   }, []);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const contextMenuItems = useCallback((): ContextMenuItem[] => {
+    const hasSelection = selectedIds.length > 0;
+    const hasClip = hasClipboardContent();
+
+    const items: ContextMenuItem[] = [];
+
+    if (hasSelection) {
+      items.push(
+        { label: 'Cut', shortcut: '\u2318X', onClick: () => {
+          const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
+          copyToClipboard(selectedObjs);
+          if (editingComponentId) deleteChildObjects(selectedIds);
+          else deleteObjects(selectedIds);
+        }},
+        { label: 'Copy', shortcut: '\u2318C', onClick: () => {
+          const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
+          copyToClipboard(selectedObjs);
+        }},
+      );
+    }
+
+    if (hasClip) {
+      items.push({ label: 'Paste', shortcut: '\u2318V', onClick: () => {
+        const { objects: clipObjs, pasteCount } = getClipboard();
+        const offset = (pasteCount + 1) * 20;
+        const offsetObjs = clipObjs.map((o) => ({
+          ...o,
+          x: o.x + offset,
+          y: o.y + offset,
+          name: pasteCount === 0 ? `${o.name} copy` : `${o.name} copy ${pasteCount + 1}`,
+        }));
+        incrementPasteCount();
+        pasteObjects(offsetObjs);
+      }});
+    }
+
+    if (hasSelection) {
+      items.push(
+        { label: 'Duplicate', shortcut: '\u2318D', divider: true, onClick: () => {
+          duplicateObjects(selectedIds);
+          showToast(`Duplicated ${selectedIds.length} object${selectedIds.length > 1 ? 's' : ''}`);
+        }},
+        { label: 'Bring to Front', shortcut: '\u2318]', divider: true, onClick: () => {
+          moveToFront(selectedIds);
+        }},
+        { label: 'Send to Back', shortcut: '\u2318[', onClick: () => {
+          moveToBack(selectedIds);
+        }},
+        { label: 'Delete', shortcut: 'Del', divider: true, danger: true, onClick: () => {
+          if (editingComponentId) deleteChildObjects(selectedIds);
+          else deleteObjects(selectedIds);
+        }},
+      );
+    }
+
+    if (items.length === 0) {
+      if (hasClip) {
+        items.push({ label: 'Paste', shortcut: '\u2318V', onClick: () => {
+          const { objects: clipObjs, pasteCount } = getClipboard();
+          const offset = (pasteCount + 1) * 20;
+          const offsetObjs = clipObjs.map((o) => ({
+            ...o,
+            x: o.x + offset,
+            y: o.y + offset,
+            name: pasteCount === 0 ? `${o.name} copy` : `${o.name} copy ${pasteCount + 1}`,
+          }));
+          incrementPasteCount();
+          pasteObjects(offsetObjs);
+        }});
+      } else {
+        items.push({ label: 'No actions available', disabled: true, onClick: () => {} });
+      }
+    }
+
+    return items;
+  }, [selectedIds, objects, editingComponentId, deleteChildObjects, deleteObjects, duplicateObjects, moveToFront, moveToBack, pasteObjects, showToast]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -293,7 +378,10 @@ export function EditorShell({
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         <ToolPanel onImageUpload={handleImageUpload} />
 
-        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}
+          onContextMenu={handleContextMenu}
+        >
           <EditorCanvas stageRef={stageRef} />
           <GroupTabBar />
         </div>
@@ -390,6 +478,16 @@ export function EditorShell({
 
       {isPreviewMode && (
         <PreviewOverlay onClose={() => setPreviewMode(false)} />
+      )}
+
+      {/* Context menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems()}
+          onClose={() => setContextMenu(null)}
+        />
       )}
 
       {/* Toast notification */}

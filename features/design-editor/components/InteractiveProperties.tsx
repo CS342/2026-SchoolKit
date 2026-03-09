@@ -621,6 +621,54 @@ function CarouselProperties({
         max={1000}
         step={50}
       />
+
+      {/* Arrow & Dot Styling */}
+      {(config.showArrows || config.showDots) && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8EA8', marginBottom: 8 }}>
+            Navigation Styling
+          </div>
+          {config.showArrows && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <ColorInputInline
+                label="Arrow Color"
+                value={config.arrowColor ?? '#374151'}
+                onChange={(v) => onUpdate({ arrowColor: v })}
+              />
+              <ColorInputInline
+                label="Arrow BG"
+                value={config.arrowBgColor ?? 'rgba(255,255,255,0.9)'}
+                onChange={(v) => onUpdate({ arrowBgColor: v })}
+              />
+            </div>
+          )}
+          {config.showDots && (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <ColorInputInline
+                  label="Active Dot"
+                  value={config.dotActiveColor ?? '#ffffff'}
+                  onChange={(v) => onUpdate({ dotActiveColor: v })}
+                />
+                <ColorInputInline
+                  label="Inactive Dot"
+                  value={config.dotInactiveColor ?? 'rgba(255,255,255,0.4)'}
+                  onChange={(v) => onUpdate({ dotInactiveColor: v })}
+                />
+              </div>
+              <SelectInput
+                label="Dot Position"
+                value={config.dotPosition ?? 'bottom'}
+                options={[
+                  { value: 'bottom', label: 'Bottom' },
+                  { value: 'top', label: 'Top' },
+                ]}
+                onChange={(v) => onUpdate({ dotPosition: v })}
+              />
+            </>
+          )}
+        </div>
+      )}
     </Section>
   );
 }

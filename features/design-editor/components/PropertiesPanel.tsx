@@ -1158,15 +1158,27 @@ function ShapeProperties({
   const shadow = (object as any).shadow as ShadowConfig | null | undefined;
   const blur = (object as any).blur as number | undefined;
 
+  const { colors } = useTheme();
+
   return (
     <>
       <Section title="Fill & Stroke">
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, opacity: gradient ? 0.5 : 1, position: 'relative' }}>
           <ColorInput
             label="Fill"
             value={object.fill}
             onChange={(fill) => onUpdate({ fill } as Partial<DesignObject>)}
           />
+          {gradient && (
+            <div style={{
+              fontSize: 10,
+              color: colors.textLight,
+              fontStyle: 'italic',
+              marginTop: 4,
+            }}>
+              Overridden by gradient
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput

@@ -215,6 +215,11 @@ export interface CarouselConfig {
   transitionDuration: number;  // ms
   pauseOnInteraction?: boolean;  // pause autoPlay on user interaction
   resumeDelay?: number;          // ms before resuming autoPlay (default 3000)
+  arrowColor?: string;           // arrow icon color (default '#374151')
+  arrowBgColor?: string;         // arrow background color (default 'rgba(255,255,255,0.9)')
+  dotActiveColor?: string;       // active dot color (default '#fff')
+  dotInactiveColor?: string;     // inactive dot color (default 'rgba(255,255,255,0.4)')
+  dotPosition?: 'bottom' | 'top';  // dot position (default 'bottom')
 }
 
 export interface TabsConfig {
