@@ -151,10 +151,10 @@ export default function CreateStoryScreen() {
         Alert.alert(
           'Story Submitted',
           'Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.',
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)/stories' as any) }]
         );
       } else {
-        router.back();
+        router.replace('/(tabs)/stories' as any);
       }
     } else {
       Alert.alert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
@@ -164,9 +164,10 @@ export default function CreateStoryScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer as any]}>
+      <View style={Platform.OS === 'web' ? styles.webInner as any : { flex: 1 }}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
+        <Pressable style={appStyles.editBackButton} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/stories' as any)}>
           <Ionicons name="close" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={appStyles.editHeaderTitle}>{isExhausted ? 'Review Story' : 'Share Your Story'}</Text>
@@ -535,7 +536,7 @@ export default function CreateStoryScreen() {
         }}
       />
 
-
+      </View>
     </View>
   );
 }
@@ -545,6 +546,15 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     container: {
       flex: 1,
       backgroundColor: c.appBackground,
+    },
+    webContainer: {
+      alignItems: 'center' as const,
+      overflowY: 'auto' as any,
+    },
+    webInner: {
+      width: '100%' as any,
+      maxWidth: 720 as any,
+      flex: 1,
     },
     titleInput: {
       fontSize: 22,

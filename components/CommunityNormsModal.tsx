@@ -29,12 +29,12 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const [selected, setSelected] = useState<string[]>([]);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(Platform.OS === 'web');
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
 
   useEffect(() => {
     if (visible) {
-      setHasScrolledToBottom(false);
+      setHasScrolledToBottom(Platform.OS === 'web');
       setSelected([]);
     }
   }, [visible, mode]);

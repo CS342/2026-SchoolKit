@@ -43,16 +43,12 @@ export const TOPIC_TAGS = [
   "Mental Health",
   "Confidence",
 
-  // symptoms
-  "Fatigue",
-  "Anxiety",
-  "Depression",
-  "Sleep",
-
   // Practical
   "Financial Support",
   "Logistics",
   "College Planning",
+  "Gap Year(s)",
+  "Unique Paths",
 ];
 
 interface TopicTagsModalProps {

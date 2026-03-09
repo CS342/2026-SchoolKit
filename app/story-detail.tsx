@@ -502,23 +502,25 @@ export default function StoryDetailScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <Pressable
-          style={appStyles.editBackButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textDark} />
-        </Pressable>
-        <Text style={appStyles.editHeaderTitle}>Story</Text>
-        {isOwnStory ? (
-          <Pressable onPress={handleDelete} style={{ padding: 8 }}>
-            <Ionicons name="trash-outline" size={22} color={colors.error} />
+      <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }, Platform.OS === "web" && { justifyContent: "center", paddingHorizontal: 0 }]}>
+        <View style={Platform.OS === "web" ? styles.webHeaderInner : { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Pressable
+            style={appStyles.editBackButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textDark} />
           </Pressable>
-        ) : (
-          <Pressable onPress={() => setShowReportModal(true)} style={{ padding: 8 }}>
-            <Ionicons name="flag-outline" size={22} color={colors.textLight} />
-          </Pressable>
-        )}
+          <Text style={appStyles.editHeaderTitle}>Story</Text>
+          {isOwnStory ? (
+            <Pressable onPress={handleDelete} style={{ padding: 8 }}>
+              <Ionicons name="trash-outline" size={22} color={colors.error} />
+            </Pressable>
+          ) : (
+            <Pressable onPress={() => setShowReportModal(true)} style={{ padding: 8 }}>
+              <Ionicons name="flag-outline" size={22} color={colors.textLight} />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <KeyboardAvoidingView
@@ -526,6 +528,7 @@ export default function StoryDetailScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
+        <View style={Platform.OS === "web" ? styles.webContainer : { flex: 1 }}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -836,6 +839,7 @@ export default function StoryDetailScreen() {
             </View>
           </View>
         )}
+        </View>
       </KeyboardAvoidingView>
 
       <ReportStoryModal
@@ -858,6 +862,20 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark:
     container: {
       flex: 1,
       backgroundColor: c.white,
+    },
+    webHeaderInner: {
+      width: "100%" as any,
+      maxWidth: 800 as any,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      justifyContent: "space-between" as const,
+      paddingHorizontal: 20,
+    },
+    webContainer: {
+      width: "100%" as any,
+      maxWidth: 800 as any,
+      alignSelf: "center" as any,
+      flex: 1,
     },
     scrollContent: {
       paddingHorizontal: 20,

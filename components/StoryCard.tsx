@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -86,11 +86,9 @@ export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
   'Feeling Different':   { bg: '#E0E7FF', text: '#4338CA' },  // indigo
   'Emotional Wellbeing': { bg: '#C7D2FE', text: '#3730A3' },  // indigo-deep
 
-  // Symptoms (Purples)
-  'Fatigue':             { bg: '#EDE9FE', text: '#6D28D9' },  // violet
-  'Anxiety':             { bg: '#DDD6FE', text: '#5B21B6' },  // violet-deep
-  'Depression':          { bg: '#F5F3FF', text: '#4C1D95' },  // purple-deep
-  'Sleep':               { bg: '#F3E8FF', text: '#7E22CE' },  // purple
+  // Symptoms (Purples) - removed, replaced with Practical continued
+  'Gap Year(s)':         { bg: '#EDE9FE', text: '#6D28D9' },  // violet
+  'Unique Paths':        { bg: '#F5F3FF', text: '#4C1D95' },  // purple-deep
 
   // Practical (Pinks / Fuchsia)
   'Financial Support': { bg: '#FAE8FF', text: '#A21CAF' },  // fuchsia
@@ -364,6 +362,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     shadowOpacity: isDark ? 0.3 : 0.04,
     shadowRadius: 12,
     elevation: 4,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } as any : {}),
   },
   myStoryCard: {
     backgroundColor: isDark ? '#322447' : '#F4F0FC',

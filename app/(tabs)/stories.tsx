@@ -8,8 +8,20 @@ import {
   Pressable,
   TextInput,
   ScrollView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+
+const WEB_NORMS = [
+  { icon: "🎒", title: "School Stories Only", desc: "Every story must connect to school life." },
+  { icon: "💙", title: "Be Kind & Supportive", desc: "Support each other with empathy." },
+  { icon: "🩺", title: "No Medical Advice", desc: "Consult your healthcare team." },
+  { icon: "🔒", title: "Protect Privacy", desc: "Keep identities anonymous." },
+  { icon: "🤝", title: "Respect Journeys", desc: "Everyone's experience is unique." },
+  { icon: "🚫", title: "Zero Tolerance", desc: "No hate, bullying, or harassment." },
+  { icon: "🌿", title: "Safe Language", desc: "Avoid triggering or graphic details." },
+];
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -79,39 +91,41 @@ export default function StoriesScreen() {
       );
     }
 
+    let filtered = stories;
+
     // If we're looking at "My Stories", we want all of our own stories regardless of status/audience
     if (!isModeratorMode && sort === "my-stories" && user) {
-      return stories.filter((s) => s.author_id === user.id);
-    }
+      filtered = stories.filter((s) => s.author_id === user.id);
+    } else {
+      filtered = isModeratorMode
+        ? stories.filter(
+            (s) =>
+              s.status === "pending" ||
+              (s.status === "approved" && s.report_count > 0)
+          )
+        : stories.filter((s) => s.status === "approved");
 
-    let filtered = isModeratorMode
-      ? stories.filter(
-          (s) =>
-            s.status === "pending" ||
-            (s.status === "approved" && s.report_count > 0)
-        )
-      : stories.filter((s) => s.status === "approved");
+      // Filter by target audience matching the current user's role
+      if (!isModeratorMode) {
+        filtered = filtered.filter((story) => {
+          const audiences = story.target_audiences || [];
+          if (audiences.length === 0) return true; // Show all if none specified
 
-    // Filter by target audience matching the current user's role
-    if (!isModeratorMode) {
-      filtered = filtered.filter((story) => {
-        const audiences = story.target_audiences || [];
-        if (audiences.length === 0) return true; // Show all if none specified
+          let userGroup = "Students";
+          if (
+            onboardingData?.role === "student-k8" ||
+            onboardingData?.role === "student-hs"
+          )
+            userGroup = "Students";
+          else if (onboardingData?.role === "parent") userGroup = "Parents";
+          else if (onboardingData?.role === "staff") userGroup = "School Staff";
 
-        let userGroup = "Students";
-        if (
-          onboardingData?.role === "student-k8" ||
-          onboardingData?.role === "student-hs"
-        )
-          userGroup = "Students";
-        else if (onboardingData?.role === "parent") userGroup = "Parents";
-        else if (onboardingData?.role === "staff") userGroup = "School Staff";
-
-        return (
-          audiences.includes(userGroup) ||
-          audiences.includes(onboardingData?.role || "")
-        );
-      });
+          return (
+            audiences.includes(userGroup) ||
+            audiences.includes(onboardingData?.role || "")
+          );
+        });
+      }
     }
 
     if (searchQuery.trim()) {
@@ -122,6 +136,7 @@ export default function StoriesScreen() {
           (s.body && s.body.toLowerCase().includes(q))
       );
     }
+    
     if (selectedTags.length > 0) {
       filtered = filtered.filter(
         (s) =>
@@ -181,6 +196,256 @@ export default function StoriesScreen() {
 
   const { isDark, fontScale } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
+
+  // ── Web Layout ──────────────────────────────────────────────
+  if (Platform.OS === "web") {
+    return (
+      <View style={styles.container}>
+        {/* Sticky page header */}
+        <View style={[styles.webPageHeader, { paddingTop: insets.top + 16 }]}>
+          <View style={styles.webPageHeaderInner}>
+            <View>
+              <Text style={styles.webPageTitle}>Peer Support</Text>
+              <Text style={styles.headerSubtitle}>Safe space to share and find support.</Text>
+            </View>
+            <View style={styles.headerActions}>
+              {isModerator && (
+                <Pressable
+                  onPress={() => setIsModeratorMode((v) => !v)}
+                  style={[styles.modBtn, isModeratorMode && styles.modBtnActive]}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name={isModeratorMode ? "shield" : "shield-outline"}
+                    size={17}
+                    color={isModeratorMode ? "#fff" : COLORS.textLight}
+                  />
+                  {!isModeratorMode && pendingCount > 0 && <View style={styles.modDot} />}
+                </Pressable>
+              )}
+              <Pressable onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
+                <Ionicons name="information-circle-outline" size={22} color={colors.textLight} />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* Three-column scrollable area */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.webContentArea}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
+        >
+          <View style={styles.webThreeCol}>
+            {/* ── Left Sidebar ──────────────────────────── */}
+            <View style={styles.webLeftCol}>
+              <View style={styles.webSidebarCard}>
+                <Text style={styles.webSidebarLabel}>SORT BY</Text>
+                {[
+                  { id: "new", label: "New", icon: "time-outline" as const },
+                  { id: "popular", label: "Popular", icon: "trending-up-outline" as const },
+                  ...(user ? [{ id: "my-stories", label: "My Stories", icon: "person-outline" as const }] : []),
+                ].map((opt) => {
+                  const isActive = sort === opt.id;
+                  return (
+                    <Pressable
+                      key={opt.id}
+                      style={[styles.webSortRow, isActive && styles.webSortRowActive]}
+                      onPress={() => setSort(opt.id as any)}
+                    >
+                      <Ionicons name={opt.icon} size={16} color={isActive ? colors.primary : colors.textMuted} />
+                      <Text style={[styles.webSortText, isActive && styles.webSortTextActive]}>{opt.label}</Text>
+                    </Pressable>
+                  );
+                })}
+
+                <View style={styles.webDivider} />
+
+                <Text style={styles.webSidebarLabel}>FILTER BY TAG</Text>
+                <Pressable style={styles.webTagPickerBtn} onPress={() => setShowTagsModal(true)}>
+                  <Ionicons name="options-outline" size={15} color={colors.primary} />
+                  <Text style={styles.webTagPickerText}>
+                    {selectedTags.length > 0
+                      ? `${selectedTags.length} tag${selectedTags.length > 1 ? "s" : ""} selected`
+                      : "Choose tags..."}
+                  </Text>
+                </Pressable>
+                {selectedTags.length > 0 && (
+                  <View style={{ gap: 6, marginTop: 8 }}>
+                    {selectedTags.map((tag) => {
+                      const tc = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
+                      return (
+                        <Pressable
+                          key={tag}
+                          style={[styles.webTagPill, { backgroundColor: tc.bg }]}
+                          onPress={() => setSelectedTags((p) => p.filter((t) => t !== tag))}
+                        >
+                          <Text style={[styles.webTagPillText, { color: tc.text }]}>{tag}</Text>
+                          <Ionicons name="close" size={12} color={tc.text} />
+                        </Pressable>
+                      );
+                    })}
+                    <Pressable onPress={() => setSelectedTags([])}>
+                      <Text style={styles.webClearTags}>Clear all</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* ── Main Feed ─────────────────────────────── */}
+            <View style={styles.webMidCol}>
+              {/* Search bar above the feed */}
+              <View style={[styles.webSearchBox, { marginBottom: 16 }]}>
+                <Ionicons name="search" size={15} color={COLORS.textLight} />
+                <TextInput
+                  style={styles.webSearchInput}
+                  placeholder="Search stories..."
+                  placeholderTextColor={COLORS.textLight}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+                    <Ionicons name="close-circle" size={15} color={COLORS.textLight} />
+                  </Pressable>
+                )}
+              </View>
+
+              {isModeratorMode && (
+                <View style={[styles.modModeBar, { borderRadius: 12, marginBottom: 16 }]}>
+                  <Ionicons name="shield" size={13} color={COLORS.primary} />
+                  <Text style={styles.modModeBarText}>Moderator Mode</Text>
+                  {pendingCount > 0 && (
+                    <View style={styles.modModeCount}>
+                      <Text style={styles.modModeCountText}>{pendingCount} pending</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+              {userPendingCount > 0 && !dismissedPendingNotif && !isModeratorMode && isOnline && (
+                <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12 }]}>
+                  <Ionicons name="time-outline" size={15} color="#F57C00" />
+                  <Text style={styles.pendingBannerText}>
+                    {userPendingCount === 1 ? "Your story is" : `${userPendingCount} stories are`} being reviewed
+                  </Text>
+                  <Pressable onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
+                    <Ionicons name="close" size={16} color="#F57C00" />
+                  </Pressable>
+                </View>
+              )}
+              {rejectedCount > 0 && !dismissedRejectedNotif && !isModeratorMode && isOnline && (
+                <View style={[styles.rejectedBanner, { borderRadius: 12, marginBottom: 12 }]}>
+                  <Pressable style={styles.rejectedBannerContent} onPress={() => router.push("/rejected-stories" as any)}>
+                    <View style={styles.rejectedBannerLeft}>
+                      <View style={styles.rejectedDot} />
+                      <Text style={styles.rejectedBannerText}>
+                        {rejectedCount} {rejectedCount === 1 ? "story needs" : "stories need"} a revision
+                      </Text>
+                    </View>
+                    <Text style={styles.rejectedBannerAction}>Review →</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setDismissedRejectedNotif(true)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                    <Ionicons name="close" size={16} color={COLORS.error} />
+                  </Pressable>
+                </View>
+              )}
+
+              {storiesLoading ? (
+                <View style={{ paddingVertical: 60, alignItems: "center" }}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : displayedStories.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <View style={sharedStyles.pageIconCircle}>
+                    <Ionicons name="chatbubbles-outline" size={SIZING.iconPage} color={colors.primary} />
+                  </View>
+                  <Text style={sharedStyles.pageTitle}>Your voice matters here</Text>
+                  <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
+                    This is a safe, supportive space. Sharing your experience can bring comfort to someone else.
+                  </Text>
+                  {!isAnonymous && (
+                    <PrimaryButton
+                      title="Share Your Story"
+                      icon="create-outline"
+                      onPress={() => router.push("/create-story" as any)}
+                    />
+                  )}
+                </View>
+              ) : (
+                displayedStories.map((item, index) => (
+                  <StoryCard
+                    key={item.id}
+                    story={item}
+                    index={index}
+                    allowModeration={isModeratorMode}
+                    showAuthorStatus={sort === "my-stories"}
+                  />
+                ))
+              )}
+            </View>
+
+            {/* ── Right Sidebar ─────────────────────────── */}
+            <View style={styles.webRightCol}>
+                <View style={[styles.webSidebarCard, { marginBottom: 16 }]}>
+                  <Text style={styles.webRightCardTitle}>Share Your Story</Text>
+                  <Text style={styles.webRightCardBody}>
+                    Your experience can bring comfort and courage to someone walking a similar path.
+                  </Text>
+                  {isAnonymous ? (
+                    <View style={[styles.webShareBtn, { backgroundColor: '#E5E5EA' }]}>
+                      <Ionicons name="lock-closed-outline" size={15} color={COLORS.textLight} />
+                      <Text style={[styles.webShareBtnText, { color: COLORS.textLight }]}>Sign in to share your story</Text>
+                    </View>
+                  ) : (
+                    <Pressable style={styles.webShareBtn} onPress={() => router.push("/create-story" as any)}>
+                      <Ionicons name="create-outline" size={15} color="#fff" />
+                      <Text style={styles.webShareBtnText}>Write a Story</Text>
+                    </Pressable>
+                  )}
+                </View>
+              <Pressable style={styles.webSidebarCard} onPress={() => setShowNormsModal(true)}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
+                  <Text style={styles.webRightCardTitle}>Community Norms</Text>
+                </View>
+                {WEB_NORMS.map((norm, i) => (
+                  <View key={i} style={styles.webNormItem}>
+                    <Text style={styles.webNormIcon}>{norm.icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.webNormTitle}>{norm.title}</Text>
+                      <Text style={styles.webNormDesc}>{norm.desc}</Text>
+                    </View>
+                  </View>
+                ))}
+                <Pressable onPress={() => setShowNormsModal(true)} style={styles.webNormReadMore}>
+                  <Text style={styles.webNormReadMoreText}>Read full norms →</Text>
+                </Pressable>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+        <CommunityNormsModal visible={showNormsModal} onClose={() => setShowNormsModal(false)} mode="view" />
+        <TopicTagsModal
+          visible={showTagsModal}
+          onClose={() => setShowTagsModal(false)}
+          selectedTags={selectedTags}
+          onToggleTag={(tag: string) => {
+            setSelectedTags((prev: string[]) => {
+              if (prev.includes(tag)) return prev.filter((t: string) => t !== tag);
+              if (prev.length >= 3) return prev;
+              return [...prev, tag];
+            });
+          }}
+          maxTags={3}
+          onClearAll={() => setSelectedTags([])}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -659,8 +924,7 @@ export default function StoriesScreen() {
         selectedTags={selectedTags}
         onToggleTag={(tag: string) => {
           setSelectedTags((prev: string[]) => {
-            if (prev.includes(tag))
-              return prev.filter((t: string) => t !== tag);
+            if (prev.includes(tag)) return prev.filter((t: string) => t !== tag);
             if (prev.length >= 3) return prev;
             return [...prev, tag];
           });
@@ -978,12 +1242,21 @@ const makeStyles = (
 
     // ── FAB ──────────────────────────────────────────────────
     fab: {
-      position: "absolute",
+      ...Platform.select({
+        web: {
+          position: "fixed" as any,
+        },
+        default: {
+          position: "absolute",
+        },
+      }),
       bottom: 24,
       right: 24,
       width: 56,
       height: 56,
       borderRadius: 28,
+      zIndex: 100,
+      elevation: 10,
     },
     fabGradient: {
       width: 56,
@@ -991,6 +1264,207 @@ const makeStyles = (
       borderRadius: 28,
       alignItems: "center",
       justifyContent: "center",
+    },
+
+    // ── Web Layout ───────────────────────────────────────────
+    webPageHeader: {
+      backgroundColor: isDark ? c.backgroundLight : c.white,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? c.borderCard : "#E5E5EA",
+      paddingHorizontal: 24,
+      paddingBottom: 14,
+    },
+    webPageHeaderInner: {
+      maxWidth: 1400 as any,
+      alignSelf: "center" as any,
+      width: "100%" as any,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      justifyContent: "space-between" as const,
+    },
+    webPageTitle: {
+      fontSize: fs(26),
+      fontWeight: "800" as const,
+      color: c.textDark,
+      letterSpacing: -0.5,
+    },
+    webContentArea: {
+      maxWidth: 1400 as any,
+      alignSelf: "center" as any,
+      width: "100%" as any,
+      paddingHorizontal: 24,
+      paddingTop: 28,
+      paddingBottom: 100,
+    },
+    webThreeCol: {
+      flexDirection: "row" as const,
+      gap: 32,
+      alignItems: "flex-start" as const,
+    },
+    webLeftCol: {
+      width: 240,
+    },
+    webMidCol: {
+      flex: 1,
+      minWidth: 0 as any,
+    },
+    webRightCol: {
+      width: 320,
+    },
+    webSidebarCard: {
+      backgroundColor: isDark ? c.backgroundLight : c.white,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1.5,
+      borderColor: isDark ? c.borderCard : "#E8E8F0",
+      marginBottom: 0,
+    },
+    webSearchBox: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 8,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderWidth: 1.5,
+      borderColor: isDark ? c.borderCard : "#E5E5EA",
+    },
+    webSearchInput: {
+      flex: 1,
+      fontSize: fs(14),
+      color: c.textDark,
+      paddingVertical: 0,
+    },
+    webSidebarLabel: {
+      fontSize: fs(10),
+      fontWeight: "700" as const,
+      color: c.textLight,
+      letterSpacing: 1,
+      textTransform: "uppercase" as const,
+      marginBottom: 8,
+    },
+    webSortRow: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 10,
+      paddingVertical: 9,
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      marginBottom: 2,
+    },
+    webSortRowActive: {
+      backgroundColor: COLORS.primary + "12",
+    },
+    webSortText: {
+      fontSize: fs(14),
+      fontWeight: "600" as const,
+      color: c.textMuted,
+    },
+    webSortTextActive: {
+      color: COLORS.primary,
+    },
+    webDivider: {
+      height: 1,
+      backgroundColor: isDark ? c.borderCard : "#E5E5EA",
+      marginVertical: 14,
+    },
+    webTagPickerBtn: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      backgroundColor: COLORS.primary + "10",
+      borderRadius: 10,
+    },
+    webTagPickerText: {
+      flex: 1,
+      fontSize: fs(13),
+      fontWeight: "600" as const,
+      color: COLORS.primary,
+    },
+    webTagPill: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 100,
+    },
+    webTagPillText: {
+      fontSize: fs(12),
+      fontWeight: "600" as const,
+    },
+    webClearTags: {
+      fontSize: fs(12),
+      fontWeight: "600" as const,
+      color: c.textLight,
+      marginTop: 2,
+    },
+    webRightCardTitle: {
+      fontSize: fs(15),
+      fontWeight: "700" as const,
+      color: c.textDark,
+      marginBottom: 8,
+    },
+    webRightCardBody: {
+      fontSize: fs(13),
+      color: c.textMuted,
+      lineHeight: fs(19),
+      marginBottom: 14,
+    },
+    webShareBtn: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      gap: 8,
+      backgroundColor: COLORS.primary,
+      paddingVertical: 10,
+      borderRadius: 100,
+    },
+    webShareBtnText: {
+      fontSize: fs(14),
+      fontWeight: "700" as const,
+      color: "#fff",
+    },
+    webNormLine: {
+      fontSize: fs(13),
+      color: c.textMuted,
+      marginBottom: 6,
+      lineHeight: fs(18),
+    },
+    webNormItem: {
+      flexDirection: "row" as const,
+      alignItems: "flex-start" as const,
+      gap: 12,
+      marginBottom: 14,
+    },
+    webNormIcon: {
+      fontSize: fs(16),
+      marginTop: 2,
+    },
+    webNormTitle: {
+      fontSize: fs(13),
+      fontWeight: "700" as const,
+      color: c.textDark,
+      marginBottom: 3,
+    },
+    webNormDesc: {
+      fontSize: fs(12),
+      color: c.textMuted,
+      lineHeight: fs(16),
+    },
+    webNormReadMore: {
+      marginTop: 8,
+      paddingTop: 14,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: isDark ? c.borderCard : "#E5E5EA",
+    },
+    webNormReadMoreText: {
+      fontSize: fs(13),
+      fontWeight: "600" as const,
+      color: COLORS.primary,
     },
   });
 }

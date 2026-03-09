@@ -215,24 +215,24 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   gridCellWrapper: {
-    width: '30%',
+    width: '46%',
   },
   gridCell: {
     backgroundColor: COLORS.white,
     borderRadius: RADII.grid,
     borderWidth: BORDERS.card,
     borderColor: COLORS.borderCard,
-    height: 90,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
   },
   gridCellLabel: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     color: COLORS.textDark,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 8,
   },
 
 });
