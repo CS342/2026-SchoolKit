@@ -2,6 +2,7 @@ import type { StaticDesignObject } from '../types/document';
 
 /** Convert a static design object's properties into React inline CSS styles. */
 export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
+  const blendMode = (obj as any).blendMode;
   const base: React.CSSProperties = {
     position: 'absolute',
     left: obj.x,
@@ -11,6 +12,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
     opacity: obj.opacity,
     transform: obj.rotation ? `rotate(${obj.rotation}deg)` : undefined,
     boxSizing: 'border-box',
+    ...(blendMode && blendMode !== 'normal' ? { mixBlendMode: blendMode as any } : {}),
   };
 
   // Add gradient CSS if applicable
@@ -55,6 +57,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
         fontFamily: obj.fontFamily,
         fontStyle: obj.fontStyle.includes('italic') ? 'italic' : 'normal',
         fontWeight: obj.fontWeight ?? (obj.fontStyle.includes('bold') ? 'bold' : 'normal'),
+        fontVariant: obj.fontVariant === 'small-caps' ? 'small-caps' : undefined,
         textAlign: obj.align as any,
         lineHeight: obj.lineHeight,
         letterSpacing: obj.letterSpacing || undefined,

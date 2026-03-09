@@ -115,6 +115,51 @@ function RangeInput({
   );
 }
 
+function TextInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <div style={{ flex: 1 }}>
+      <label
+        style={{
+          fontSize: 11,
+          color: colors.textLight,
+          fontWeight: 500,
+          display: 'block',
+          marginBottom: 3,
+        }}
+      >
+        {label}
+      </label>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '6px 8px',
+          borderRadius: 6,
+          border: `1px solid ${colors.borderCard}`,
+          fontSize: 13,
+          color: colors.textDark,
+          backgroundColor: colors.appBackground,
+          boxSizing: 'border-box',
+        }}
+      />
+    </div>
+  );
+}
+
 function ColorInput({
   label,
   value,
@@ -705,6 +750,34 @@ function ObjectProperties({
           />
         </div>
       </Section>
+
+      {/* Accessibility & Blend Mode */}
+      <Section title="Accessibility">
+        <TextInput
+          label="A11y Label"
+          value={(object as any).accessibilityLabel ?? ''}
+          onChange={(v) => onUpdate({ accessibilityLabel: v || undefined } as any)}
+          placeholder="Screen reader label..."
+        />
+      </Section>
+
+      {object.type !== 'line' && object.type !== 'arrow' && (
+        <Section title="Blend Mode">
+          <SelectInput
+            label="Mode"
+            value={(object as any).blendMode ?? 'normal'}
+            options={[
+              { value: 'normal', label: 'Normal' },
+              { value: 'multiply', label: 'Multiply' },
+              { value: 'screen', label: 'Screen' },
+              { value: 'overlay', label: 'Overlay' },
+              { value: 'darken', label: 'Darken' },
+              { value: 'lighten', label: 'Lighten' },
+            ]}
+            onChange={(v) => onUpdate({ blendMode: v === 'normal' ? undefined : v } as any)}
+          />
+        </Section>
+      )}
 
       {/* Type-specific properties */}
       {(object.type === 'rect' || object.type === 'ellipse') && (

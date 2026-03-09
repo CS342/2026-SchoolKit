@@ -38,9 +38,30 @@ function applyTextTransform(text: string, transform?: string): string {
   }
 }
 
+function getA11yProps(object: StaticDesignObject) {
+  const props: Record<string, any> = {};
+  if (object.accessibilityLabel) {
+    props.accessibilityLabel = object.accessibilityLabel;
+    props.accessible = true;
+  }
+  if (object.type === 'text') props.accessibilityRole = 'text';
+  if (object.type === 'image') props.accessibilityRole = 'image';
+  if (object.type === 'badge') props.accessibilityRole = 'text';
+  return props;
+}
+
+function getBlendStyle(blendMode?: string): Record<string, any> {
+  if (!blendMode || blendMode === 'normal') return {};
+  // mixBlendMode works on web; ignored on native
+  return { mixBlendMode: blendMode } as any;
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObject; parentWidth: number }) {
+  const a11y = getA11yProps(object);
+  const blend = getBlendStyle(object.blendMode);
+
   switch (object.type) {
     case 'rect': {
       const baseStyle = {
@@ -55,12 +76,13 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         borderColor: object.stroke || 'transparent',
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
+        ...blend,
       };
 
       if (object.gradient) {
         const gp = getGradientProps(object.gradient);
         return (
-          <View style={{ ...baseStyle, overflow: 'hidden' }}>
+          <View style={{ ...baseStyle, overflow: 'hidden' }} {...a11y}>
             <LinearGradient
               colors={gp.colors}
               start={gp.start}
@@ -71,7 +93,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         );
       }
 
-      return <View style={{ ...baseStyle, backgroundColor: object.fill }} />;
+      return <View style={{ ...baseStyle, backgroundColor: object.fill }} {...a11y} />;
     }
 
     case 'ellipse': {
@@ -87,12 +109,13 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         borderColor: object.stroke || 'transparent',
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
+        ...blend,
       };
 
       if (object.gradient) {
         const gp = getGradientProps(object.gradient);
         return (
-          <View style={{ ...baseStyle, overflow: 'hidden' }}>
+          <View style={{ ...baseStyle, overflow: 'hidden' }} {...a11y}>
             <LinearGradient
               colors={gp.colors}
               start={gp.start}
@@ -103,7 +126,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         );
       }
 
-      return <View style={{ ...baseStyle, backgroundColor: object.fill }} />;
+      return <View style={{ ...baseStyle, backgroundColor: object.fill }} {...a11y} />;
     }
 
     case 'text': {
@@ -123,7 +146,9 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               object.verticalAlign === 'middle' ? 'center' :
               object.verticalAlign === 'bottom' ? 'flex-end' : 'flex-start',
             padding: object.padding || 0,
+            ...blend,
           }}
+          {...a11y}
         >
           <Text
             style={{
@@ -132,6 +157,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               fontFamily: object.fontFamily === 'Arial' ? undefined : object.fontFamily,
               fontWeight: resolvedWeight,
               fontStyle: object.fontStyle.includes('italic') ? 'italic' : 'normal',
+              fontVariant: object.fontVariant === 'small-caps' ? ['small-caps'] : undefined,
               textAlign: object.align,
               lineHeight: object.fontSize * object.lineHeight,
               letterSpacing: object.letterSpacing || 0,
@@ -171,12 +197,15 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             borderColor: imgStroke || 'transparent',
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
             ...getShadowStyle(imgShadow),
+            ...blend,
           }}
+          {...a11y}
         >
           <Image
             source={{ uri: object.src }}
             style={{ width: '100%', height: '100%' }}
             resizeMode={resizeMode as any}
+            accessibilityLabel={object.accessibilityLabel}
           />
         </View>
       );
@@ -194,7 +223,9 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             backgroundColor: object.stroke,
             opacity: object.opacity,
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
+            ...blend,
           }}
+          {...a11y}
         />
       );
 
@@ -216,6 +247,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         paddingVertical: object.paddingY,
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
+        ...blend,
       };
 
       const textStyle = {
@@ -232,7 +264,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       if (object.gradient) {
         const gp = getGradientProps(object.gradient);
         return (
-          <View style={badgeStyle}>
+          <View style={badgeStyle} {...a11y}>
             <LinearGradient colors={gp.colors} start={gp.start} end={gp.end} style={StyleSheet.absoluteFill} />
             <Text style={textStyle}>{badgeText}</Text>
           </View>
@@ -240,7 +272,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       }
 
       return (
-        <View style={{ ...badgeStyle, backgroundColor: object.fill }}>
+        <View style={{ ...badgeStyle, backgroundColor: object.fill }} {...a11y}>
           <Text style={textStyle}>{badgeText}</Text>
         </View>
       );

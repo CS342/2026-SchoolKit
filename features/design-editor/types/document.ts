@@ -19,6 +19,8 @@ export interface BaseObject {
   opacity: number;
   visible: boolean;
   locked: boolean;
+  accessibilityLabel?: string;
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 }
 
 // ─── Shared Stroke Type ──────────────────────────────────────
@@ -228,6 +230,10 @@ export interface QuizConfig {
   showFeedback: boolean;
   feedbackCorrect: string;
   feedbackIncorrect: string;
+  correctColor?: string;       // feedback text color for correct (default '#22C55E')
+  incorrectColor?: string;     // feedback text color for incorrect (default '#EF4444')
+  buttonColor?: string;        // "Try Again" button color (default '#7B68EE')
+  optionHighlight?: string;    // selected option highlight (default 'rgba(123,104,238,0.1)')
 }
 
 export type InteractionConfig =

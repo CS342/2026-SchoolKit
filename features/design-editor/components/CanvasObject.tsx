@@ -232,6 +232,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
     }
   };
 
+  const blendMode = (object as any).blendMode;
   const commonProps = {
     id: object.id,
     x: object.x,
@@ -244,6 +245,7 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
     onDragMove: handleDragMove,
     onDragEnd: handleDragEnd,
     onTransformEnd: handleTransformEnd,
+    ...(blendMode && blendMode !== 'normal' ? { globalCompositeOperation: blendMode } : {}),
   };
 
   switch (object.type) {
@@ -595,12 +597,14 @@ function getInteractionLabel(type: string): string {
 
 /** Renders a static child object inside a Group (no interaction handling). */
 function StaticChildObject({ object }: { object: StaticDesignObject }) {
+  const childBlendMode = (object as any).blendMode;
   const commonProps = {
     x: object.x,
     y: object.y,
     rotation: object.rotation,
     opacity: object.opacity,
     listening: false,
+    ...(childBlendMode && childBlendMode !== 'normal' ? { globalCompositeOperation: childBlendMode } : {}),
   };
 
   switch (object.type) {

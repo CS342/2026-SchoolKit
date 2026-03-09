@@ -30,14 +30,19 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
           <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
         ))}
         <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: isCorrect ? '#22C55E' : '#EF4444', marginBottom: 8 }}>
+          <Text style={{
+            fontSize: 16, fontWeight: '600', marginBottom: 8,
+            color: isCorrect ? (config.correctColor ?? '#22C55E') : (config.incorrectColor ?? '#EF4444'),
+          }}>
             {isCorrect ? config.feedbackCorrect : config.feedbackIncorrect}
           </Text>
           <TouchableOpacity
             onPress={() => { setSelectedIndex(null); setShowFeedback(false); }}
+            accessibilityRole="button"
+            accessibilityLabel="Try again"
             style={{
               paddingVertical: 8, paddingHorizontal: 20, borderRadius: 12,
-              backgroundColor: '#7B68EE',
+              backgroundColor: config.buttonColor ?? '#7B68EE',
             }}
           >
             <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Try Again</Text>
@@ -70,6 +75,8 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
             setSelectedIndex(i);
             setShowFeedback(true);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={`Option ${i + 1}: ${option}`}
           style={{
             position: 'absolute',
             left: 20,
@@ -77,7 +84,7 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
             width: object.width - 40,
             height: 44,
             borderRadius: 12,
-            backgroundColor: selectedIndex === i ? 'rgba(123,104,238,0.1)' : 'transparent',
+            backgroundColor: selectedIndex === i ? (config.optionHighlight ?? 'rgba(123,104,238,0.1)') : 'transparent',
           }}
         />
       ))}
