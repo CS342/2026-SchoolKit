@@ -639,6 +639,7 @@ export default function FindingSupportScreen() {
     const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
     const [isPageSpeaking, setIsPageSpeaking] = useState(false);
     const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
+    const [pagePlaybackRate, setPagePlaybackRate] = useState(1.0);
 
     // Card TTS
     const cardPlayer = useAudioPlayer();
@@ -719,6 +720,15 @@ export default function FindingSupportScreen() {
         }
     };
 
+    const togglePagePlaybackRate = () => {
+        let next = 1.0;
+        if (pagePlaybackRate === 1.0) next = 1.25;
+        else if (pagePlaybackRate === 1.25) next = 1.5;
+        else if (pagePlaybackRate === 1.5) next = 2.0;
+        setPagePlaybackRate(next);
+        if (pagePlayerStatus.isLoaded) pagePlayer.setPlaybackRate(next);
+    };
+
     // Card TTS
     const handleCardSpeak = async () => {
         if (isCardSpeaking) {
@@ -780,6 +790,26 @@ export default function FindingSupportScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <TouchableOpacity
+                        onPress={handlePageSpeak}
+                        style={{ padding: 4 }}
+                        accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}
+                    >
+                        {isPageLoadingAudio ? (
+                            <ActivityIndicator size="small" color={COLORS.studentK8} />
+                        ) : (
+                            <Ionicons
+                                name={isPageSpeaking ? "pause-circle" : "volume-high"}
+                                size={28}
+                                color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted}
+                            />
+                        )}
+                    </TouchableOpacity>
+                    {pagePlayerStatus.isLoaded && (
+                        <TouchableOpacity onPress={togglePagePlaybackRate} style={{ padding: 8 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textMuted }}>{pagePlaybackRate}x</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         onPress={handleShare}
                         style={{ padding: 4 }}

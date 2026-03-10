@@ -4,6 +4,14 @@ const API_KEY = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
 
 // Voice IDs
 export const VOICES = {
+  // Spanish
+  LUCIA: "zl7szWVBXnpgrJmAalgz",
+  SOFIA: "LlsiGQPTj7Tt7gsEPZl0",
+  CARLOS: "NWqMOQLlMBaUbjKYdhbW",
+  ISABELLA: "VvYiNBPylZtUh8Bf6u8l",
+  MIGUEL: "qWWAqFomnJ99VwQLREfT",
+  VALENTINA: "LudcwvHIZaqQOcQfVZSY",
+  DIEGO: "dNjJKg63Fr5AXwIdkATa",
   // User favourites
   PETER: "ZthjuvLPty3kTMaNKVKb",
   MIRA: "ZqvIIuD5aI9JFejebHiH",
@@ -35,6 +43,61 @@ export type VoiceData = {
 };
 
 export const VOICE_META: Record<string, VoiceData> = {
+  // ── Spanish ───────────────────────────────────
+  [VOICES.SOFIA]: {
+    id: VOICES.SOFIA,
+    name: "Sofia",
+    description: "Cálida y expresiva",
+    accent: "Spanish",
+    image: require("../assets/images/voice_mira.png"),
+    initial: "S",
+    color: "#A78BFA",
+  },
+  [VOICES.CARLOS]: {
+    id: VOICES.CARLOS,
+    name: "Carlos",
+    description: "Seguro y claro",
+    accent: "Spanish",
+    image: require("../assets/images/voice_peter.png"),
+    initial: "C",
+    color: "#5B8DEF",
+  },
+  [VOICES.ISABELLA]: {
+    id: VOICES.ISABELLA,
+    name: "Isabella",
+    description: "Gentil y amable",
+    accent: "Spanish",
+    image: require("../assets/images/voice_emily.png"),
+    initial: "I",
+    color: "#818CF8",
+  },
+  [VOICES.MIGUEL]: {
+    id: VOICES.MIGUEL,
+    name: "Miguel",
+    description: "Amigable y cálido",
+    accent: "Spanish",
+    image: require("../assets/images/voice_bill.png"),
+    initial: "M",
+    color: "#10B981",
+  },
+  [VOICES.VALENTINA]: {
+    id: VOICES.VALENTINA,
+    name: "Valentina",
+    description: "Tranquila y serena",
+    accent: "Spanish",
+    image: require("../assets/images/voice_hope.png"),
+    initial: "V",
+    color: "#F59E0B",
+  },
+  [VOICES.DIEGO]: {
+    id: VOICES.DIEGO,
+    name: "Diego",
+    description: "Natural y expresivo",
+    accent: "Spanish",
+    image: require("../assets/images/voice_james.png"),
+    initial: "D",
+    color: "#22C55E",
+  },
   // ── User favourites ───────────────────────────
   [VOICES.PETER]: {
     id: VOICES.PETER,

@@ -203,8 +203,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,
+    alignItems: 'center',
   },
   options: {
+    width: '100%',
     gap: 14,
   },
   roleCard: {

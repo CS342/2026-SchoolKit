@@ -269,6 +269,7 @@ export default function CopingAwayFromHomeScreen() {
     const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
     const [isPageSpeaking, setIsPageSpeaking] = useState(false);
     const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
+    const [pagePlaybackRate, setPagePlaybackRate] = useState(1.0);
 
     const titleFade = useRef(new Animated.Value(0)).current;
     const titleSlide = useRef(new Animated.Value(20)).current;
@@ -323,6 +324,15 @@ export default function CopingAwayFromHomeScreen() {
         }
     };
 
+    const togglePagePlaybackRate = () => {
+        let next = 1.0;
+        if (pagePlaybackRate === 1.0) next = 1.25;
+        else if (pagePlaybackRate === 1.25) next = 1.5;
+        else if (pagePlaybackRate === 1.5) next = 2.0;
+        setPagePlaybackRate(next);
+        if (pagePlayerStatus.isLoaded) pagePlayer.setPlaybackRate(next);
+    };
+
     const handleShare = async () => {
         try { await Share.share({ message: 'Check out "Coping When Away From Home" on SchoolKit — tips for staying connected and making your hospital room feel more like home.' }); } catch { }
     };
@@ -337,6 +347,17 @@ export default function CopingAwayFromHomeScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }}>
+                        {isPageLoadingAudio
+                            ? <ActivityIndicator size="small" color={PAGE_COLOR} />
+                            : <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? PAGE_COLOR : "#6B6B85"} />
+                        }
+                    </TouchableOpacity>
+                    {pagePlayerStatus.isLoaded && (
+                        <TouchableOpacity onPress={togglePagePlaybackRate} style={{ padding: 4 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: PAGE_COLOR }}>{pagePlaybackRate}x</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>

@@ -18,6 +18,7 @@ export function useTTS() {
   const playerStatus = useAudioPlayerStatus(player);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
 
   const currentTextRef = useRef<string | null>(null);
   const currentVoiceRef = useRef<string | null>(null);
@@ -81,5 +82,14 @@ export function useTTS() {
     [isSpeaking, selectedVoice, player],
   );
 
-  return { isSpeaking, isLoading, speak, stop };
+  const togglePlaybackRate = () => {
+    let next = 1.0;
+    if (playbackRate === 1.0) next = 1.25;
+    else if (playbackRate === 1.25) next = 1.5;
+    else if (playbackRate === 1.5) next = 2.0;
+    setPlaybackRate(next);
+    if (playerStatus.isLoaded) player.setPlaybackRate(next);
+  };
+
+  return { isSpeaking, isLoading, speak, stop, playbackRate, togglePlaybackRate, isAudioLoaded: playerStatus.isLoaded };
 }

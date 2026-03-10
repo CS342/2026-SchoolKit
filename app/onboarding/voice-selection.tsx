@@ -18,11 +18,13 @@ import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS } from '../../constant
 
 export default function VoiceSelectionScreen() {
   const router = useRouter();
-  const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding } = useOnboarding();
+  const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding, preferredLanguage } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const isWebDesktop = isWeb && !isMobile;
   const { fireEvent } = useAccomplishments();
-  const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || '21m00Tcm4TlvDq8ikWAM'); // Default to Rachel if none
+  const isSpanish = preferredLanguage === 'spanish';
+  const defaultVoice = isSpanish ? VOICE_META['LlsiGQPTj7Tt7gsEPZl0']?.id : '21m00Tcm4TlvDq8ikWAM';
+  const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || defaultVoice);
 
   // Audio playback state for samples
   const player = useAudioPlayer();
@@ -55,7 +57,9 @@ export default function VoiceSelectionScreen() {
       setPlayingVoiceId(voiceId);
 
       // Intro text for the sample
-      const text = `Hi, I'm ${name}. I'm excited to help you on your journey.`;
+      const text = isSpanish
+        ? `Hola, soy ${name}. Estoy emocionado de acompañarte en este camino.`
+        : `Hi, I'm ${name}. I'm excited to help you on your journey.`;
       const uri = await generateSpeech(text, voiceId);
 
       if (uri) {
@@ -83,18 +87,21 @@ export default function VoiceSelectionScreen() {
     router.replace('/loading');
   };
 
-  // Group voices by accent
+  // Group voices by accent, filtered by preferred language
   const voicesByAccent = useMemo(() => {
     const groups: Record<string, VoiceData[]> = {};
     Object.values(VOICE_META).forEach((voice) => {
+      const isSpanishVoice = voice.accent === 'Spanish';
+      if (isSpanish && !isSpanishVoice) return;
+      if (!isSpanish && isSpanishVoice) return;
       const accent = voice.accent || 'Other';
       if (!groups[accent]) groups[accent] = [];
       groups[accent].push(voice);
     });
     return groups;
-  }, []);
+  }, [isSpanish]);
 
-  const accentOrder = ['American', 'British', 'Australian'];
+  const accentOrder = isSpanish ? ['Spanish'] : ['American', 'British', 'Australian'];
 
   return (
     <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>

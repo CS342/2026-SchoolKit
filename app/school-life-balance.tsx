@@ -643,6 +643,7 @@ export default function SchoolLifeBalanceScreen() {
     const playerStatus = useAudioPlayerStatus(player);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+    const [playbackRate, setPlaybackRate] = useState(1.0);
 
     useEffect(() => {
         if (playerStatus.isLoaded && playerStatus.didJustFinish) {
@@ -650,6 +651,15 @@ export default function SchoolLifeBalanceScreen() {
             player.seekTo(0);
         }
     }, [playerStatus.isLoaded, playerStatus.didJustFinish]);
+
+    const togglePlaybackRate = () => {
+        let next = 1.0;
+        if (playbackRate === 1.0) next = 1.25;
+        else if (playbackRate === 1.25) next = 1.5;
+        else if (playbackRate === 1.5) next = 2.0;
+        setPlaybackRate(next);
+        if (playerStatus.isLoaded) player.setPlaybackRate(next);
+    };
 
     const getCardColor = (id: string) => {
         const idx = CARDS.findIndex((c) => c.id === id);
@@ -711,6 +721,18 @@ export default function SchoolLifeBalanceScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <TouchableOpacity onPress={handleSpeak} style={{ padding: 4 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
+                        {isLoadingAudio ? (
+                            <ActivityIndicator size="small" color="#7B68EE" />
+                        ) : (
+                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
+                        )}
+                    </TouchableOpacity>
+                    {playerStatus.isLoaded && (
+                        <TouchableOpacity onPress={togglePlaybackRate} style={{ padding: 4 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#7B68EE' }}>{playbackRate}x</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>

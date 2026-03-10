@@ -280,6 +280,9 @@ function ExpandedCardModal({
   isLoadingAudio,
   onToggleSpeak,
   selectedVoice,
+  isAudioLoaded,
+  playbackRate,
+  onTogglePlaybackRate,
 }: {
   visible: boolean;
   item: CardData | null;
@@ -289,6 +292,9 @@ function ExpandedCardModal({
   isLoadingAudio: boolean;
   onToggleSpeak: () => void;
   selectedVoice: string;
+  isAudioLoaded: boolean;
+  playbackRate: number;
+  onTogglePlaybackRate: () => void;
 }) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -655,6 +661,11 @@ function ExpandedCardModal({
                           />
                         )}
                       </TouchableOpacity>
+                      {isAudioLoaded && (
+                        <TouchableOpacity onPress={onTogglePlaybackRate} style={{ padding: 6 }}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: "#6B6B85" }}>{playbackRate}x</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
 
@@ -761,6 +772,16 @@ export default function UnderstandingCancerScreen() {
   const playerStatus = useAudioPlayerStatus(player);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+
+  const togglePlaybackRate = () => {
+    let next = 1.0;
+    if (playbackRate === 1.0) next = 1.25;
+    else if (playbackRate === 1.25) next = 1.5;
+    else if (playbackRate === 1.5) next = 2.0;
+    setPlaybackRate(next);
+    if (playerStatus.isLoaded) player.setPlaybackRate(next);
+  };
 
   // Cleanup sound on unmount/change
   useEffect(() => {
@@ -939,6 +960,9 @@ export default function UnderstandingCancerScreen() {
         isLoadingAudio={isLoadingAudio}
         onToggleSpeak={handleSpeak}
         selectedVoice={selectedVoice}
+        isAudioLoaded={playerStatus.isLoaded}
+        playbackRate={playbackRate}
+        onTogglePlaybackRate={togglePlaybackRate}
       />
     </View>
   );

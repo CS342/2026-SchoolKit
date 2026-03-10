@@ -220,7 +220,7 @@ function BottomSheet({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
-  const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const { isSpeaking, isLoading, speak, stop, playbackRate, togglePlaybackRate, isAudioLoaded } = useTTS();
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);
 
@@ -364,6 +364,11 @@ function BottomSheet({
               size={22}
               activeColor={section.color}
             />
+            {isAudioLoaded && (
+              <TouchableOpacity onPress={togglePlaybackRate} style={{ padding: 6 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textLight }}>{playbackRate}x</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={handleDismiss} style={{ padding: 4 }}>
               <Ionicons name="close" size={24} color={COLORS.textLight} />
             </TouchableOpacity>

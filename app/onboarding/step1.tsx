@@ -58,7 +58,7 @@ export default function Step1Screen() {
   const handleContinue = () => {
     if (name.trim()) {
       updateName(name.trim());
-      router.push('/onboarding/step2');
+      router.push('/onboarding/step-language');
     }
   };
 

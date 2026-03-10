@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
@@ -18,7 +18,7 @@ export default function TopicDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
-  const { isSpeaking, isLoading, speak } = useTTS();
+  const { isSpeaking, isLoading, speak, playbackRate, togglePlaybackRate, isAudioLoaded } = useTTS();
   const { fontScale } = useTheme();
   const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
@@ -141,6 +141,12 @@ export default function TopicDetailScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
+          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={24} activeColor={color} />
+          {isAudioLoaded && (
+            <TouchableOpacity onPress={togglePlaybackRate} style={styles.shareButton}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textMuted }}>{playbackRate}x</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>

@@ -50,6 +50,9 @@ interface OnboardingContextType {
   // Voice
   selectedVoice: string;
   updateVoice: (voiceId: string) => Promise<void>;
+  // Language
+  preferredLanguage: 'english' | 'spanish';
+  updatePreferredLanguage: (lang: 'english' | 'spanish') => Promise<void>;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -73,11 +76,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
   const [downloads, setDownloads] = useState<string[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>(VOICES.PETER);
+  const [preferredLanguage, setPreferredLanguage] = useState<'english' | 'spanish'>('english');
 
-  // Load downloads and voice from AsyncStorage on mount
+  // Load downloads, voice, and language from AsyncStorage on mount
   useEffect(() => {
     loadDownloads();
     loadVoice();
+    loadLanguage();
   }, []);
 
   const loadVoice = async () => {
@@ -86,6 +91,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (stored) setSelectedVoice(stored);
     } catch (error) {
       console.error('Error loading voice:', error);
+    }
+  };
+
+  const loadLanguage = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('@schoolkit_preferred_language');
+      if (stored === 'english' || stored === 'spanish') setPreferredLanguage(stored);
+    } catch (error) {
+      console.error('Error loading language:', error);
     }
   };
 
@@ -390,8 +404,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       await updateProfile({ voice_id: voiceId });
     } catch (e) {
       console.warn('Failed to sync voice preference to Supabase (likely missing column):', e);
-      // Do not throw, keep local state
     }
+  };
+
+  const updatePreferredLanguage = async (lang: 'english' | 'spanish') => {
+    setPreferredLanguage(lang);
+    await AsyncStorage.setItem('@schoolkit_preferred_language', lang);
   };
 
   return (
@@ -419,6 +437,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         downloadAllResources,
         selectedVoice,
         updateVoice,
+        preferredLanguage,
+        updatePreferredLanguage,
       }}
     >
       {children}

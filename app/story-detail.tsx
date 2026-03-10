@@ -193,7 +193,7 @@ export default function StoryDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user, isAnonymous } = useAuth();
-  const { selectedVoice, data: onboardingData } = useOnboarding();
+  const { selectedVoice, data: onboardingData, preferredLanguage } = useOnboarding();
   const {
     stories,
     deleteStory,
@@ -237,6 +237,12 @@ export default function StoryDetailScreen() {
   const downloadScale = useRef(new RNAnimated.Value(1)).current;
   const [showReportModal, setShowReportModal] = useState(false);
   const [showOriginalVersion, setShowOriginalVersion] = useState(false);
+  const [fontSizeStep, setFontSizeStep] = useState(0);
+  const FONT_STEPS = [1.0, 1.2, 1.45];
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [translatedBody, setTranslatedBody] = useState<string | null>(null);
 
   const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
 
@@ -436,12 +442,14 @@ export default function StoryDetailScreen() {
 
     try {
       setIsLoadingAudio(true);
-      const textToSpeak = `${story.title}. ${story.body}`;
-      const audioUri = await generateSpeech(textToSpeak, selectedVoice);
+      const titleToSpeak = isTranslated && translatedTitle ? translatedTitle : story.title;
+      const bodyToSpeak = isTranslated && translatedBody ? translatedBody : story.body;
+      const textToSpeak = `${titleToSpeak}. ${bodyToSpeak}`;
+      const voiceToUse = isTranslated && preferredLanguage !== 'spanish' ? 'dNjJKg63Fr5AXwIdkATa' : selectedVoice;
+      const audioUri = await generateSpeech(textToSpeak, voiceToUse);
 
       if (audioUri) {
         player.replace(audioUri);
-        player.playbackRate = playbackRate;
         player.play();
       } else {
         setIsSpeaking(false);
@@ -454,6 +462,47 @@ export default function StoryDetailScreen() {
     }
   };
 
+  const handleTranslate = async () => {
+    if (!story) return;
+    if (isTranslated) {
+      setIsTranslated(false);
+      if (isSpeaking) { player.pause(); setIsSpeaking(false); }
+      return;
+    }
+    if (translatedTitle && translatedBody) { setIsTranslated(true); return; }
+    setIsTranslating(true);
+    try {
+      const openAiKey = process.env.EXPO_PUBLIC_OPEN_AI_MODERATION_KEY;
+      if (!openAiKey) throw new Error('OpenAI key missing');
+      const translateText = async (text: string) => {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openAiKey}` },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'Translate the following text to Spanish. Return only the translated text, no explanations.' },
+              { role: 'user', content: text },
+            ],
+            temperature: 0.2,
+          }),
+        });
+        const json = await res.json();
+        console.log('OpenAI translate response:', JSON.stringify(json));
+        return json.choices?.[0]?.message?.content?.trim() ?? text;
+      };
+      const [title, body] = await Promise.all([translateText(story.title), translateText(story.body)]);
+      setTranslatedTitle(title);
+      setTranslatedBody(body);
+      setIsTranslated(true);
+    } catch (e) {
+      console.error('Translation error:', e);
+      Alert.alert('Translation failed', 'Could not translate the story. Please try again.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const togglePlaybackRate = async () => {
     let nextRate = 1.0;
     if (playbackRate === 1.0) nextRate = 1.25;
@@ -462,7 +511,7 @@ export default function StoryDetailScreen() {
     else nextRate = 1.0;
 
     setPlaybackRate(nextRate);
-    player.playbackRate = nextRate;
+    if (playerStatus.isLoaded) player.setPlaybackRate(nextRate);
   };
 
   const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
@@ -539,7 +588,7 @@ export default function StoryDetailScreen() {
 
           {/* Title */}
           {isModeratorMode && story.status === 'pending' && story.previous_title ? (
-            <Text style={styles.storyTitle}>
+            <Text style={[styles.storyTitle, fontSizeStep > 0 && { fontSize: Math.round(22 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(29 * FONT_STEPS[fontSizeStep]) }]}>
               {diffWords(story.previous_title, story.title).map((part, i) => {
                 if (part.removed) return null;
                 return (
@@ -550,7 +599,7 @@ export default function StoryDetailScreen() {
               })}
             </Text>
           ) : (
-            <Text style={styles.storyTitle}>{story.title}</Text>
+            <Text style={[styles.storyTitle, fontSizeStep > 0 && { fontSize: Math.round(22 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(29 * FONT_STEPS[fontSizeStep]) }]}>{isTranslated && translatedTitle ? translatedTitle : story.title}</Text>
           )}
 
           {/* Audio Player Container */}
@@ -597,12 +646,30 @@ export default function StoryDetailScreen() {
                   <Text style={styles.speedBtnText}>{playbackRate}x</Text>
                 </TouchableOpacity>
               )}
+
+              <TouchableOpacity
+                style={[styles.speedBtn, fontSizeStep > 0 && { borderColor: colors.primary }]}
+                onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)}
+              >
+                <Text style={[styles.speedBtnText, fontSizeStep > 0 && { color: colors.primary }]}>Aa</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.speedBtn, isTranslated && { borderColor: colors.primary }]}
+                onPress={handleTranslate}
+                disabled={isTranslating}
+              >
+                {isTranslating
+                  ? <ActivityIndicator size="small" color={colors.primary} />
+                  : <Text style={[styles.speedBtnText, isTranslated && { color: colors.primary }]}>ES</Text>
+                }
+              </TouchableOpacity>
             </View>
           )}
 
           {/* Body */}
           {isModeratorMode && story.status === 'pending' && story.previous_body ? (
-            <Text style={styles.storyBody}>
+            <Text style={[styles.storyBody, fontSizeStep > 0 && { fontSize: Math.round(16 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(26 * FONT_STEPS[fontSizeStep]) }]}>
               {diffWords(story.previous_body, story.body).map((part, i) => {
                 if (part.removed) return null;
                 return (
@@ -613,7 +680,7 @@ export default function StoryDetailScreen() {
               })}
             </Text>
           ) : (
-            <Text style={styles.storyBody}>{story.body}</Text>
+            <Text style={[styles.storyBody, fontSizeStep > 0 && { fontSize: Math.round(16 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(26 * FONT_STEPS[fontSizeStep]) }]}>{isTranslated && translatedBody ? translatedBody : story.body}</Text>
           )}
 
           {/* Show Original Toggle (Moderator Only) */}
@@ -856,7 +923,7 @@ export default function StoryDetailScreen() {
   );
 }
 
-const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark: boolean, fontScale = 1) => {
+const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark: boolean, fontScale = 1) => {
   const fs = (size: number) => Math.round(size * fontScale);
   return StyleSheet.create({
     container: {
