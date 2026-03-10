@@ -4,8 +4,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
-import { TTSButton } from '../components/TTSButton';
-import { useTTS } from '../hooks/useTTS';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/onboarding-theme';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
@@ -18,7 +16,6 @@ export default function TopicDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
-  const { isSpeaking, isLoading, speak, playbackRate, togglePlaybackRate, isAudioLoaded } = useTTS();
   const { fontScale } = useTheme();
   const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
@@ -110,12 +107,6 @@ export default function TopicDetailScreen() {
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
   const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
 
-  const handleSpeak = () => {
-    const description = `This is a comprehensive resource about "${title}". Here you'll find helpful information, strategies, and support for navigating this aspect of your school journey.`;
-    const textToSpeak = `${title}. About this topic. ${description} Key Resources. Getting Started Guide. Learn the basics. Community Support. Connect with others. Tips and Strategies. Practical advice.`;
-    speak(textToSpeak);
-  };
-
   const handleShare = async () => {
     try {
       await Share.share({
@@ -141,12 +132,6 @@ export default function TopicDetailScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
-          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={24} activeColor={color} />
-          {isAudioLoaded && (
-            <TouchableOpacity onPress={togglePlaybackRate} style={styles.shareButton}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textMuted }}>{playbackRate}x</Text>
-            </TouchableOpacity>
-          )}
           <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
           </TouchableOpacity>
@@ -163,7 +148,6 @@ export default function TopicDetailScreen() {
         onContentSizeChange={(_, h) => setContentHeight(h)}
       >
         <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
-          <TTSButton isSpeaking={isSpeaking} isLoading={isLoading} onPress={handleSpeak} size={22} activeColor={color} style={{ position: 'absolute', top: 16, right: 16 }} />
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
             <Ionicons name="book" size={40} color={color} />
           </View>

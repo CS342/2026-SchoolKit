@@ -11,10 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { generateSpeech } from "../services/elevenLabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useOnboarding } from "../contexts/OnboardingContext";
 import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
@@ -259,17 +256,10 @@ const listFlip = StyleSheet.create({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function CopingAwayFromHomeScreen() {
-    const { selectedVoice } = useOnboarding();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { fontScale } = useTheme();
     const fs = (size: number) => Math.round(size * fontScale);
-
-    const pagePlayer = useAudioPlayer();
-    const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
-    const [isPageSpeaking, setIsPageSpeaking] = useState(false);
-    const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
-    const [pagePlaybackRate, setPagePlaybackRate] = useState(1.0);
 
     const titleFade = useRef(new Animated.Value(0)).current;
     const titleSlide = useRef(new Animated.Value(20)).current;
@@ -300,39 +290,6 @@ export default function CopingAwayFromHomeScreen() {
         });
     }, []);
 
-    useEffect(() => {
-        if (pagePlayerStatus.isLoaded && pagePlayerStatus.didJustFinish) {
-            setIsPageSpeaking(false);
-            pagePlayer.seekTo(0);
-        }
-    }, [pagePlayerStatus.isLoaded, pagePlayerStatus.didJustFinish]);
-
-    const handlePageSpeak = async () => {
-        if (isPageSpeaking) { pagePlayer.pause(); setIsPageSpeaking(false); return; }
-        setIsPageSpeaking(true);
-        if (pagePlayerStatus.isLoaded) { pagePlayer.play(); return; }
-        try {
-            setIsPageLoadingAudio(true);
-            const text = `Coping When Away From Home. It is natural to feel out of place when being away from home for treatment. You are not alone, and we're here to help you feel a little more at home. Staying Connected with Home: Video calls with family. Making drawings or crafts. Keeping a digital photo album. From Hospital Room to YOUR Hospital Room: Bring photos and art from home. Bring comfort items like a stuffed animal, your own pillowcases, or sheets. Light and glow decor.`;
-            const audioUri = await generateSpeech(text, selectedVoice);
-            if (audioUri) { pagePlayer.replace(audioUri); pagePlayer.play(); }
-            else { setIsPageSpeaking(false); }
-        } catch (e) {
-            setIsPageSpeaking(false);
-        } finally {
-            setIsPageLoadingAudio(false);
-        }
-    };
-
-    const togglePagePlaybackRate = () => {
-        let next = 1.0;
-        if (pagePlaybackRate === 1.0) next = 1.25;
-        else if (pagePlaybackRate === 1.25) next = 1.5;
-        else if (pagePlaybackRate === 1.5) next = 2.0;
-        setPagePlaybackRate(next);
-        if (pagePlayerStatus.isLoaded) pagePlayer.setPlaybackRate(next);
-    };
-
     const handleShare = async () => {
         try { await Share.share({ message: 'Check out "Coping When Away From Home" on SchoolKit — tips for staying connected and making your hospital room feel more like home.' }); } catch { }
     };
@@ -347,17 +304,6 @@ export default function CopingAwayFromHomeScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }}>
-                        {isPageLoadingAudio
-                            ? <ActivityIndicator size="small" color={PAGE_COLOR} />
-                            : <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? PAGE_COLOR : "#6B6B85"} />
-                        }
-                    </TouchableOpacity>
-                    {pagePlayerStatus.isLoaded && (
-                        <TouchableOpacity onPress={togglePagePlaybackRate} style={{ padding: 4 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: PAGE_COLOR }}>{pagePlaybackRate}x</Text>
-                        </TouchableOpacity>
-                    )}
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>
@@ -370,12 +316,6 @@ export default function CopingAwayFromHomeScreen() {
 
                 {/* Title */}
                 <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
-                    <TouchableOpacity onPress={handlePageSpeak} style={{ position: 'absolute', top: 10, right: 0, padding: 4, zIndex: 1 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
-                        {isPageLoadingAudio
-                            ? <ActivityIndicator size="small" color={PAGE_COLOR} />
-                            : <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={24} color={isPageSpeaking ? PAGE_COLOR : "#6B6B85"} />
-                        }
-                    </TouchableOpacity>
                     <Text style={styles.pageTitle}>
                         Coping When <Text style={{ color: PAGE_COLOR }}>Away From Home</Text>
                     </Text>

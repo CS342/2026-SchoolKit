@@ -28,8 +28,6 @@ import RNAnimated, {
 import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
-import { TTSButton } from "../components/TTSButton";
-import { useTTS } from "../hooks/useTTS";
 import {
   COLORS,
   SHADOWS,
@@ -348,6 +346,8 @@ function BottomSheet({
   const sheetPlayerStatus = useAudioPlayerStatus(sheetPlayer);
   const [isSheetSpeaking, setIsSheetSpeaking] = useState(false);
   const [isSheetLoadingAudio, setIsSheetLoadingAudio] = useState(false);
+  const [sheetPlaybackRate, setSheetPlaybackRate] = useState(1.0);
+  const currentTopicIdRef = useRef<string | null>(null);
 
   const maxBullets = 8;
   while (bulletAnims.length < maxBullets) {
@@ -454,12 +454,14 @@ function BottomSheet({
       return;
     }
 
-    setIsSheetSpeaking(true);
-
-    if (sheetPlayerStatus.isLoaded) {
+    if (sheetPlayerStatus.isLoaded && currentTopicIdRef.current === topic.id) {
       sheetPlayer.play();
+      setIsSheetSpeaking(true);
       return;
     }
+
+    currentTopicIdRef.current = topic.id;
+    setIsSheetSpeaking(true);
 
     try {
       setIsSheetLoadingAudio(true);
@@ -472,13 +474,24 @@ function BottomSheet({
         sheetPlayer.play();
       } else {
         setIsSheetSpeaking(false);
+        currentTopicIdRef.current = null;
       }
     } catch (error) {
       console.error("Audio playback error:", error);
       setIsSheetSpeaking(false);
+      currentTopicIdRef.current = null;
     } finally {
       setIsSheetLoadingAudio(false);
     }
+  };
+
+  const toggleSheetPlaybackRate = () => {
+    let next = 1.0;
+    if (sheetPlaybackRate === 1.0) next = 1.25;
+    else if (sheetPlaybackRate === 1.25) next = 1.5;
+    else if (sheetPlaybackRate === 1.5) next = 2.0;
+    setSheetPlaybackRate(next);
+    if (sheetPlayerStatus.isLoaded) sheetPlayer.setPlaybackRate(next);
   };
 
   // Reset audio when topic changes
@@ -522,6 +535,11 @@ function BottomSheet({
                 <Ionicons name={isSheetSpeaking ? "pause-circle" : "volume-high"} size={22} color={isSheetSpeaking ? topic.color : COLORS.textLight} />
               )}
             </TouchableOpacity>
+            {sheetPlayerStatus.isLoaded && (
+              <TouchableOpacity onPress={toggleSheetPlaybackRate} style={styles.sheetActionButton} accessibilityLabel="Change speed">
+                <Text style={{ fontSize: 12, fontWeight: '700', color: topic.color }}>{sheetPlaybackRate}x</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.sheetActionButton} onPress={handleDismiss} accessibilityLabel="Close">
               <Ionicons name="close" size={24} color={COLORS.textLight} />
             </TouchableOpacity>
@@ -649,62 +667,6 @@ export default function PeerSupportScreen() {
     }
   };
 
-  // TTS state for main page
-  const pagePlayer = useAudioPlayer();
-  const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
-  const [isPageSpeaking, setIsPageSpeaking] = useState(false);
-  const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
-  const [pagePlaybackRate, setPagePlaybackRate] = useState(1.0);
-
-  useEffect(() => {
-    if (pagePlayerStatus.isLoaded && pagePlayerStatus.didJustFinish) {
-      setIsPageSpeaking(false);
-      pagePlayer.seekTo(0);
-    }
-  }, [pagePlayerStatus.isLoaded, pagePlayerStatus.didJustFinish, pagePlayer]);
-
-  const handlePageSpeak = async () => {
-    if (isPageSpeaking) {
-      pagePlayer.pause();
-      setIsPageSpeaking(false);
-      return;
-    }
-
-    setIsPageSpeaking(true);
-
-    if (pagePlayerStatus.isLoaded) {
-      pagePlayer.play();
-      return;
-    }
-
-    try {
-      setIsPageLoadingAudio(true);
-      const textToSpeak = `Encouraging Positive Peer Support. "Alone we can do so little; together we can do so much." Helen Keller. Why is peer support important? After a prolonged absence, a returning student may worry about being different, falling behind socially, or being treated differently by classmates. Positive peer support helps create a welcoming environment where every student feels they belong.`;
-      const audioUri = await generateSpeech(textToSpeak, selectedVoice);
-
-      if (audioUri) {
-        pagePlayer.replace(audioUri);
-        pagePlayer.play();
-      } else {
-        setIsPageSpeaking(false);
-      }
-    } catch (error) {
-      console.error("Audio playback error:", error);
-      setIsPageSpeaking(false);
-    } finally {
-      setIsPageLoadingAudio(false);
-    }
-  };
-
-  const togglePagePlaybackRate = () => {
-    let next = 1.0;
-    if (pagePlaybackRate === 1.0) next = 1.25;
-    else if (pagePlaybackRate === 1.25) next = 1.5;
-    else if (pagePlaybackRate === 1.5) next = 2.0;
-    setPagePlaybackRate(next);
-    if (pagePlayerStatus.isLoaded) pagePlayer.setPlaybackRate(next);
-  };
-
   // Entrance animations
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(20);
@@ -762,18 +724,6 @@ export default function PeerSupportScreen() {
           <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <TouchableOpacity onPress={handlePageSpeak} style={{ padding: 4 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
-            {isPageLoadingAudio ? (
-              <ActivityIndicator size="small" color={COLORS.studentK8} />
-            ) : (
-              <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={28} color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted} />
-            )}
-          </TouchableOpacity>
-          {pagePlayerStatus.isLoaded && (
-            <TouchableOpacity onPress={togglePagePlaybackRate} style={{ padding: 8 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textMuted }}>{pagePlaybackRate}x</Text>
-            </TouchableOpacity>
-          )}
           <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
             <Ionicons name="share-outline" size={28} color={COLORS.textMuted} />
           </TouchableOpacity>
@@ -790,14 +740,6 @@ export default function PeerSupportScreen() {
       >
         {/* Page Title */}
         <RNAnimated.View style={titleStyle}>
-          <TTSButton
-            isSpeaking={isPageSpeaking}
-            isLoading={isPageLoadingAudio}
-            onPress={handlePageSpeak}
-            size={24}
-            activeColor={COLORS.studentK8}
-            style={{ position: 'absolute', top: 10, right: 0 }}
-          />
           <Text style={styles.pageTitle}>
             Encouraging{"\n"}
             <Text style={{ color: COLORS.studentK8 }}>Positive Peer</Text>

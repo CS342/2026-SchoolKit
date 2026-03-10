@@ -332,6 +332,9 @@ function ExpandedCardModal({
     isSpeaking,
     isLoadingAudio,
     onToggleSpeak,
+    playbackRate,
+    onTogglePlaybackRate,
+    isAudioLoaded,
 }: {
     visible: boolean;
     card: TipCard | null;
@@ -339,6 +342,9 @@ function ExpandedCardModal({
     isSpeaking: boolean;
     isLoadingAudio: boolean;
     onToggleSpeak: () => void;
+    playbackRate: number;
+    onTogglePlaybackRate: () => void;
+    isAudioLoaded: boolean;
 }) {
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.85)).current;
@@ -511,6 +517,15 @@ function ExpandedCardModal({
                                             />
                                         )}
                                     </TouchableOpacity>
+                                    {isAudioLoaded && (
+                                        <TouchableOpacity
+                                            onPress={onTogglePlaybackRate}
+                                            style={modalStyles.speakerBtn}
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                        >
+                                            <Text style={{ fontSize: 12, fontWeight: '700', color }}>{playbackRate}x</Text>
+                                        </TouchableOpacity>
+                                    )}
                                 </View>
 
                                 <View style={[modalStyles.divider, { backgroundColor: color + "30" }]} />
@@ -634,18 +649,13 @@ export default function FindingSupportScreen() {
     const [expandedCard, setExpandedCard] = useState<TipCard | null>(null);
     const [activeHandout, setActiveHandout] = useState(null);
 
-    // Page TTS
-    const pagePlayer = useAudioPlayer();
-    const pagePlayerStatus = useAudioPlayerStatus(pagePlayer);
-    const [isPageSpeaking, setIsPageSpeaking] = useState(false);
-    const [isPageLoadingAudio, setIsPageLoadingAudio] = useState(false);
-    const [pagePlaybackRate, setPagePlaybackRate] = useState(1.0);
-
     // Card TTS
     const cardPlayer = useAudioPlayer();
     const cardPlayerStatus = useAudioPlayerStatus(cardPlayer);
     const [isCardSpeaking, setIsCardSpeaking] = useState(false);
     const [isCardLoadingAudio, setIsCardLoadingAudio] = useState(false);
+    const [cardPlaybackRate, setCardPlaybackRate] = useState(1.0);
+    const currentCardIdRef = useRef<string | null>(null);
 
     // Entrance anims
     const titleFade = useRef(new Animated.Value(0)).current;
@@ -675,14 +685,6 @@ export default function FindingSupportScreen() {
         });
     }, []);
 
-    // Cleanup
-    useEffect(() => {
-        if (pagePlayerStatus.isLoaded && pagePlayerStatus.didJustFinish) {
-            setIsPageSpeaking(false);
-            pagePlayer.seekTo(0);
-        }
-    }, [pagePlayerStatus.isLoaded, pagePlayerStatus.didJustFinish, pagePlayer]);
-
     useEffect(() => {
         if (cardPlayerStatus.isLoaded && cardPlayerStatus.didJustFinish) {
             setIsCardSpeaking(false);
@@ -690,58 +692,21 @@ export default function FindingSupportScreen() {
         }
     }, [cardPlayerStatus.isLoaded, cardPlayerStatus.didJustFinish, cardPlayer]);
 
-    // Page TTS
-    const handlePageSpeak = async () => {
-        if (isPageSpeaking) {
-            pagePlayer.pause();
-            setIsPageSpeaking(false);
-            return;
-        }
-        setIsPageSpeaking(true);
-        if (pagePlayerStatus.isLoaded) {
-            pagePlayer.play();
-            return;
-        }
-        try {
-            setIsPageLoadingAudio(true);
-            const text = `How to Find People Who Understand Your Journey. A friend is someone who knows all about you and still loves you. Elbert Hubbard. Whether you're returning to school after treatment or navigating life with a chronic condition, finding people who truly understand what you're going through can make all the difference.`;
-            const audioUri = await generateSpeech(text, selectedVoice);
-            if (audioUri) {
-                pagePlayer.replace(audioUri);
-                pagePlayer.play();
-            } else {
-                setIsPageSpeaking(false);
-            }
-        } catch (e) {
-            console.error("Audio error:", e);
-            setIsPageSpeaking(false);
-        } finally {
-            setIsPageLoadingAudio(false);
-        }
-    };
-
-    const togglePagePlaybackRate = () => {
-        let next = 1.0;
-        if (pagePlaybackRate === 1.0) next = 1.25;
-        else if (pagePlaybackRate === 1.25) next = 1.5;
-        else if (pagePlaybackRate === 1.5) next = 2.0;
-        setPagePlaybackRate(next);
-        if (pagePlayerStatus.isLoaded) pagePlayer.setPlaybackRate(next);
-    };
-
     // Card TTS
     const handleCardSpeak = async () => {
+        if (!expandedCard) return;
         if (isCardSpeaking) {
             cardPlayer.pause();
             setIsCardSpeaking(false);
             return;
         }
-        setIsCardSpeaking(true);
-        if (cardPlayerStatus.isLoaded) {
+        if (cardPlayerStatus.isLoaded && currentCardIdRef.current === expandedCard.id) {
             cardPlayer.play();
+            setIsCardSpeaking(true);
             return;
         }
-        if (!expandedCard) return;
+        currentCardIdRef.current = expandedCard.id;
+        setIsCardSpeaking(true);
         try {
             setIsCardLoadingAudio(true);
             const text = `${expandedCard.front}. ${expandedCard.back}`;
@@ -751,13 +716,24 @@ export default function FindingSupportScreen() {
                 cardPlayer.play();
             } else {
                 setIsCardSpeaking(false);
+                currentCardIdRef.current = null;
             }
         } catch (e) {
             console.error("Audio error:", e);
             setIsCardSpeaking(false);
+            currentCardIdRef.current = null;
         } finally {
             setIsCardLoadingAudio(false);
         }
+    };
+
+    const toggleCardPlaybackRate = () => {
+        let next = 1.0;
+        if (cardPlaybackRate === 1.0) next = 1.25;
+        else if (cardPlaybackRate === 1.25) next = 1.5;
+        else if (cardPlaybackRate === 1.5) next = 2.0;
+        setCardPlaybackRate(next);
+        if (cardPlayerStatus.isLoaded) cardPlayer.setPlaybackRate(next);
     };
 
     const closeExpandedCard = async () => {
@@ -791,26 +767,6 @@ export default function FindingSupportScreen() {
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <TouchableOpacity
-                        onPress={handlePageSpeak}
-                        style={{ padding: 4 }}
-                        accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}
-                    >
-                        {isPageLoadingAudio ? (
-                            <ActivityIndicator size="small" color={COLORS.studentK8} />
-                        ) : (
-                            <Ionicons
-                                name={isPageSpeaking ? "pause-circle" : "volume-high"}
-                                size={28}
-                                color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted}
-                            />
-                        )}
-                    </TouchableOpacity>
-                    {pagePlayerStatus.isLoaded && (
-                        <TouchableOpacity onPress={togglePagePlaybackRate} style={{ padding: 8 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textMuted }}>{pagePlaybackRate}x</Text>
-                        </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
                         onPress={handleShare}
                         style={{ padding: 4 }}
                         accessibilityLabel="Share"
@@ -830,13 +786,6 @@ export default function FindingSupportScreen() {
                 <Animated.View
                     style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}
                 >
-                    <TouchableOpacity onPress={handlePageSpeak} style={{ position: 'absolute', top: 10, right: 0, padding: 4, zIndex: 1 }} accessibilityLabel={isPageSpeaking ? "Pause reading" : "Read aloud"}>
-                        {isPageLoadingAudio ? (
-                            <ActivityIndicator size="small" color={COLORS.studentK8} />
-                        ) : (
-                            <Ionicons name={isPageSpeaking ? "pause-circle" : "volume-high"} size={24} color={isPageSpeaking ? COLORS.studentK8 : COLORS.textMuted} />
-                        )}
-                    </TouchableOpacity>
                     <Text style={styles.pageTitle}>
                         How to Find People Who <Text style={{ color: "#7B68EE" }}>Understand</Text> Your Journey
                     </Text>
@@ -962,6 +911,9 @@ export default function FindingSupportScreen() {
                 isSpeaking={isCardSpeaking}
                 isLoadingAudio={isCardLoadingAudio}
                 onToggleSpeak={handleCardSpeak}
+                playbackRate={cardPlaybackRate}
+                onTogglePlaybackRate={toggleCardPlaybackRate}
+                isAudioLoaded={cardPlayerStatus.isLoaded}
             />
         </View>
     );
