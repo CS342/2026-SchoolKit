@@ -41,7 +41,7 @@ export function PrimaryButton({ title, onPress, disabled = false, icon }: Primar
       accessibilityState={{ disabled }}
       accessibilityLabel={title}
     >
-      <Animated.View style={[animatedStyle, !disabled && SHADOWS.button]}>
+      <Animated.View style={[animatedStyle, { borderRadius: RADII.button }, !disabled && SHADOWS.button]}>
         <LinearGradient
           colors={disabled ? [...GRADIENTS.disabledButton] : [...GRADIENTS.primaryButton]}
           start={{ x: 0, y: 0 }}
