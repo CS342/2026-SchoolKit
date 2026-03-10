@@ -234,7 +234,11 @@ function VoiceView({
       }
       setIsLoading(true);
       setPlayingVoiceId(voiceId);
-      const uri = await generateSpeech('The quick brown fox jumps over the lazy dog.', voiceId);
+      const meta = Object.values(VOICE_META).find(v => v.id === voiceId);
+      const sampleText = meta?.accent === 'Spanish'
+        ? 'Hola, soy tu compañero de apoyo en SchoolKit.'
+        : 'The quick brown fox jumps over the lazy dog.';
+      const uri = await generateSpeech(sampleText, voiceId);
       if (uri) {
         player.replace(uri);
         player.play();
@@ -269,7 +273,7 @@ function VoiceView({
       </View>
       <Text style={[styles.subSubtitle, { color: colors.textLight }]}>Select a companion for your journey</Text>
       <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 8 }}>
-        {['American', 'British', 'Australian'].map((accent) => {
+        {['Spanish', 'American', 'British', 'Australian'].map((accent) => {
           const voices = voicesByAccent[accent];
           if (!voices?.length) return null;
           return (
@@ -533,6 +537,12 @@ export function SettingsSheet() {
 
   const handleRetakeSurvey = () => {
     close();
+    if (Platform.OS === 'web') {
+      if (!window.confirm('This will reset your profile. Are you sure?')) return;
+      resetOnboarding();
+      router.replace('/onboarding/step1');
+      return;
+    }
     Alert.alert('Retake Survey', 'This will reset your profile. Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Retake', style: 'destructive', onPress: () => { resetOnboarding(); router.replace('/onboarding/step1'); } },

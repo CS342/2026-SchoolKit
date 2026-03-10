@@ -51,6 +51,8 @@ export function WebResourceTile({
           {
             backgroundColor: isDark ? colors.backgroundLight : '#FFFFFF',
             borderColor: colors.borderCard,
+            width: tileSize,
+            height: tileSize,
           },
         ]}
       >
@@ -85,6 +87,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 10,
     shadowColor: '#7B68EE',
     shadowOffset: { width: 0, height: 4 },

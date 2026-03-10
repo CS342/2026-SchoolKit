@@ -106,7 +106,7 @@ export default function ForYouScreen() {
             onLayout={isWebDesktop ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
           >
             {data.topics.map((topic, index) => {
-              const resource = resources.find(r => r.title === topic);
+              const resource = resources.find(r => r.title.toLowerCase() === topic.toLowerCase());
               const color = resource?.color || colors.primary;
               const icon = resource?.icon || 'bookmarks';
 

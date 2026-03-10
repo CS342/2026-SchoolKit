@@ -302,6 +302,8 @@ function ExpandedCardModal({
     isSpeaking,
     isLoadingAudio,
     onToggleSpeak,
+    playbackRate,
+    onTogglePlaybackRate,
 }: {
     visible: boolean;
     item: CardData | null;
@@ -310,6 +312,8 @@ function ExpandedCardModal({
     isSpeaking: boolean;
     isLoadingAudio: boolean;
     onToggleSpeak: () => void;
+    playbackRate: number;
+    onTogglePlaybackRate: () => void;
 }) {
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -390,13 +394,20 @@ function ExpandedCardModal({
                                     <Text style={[styles.factBigText, { color }]}>Tips</Text>
                                     <Animated.View style={{ height: 4, backgroundColor: color, width: underlineWidth, borderRadius: 2, marginTop: 2 }} />
                                 </View>
-                                <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                                    {isLoadingAudio ? (
-                                        <ActivityIndicator size="small" color={color} />
-                                    ) : (
-                                        <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                    {isSpeaking && (
+                                        <TouchableOpacity onPress={onTogglePlaybackRate} hitSlop={10}>
+                                            <Text style={{ fontSize: 12, fontWeight: '700', color }}>{playbackRate}x</Text>
+                                        </TouchableOpacity>
                                     )}
-                                </TouchableOpacity>
+                                    <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                        {isLoadingAudio ? (
+                                            <ActivityIndicator size="small" color={color} />
+                                        ) : (
+                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
                             <Text style={[styles.backCardTitle, { color }]}>{item.front}</Text>
@@ -666,36 +677,51 @@ export default function SchoolLifeBalanceScreen() {
         return CARD_COLORS[idx % CARD_COLORS.length];
     };
 
+    const currentCardIdRef = useRef<string | null>(null);
+
     const closeExpandedCard = async () => {
         player.pause();
         setIsSpeaking(false);
+        currentCardIdRef.current = null;
         setExpandedCard(null);
     };
 
     const handleSpeak = async () => {
+        if (!expandedCard?.back) return;
+
         if (isSpeaking) {
             player.pause();
             setIsSpeaking(false);
-        } else {
+            return;
+        }
+
+        // Resume if same card is already loaded
+        if (playerStatus.isLoaded && currentCardIdRef.current === expandedCard.id) {
+            player.play();
             setIsSpeaking(true);
-            if (playerStatus.isLoaded) {
+            return;
+        }
+
+        // Generate speech for this card
+        currentCardIdRef.current = expandedCard.id;
+        setIsSpeaking(true);
+        setIsLoadingAudio(true);
+        try {
+            const text = `${expandedCard.front}. ${expandedCard.back}`;
+            const audioUri = await generateSpeech(text, selectedVoice);
+            if (audioUri) {
+                player.replace(audioUri);
                 player.play();
-            } else if (expandedCard?.back) {
-                try {
-                    setIsLoadingAudio(true);
-                    const text = `${expandedCard.front}. ${expandedCard.back}`;
-                    const audioUri = await generateSpeech(text, selectedVoice);
-                    if (audioUri) {
-                        player.replace(audioUri);
-                        player.play();
-                    }
-                } catch (e) {
-                    console.error("Audio error:", e);
-                    setIsSpeaking(false);
-                } finally {
-                    setIsLoadingAudio(false);
-                }
+            } else {
+                setIsSpeaking(false);
+                currentCardIdRef.current = null;
             }
+        } catch (e) {
+            console.error("Audio error:", e);
+            setIsSpeaking(false);
+            currentCardIdRef.current = null;
+        } finally {
+            setIsLoadingAudio(false);
         }
     };
 
@@ -721,18 +747,6 @@ export default function SchoolLifeBalanceScreen() {
                     <Ionicons name="arrow-back" size={28} color="#2D2D44" />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleSpeak} style={{ padding: 4 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
-                        {isLoadingAudio ? (
-                            <ActivityIndicator size="small" color="#7B68EE" />
-                        ) : (
-                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
-                        )}
-                    </TouchableOpacity>
-                    {playerStatus.isLoaded && (
-                        <TouchableOpacity onPress={togglePlaybackRate} style={{ padding: 4 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#7B68EE' }}>{playbackRate}x</Text>
-                        </TouchableOpacity>
-                    )}
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
                         <Ionicons name="share-outline" size={28} color="#6B6B85" />
                     </TouchableOpacity>
@@ -748,19 +762,10 @@ export default function SchoolLifeBalanceScreen() {
                 scrollEventThrottle={100}
             >
                 {/* Title */}
-                <View style={{ position: 'relative' }}>
-                    <TouchableOpacity onPress={handleSpeak} style={{ position: 'absolute', top: 0, right: 0, padding: 4, zIndex: 1 }} disabled={isLoadingAudio} accessibilityLabel={isSpeaking ? "Stop reading" : "Read aloud"}>
-                        {isLoadingAudio ? (
-                            <ActivityIndicator size="small" color="#7B68EE" />
-                        ) : (
-                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={24} color={isSpeaking ? "#FF6B6B" : "#7B68EE"} />
-                        )}
-                    </TouchableOpacity>
-                    <Text style={styles.pageTitle}>
-                        Best Practices for Juggling{"\n"}
-                        <Text style={{ color: "#7B68EE" }}>School and Life</Text>
-                    </Text>
-                </View>
+                <Text style={styles.pageTitle}>
+                    Best Practices for Juggling{"\n"}
+                    <Text style={{ color: "#7B68EE" }}>School and Life</Text>
+                </Text>
 
                 {/* Subtitle */}
                 <Text style={styles.subtitleText}>
@@ -827,6 +832,8 @@ export default function SchoolLifeBalanceScreen() {
                 isSpeaking={isSpeaking}
                 isLoadingAudio={isLoadingAudio}
                 onToggleSpeak={handleSpeak}
+                playbackRate={playbackRate}
+                onTogglePlaybackRate={togglePlaybackRate}
             />
 
             {/* Handout modal */}
