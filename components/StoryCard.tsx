@@ -26,7 +26,6 @@ interface StoryCardProps {
   showRejectedNorms?: boolean;
 }
 
-const FONT_STEPS = [1.0, 1.2, 1.45];
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const AUDIENCE_DISPLAY: Record<string, string> = {
   'student-k8': 'Students', 'student-hs': 'Students',
@@ -136,7 +135,6 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
   const [showRejectModal, setShowRejectModal] = React.useState(false);
-  const [fontSizeStep, setFontSizeStep] = React.useState(0);
 
   const styles = React.useMemo(() => makeCardStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
@@ -253,11 +251,11 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
 
         {/* Title — the hero element */}
-        <Text style={[styles.title, fontSizeStep > 0 && { fontSize: Math.round(18 * fontScale * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * fontScale * FONT_STEPS[fontSizeStep]) }]} numberOfLines={2}>{story.title}</Text>
+        <Text style={styles.title} numberOfLines={2}>{story.title}</Text>
 
         {/* Body preview */}
         {story.body ? (
-          <Text style={[styles.bodyPreview, fontSizeStep > 0 && { fontSize: Math.round(14 * fontScale * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(21 * fontScale * FONT_STEPS[fontSizeStep]) }]} numberOfLines={3}>{story.body}</Text>
+          <Text style={styles.bodyPreview} numberOfLines={3}>{story.body}</Text>
         ) : null}
 
         {/* Content Tags */}
@@ -307,9 +305,6 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); setFontSizeStep(s => (s + 1) % FONT_STEPS.length); }} hitSlop={10} activeOpacity={0.7}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? colors.primary : colors.textLight }}>Aa</Text>
-            </TouchableOpacity>
             <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7}>
               <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
                 <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={27} color={bookmarked ? colors.primary : colors.textLight} />
@@ -461,18 +456,18 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     marginBottom: 4,
   },
   title: {
-    fontSize: fs(22),
+    fontSize: 18,
     fontWeight: '700',
     color: c.textDark,
-    lineHeight: fs(28),
+    lineHeight: 24,
     marginBottom: 4,
     letterSpacing: -0.2,
   },
   bodyPreview: {
-      fontSize: fs(16),
+      fontSize: 15,
       fontWeight: '400',
       color: c.textMuted,
-      lineHeight: fs(24),
+      lineHeight: 22,
       marginBottom: 10,
     },
     tagsContainer: {
