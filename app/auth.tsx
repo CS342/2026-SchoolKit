@@ -81,40 +81,48 @@ export default function AuthScreen() {
     }
   };
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing fields', 'Please fill in all fields.');
+      showAlert('Missing fields', 'Please fill in all fields.');
       return;
     }
 
     if (!isValidEmail(email.trim())) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      showAlert('Invalid email', 'Please enter a valid email address.');
       return;
     }
 
     if (isSignUp) {
       if (password.length < 8) {
-        Alert.alert('Weak password', 'Password must be at least 8 characters.');
+        showAlert('Weak password', 'Password must be at least 8 characters.');
         return;
       }
       if (!/[A-Z]/.test(password)) {
-        Alert.alert('Weak password', 'Password must contain at least one uppercase letter.');
+        showAlert('Weak password', 'Password must contain at least one uppercase letter.');
         return;
       }
       if (!/[a-z]/.test(password)) {
-        Alert.alert('Weak password', 'Password must contain at least one lowercase letter.');
+        showAlert('Weak password', 'Password must contain at least one lowercase letter.');
         return;
       }
       if (!/[0-9]/.test(password)) {
-        Alert.alert('Weak password', 'Password must contain at least one number.');
+        showAlert('Weak password', 'Password must contain at least one number.');
         return;
       }
       if (!confirmPassword.trim()) {
-        Alert.alert('Confirm password', 'Please confirm your password.');
+        showAlert('Confirm password', 'Please confirm your password.');
         return;
       }
       if (password !== confirmPassword) {
-        Alert.alert("Passwords don't match", 'Please make sure both passwords are the same.');
+        showAlert("Passwords don't match", 'Please make sure both passwords are the same.');
         return;
       }
     }
@@ -124,20 +132,20 @@ export default function AuthScreen() {
       if (isSignUp) {
         const { error } = await signUp(email.trim(), password);
         if (error) {
-          Alert.alert('Sign up failed', error.message);
+          showAlert('Sign up failed', error.message);
         } else {
           router.replace('/confirm-email');
         }
       } else {
         const { error } = await signInWithPassword(email.trim(), password);
         if (error) {
-          Alert.alert('Sign in failed', error.message);
+          showAlert('Sign in failed', error.message);
         } else {
           router.replace('/');
         }
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
+      showAlert('Error', err.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }

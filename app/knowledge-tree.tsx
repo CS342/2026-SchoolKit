@@ -13,8 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResources } from '../hooks/useResources';
+import { useResponsive } from '../hooks/useResponsive';
 import { ANIMATION, COLORS, SHADOWS, TYPOGRAPHY } from '../constants/onboarding-theme';
 import KnowledgeTree from '../components/tree/KnowledgeTree';
+
+const WEB_MAX_WIDTH = 600;
 
 export default function KnowledgeTreeScreen() {
   const router = useRouter();
@@ -22,6 +25,8 @@ export default function KnowledgeTreeScreen() {
   const { isResourceFullyViewed } = useAccomplishments();
   const { isDark, colors } = useTheme();
   const { resources } = useResources();
+  const { isWeb, isDesktop } = useResponsive();
+  const webDesktop = isWeb && isDesktop;
 
   const treeResources = resources.filter(r => !r.designOnly);
   const litCount = treeResources.filter(r => isResourceFullyViewed(r.id)).length;
@@ -47,29 +52,35 @@ export default function KnowledgeTreeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.appBackground }]}>
-      {/* Header */}
-      <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={[styles.backButton, { backgroundColor: colors.white, borderColor: colors.border }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.textDark} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textDark }]}>Knowledge Tree</Text>
-        <Text style={[styles.countBadge, { color: colors.textMuted }]}>
-          {litCount} / {treeResources.length}
-        </Text>
-      </Animated.View>
+      <View style={webDesktop && styles.webContainer}>
+        {/* Header */}
+        <Animated.View style={[styles.header, headerStyle]}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={[styles.backButton, { backgroundColor: colors.white, borderColor: colors.border }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.textDark} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.textDark }]}>Knowledge Tree</Text>
+          <Text style={[styles.countBadge, { color: colors.textMuted }]}>
+            {litCount} / {treeResources.length}
+          </Text>
+        </Animated.View>
 
-      {/* Tree in a scroll view in case screen is short */}
-      <ScrollView
-        contentContainerStyle={styles.treeScroll}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        <KnowledgeTree isResourceFullyViewed={isResourceFullyViewed} resources={treeResources} />
-      </ScrollView>
+        {/* Tree in a scroll view in case screen is short */}
+        <ScrollView
+          contentContainerStyle={styles.treeScroll}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <KnowledgeTree
+            isResourceFullyViewed={isResourceFullyViewed}
+            resources={treeResources}
+            containerWidth={webDesktop ? WEB_MAX_WIDTH : undefined}
+          />
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -77,6 +88,12 @@ export default function KnowledgeTreeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  webContainer: {
+    flex: 1,
+    maxWidth: WEB_MAX_WIDTH,
+    width: '100%' as any,
+    alignSelf: 'center' as const,
   },
   header: {
     flexDirection: 'row',
