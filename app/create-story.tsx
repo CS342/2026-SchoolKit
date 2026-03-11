@@ -350,15 +350,23 @@ export default function CreateStoryScreen() {
                   isExhausted ? styles.deleteBtnSolid : styles.deleteBtn
                 ]}
                 onPress={() => {
-                  Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete', style: 'destructive', onPress: async () => {
-                        await deleteStory(editId);
+                  if (Platform.OS === 'web') {
+                    if (window.confirm('Are you sure you want to delete this story?')) {
+                      deleteStory(editId).then(() => {
                         router.back();
-                      }
+                      });
                     }
-                  ]);
+                  } else {
+                    Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete', style: 'destructive', onPress: async () => {
+                          await deleteStory(editId);
+                          router.back();
+                        }
+                      }
+                    ]);
+                  }
                 }}
               >
                 <Text style={[

@@ -301,23 +301,33 @@ export default function StoryDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Story",
-      "Are you sure you want to delete this story? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            if (id) {
-              await deleteStory(id);
-              router.back();
-            }
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to delete this story? This cannot be undone.")) {
+        if (id) {
+          deleteStory(id).then(() => {
+            router.back();
+          });
+        }
+      }
+    } else {
+      Alert.alert(
+        "Delete Story",
+        "Are you sure you want to delete this story? This cannot be undone.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              if (id) {
+                await deleteStory(id);
+                router.back();
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -355,19 +365,29 @@ export default function StoryDetailScreen() {
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert("Delete Comment", "Delete this comment?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          if (id) {
-            await deleteComment(commentId, id);
+    if (Platform.OS === "web") {
+      if (window.confirm("Delete this comment?")) {
+        if (id) {
+          deleteComment(commentId, id).then(() => {
             setComments((prev) => prev.filter((c) => c.id !== commentId));
-          }
+          });
+        }
+      }
+    } else {
+      Alert.alert("Delete Comment", "Delete this comment?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            if (id) {
+              await deleteComment(commentId, id);
+              setComments((prev) => prev.filter((c) => c.id !== commentId));
+            }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const handleLike = () => {
@@ -497,7 +517,11 @@ export default function StoryDetailScreen() {
       setIsTranslated(true);
     } catch (e) {
       console.error('Translation error:', e);
-      Alert.alert('Translation failed', 'Could not translate the story. Please try again.');
+      if (Platform.OS === 'web') {
+        window.alert('Translation failed. Could not translate the story. Please try again.');
+      } else {
+        Alert.alert('Translation failed', 'Could not translate the story. Please try again.');
+      }
     } finally {
       setIsTranslating(false);
     }

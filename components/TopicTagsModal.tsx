@@ -80,13 +80,13 @@ export function TopicTagsModal({
   const insets = useSafeAreaInsets();
 
   const content = (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <View
       style={[
         styles.overlay,
         !useModal && StyleSheet.absoluteFill,
         !useModal && { zIndex: 100 },
       ]}
+      pointerEvents={visible ? "auto" : "none"}
     >
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
@@ -168,8 +168,14 @@ export function TopicTagsModal({
           </View>
         </ScrollView>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
+
+  const finalContent = Platform.OS === 'ios' ? (
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, ...(useModal ? {} : StyleSheet.absoluteFillObject), zIndex: 100 }} pointerEvents={visible ? "box-none" : "none"}>
+      {content}
+    </KeyboardAvoidingView>
+  ) : content;
 
   if (!visible) return null;
 
@@ -181,12 +187,12 @@ export function TopicTagsModal({
         animationType="fade"
         onRequestClose={onClose}
       >
-        {content}
+        {finalContent}
       </Modal>
     );
   }
 
-  return content;
+  return finalContent;
 }
 
 function makeStyles(c: AppTheme["colors"], isDark: boolean) {
