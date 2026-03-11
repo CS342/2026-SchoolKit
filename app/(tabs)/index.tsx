@@ -30,8 +30,7 @@ export default function ForYouScreen() {
 
   const { resources } = useResources();
   const { colors, appStyles, sharedStyles } = useTheme();
-  const { isWeb, isDesktop } = useResponsive();
-  const isWebDesktop = isWeb && isDesktop;
+  const { isWeb } = useResponsive();
 
   const [gridWidth, setGridWidth] = useState(0);
   const tileSize = gridWidth > 0
@@ -56,7 +55,7 @@ export default function ForYouScreen() {
     }
   };
 
-  const styles = useMemo(() => makeStyles(colors, isWebDesktop), [colors, isWebDesktop]);
+  const styles = useMemo(() => makeStyles(colors, isWeb), [colors, isWeb]);
 
   return (
     <View style={styles.container}>
@@ -92,14 +91,14 @@ export default function ForYouScreen() {
         {data.topics.length > 0 ? (
           <View
             style={styles.topicsContainer}
-            onLayout={isWebDesktop ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
+            onLayout={isWeb ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
           >
             {data.topics.map((topic, index) => {
               const resource = resources.find(r => r.title.toLowerCase() === topic.toLowerCase());
               const color = resource?.color || colors.primary;
               const icon = resource?.icon || 'bookmarks';
 
-              return isWebDesktop && tileSize > 0 ? (
+              return isWeb && tileSize > 0 ? (
                 <WebResourceTile
                   key={index}
                   id={resource?.id || topic}
@@ -143,7 +142,7 @@ export default function ForYouScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors, isWebDesktop: boolean) =>
+const makeStyles = (c: ThemeColors, isWeb: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -200,7 +199,7 @@ const makeStyles = (c: ThemeColors, isWebDesktop: boolean) =>
       color: c.textDark,
       marginBottom: SPACING.sectionGap,
     },
-    topicsContainer: isWebDesktop
+    topicsContainer: isWeb
       ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
       : { gap: SPACING.itemGap },
     emptyContainer: {
