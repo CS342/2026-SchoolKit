@@ -55,6 +55,43 @@ export type DesignAsset = {
   created_at: string;
 };
 
+export type Journal = {
+  id: string;
+  user_id: string;
+  title: string;
+  cover_id: string;
+  paper_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JournalPageRow = {
+  id: string;
+  journal_id: string;
+  page_index: number;
+  text_entry: string;
+  paths: PathData[];
+  images: JournalImageData[];
+  created_at: string;
+  updated_at: string;
+};
+
+/** Drawing stroke stored in journal_pages.paths jsonb */
+export type PathData = {
+  path: string;
+  color: string;
+  strokeWidth: number;
+};
+
+/** Image metadata stored in journal_pages.images jsonb */
+export type JournalImageData = {
+  uri: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -77,6 +114,16 @@ export type Database = {
         Row: DesignAsset;
         Insert: Omit<DesignAsset, 'id' | 'created_at'>;
         Update: Partial<Omit<DesignAsset, 'id' | 'created_at'>>;
+      };
+      journals: {
+        Row: Journal;
+        Insert: Omit<Journal, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Journal, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
+      };
+      journal_pages: {
+        Row: JournalPageRow;
+        Insert: Omit<JournalPageRow, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<JournalPageRow, 'id' | 'journal_id' | 'created_at' | 'updated_at'>>;
       };
     };
   };

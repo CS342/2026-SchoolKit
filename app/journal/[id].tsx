@@ -22,6 +22,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useJournal, PathData, JournalImage, JournalPage, MAX_PAGES, MAX_IMAGES_PER_PAGE } from "../../contexts/JournalContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { PAPERS } from "../../constants/journal";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { WebContainer } from "../../components/WebContainer";
@@ -146,7 +147,7 @@ export default function NotebookScreen() {
     const theme = useTheme();
     const { colors, appStyles, shadows } = theme;
 
-    const { getNotebook, updateNotebook } = useJournal();
+    const { getNotebook, updateNotebook, uploadJournalImage } = useJournal();
     const notebook = getNotebook(id);
 
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -472,22 +473,20 @@ export default function NotebookScreen() {
 
             if (!result.canceled) {
                 const tempUri = result.assets[0].uri;
-                let persistedUri: string;
 
-                if (Platform.OS === 'web') {
-                    persistedUri = await copyImageForWeb(tempUri);
-                } else {
-                    // Validate file size (max 10MB)
-                    const tempFile = new FSFile(tempUri);
-                    if (tempFile.exists && tempFile.size > 10 * 1024 * 1024) {
-                        Alert.alert("File Too Large", "Please select an image under 10MB.");
-                        return;
+                // Upload to Supabase Storage
+                const publicUrl = await uploadJournalImage(tempUri);
+                if (!publicUrl) {
+                    if (Platform.OS === 'web') {
+                        window.alert("Failed to upload image. Please try again.");
+                    } else {
+                        Alert.alert("Error", "Failed to upload image. Please try again.");
                     }
-                    persistedUri = await copyImageToDocuments(tempUri);
+                    return;
                 }
 
                 const newImage: JournalImage = {
-                    uri: persistedUri,
+                    uri: publicUrl,
                     x: 50,
                     y: 50,
                     width: 200,

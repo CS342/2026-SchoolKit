@@ -32,15 +32,22 @@ export default function CreateNotebookScreen() {
     const [selectedPaper, setSelectedPaper] = useState(PAPERS[1]);
     const [title, setTitle] = useState("");
 
-    const handleCreate = () => {
-        const finalTitle = title.trim() || "Untitled Notebook";
-        const id = createNotebook(finalTitle.slice(0, 40), selectedCover.id, selectedPaper.id);
-        if (!id) {
-            Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
-            return;
+    const [isCreating, setIsCreating] = useState(false);
+
+    const handleCreate = async () => {
+        if (isCreating) return;
+        setIsCreating(true);
+        try {
+            const finalTitle = title.trim() || "Untitled Notebook";
+            const id = await createNotebook(finalTitle.slice(0, 40), selectedCover.id, selectedPaper.id);
+            if (!id) {
+                Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                return;
+            }
+            router.replace(`/journal/${id}`);
+        } finally {
+            setIsCreating(false);
         }
-        // Navigate replace so "back" from notebook goes to library
-        router.replace(`/journal/${id}`);
     };
 
     const renderCoverSelection = () => (
