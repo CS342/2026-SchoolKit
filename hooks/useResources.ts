@@ -50,8 +50,11 @@ export function useResources() {
         ALL_RESOURCES.map((r) => r.title.toLowerCase()),
       );
 
+      const DESIGN_CUTOFF = '2026-03-10T00:00:00Z';
+
       const dbResources: Resource[] = data
         .filter((r) => !hardcodedTitles.has(r.title.toLowerCase()))
+        .filter((r) => r.created_at && r.created_at >= DESIGN_CUTOFF)
         .map((r) => {
           // Generate an abbreviation from the first two words of the title
           const words = r.title.split(' ');
