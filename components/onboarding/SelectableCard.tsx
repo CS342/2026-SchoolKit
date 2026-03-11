@@ -7,6 +7,7 @@ import Animated, {
   withSpring,
   withSequence,
   withTiming,
+  withDelay,
 } from 'react-native-reanimated';
 import { SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
 
@@ -18,6 +19,7 @@ interface SelectableCardProps {
   multiSelect?: boolean;
   color?: string;
   icon?: keyof typeof Ionicons.glyphMap;
+  index?: number;
 }
 
 export function SelectableCard({
@@ -28,12 +30,21 @@ export function SelectableCard({
   multiSelect = false,
   color = COLORS.primary,
   icon,
+  index = 0,
 }: SelectableCardProps) {
   const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
   const indicatorScale = useSharedValue(selected ? 1 : 0);
 
+  React.useEffect(() => {
+    translateY.value = withDelay(index * ANIMATION.staggerDelay, withSpring(0, ANIMATION.springBouncy));
+    opacity.value = withDelay(index * ANIMATION.staggerDelay, withTiming(1, { duration: 400 }));
+  }, []);
+
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
   }));
 
   const indicatorAnimStyle = useAnimatedStyle(() => ({

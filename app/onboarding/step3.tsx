@@ -84,7 +84,7 @@ export default function Step3Screen() {
             </View>
 
             <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
-              {SCHOOL_STATUS_OPTIONS.map((option) => (
+              {SCHOOL_STATUS_OPTIONS.map((option, index) => (
                 <View key={option.value} style={isWebDesktop ? { width: '48%' } : undefined}>
                   <SelectableCard
                     title={option.label}
@@ -93,6 +93,7 @@ export default function Step3Screen() {
                     multiSelect
                     color={option.color}
                     icon={option.icon}
+                    index={index}
                   />
                 </View>
               ))}

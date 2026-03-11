@@ -60,20 +60,22 @@ function GradeCell({
   index: number;
 }) {
   const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    opacity.value = withDelay(index * 50, withTiming(1, { duration: 300 }));
+    translateY.value = withDelay(index * ANIMATION.staggerDelay, withSpring(0, ANIMATION.springBouncy));
+    opacity.value = withDelay(index * ANIMATION.staggerDelay, withTiming(1, { duration: 400 }));
   }, []);
 
   const cellStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
   }));
 
   const handlePress = () => {
     scale.value = withSequence(
-      withTiming(0.93, { duration: 80 }),
+      withTiming(0.96, { duration: 80 }),
       withSpring(1, ANIMATION.springBouncy)
     );
     onPress();
@@ -93,7 +95,7 @@ function GradeCell({
           cellStyle,
         ]}
       >
-        <Ionicons name={grade.icon} size={26} color={grade.color} />
+        <Ionicons name={grade.icon} size={24} color={grade.color} />
         <Text style={[styles.gridCellLabel, isSelected && { color: grade.color, fontWeight: '700' }]}>
           {grade.label}
         </Text>
@@ -219,7 +221,7 @@ const styles = StyleSheet.create({
   },
   gridCell: {
     backgroundColor: COLORS.white,
-    borderRadius: RADII.grid,
+    borderRadius: RADII.card,
     borderWidth: BORDERS.card,
     borderColor: COLORS.borderCard,
     height: 120,

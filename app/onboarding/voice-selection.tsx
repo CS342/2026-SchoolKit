@@ -5,6 +5,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Image } from 'expo-image';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withSpring,
+  withSequence,
+} from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
@@ -14,7 +22,36 @@ import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { VOICE_META, generateSpeech, VoiceData } from '../../services/elevenLabs';
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS } from '../../constants/onboarding-theme';
+import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+
+function AnimatedVoiceCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(30);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withDelay(index * ANIMATION.staggerDelay, withSpring(0, ANIMATION.springBouncy));
+    opacity.value = withDelay(index * ANIMATION.staggerDelay, withTiming(1, { duration: 400 }));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, ANIMATION.springBouncy)
+    );
+  };
+
+  return (
+    <Animated.View style={animatedStyle} onTouchStart={handlePressIn}>
+      {children}
+    </Animated.View>
+  );
+}
 
 export default function VoiceSelectionScreen() {
   const router = useRouter();
@@ -126,7 +163,9 @@ export default function VoiceSelectionScreen() {
               Select a voice you'd like to hear. You can change this later.
             </Text>
 
-            {accentOrder.map((accent) => {
+            {(() => {
+              let globalIndex = 0;
+              return accentOrder.map((accent) => {
               const voices = voicesByAccent[accent];
               if (!voices || voices.length === 0) return null;
               return (
@@ -136,9 +175,11 @@ export default function VoiceSelectionScreen() {
                     {voices.map((voice) => {
                       const isSelected = selectedVoice === voice.id;
                       const isPlaying = playingVoiceId === voice.id;
+                      const cardIndex = globalIndex++;
 
                       return (
                         <View key={voice.id} style={isWebDesktop ? { width: '31%' } : undefined}>
+                          <AnimatedVoiceCard index={cardIndex}>
                           <Pressable
                             style={[
                               styles.voiceCard,
@@ -181,13 +222,15 @@ export default function VoiceSelectionScreen() {
                               )}
                             </Pressable>
                           </Pressable>
+                          </AnimatedVoiceCard>
                         </View>
                       );
                     })}
                   </View>
                 </View>
               );
-            })}
+            });
+            })()}
 
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
@@ -253,7 +296,7 @@ const styles = StyleSheet.create({
   voiceCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    padding: 14,
     borderRadius: RADII.card,
     backgroundColor: COLORS.white,
     borderWidth: 2,
@@ -288,8 +331,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   voiceName: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.textDark,
     marginBottom: 2,
   },

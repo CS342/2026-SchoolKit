@@ -397,10 +397,10 @@ export default function StoriesScreen() {
                     Your experience can bring comfort and courage to someone walking a similar path.
                   </Text>
                   {isAnonymous ? (
-                    <View style={[styles.webShareBtn, { backgroundColor: colors.disabledButton }]}>
-                      <Ionicons name="lock-closed-outline" size={15} color={colors.textLight} />
-                      <Text style={[styles.webShareBtnText, { color: colors.textLight }]}>Sign in to share your story</Text>
-                    </View>
+                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/auth" as any)}>
+                      <Ionicons name="lock-closed-outline" size={15} color="#FFFFFF" />
+                      <Text style={[styles.webShareBtnText, { color: "#FFFFFF" }]}>Sign in to share your story</Text>
+                    </Pressable>
                   ) : (
                     <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-story" as any)}>
                       <Ionicons name="create-outline" size={15} color="#FFFFFF" />

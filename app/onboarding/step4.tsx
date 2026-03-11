@@ -104,7 +104,7 @@ export default function Step4Screen() {
             <CounterPill count={selectedTopics.length} />
 
             <View style={[styles.topicsContainer, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
-              {availableTopics.map((topic) => (
+              {availableTopics.map((topic, index) => (
                 <View key={topic.label} style={isWebDesktop ? { width: '48%' } : undefined}>
                   <SelectableCard
                     title={topic.label}
@@ -113,6 +113,7 @@ export default function Step4Screen() {
                     multiSelect
                     color={topic.color}
                     icon={topic.icon as any}
+                    index={index}
                   />
                 </View>
               ))}

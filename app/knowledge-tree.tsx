@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -52,7 +52,7 @@ export default function KnowledgeTreeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.appBackground }]}>
-      <View style={webDesktop && styles.webContainer}>
+      <View style={webDesktop ? styles.webContainer : styles.fullContainer}>
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle]}>
           <TouchableOpacity
@@ -68,18 +68,14 @@ export default function KnowledgeTreeScreen() {
           </Text>
         </Animated.View>
 
-        {/* Tree in a scroll view in case screen is short */}
-        <ScrollView
-          contentContainerStyle={styles.treeScroll}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
+        {/* Tree fills remaining space */}
+        <View style={styles.treeContainer}>
           <KnowledgeTree
             isResourceFullyViewed={isResourceFullyViewed}
             resources={treeResources}
             containerWidth={webDesktop ? WEB_MAX_WIDTH : undefined}
           />
-        </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -87,6 +83,9 @@ export default function KnowledgeTreeScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  fullContainer: {
     flex: 1,
   },
   webContainer: {
@@ -122,8 +121,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Raleway_600SemiBold',
     letterSpacing: -0.1,
   },
-  treeScroll: {
-    alignItems: 'center',
-    paddingBottom: 24,
+  treeContainer: {
+    flex: 1,
   },
 });

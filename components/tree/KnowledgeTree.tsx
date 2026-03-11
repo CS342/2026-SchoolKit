@@ -255,8 +255,16 @@ type Props = { isResourceFullyViewed: (id: string) => boolean; resources: Resour
 
 export default function KnowledgeTree({ isResourceFullyViewed, resources, containerWidth }: Props) {
   const { width: windowWidth } = useWindowDimensions();
-  const RENDER_W = Math.min(containerWidth ?? windowWidth, ARTBOARD_W);
-  const RENDER_H = RENDER_W * (ARTBOARD_H / ARTBOARD_W);
+  const [layoutSize, setLayoutSize] = useState<{ w: number; h: number } | null>(null);
+
+  // Fit the artboard into the available space while preserving aspect ratio
+  const availW = layoutSize?.w ?? containerWidth ?? windowWidth;
+  const availH = layoutSize?.h ?? (availW * (ARTBOARD_H / ARTBOARD_W));
+  const artboardAspect = ARTBOARD_W / ARTBOARD_H;
+  const containerAspect = availW / availH;
+  // Scale to fit: if container is wider than artboard, height is limiting; otherwise width
+  const RENDER_W = containerAspect > artboardAspect ? availH * artboardAspect : availW;
+  const RENDER_H = containerAspect > artboardAspect ? availH : availW / artboardAspect;
   const SCALE = RENDER_W / ARTBOARD_W;
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -363,15 +371,15 @@ export default function KnowledgeTree({ isResourceFullyViewed, resources, contai
   }, [expandedSection]);
 
   return (
-    <View style={[{ width: RENDER_W, height: RENDER_H, overflow: 'hidden' }]}>
-      {/*
-        Animated.View handles the zoom transform.  Everything inside is a single
-        SVG so all rendering is vector-based and crisp at any zoom level.
-        React Native routes touches through the transform automatically, so SVG
-        element onPress callbacks fire at the correct visual positions.
-      */}
+    <View
+      style={{ flex: 1 }}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        if (width > 0 && height > 0) setLayoutSize({ w: width, h: height });
+      }}
+    >
       <Animated.View style={[{ width: RENDER_W, height: RENDER_H }, zoomStyle]}>
-        <Svg width="100%" height="100%" viewBox={`0 0 ${ARTBOARD_W} ${ARTBOARD_H}`}>
+        <Svg width={RENDER_W} height={RENDER_H} viewBox={`0 0 ${ARTBOARD_W} ${ARTBOARD_H}`}>
 
           {/* Full-viewport hit area — must come first (lowest z-order) so that
               taps on nodes/leaves above it are NOT absorbed here. */}

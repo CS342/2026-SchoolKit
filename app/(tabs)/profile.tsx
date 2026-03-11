@@ -266,7 +266,7 @@ export default function ProfileScreen() {
                 colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.identityCard, { borderColor: colors.border }]}
+                style={[styles.identityCard, { borderColor: colors.border, marginHorizontal: 0 }]}
               >
                 <View style={styles.identity}>
                   <Pressable onPress={() => setShowIconPicker(true)}>
@@ -332,72 +332,75 @@ export default function ProfileScreen() {
 
             <View style={styles.webRight}>
               <AnimatedSection delay={460}>
-                <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
+                <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
 
-                <Pressable
-                  onPress={() => router.push('/knowledge-tree' as any)}
-                  style={({ pressed }) => [
-                    styles.journalWidget,
-                    { marginBottom: 16 },
-                    shadows.card,
-                    pressed && { transform: [{ scale: 0.98 }] }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.journalGlass}
+                <View style={styles.webProgressRow}>
+                  <Pressable
+                    onPress={() => router.push('/knowledge-tree' as any)}
+                    style={({ pressed }) => [
+                      styles.journalWidget,
+                      styles.webProgressCard,
+                      shadows.card,
+                      pressed && { transform: [{ scale: 0.98 }] }
+                    ]}
                   >
-                    <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
-                      <Ionicons name="leaf" size={28} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.journalInfo}>
-                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
-                      <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
-                    </View>
-                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
-                      <Ionicons name="arrow-forward" size={18} color="#10B981" />
-                    </View>
-                  </LinearGradient>
-                </Pressable>
+                    <LinearGradient
+                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.journalGlass}
+                    >
+                      <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
+                        <Ionicons name="leaf" size={28} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.journalInfo}>
+                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
+                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
+                      </View>
+                      <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
+                        <Ionicons name="arrow-forward" size={18} color="#10B981" />
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
 
-                <Pressable
-                  onPress={() => router.push('/accomplishments' as any)}
-                  style={({ pressed }) => [
-                    styles.journalWidget,
-                    { marginBottom: 24 },
-                    shadows.card,
-                    pressed && { transform: [{ scale: 0.98 }] }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.journalGlass}
+                  <Pressable
+                    onPress={() => router.push('/accomplishments' as any)}
+                    style={({ pressed }) => [
+                      styles.journalWidget,
+                      styles.webProgressCard,
+                      shadows.card,
+                      pressed && { transform: [{ scale: 0.98 }] }
+                    ]}
                   >
-                    <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
-                      <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.journalInfo}>
-                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
-                      <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
-                    </View>
-                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
-                      <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
-                    </View>
-                  </LinearGradient>
-                </Pressable>
+                    <LinearGradient
+                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.journalGlass}
+                    >
+                      <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
+                        <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.journalInfo}>
+                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
+                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
+                      </View>
+                      <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
+                        <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
               </AnimatedSection>
 
               <AnimatedSection delay={500}>
-                <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+                <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
 
                 <Pressable
                   onPress={() => router.push("/journal")}
                   style={({ pressed }) => [
                     styles.journalWidget,
+                    styles.webCard,
                     shadows.card,
                     pressed && { transform: [{ scale: 0.98 }] }
                   ]}
@@ -913,13 +916,34 @@ const styles = StyleSheet.create({
   webColumns: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 24,
-    gap: 24,
+    padding: 32,
+    gap: 32,
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%' as any,
   },
   webLeft: {
-    width: 300,
+    width: 340,
   },
   webRight: {
     flex: 1,
+  },
+  webProgressRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 24,
+  },
+  webProgressCard: {
+    flex: 1,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    borderWidth: 0,
+  },
+  webCard: {
+    marginHorizontal: 0,
+    borderWidth: 0,
+  },
+  webSectionLabel: {
+    marginLeft: 4,
   },
 });
