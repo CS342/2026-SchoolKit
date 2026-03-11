@@ -36,5 +36,5 @@ export const PAGE_TOPICS: { label: string; icon: string; color: string }[] = [
   { label: 'Tips for Managing Symptoms', icon: 'body-outline', color: '#6366F1' },
 ];
 
-export const RESOURCE_CATEGORIES = ['School', 'Social', 'Health', 'Family', 'Emotions'] as const;
+export const RESOURCE_CATEGORIES = ['School', 'Social', 'Health', 'Family'] as const;
 export type ResourceCategory = (typeof RESOURCE_CATEGORIES)[number];

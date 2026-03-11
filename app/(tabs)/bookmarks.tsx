@@ -42,7 +42,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ThemeColors, ThemeShadows } from '../../constants/theme';
 
-const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Design'] as const;
+const CATEGORIES = ['All', ...RESOURCE_CATEGORIES] as const;
 type CategoryTab = (typeof CATEGORIES)[number];
 type SegmentType = 'all' | 'saved' | 'downloaded';
 
@@ -51,12 +51,10 @@ const MAX_RECENT_SEARCHES = 5;
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   All: 'apps-outline',
-  Emotions: 'heart-outline',
   School: 'school-outline',
   Social: 'people-outline',
   Health: 'medical-outline',
   Family: 'home-outline',
-  Design: 'color-palette-outline',
 };
 
 function AnimatedSection({ children, delay }: { children: React.ReactNode; delay: number }) {
@@ -162,7 +160,6 @@ export default function LibraryScreen() {
     const matchesSearch =
       resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       resource.category.toLowerCase().includes(searchQuery.toLowerCase());
-    if (selectedCategory === 'Design') return matchesSearch && resource.designOnly === true;
     if (resource.designOnly) return false;
     const matchesCategory = selectedCategory === 'All' || resource.category === selectedCategory;
     return matchesSearch && matchesCategory;
