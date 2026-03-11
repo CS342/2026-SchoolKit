@@ -258,6 +258,13 @@ export default function CreateStoryScreen() {
                     return (
                       <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
                         <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                        <Pressable 
+                          onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
+                          hitSlop={8}
+                          style={{ marginLeft: 4 }}
+                        >
+                          <Ionicons name="close-circle" size={18} color={color.text} />
+                        </Pressable>
                       </View>
                     );
                   })}
@@ -592,8 +599,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
     },
     previewContainer: {
       marginBottom: 20,
-      padding: 12,
-      backgroundColor: isDark ? c.backgroundLight : c.backgroundLight,
+      paddingVertical: 12,
       borderRadius: 12,
     },
     audiencePreviewText: {
@@ -608,12 +614,15 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       gap: 6,
     },
     tagBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingLeft: 12,
+      paddingRight: 8,
+      paddingVertical: 6,
       borderRadius: 100,
     },
     tagText: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: '700',
     },
     lookingForPreview: {
