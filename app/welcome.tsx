@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -15,7 +15,7 @@ import { DecorativeBackground } from '../components/onboarding/DecorativeBackgro
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { useResponsive } from '../hooks/useResponsive';
 
-import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHADOWS, SHARED_STYLES } from '../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../constants/onboarding-theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
   const [animDone, setAnimDone] = useState(false);
 
   const iconScale = useSharedValue(0);
-  const titleOpacity = useSharedValue(0);
+
   const taglineOpacity = useSharedValue(0);
   const buttonTranslateY = useSharedValue(40);
   const buttonOpacity = useSharedValue(0);
@@ -34,7 +34,7 @@ export default function WelcomeScreen() {
 
   const skipToEnd = () => {
     iconScale.value = withSpring(1, ANIMATION.springBouncy);
-    titleOpacity.value = withTiming(1, { duration: 200 });
+
     taglineOpacity.value = withTiming(1, { duration: 200 });
     buttonOpacity.value = withTiming(1, { duration: 200 });
     buttonTranslateY.value = withSpring(0, ANIMATION.springBouncy);
@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
 
   useEffect(() => {
     iconScale.value = withDelay(200, withSpring(1, ANIMATION.springBouncy));
-    titleOpacity.value = withDelay(700, withTiming(1, { duration: 600 }));
+
     taglineOpacity.value = withDelay(1000, withTiming(1, { duration: 600 }));
     buttonOpacity.value = withDelay(1200, withTiming(1, { duration: 600 }));
     buttonTranslateY.value = withDelay(1200, withSpring(0, ANIMATION.springBouncy));
@@ -67,10 +67,6 @@ export default function WelcomeScreen() {
     transform: [{ scale: glowScale.value }],
   }));
 
-  const titleStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-  }));
-
   const taglineStyle = useAnimatedStyle(() => ({
     opacity: taglineOpacity.value,
   }));
@@ -92,39 +88,13 @@ export default function WelcomeScreen() {
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={[iconStyle, styles.logoContainer]}>
-                {/* Smooth layered glow */}
-                {Array.from({ length: 40 }, (_, i) => {
-                  const size = 110 + i * 3.5;
-                  const opacity = 0.5 - i * 0.012;
-                  return (
-                    <Animated.View
-                      key={i}
-                      style={[
-                        {
-                          position: 'absolute' as const,
-                          width: size,
-                          height: size,
-                          borderRadius: size / 2,
-                          backgroundColor: `rgba(255,255,255,${Math.max(opacity, 0.03)})`,
-                        },
-                        glowStyle,
-                      ]}
-                    />
-                  );
-                })}
-                <Image
-                  source={require('../assets/images/SchoolKit-transparent.png')}
-                  style={{ width: isWebDesktop ? 220 : 180, height: isWebDesktop ? 220 : 180, resizeMode: 'contain' }}
+                <Animated.Image
+                  source={require('../assets/images/StartLogo.png')}
+                  style={[{ width: isWebDesktop ? 220 : 180, height: isWebDesktop ? 220 : 180, resizeMode: 'contain' }, glowStyle]}
                 />
               </Animated.View>
 
               <View style={{ height: 40 }} />
-
-              <Animated.Text style={[styles.title, isWebDesktop && { fontSize: 56, letterSpacing: -1.5 }, titleStyle]}>
-                SchoolKit
-              </Animated.Text>
-
-              <View style={styles.gap8} />
 
               <Animated.Text style={[styles.tagline, isWebDesktop && { fontSize: 22 }, taglineStyle]}>
                 Support for every school journey
@@ -175,14 +145,6 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  gap8: {
-    height: 8,
-  },
-  title: {
-    ...TYPOGRAPHY.display,
-    color: COLORS.white,
-    textAlign: 'center',
   },
   tagline: {
     ...TYPOGRAPHY.body,

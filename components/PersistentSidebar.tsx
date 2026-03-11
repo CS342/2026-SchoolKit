@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
@@ -73,9 +73,11 @@ export function PersistentSidebar() {
     ]}>
       {/* Brand */}
       <View style={styles.brand}>
-        <View style={[styles.brandIcon, { backgroundColor: colors.primary }]}>
-          <Ionicons name="school" size={20} color="#FFFFFF" />
-        </View>
+        <Image
+          source={require('../assets/images/HeaderLogo.png')}
+          style={styles.brandIcon}
+          resizeMode="contain"
+        />
         <Text style={[styles.brandText, { color: colors.textDark }]}>SchoolKit</Text>
       </View>
 

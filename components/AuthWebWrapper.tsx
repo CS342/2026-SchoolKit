@@ -38,7 +38,7 @@ function WebStepperBar({ step }: { step: StepInfo }) {
         {/* Left: Logo + brand name */}
         <View style={stepperStyles.brand}>
           <Image
-            source={require('../assets/images/SchoolKit-transparent.png')}
+            source={require('../assets/images/HeaderLogo.png')}
             style={stepperStyles.logo}
           />
           <Text style={stepperStyles.brandName}>SchoolKit</Text>
@@ -134,7 +134,7 @@ export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrap
           <View style={[stepperStyles.inner, { justifyContent: 'center' }]}>
             <View style={stepperStyles.brand}>
               <Image
-                source={require('../assets/images/SchoolKit-transparent.png')}
+                source={require('../assets/images/HeaderLogo.png')}
                 style={stepperStyles.logo}
               />
               <Text style={stepperStyles.brandName}>SchoolKit</Text>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, StyleSheet, LayoutChangeEvent, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -241,9 +241,11 @@ function SidebarNav({ state, descriptors, navigation }: BottomTabBarProps) {
     >
       {/* App brand */}
       <View style={sidebarStyles.brand}>
-        <View style={[sidebarStyles.brandIcon, { backgroundColor: colors.primary }]}>
-          <Ionicons name="school" size={20} color="#FFFFFF" />
-        </View>
+        <Image
+          source={require('../assets/images/HeaderLogo.png')}
+          style={sidebarStyles.brandIcon}
+          resizeMode="contain"
+        />
         <Text style={[sidebarStyles.brandText, { color: colors.textDark }]}>
           SchoolKit
         </Text>

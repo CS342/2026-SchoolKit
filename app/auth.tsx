@@ -231,7 +231,7 @@ export default function AuthScreen() {
                   );
                 })}
                 <Image
-                  source={require('../assets/images/SchoolKit-transparent.png')}
+                  source={require('../assets/images/HeaderLogo.png')}
                   style={{ width: 56, height: 56, resizeMode: 'contain' }}
                 />
               </View>
