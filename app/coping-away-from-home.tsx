@@ -20,6 +20,8 @@ import { useTheme } from "../contexts/ThemeContext";
 const PAGE_COLOR = "#E8734A";
 const RESOURCE_ID = "16";
 
+const FONT_STEPS = [1.0, 1.2, 1.45];
+
 type NumberedItem = { icon: string; text: string };
 
 const STAYING_CONNECTED: NumberedItem[] = [
@@ -177,7 +179,7 @@ function FlipHint({ label }: { label: string }) {
     );
 }
 
-function ContactsBack({ contacts, flipped }: { contacts: string[]; flipped: boolean }) {
+function ContactsBack({ contacts, flipped, fontSizeStep, onAaPress }: { contacts: string[]; flipped: boolean; fontSizeStep: number; onAaPress: () => void }) {
     return (
         <>
             <Text style={sharedFlip.backTitle}>Need Help? Contact:</Text>
@@ -187,11 +189,16 @@ function ContactsBack({ contacts, flipped }: { contacts: string[]; flipped: bool
                         <View style={sharedFlip.bullet}>
                             <Ionicons name="person-outline" size={11} color="#FFF" />
                         </View>
-                        <Text style={sharedFlip.contact}>{c}</Text>
+                        <Text style={[sharedFlip.contact, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]) }]}>{c}</Text>
                     </View>
                 ))}
             </View>
-            <FlipHint label={flipped ? "Tap to go back" : "Tap for Help Contacts"} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); onAaPress(); }} hitSlop={10} activeOpacity={0.7}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : '#9CA3AF' }}>Aa</Text>
+                </TouchableOpacity>
+                <FlipHint label={flipped ? "Tap to go back" : "Tap for Help Contacts"} />
+            </View>
         </>
     );
 }
@@ -209,6 +216,7 @@ const sharedFlip = StyleSheet.create({
 // ─── List Flip Card — numbered list front, contacts back ──────────────────────
 function ListFlipCard({ items, contacts, style }: { items: NumberedItem[]; contacts: string[]; style?: object }) {
     const { toggle, frontRotate, backRotate, frontOpacity, backOpacity, flipped } = useFlip();
+    const [fontSizeStep, setFontSizeStep] = useState(0);
     return (
         <TouchableOpacity activeOpacity={0.95} onPress={toggle} style={[listFlip.container, style]}>
             <View style={listFlip.inner}>
@@ -220,14 +228,19 @@ function ListFlipCard({ items, contacts, style }: { items: NumberedItem[]; conta
                                 <View style={listFlip.iconCircle}>
                                     <Ionicons name={item.icon as any} size={14} color={PAGE_COLOR} />
                                 </View>
-                                <Text style={listFlip.itemText} numberOfLines={2}>{item.text}</Text>
+                                <Text style={[listFlip.itemText, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(17 * FONT_STEPS[fontSizeStep]) }]} numberOfLines={2}>{item.text}</Text>
                             </View>
                         ))}
                     </View>
-                    <FlipHint label="Tap for Help Contacts" />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); setFontSizeStep(s => (s + 1) % FONT_STEPS.length); }} hitSlop={10} activeOpacity={0.7}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : '#9CA3AF' }}>Aa</Text>
+                        </TouchableOpacity>
+                        <FlipHint label="Tap for Help Contacts" />
+                    </View>
                 </Animated.View>
                 <Animated.View style={[listFlip.card, listFlip.back, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, backfaceVisibility: "hidden" }]}>
-                    <ContactsBack contacts={contacts} flipped={flipped} />
+                    <ContactsBack contacts={contacts} flipped={flipped} fontSizeStep={fontSizeStep} onAaPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} />
                 </Animated.View>
             </View>
         </TouchableOpacity>
