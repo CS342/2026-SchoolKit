@@ -62,7 +62,7 @@ export function WebResourceTile({
           end={{ x: 1, y: 1 }}
           style={styles.iconCircle}
         >
-          <Ionicons name={icon as any} size={28} color="#FFF" />
+          <Ionicons name={icon as any} size={32} color="#FFF" />
         </LinearGradient>
         <Text style={[styles.title, { color: colors.textDark }]} numberOfLines={2}>
           {title}
@@ -109,18 +109,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   title: {
-    fontSize: 14,
+    fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 28,
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 8,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
   },
   actions: {

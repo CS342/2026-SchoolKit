@@ -972,7 +972,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   sheetActionButton: {
-    padding: 6,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sheetTitleBadge: {
     flexDirection: "row",

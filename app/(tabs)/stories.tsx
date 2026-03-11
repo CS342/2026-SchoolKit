@@ -950,7 +950,7 @@ const makeStyles = (
 
     // ── Header ──────────────────────────────────────────────
     headerSubtitle: {
-      fontSize: fs(12),
+      fontSize: fs(15),
       color: COLORS.textLight,
       fontWeight: "400",
       marginTop: 2,
@@ -1015,7 +1015,7 @@ const makeStyles = (
     },
     searchInput: {
       flex: 1,
-      fontSize: fs(15),
+      fontSize: fs(17),
       color: c.textDark,
       paddingVertical: 0,
     },
@@ -1060,7 +1060,7 @@ const makeStyles = (
       elevation: 8,
     },
     chipText: {
-      ...TYPOGRAPHY.caption,
+      fontSize: fs(15),
       fontWeight: "700" as const,
       color: c.textMuted,
     },
@@ -1137,7 +1137,7 @@ const makeStyles = (
       backgroundColor: COLORS.primary + "15",
     },
     sortText: {
-      fontSize: fs(14),
+      fontSize: fs(15),
       fontWeight: "600",
       color: COLORS.textLight,
     },
@@ -1283,7 +1283,7 @@ const makeStyles = (
       justifyContent: "space-between" as const,
     },
     webPageTitle: {
-      fontSize: fs(26),
+      fontSize: fs(32),
       fontWeight: "800" as const,
       color: c.textDark,
       letterSpacing: -0.5,
@@ -1332,7 +1332,7 @@ const makeStyles = (
     },
     webSearchInput: {
       flex: 1,
-      fontSize: fs(14),
+      fontSize: fs(16),
       color: c.textDark,
       paddingVertical: 0,
     },
@@ -1357,7 +1357,7 @@ const makeStyles = (
       backgroundColor: COLORS.primary + "12",
     },
     webSortText: {
-      fontSize: fs(14),
+      fontSize: fs(16),
       fontWeight: "600" as const,
       color: c.textMuted,
     },
@@ -1380,7 +1380,7 @@ const makeStyles = (
     },
     webTagPickerText: {
       flex: 1,
-      fontSize: fs(13),
+      fontSize: fs(15),
       fontWeight: "600" as const,
       color: COLORS.primary,
     },
@@ -1393,7 +1393,7 @@ const makeStyles = (
       borderRadius: 100,
     },
     webTagPillText: {
-      fontSize: fs(12),
+      fontSize: fs(14),
       fontWeight: "600" as const,
     },
     webClearTags: {
@@ -1403,15 +1403,15 @@ const makeStyles = (
       marginTop: 2,
     },
     webRightCardTitle: {
-      fontSize: fs(15),
+      fontSize: fs(18),
       fontWeight: "700" as const,
       color: c.textDark,
       marginBottom: 8,
     },
     webRightCardBody: {
-      fontSize: fs(13),
+      fontSize: fs(15),
       color: c.textMuted,
-      lineHeight: fs(19),
+      lineHeight: fs(21),
       marginBottom: 14,
     },
     webShareBtn: {
@@ -1424,7 +1424,7 @@ const makeStyles = (
       borderRadius: 100,
     },
     webShareBtnText: {
-      fontSize: fs(14),
+      fontSize: fs(16),
       fontWeight: "700" as const,
       color: "#fff",
     },
@@ -1445,15 +1445,15 @@ const makeStyles = (
       marginTop: 2,
     },
     webNormTitle: {
-      fontSize: fs(13),
+      fontSize: fs(15),
       fontWeight: "700" as const,
       color: c.textDark,
       marginBottom: 3,
     },
     webNormDesc: {
-      fontSize: fs(12),
+      fontSize: fs(14),
       color: c.textMuted,
-      lineHeight: fs(16),
+      lineHeight: fs(18),
     },
     webNormReadMore: {
       marginTop: 8,
@@ -1462,7 +1462,7 @@ const makeStyles = (
       borderTopColor: isDark ? c.borderCard : "#E5E5EA",
     },
     webNormReadMoreText: {
-      fontSize: fs(13),
+      fontSize: fs(15),
       fontWeight: "600" as const,
       color: COLORS.primary,
     },

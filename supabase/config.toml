@@ -1,0 +1,8 @@
+[functions.translate-story]
+verify_jwt = false
+import_map = "./functions/translate-story/deno.json"
+entrypoint = "./functions/translate-story/index.ts"
+
+[functions.generate-tts]
+verify_jwt = false
+entrypoint = "./functions/generate-tts/index.ts"

@@ -70,6 +70,8 @@ interface StoriesContextType {
   isStoryDownloaded: (storyId: string) => boolean;
   downloadStory: (story: Story) => void;
   removeStoryDownload: (storyId: string) => void;
+  reportedStoryIds: string[];
+  isStoryReported: (storyId: string) => boolean;
 }
 
 const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
@@ -79,6 +81,7 @@ const STORY_BOOKMARKS_KEY = '@schoolkit_story_bookmarks';
 const STORY_LIKES_KEY = '@schoolkit_story_likes';
 const COMMENT_LIKES_KEY = '@schoolkit_comment_likes';
 const STORY_DOWNLOADS_KEY = '@schoolkit_story_downloads';
+const REPORTED_STORIES_KEY = '@schoolkit_reported_stories';
 
 export function StoriesProvider({ children }: { children: ReactNode }) {
   const { user, isAnonymous } = useAuth();
@@ -90,6 +93,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const [storyLikes, setStoryLikes] = useState<string[]>([]);
   const [commentLikes, setCommentLikes] = useState<string[]>([]);
   const [downloadedStories, setDownloadedStories] = useState<Story[]>([]);
+  const [reportedStoryIds, setReportedStoryIds] = useState<string[]>([]);
 
   // Load downloads once on mount — available offline regardless of auth state
   useEffect(() => {
@@ -123,14 +127,39 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       fetchStoryBookmarks();
       fetchStoryLikes();
       fetchCommentLikes();
+      fetchReportedStories();
     } else {
       setStories([]);
       setStoryBookmarks([]);
       setStoryLikes([]);
       setCommentLikes([]);
+      setReportedStoryIds([]);
       setStoriesLoading(false);
     }
   }, [user?.id]);
+
+  const fetchReportedStories = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from('story_reports')
+        .select('story_id')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      if (data) {
+        const ids = data.map((r: any) => r.story_id);
+        setReportedStoryIds(ids);
+        AsyncStorage.setItem(REPORTED_STORIES_KEY, JSON.stringify(ids));
+      }
+    } catch (error) {
+       console.error('Error fetching reported stories:', error);
+       try {
+         const cached = await AsyncStorage.getItem(REPORTED_STORIES_KEY);
+         if (cached) setReportedStoryIds(JSON.parse(cached));
+       } catch {}
+    }
+  };
 
   const fetchCommentLikes = async () => {
     if (!user?.id) return;
@@ -807,12 +836,15 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isStoryReported = (storyId: string) => reportedStoryIds.includes(storyId);
+
   const reportStory = async (storyId: string, reason: string, details?: string) => {
-    if (!user?.id) return;
+    if (!user?.id || isStoryReported(storyId)) return;
 
     const newReport = { reason, details: details || null, created_at: new Date().toISOString() };
 
     // Optimistically update the UI to show increased report count and append the report details
+    setReportedStoryIds(prev => [storyId, ...prev]);
     setStories(prev => prev.map(s =>
       s.id === storyId 
         ? { 
@@ -834,9 +866,13 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         });
 
       if (error && error.code !== '23505') throw error; // Ignore constraint violations (duplicate reports)
+      
+      // Update local storage for persistence
+      AsyncStorage.setItem(REPORTED_STORIES_KEY, JSON.stringify([storyId, ...reportedStoryIds]));
     } catch (error) {
       console.error('Error reporting story:', error);
       // Revert optimistic update
+      setReportedStoryIds(prev => prev.filter(id => id !== storyId));
       setStories(prev => prev.map(s =>
         s.id === storyId 
           ? { 
@@ -879,6 +915,8 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         isStoryDownloaded,
         downloadStory,
         removeStoryDownload,
+        reportedStoryIds,
+        isStoryReported,
       }}
     >
       {children}

@@ -55,12 +55,9 @@ export function useTTS() {
 
       try {
         setIsLoading(true);
-        let audioUri = null;
-        try {
-          audioUri = await generateSpeech(text, selectedVoice);
-        } catch (e) {
-          console.warn("Speech generation skipped:", e);
-        }
+        console.log('[TTS] Requesting speech for voice:', selectedVoice);
+        const audioUri = await generateSpeech(text, selectedVoice);
+        console.log('[TTS] Got audioUri:', audioUri ? 'yes' : 'null');
 
         if (audioUri) {
           player.replace(audioUri);
@@ -70,10 +67,11 @@ export function useTTS() {
           fireEvent('tts_played');
           currentVoiceRef.current = selectedVoice;
         } else {
+          console.warn('[TTS] generateSpeech returned null');
           setIsSpeaking(false);
         }
       } catch (error) {
-        console.error('TTS playback error:', error);
+        console.error('[TTS] Error:', error);
         setIsSpeaking(false);
       } finally {
         setIsLoading(false);

@@ -249,38 +249,37 @@ export const VOICE_META: Record<string, VoiceData> = {
   },
 };
 
+import { supabaseUrl, supabase, supabaseAnonKey } from '../lib/supabase';
+
 export const generateSpeech = async (text: string, voiceId: string = VOICES.RACHEL): Promise<string | null> => {
   try {
-    if (!API_KEY) {
-      console.error("ElevenLabs API Key is missing");
-      return null;
-    }
+    // Use the anon key for authorization to ensure consistency and avoid session token issues
+    const token = supabaseAnonKey;
 
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    console.log('Sending TTS request to Edge Function...');
+    const response = await fetch(`${supabaseUrl}/functions/v1/generate-tts`, {
       method: 'POST',
       headers: {
-        'Accept': 'audio/mpeg',
         'Content-Type': 'application/json',
-        'xi-api-key': API_KEY,
+        'Authorization': `Bearer ${token}`,
+        'apikey': supabaseAnonKey,
       },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: { stability: 0.5, similarity_boost: 0.5 },
-      }),
+      body: JSON.stringify({ text, voiceId }),
     });
 
+    console.log('TTS Response status:', response.status);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("ElevenLabs API Error:", response.status, errorText);
-      return null;
+      const errorJson = await response.json().catch(() => ({}));
+      console.error('TTS Proxy Error response:', errorJson);
+      throw new Error(errorJson.message || errorJson.error || `TTS service returned ${response.status}`);
     }
 
-    const blob = await response.blob();
+    const audioBlob = await response.blob();
 
     // On web: return a blob URL directly (FileSystem not available)
     if (Platform.OS === 'web') {
-      return URL.createObjectURL(blob);
+      return URL.createObjectURL(audioBlob);
     }
 
     // On native: cache to FileSystem and return file path
@@ -307,11 +306,11 @@ export const generateSpeech = async (text: string, voiceId: string = VOICES.RACH
         }
       };
       reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+      reader.readAsDataURL(audioBlob);
     });
 
   } catch (error) {
     console.error("Error generating speech:", error);
-    return null;
+    throw error;
   }
 };

@@ -79,23 +79,7 @@ export default function ForYouScreen() {
             <Text style={[appStyles.tabHeaderTitle, { marginBottom: 12 }]}>{data.name}!</Text>
           </View>
         </View>
-        <View style={styles.badgeRow}>
-          <View style={[sharedStyles.badge, styles.roleBadge]}>
-            <Ionicons name="person-circle-outline" size={16} color={colors.primary} />
-            <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>
-              {getRoleDisplayName(data.role, 'User')}
-            </Text>
-          </View>
-          {(() => {
-            const schoolStatus = getSchoolStatusText(data.schoolStatuses);
-            return schoolStatus !== 'Not set' ? (
-              <View style={[sharedStyles.badge, styles.roleBadge]}>
-                <Ionicons name="school-outline" size={16} color={colors.primary} />
-                <Text style={[sharedStyles.badgeText, styles.roleBadgeText]} numberOfLines={1} ellipsizeMode="tail">{schoolStatus}</Text>
-              </View>
-            ) : null;
-          })()}
-        </View>
+
       </Animated.View>
 
       <ScrollView

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -22,12 +22,14 @@ import { useStories, StoryComment } from "../contexts/StoriesContext";
 import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
+import { supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
 import { ReportStoryModal } from "../components/ReportStoryModal";
 import { RecommendationList } from "../components/RecommendationList";
 import { diffWords } from "diff";
+import { FeedbackBanner } from "../components/FeedbackBanner";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const AUDIENCE_DISPLAY: Record<string, string> = {
@@ -212,6 +214,7 @@ export default function StoryDetailScreen() {
     isStoryDownloaded,
     downloadStory,
     removeStoryDownload,
+    isStoryReported,
   } = useStories();
   const { colors, appStyles, isDark, fontScale } = useTheme();
   const { fireEvent } = useAccomplishments();
@@ -243,6 +246,7 @@ export default function StoryDetailScreen() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
   const [translatedBody, setTranslatedBody] = useState<string | null>(null);
+  const [showReportBanner, setShowReportBanner] = useState(false);
 
   const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
 
@@ -251,6 +255,17 @@ export default function StoryDetailScreen() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
+  const loadedStoryIdRef = useRef<string | null>(null);
+  const loadedIsTranslatedRef = useRef<boolean>(false);
+
+  // Reset audio state when the story changes (component reuses across navigation)
+  useEffect(() => {
+    player.pause();
+    setIsSpeaking(false);
+    setIsLoadingAudio(false);
+    loadedStoryIdRef.current = null;
+    loadedIsTranslatedRef.current = false;
+  }, [id]);
 
   const story = stories.find((s) => s.id === id) ?? downloadedStories.find((s) => s.id === id);
   const isOwnStory = story && user?.id === story.author_id;
@@ -288,17 +303,17 @@ export default function StoryDetailScreen() {
     }
   }, [playerStatus.isLoaded, playerStatus.didJustFinish, player]);
 
-  useEffect(() => {
-    if (id) loadComments();
-  }, [id]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!id) return;
     setCommentsLoading(true);
     const data = await fetchComments(id);
     setComments(data);
     setCommentsLoading(false);
-  };
+  }, [id, fetchComments]);
+
+  useEffect(() => {
+    if (id) loadComments();
+  }, [id, loadComments]);
 
   const handleDelete = () => {
     if (Platform.OS === "web") {
@@ -453,29 +468,50 @@ export default function StoryDetailScreen() {
       return;
     }
 
+    // We track the last spoken text to know if we need to regenerate
+    const titleToSpeak = isTranslated && translatedTitle ? translatedTitle : story.title;
+    const bodyToSpeak = isTranslated && translatedBody ? translatedBody : story.body;
+    const textToSpeak = `${titleToSpeak}. ${bodyToSpeak}`;
+    const voiceToUse = isTranslated && preferredLanguage !== 'spanish' ? 'dNjJKg63Fr5AXwIdkATa' : selectedVoice;
+
     setIsSpeaking(true);
 
-    if (playerStatus.isLoaded) {
+    // If this exact story's audio is already loaded in the same language, just resume
+    if (playerStatus.isLoaded && loadedStoryIdRef.current === id && loadedIsTranslatedRef.current === isTranslated) {
       player.play();
       return;
     }
 
     try {
       setIsLoadingAudio(true);
-      const titleToSpeak = isTranslated && translatedTitle ? translatedTitle : story.title;
-      const bodyToSpeak = isTranslated && translatedBody ? translatedBody : story.body;
-      const textToSpeak = `${titleToSpeak}. ${bodyToSpeak}`;
-      const voiceToUse = isTranslated && preferredLanguage !== 'spanish' ? 'dNjJKg63Fr5AXwIdkATa' : selectedVoice;
-      const audioUri = await generateSpeech(textToSpeak, voiceToUse);
+      // Truncate to 4000 chars to stay within ElevenLabs API limits
+      const truncated = textToSpeak.length > 4000 ? textToSpeak.substring(0, 4000) + '...' : textToSpeak;
+      console.log('[TTS] Generating story speech, chars:', truncated.length, 'voice:', voiceToUse);
+      const audioUri = await generateSpeech(truncated, voiceToUse);
+      console.log('Speech generated, URI:', audioUri ? 'exists' : 'null');
 
       if (audioUri) {
         player.replace(audioUri);
         player.play();
+        loadedStoryIdRef.current = id ?? null;
+        loadedIsTranslatedRef.current = isTranslated;
       } else {
         setIsSpeaking(false);
       }
-    } catch (error) {
-      console.error("Audio playback error:", error);
+    } catch (e: any) {
+      console.error('[TTS] Story audio error:', e);
+      let msg = 'Could not generate speech. Please try again.';
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (typeof e === 'object' && e !== null && (e.error || e.message)) {
+        msg = e.error || e.message;
+      }
+
+      if (Platform.OS === 'web') {
+        window.alert(`Audio failed: ${msg}`);
+      } else {
+        Alert.alert('Audio failed', msg);
+      }
       setIsSpeaking(false);
     } finally {
       setIsLoadingAudio(false);
@@ -492,40 +528,48 @@ export default function StoryDetailScreen() {
     if (translatedTitle && translatedBody) { setIsTranslated(true); return; }
     setIsTranslating(true);
     try {
-      const openAiKey = process.env.EXPO_PUBLIC_OPEN_AI_MODERATION_KEY;
-      if (!openAiKey) throw new Error('OpenAI key missing');
-      const translateText = async (text: string) => {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openAiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'Translate the following text to Spanish. Return only the translated text, no explanations.' },
-              { role: 'user', content: text },
-            ],
-            temperature: 0.2,
-          }),
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          console.error('OpenAI Error:', json);
-          throw new Error(json.error?.message || `API error: ${res.status}`);
-        }
-        console.log('OpenAI translate response:', JSON.stringify(json));
-        return json.choices?.[0]?.message?.content?.trim() ?? text;
-      };
-      const [title, body] = await Promise.all([translateText(story.title), translateText(story.body)]);
-      setTranslatedTitle(title);
-      setTranslatedBody(body);
+      // Use the anon key for authorization to ensure consistency and avoid session token issues
+      const token = supabaseAnonKey;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/translate-story`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify({ title: story.title, body: story.body }),
+      });
+
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => ({}));
+        console.error('Translation server error:', errorJson);
+        throw new Error(errorJson.message || errorJson.error || `Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data?.title && data?.body) {
+        setTranslatedTitle(data.title);
+        setTranslatedBody(data.body);
+        setIsTranslated(true);
+      } else {
+        throw new Error('Received incomplete translation from server');
+      }
       setIsTranslated(true);
     } catch (e: any) {
       console.error('Translation error:', e);
-      const msg = e instanceof Error ? e.message : 'Could not translate the story';
+      let msg = 'Could not translate the story. Please try again.';
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (typeof e === 'object' && e !== null && e.error) {
+        msg = e.error;
+      }
+      
       if (Platform.OS === 'web') {
-        window.alert(`Translation failed: ${msg}. Please try again.`);
+        window.alert(`Translation failed: ${msg}`);
       } else {
-        Alert.alert('Translation failed', `${msg}. Please try again.`);
+        Alert.alert('Translation failed', msg);
       }
     } finally {
       setIsTranslating(false);
@@ -594,8 +638,15 @@ export default function StoryDetailScreen() {
               <Ionicons name="trash-outline" size={22} color={colors.error} />
             </Pressable>
           ) : (
-            <Pressable onPress={() => setShowReportModal(true)} style={{ padding: 8 }}>
-              <Ionicons name="flag-outline" size={22} color={colors.textLight} />
+            <Pressable 
+              onPress={() => !isStoryReported(id || "") && setShowReportModal(true)} 
+              style={{ padding: 8 }}
+            >
+              <Ionicons 
+                name={isStoryReported(id || "") ? "flag" : "flag-outline"} 
+                size={22} 
+                color={isStoryReported(id || "") ? colors.primary : colors.textLight} 
+              />
             </Pressable>
           )}
         </View>
@@ -612,6 +663,13 @@ export default function StoryDetailScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <FeedbackBanner 
+            visible={showReportBanner}
+            message="Report submitted and a moderator is looking at it."
+            onDismiss={() => setShowReportBanner(false)}
+            type="success"
+            style={{ marginHorizontal: 0, marginBottom: 20, marginTop: 0 }}
+          />
           {/* Meta line */}
           <Text style={styles.meta}>{metaLine}</Text>
 
@@ -944,7 +1002,7 @@ export default function StoryDetailScreen() {
         onSubmit={(reason, details) => {
           if (story) {
             reportStory(story.id, reason, details);
-            Alert.alert("Report Submitted", "Thank you for helping keep our community safe.");
+            setShowReportBanner(true);
           }
         }}
       />

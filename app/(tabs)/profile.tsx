@@ -217,7 +217,7 @@ export default function ProfileScreen() {
               <View style={[styles.groupCard, { backgroundColor: colors.appBackground, marginHorizontal: 0, marginBottom: 0 }]}>
                 <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
                 <SettingRow icon="school-outline" label="Role" value={roleDisplayName} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
-                <SettingRow icon="book-outline" label="School Status" value={schoolStatusText} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
+                <SettingRow icon="book-outline" label="School Status" value={data.schoolStatuses.length > 0 ? `${data.schoolStatuses.length} selected` : 'Not set'} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
                 <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
               </View>
             </View>
@@ -284,14 +284,25 @@ export default function ProfileScreen() {
 
                   <Animated.View style={[styles.identityText, nameStyle]}>
                     <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
-                    <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-                      <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
-                    </View>
-                    {schoolStatusText !== 'Not set' && (
-                      <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
-                        <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
+                    <View style={styles.badgeWrapRow}>
+                      <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                        <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                       </View>
-                    )}
+                      {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
+                        const labels: Record<string, string> = {
+                          'current-treatment': 'Currently in school',
+                          'returning-after-treatment': 'Taking a break from school',
+                          'supporting-student': 'Planning to return to school soon',
+                          'special-needs': 'Home Hospital Education',
+                        };
+                        const label = labels[status] ?? status.replace(/-/g, ' ');
+                        return (
+                          <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                            <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
                     <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
                       <View style={styles.statItem}>
                         <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
@@ -434,14 +445,25 @@ export default function ProfileScreen() {
 
               <Animated.View style={[styles.identityText, nameStyle]}>
                 <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
-                <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-                  <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
-                </View>
-                {schoolStatusText !== 'Not set' && (
-                  <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight, marginTop: 8 }]}>
-                    <Text style={[styles.rolePillText, { color: colors.primary }]}>{schoolStatusText}</Text>
+                <View style={styles.badgeWrapRow}>
+                  <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                    <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                   </View>
-                )}
+                  {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
+                    const labels: Record<string, string> = {
+                      'current-treatment': 'Currently in school',
+                      'returning-after-treatment': 'Taking a break from school',
+                      'supporting-student': 'Planning to return to school soon',
+                      'special-needs': 'Home Hospital Education',
+                    };
+                    const label = labels[status] ?? status.replace(/-/g, ' ');
+                    return (
+                      <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                        <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
                 <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
                   <View style={styles.statItem}>
                     <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
@@ -626,6 +648,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.3,
     marginBottom: 8,
+  },
+  badgeWrapRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 8,
+    paddingHorizontal: 24,
   },
   rolePill: {
     paddingHorizontal: 14,

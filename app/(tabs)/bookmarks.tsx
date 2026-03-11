@@ -398,7 +398,7 @@ export default function LibraryScreen() {
               {bookmarkedStories.length > 0 && (
                 <View style={styles.sectionContainer}>
                   <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
-                  <View style={styles.resourcesContainer}>
+                  <View style={styles.storiesContainer}>
                     {bookmarkedStories.map((story, index) => (
                       <StoryCard key={story.id} story={story} index={index} />
                     ))}
@@ -467,7 +467,7 @@ export default function LibraryScreen() {
               {filteredDownloadedStories.length > 0 && (
                 <View style={styles.sectionContainer}>
                   <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
-                  <View style={styles.resourcesContainer}>
+                  <View style={styles.storiesContainer}>
                     {filteredDownloadedStories.map((story, index) => (
                       <StoryCard key={`dl-${story.id}`} story={story} index={index} />
                     ))}
@@ -669,6 +669,10 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
     resourcesContainer: isWebDesktop
       ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
       : { gap: SPACING.itemGap },
+    storiesContainer: {
+      gap: SPACING.itemGap,
+      width: '100%',
+    },
     emptyContainer: {
       alignItems: 'center',
       paddingVertical: 60,

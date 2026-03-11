@@ -93,7 +93,7 @@ function GradeCell({
           cellStyle,
         ]}
       >
-        <Ionicons name={grade.icon} size={22} color={grade.color} />
+        <Ionicons name={grade.icon} size={26} color={grade.color} />
         <Text style={[styles.gridCellLabel, isSelected && { color: grade.color, fontWeight: '700' }]}>
           {grade.label}
         </Text>
@@ -222,17 +222,17 @@ const styles = StyleSheet.create({
     borderRadius: RADII.grid,
     borderWidth: BORDERS.card,
     borderColor: COLORS.borderCard,
-    height: 100,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
   },
   gridCellLabel: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '600',
     color: COLORS.textDark,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
 
 });

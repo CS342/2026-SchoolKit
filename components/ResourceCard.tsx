@@ -95,13 +95,13 @@ export function ResourceCard({
 
         {category ? (
           <View style={styles.content}>
-            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
+            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(22 * fontScale) }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.1) }]}>
-              <Text style={[styles.categoryText, { color, fontSize: Math.round(14 * fontScale) }]}>{category}</Text>
+              <Text style={[styles.categoryText, { color, fontSize: Math.round(16 * fontScale) }]}>{category}</Text>
             </View>
           </View>
         ) : (
-          <Text style={[styles.titleFull, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
+          <Text style={[styles.titleFull, { color: colors.textDark, fontSize: Math.round(22 * fontScale) }]}>{title}</Text>
         )}
 
         <View style={styles.actions}>
@@ -137,15 +137,17 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.body,
+    fontWeight: '700',
     color: COLORS.textDark,
     marginBottom: SPACING.xs,
-    lineHeight: 24,
+    lineHeight: 28,
   },
   titleFull: {
     flex: 1,
     ...TYPOGRAPHY.body,
+    fontWeight: '700',
     color: COLORS.textDark,
-    lineHeight: 24,
+    lineHeight: 28,
   },
   categoryBadge: {
     alignSelf: 'flex-start',

@@ -376,7 +376,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     marginBottom: 12,
   },
   modBannerText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: isDark ? '#FCA5A5' : '#E65100',
     textTransform: 'uppercase',
@@ -416,7 +416,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     alignSelf: 'flex-start',
   },
   authorPendingText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: isDark ? '#FCA5A5' : '#F57C00',
     textTransform: 'uppercase',
@@ -433,7 +433,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     alignSelf: 'flex-start',
   },
   authorRejectedText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: c.error,
     textTransform: 'uppercase',
@@ -448,24 +448,24 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     borderRadius: 100,
   },
   meta: {
-    fontSize: 12,
+    fontSize: 14,
     color: c.textLight,
     fontWeight: '400',
     marginBottom: 7,
   },
   title: {
-    fontSize: fs(18),
+    fontSize: fs(22),
     fontWeight: '700',
     color: c.textDark,
-    lineHeight: fs(24),
+    lineHeight: fs(28),
     marginBottom: 6,
     letterSpacing: -0.2,
   },
   bodyPreview: {
-      fontSize: fs(14),
+      fontSize: fs(16),
       fontWeight: '400',
       color: c.textMuted,
-      lineHeight: fs(21),
+      lineHeight: fs(24),
       marginBottom: 14,
     },
     tagsContainer: {
@@ -480,7 +480,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
       borderRadius: 100,
     },
     tagText: {
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '600',
     },
     normsContainer: {
@@ -528,7 +528,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     gap: 5,
   },
   actionText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '500',
     color: c.textLight,
   },
