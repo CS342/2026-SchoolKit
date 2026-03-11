@@ -401,7 +401,9 @@ export default function LibraryScreen() {
                   <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
                   <View style={styles.storiesContainer}>
                     {bookmarkedStories.map((story, index) => (
-                      <StoryCard key={story.id} story={story} index={index} />
+                      <View key={story.id} style={styles.storyGridItem}>
+                        <StoryCard story={story} index={index} />
+                      </View>
                     ))}
                   </View>
                 </View>
@@ -470,7 +472,9 @@ export default function LibraryScreen() {
                   <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
                   <View style={styles.storiesContainer}>
                     {filteredDownloadedStories.map((story, index) => (
-                      <StoryCard key={`dl-${story.id}`} story={story} index={index} />
+                      <View key={`dl-${story.id}`} style={styles.storyGridItem}>
+                        <StoryCard story={story} index={index} />
+                      </View>
                     ))}
                   </View>
                 </View>
@@ -667,8 +671,12 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
       : { gap: 10 },
     storiesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 10,
-      width: '100%',
+    },
+    storyGridItem: {
+      width: '48.5%',
     },
     emptyContainer: {
       alignItems: 'center',
