@@ -274,38 +274,7 @@ export default function CreateStoryScreen() {
             </Pressable>
           )}
 
-          {/* Content Tags via Dropdown/Modal */}
-          <Text style={styles.sectionHeading}>Topic Tags</Text>
-          <Pressable
-            style={styles.tagsDropdownBtn}
-            onPress={() => !isExhausted && setShowTagsModal(true)}
-          >
-            <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
-              {storyTags.length > 0
-                ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
-                : "Select topic tags..."}
-            </Text>
-            <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
-          </Pressable>
 
-          {storyTags.length > 0 && (
-            <View style={styles.selectedTagsContainer}>
-              {storyTags.map((tag) => (
-                <View key={tag} style={styles.selectedTagChip}>
-                  <Text style={styles.selectedTagText}>{tag}</Text>
-                  {!isExhausted && (
-                    <Pressable
-                      onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
-                      hitSlop={8}
-                      style={{ marginLeft: 4 }}
-                    >
-                      <Ionicons name="close-circle" size={16} color={colors.primary} />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
 
           {/* Looking For preview area */}
           {(!isExhausted && lookingFor.length > 0) && (

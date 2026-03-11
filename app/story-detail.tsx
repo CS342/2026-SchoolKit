@@ -508,6 +508,10 @@ export default function StoryDetailScreen() {
           }),
         });
         const json = await res.json();
+        if (!res.ok) {
+          console.error('OpenAI Error:', json);
+          throw new Error(json.error?.message || `API error: ${res.status}`);
+        }
         console.log('OpenAI translate response:', JSON.stringify(json));
         return json.choices?.[0]?.message?.content?.trim() ?? text;
       };
@@ -515,12 +519,13 @@ export default function StoryDetailScreen() {
       setTranslatedTitle(title);
       setTranslatedBody(body);
       setIsTranslated(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Translation error:', e);
+      const msg = e instanceof Error ? e.message : 'Could not translate the story';
       if (Platform.OS === 'web') {
-        window.alert('Translation failed. Could not translate the story. Please try again.');
+        window.alert(`Translation failed: ${msg}. Please try again.`);
       } else {
-        Alert.alert('Translation failed', 'Could not translate the story. Please try again.');
+        Alert.alert('Translation failed', `${msg}. Please try again.`);
       }
     } finally {
       setIsTranslating(false);
