@@ -406,6 +406,9 @@ export default function AuthScreen() {
             <Ionicons name="person-outline" size={20} color={COLORS.textMuted} style={{ marginRight: 8 }} />
             <Text style={styles.guestButtonText}>Continue as Guest</Text>
           </TouchableOpacity>
+          <Text style={[styles.guestWarningText, isWebDesktop && { marginHorizontal: 0 }]}>
+            We won't remember your info and you have limited ability to interact with story posts.
+          </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -580,5 +583,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.textMuted,
+  },
+  guestWarningText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginHorizontal: 24,
+    marginTop: 8,
   },
 });

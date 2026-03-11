@@ -1,3 +1,35 @@
+-- Create the earned_accomplishments table
+CREATE TABLE IF NOT EXISTS public.earned_accomplishments (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  piece_id text NOT NULL,
+  earned_at timestamp with time zone DEFAULT now() NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  UNIQUE(user_id, piece_id)
+);
+
+-- Enable RLS
+ALTER TABLE public.earned_accomplishments ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+
+-- 1. Users can view their own earned accomplishments
+CREATE POLICY "Users can view their own earned accomplishments"
+  ON public.earned_accomplishments
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- 2. Users can insert their own earned accomplishments
+CREATE POLICY "Users can insert their own earned accomplishments"
+  ON public.earned_accomplishments
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- 3. Users can update their own earned accomplishments (e.g. for re-syncing timestamps)
+CREATE POLICY "Users can update their own earned accomplishments"
+  ON public.earned_accomplishments
+  FOR UPDATE
+  USING (auth.uid() = user_id);
 -- SchoolKit Database Schema
 -- Run this in Supabase SQL Editor (https://supabase.com/dashboard/project/inquvsymyujundkwxzju/sql)
 
@@ -136,3 +168,14 @@ CREATE POLICY "Public read access for avatars"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'avatars');
+
+-- Resource progress table (created by user)
+-- CREATE TABLE public.resource_progress (
+--   id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+--   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+--   resource_id text,
+--   is_opened boolean DEFAULT false,
+--   is_completed boolean DEFAULT false,
+--   updated_at timestamptz DEFAULT now()
+-- );
+-- Note: A UNIQUE constraint on (user_id, resource_id) is required for upsert to work.

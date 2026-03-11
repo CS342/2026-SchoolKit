@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_700Bold, Raleway_800ExtraBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -21,6 +21,8 @@ function InnerLayout() {
   const { isDark, colors } = useTheme();
   const { isWeb, isDesktop, isTablet } = useResponsive();
   const isWebDesktop = isWeb && (isDesktop || isTablet);
+  const pathname = usePathname();
+  const isWelcomePage = pathname === '/welcome' || pathname === '/welcome/';
 
   const navigationTheme = isDark
     ? {
@@ -62,7 +64,7 @@ function InnerLayout() {
       <OfflineBanner />
       {isWebDesktop ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <PersistentSidebar />
+          {!isWelcomePage && <PersistentSidebar />}
           <View style={{ flex: 1 }}>
             {stack}
             <PieceRevealOverlay />

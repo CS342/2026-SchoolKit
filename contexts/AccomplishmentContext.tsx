@@ -21,6 +21,8 @@ import {
 } from '../constants/accomplishments';
 import { useOnboarding } from './OnboardingContext';
 import { useStories } from './StoriesContext';
+import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = '@schoolkit_accomplishments';
 
@@ -77,6 +79,7 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
   // ── Contexts we observe (no coupling back into OnboardingContext) ─────────
   const { data: onboardingData, bookmarks, downloads } = useOnboarding();
   const { storyBookmarks } = useStories();
+  const { user } = useAuth();
 
   // ── Persistence ──────────────────────────────────────────────────────────
   const persistState = useCallback(() => {
@@ -130,6 +133,129 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsHydrated(true));
   }, []);
 
+  // ── Sync with Supabase ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isHydrated || !user?.id) return;
+
+    const syncWithSupabase = async () => {
+      try {
+        const localEarnedIds = Array.from(earnedPieceIdsRef.current);
+        const [ { data: serverAccomplishments, error: fetchError }, { data: serverProgress, error: progressError } ] = await Promise.all([
+           (supabase as any).from('earned_accomplishments').select('piece_id, earned_at').eq('user_id', user.id),
+           (supabase as any).from('resource_progress').select('resource_id, is_opened, is_completed').eq('user_id', user.id)
+        ]);
+
+        if (fetchError) {
+          console.warn('[Accomplishments] Failed to fetch server accomplishments:', fetchError.message);
+        }
+        if (progressError) {
+          console.warn('[Accomplishments] Failed to fetch server progress:', progressError.message);
+        }
+
+        const serverEarnedIds = new Set(serverAccomplishments?.map((a: any) => a.piece_id) || []);
+        
+        // Push local missing pieces to server
+        const missingOnServer = localEarnedIds.filter(id => !serverEarnedIds.has(id));
+        if (missingOnServer.length > 0) {
+          const toInsert = missingOnServer.map(pieceId => ({
+            user_id: user.id,
+            piece_id: pieceId,
+            earned_at: new Date(earnedAtRef.current[pieceId] || Date.now()).toISOString(),
+          }));
+
+          const { error: insertError } = await (supabase as any)
+            .from('earned_accomplishments')
+            .upsert(toInsert, { onConflict: 'user_id, piece_id' });
+          if (insertError) {
+             console.warn('[Accomplishments] Failed to sync local to server:', insertError.message);
+          }
+        }
+
+        // Pull server missing pieces to local
+        const missingLocally = (serverAccomplishments || []).filter((a: any) => !earnedPieceIdsRef.current.has(a.piece_id));
+        if (missingLocally.length > 0) {
+          let needsUpdate = false;
+          missingLocally.forEach((item: any) => {
+            const pieceId = item.piece_id;
+            // Best effort backward lookup to figure out chapterId. 
+            // In a robust implementation we might build a map of piece.id -> chapterId beforehand.
+            for (const chapId in CHAPTER_BY_ID) {
+               const chapter = CHAPTER_BY_ID[chapId];
+               if (chapter?.pieces.some(p => p.id === pieceId)) {
+                  earnedPieceIdsRef.current.add(pieceId);
+                  visibleChapterIdsRef.current.add(chapId);
+                  earnedAtRef.current[pieceId] = new Date(item.earned_at).getTime();
+                  needsUpdate = true;
+                  break;
+               }
+            }
+          });
+
+          if (needsUpdate) {
+            setEarnedPieceIds(new Set(earnedPieceIdsRef.current));
+            setVisibleChapterIds(new Set(visibleChapterIdsRef.current));
+            setEarnedAt({ ...earnedAtRef.current });
+            persistState();
+          }
+        }
+
+        // Merge resource progress
+        if (serverProgress && serverProgress.length > 0) {
+           let progressNeedsUpdate = false;
+           serverProgress.forEach((p: any) => {
+              if (p.is_opened && !openedResourceIdsRef.current.has(p.resource_id)) {
+                 openedResourceIdsRef.current.add(p.resource_id);
+                 progressNeedsUpdate = true;
+              }
+              if (p.is_completed && !scrolledToEndIdsRef.current.has(p.resource_id)) {
+                 scrolledToEndIdsRef.current.add(p.resource_id);
+                 progressNeedsUpdate = true;
+              }
+           });
+
+           if (progressNeedsUpdate) {
+              setOpenedResourceIds(new Set(openedResourceIdsRef.current));
+              setScrolledToEndIds(new Set(scrolledToEndIdsRef.current));
+              persistState();
+           }
+        }
+
+        // Push local progress that is missing on server
+        const localOpened = Array.from(openedResourceIdsRef.current);
+        const serverProgressMap = new Map((serverProgress || []).map((p: any) => [p.resource_id, p]));
+        
+        const progressToInsert: any[] = [];
+        localOpened.forEach(resId => {
+           const sProg: any = serverProgressMap.get(resId);
+           const isCompletedLocally = scrolledToEndIdsRef.current.has(resId);
+           if (!sProg || (!sProg.is_completed && isCompletedLocally)) {
+               progressToInsert.push({
+                   user_id: user.id,
+                   resource_id: resId,
+                   is_opened: true,
+                   is_completed: isCompletedLocally,
+                   updated_at: new Date().toISOString()
+               });
+           }
+        });
+
+        if (progressToInsert.length > 0) {
+           // We use upsert, assuming user_id + resource_id is unique
+           const { error: progInsertError } = await (supabase as any).from('resource_progress').upsert(progressToInsert, { onConflict: 'user_id, resource_id' });
+           // If upsert fails because the user didn't create a unique constraint in the GUI, that's okay, we'll just log it.
+           if (progInsertError) {
+               console.warn('[Accomplishments] Failed to push resource progress (you might need a UNIQUE constraint on user_id, resource_id):', progInsertError.message);
+           }
+        }
+
+      } catch (err) {
+        console.warn('[Accomplishments] Sync error:', err);
+      }
+    };
+
+    syncWithSupabase();
+  }, [isHydrated, user?.id, persistState]);
+
   // ── Toast queue management ───────────────────────────────────────────────
   const showNextToast = useCallback(() => {
     if (toastQueue.current.length === 0) {
@@ -179,7 +305,20 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
 
     persistState();
-  }, [showNextToast, persistState]);
+
+    // Push immediately to Supabase if logged in
+    if (user?.id) {
+       const toInsert = newlyEarned.map(p => ({
+         user_id: user.id,
+         piece_id: p.id,
+         earned_at: new Date(earnedAtRef.current[p.id] || Date.now()).toISOString(),
+       }));
+       (supabase as any).from('earned_accomplishments').upsert(toInsert, { onConflict: 'user_id, piece_id' }).catch((e: any) => {
+         console.warn('[Accomplishments] Failed to push on earn:', e.message);
+       });
+    }
+
+  }, [showNextToast, persistState, user?.id]);
 
   // ── Resource scroll-to-end tracking ─────────────────────────────────────
   const fireResourceScrolledToEnd = useCallback((resourceId: string) => {
@@ -190,8 +329,18 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
       
       // Fire event for reading a resource completely (formerly the early onboarding piece)
       fireEvent('resource_completed');
+
+      if (user?.id) {
+         (supabase as any).from('resource_progress').upsert({
+             user_id: user.id,
+             resource_id: resourceId,
+             is_opened: true,
+             is_completed: true,
+             updated_at: new Date().toISOString()
+         }, { onConflict: 'user_id, resource_id' }).catch((e: any) => console.warn('[Accomplishments] Progress sync failed:', e.message));
+      }
     }
-  }, [fireEvent, persistState]);
+  }, [fireEvent, persistState, user?.id]);
 
   // ── Resource opened tracking (unique resource IDs) ───────────────────────
   const fireResourceOpened = useCallback((resourceId: string) => {
@@ -201,6 +350,16 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
       openedResourceIdsRef.current.add(resourceId);
       setOpenedResourceIds(new Set(openedResourceIdsRef.current));
       persistState();
+
+      if (user?.id) {
+         (supabase as any).from('resource_progress').upsert({
+             user_id: user.id,
+             resource_id: resourceId,
+             is_opened: true,
+             is_completed: scrolledToEndIdsRef.current.has(resourceId),
+             updated_at: new Date().toISOString()
+         }, { onConflict: 'user_id, resource_id' }).catch((e: any) => console.warn('[Accomplishments] Progress sync failed:', e.message));
+      }
     }
 
     // Check percentage thresholds

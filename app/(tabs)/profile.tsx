@@ -130,7 +130,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const { colors, shadows, appStyles, isDark } = theme;
   const { data, updateProfilePicture, bookmarks } = useOnboarding();
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
   const { stories, storyBookmarks } = useStories();
   const { fireEvent } = useAccomplishments();
 
@@ -283,6 +283,11 @@ export default function ProfileScreen() {
                   <Animated.View style={[styles.identityText, nameStyle]}>
                     <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
                     <View style={styles.badgeWrapRow}>
+                      {isAnonymous && (
+                        <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
+                          <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
+                        </View>
+                      )}
                       <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                         <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                       </View>
@@ -444,6 +449,11 @@ export default function ProfileScreen() {
               <Animated.View style={[styles.identityText, nameStyle]}>
                 <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
                 <View style={styles.badgeWrapRow}>
+                  {isAnonymous && (
+                    <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
+                      <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
+                    </View>
+                  )}
                   <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                     <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                   </View>

@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Animated as RNAnimated,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -104,13 +105,19 @@ function CommentItem({
   isLiked,
   onDelete,
   onLike,
+  fontSizeStep = 0,
 }: {
   comment: StoryComment;
   isOwn: boolean;
   isLiked: boolean;
   onDelete: () => void;
   onLike: () => void;
+  fontSizeStep?: number;
 }) {
+  const { colors, isDark, fontScale } = useTheme();
+  const styles = React.useMemo(() => makeCommentStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
+  const FONT_STEPS = [1.0, 1.2, 1.45];
+
   const roleLabel = getRoleLabel(comment.author_role);
   const metaParts = [comment.author_name || "Anonymous"];
   if (roleLabel) metaParts.push(roleLabel);
@@ -118,9 +125,9 @@ function CommentItem({
   const metaLine = metaParts.join(" · ");
 
   return (
-    <View style={commentStyles.container}>
-      <View style={commentStyles.headerRow}>
-        <Text style={commentStyles.meta} numberOfLines={1}>
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.meta} numberOfLines={1}>
           {metaLine}
         </Text>
         {isOwn && (
@@ -128,19 +135,21 @@ function CommentItem({
             onPress={onDelete}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+            <Ionicons name="trash-outline" size={15} color={colors.error} />
           </TouchableOpacity>
         )}
       </View>
-      <Text style={commentStyles.body}>{comment.body}</Text>
-      <TouchableOpacity onPress={onLike} style={commentStyles.likeRow} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+      <Text style={[styles.body, fontSizeStep > 0 && { fontSize: Math.round(15 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>
+        {comment.body}
+      </Text>
+      <TouchableOpacity onPress={onLike} style={styles.likeRow} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
         <Ionicons
           name={isLiked ? "heart" : "heart-outline"}
           size={14}
-          color={isLiked ? "#E53935" : COLORS.textLight}
+          color={isLiked ? "#E53935" : colors.textLight}
         />
         {comment.like_count > 0 && (
-          <Text style={[commentStyles.likeCount, isLiked && commentStyles.likeCountActive]}>
+          <Text style={[styles.likeCount, isLiked && styles.likeCountActive]}>
             {comment.like_count}
           </Text>
         )}
@@ -149,46 +158,49 @@ function CommentItem({
   );
 }
 
-const commentStyles = StyleSheet.create({
-  container: {
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E5EA",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  meta: {
-    fontSize: 12,
-    color: COLORS.textLight,
-    flex: 1,
-    marginRight: 8,
-  },
-  body: {
-    fontSize: 15,
-    fontWeight: "400",
-    color: COLORS.textDark,
-    lineHeight: 22,
-  },
-  likeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 8,
-    alignSelf: "flex-start",
-  },
-  likeCount: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: COLORS.textLight,
-  },
-  likeCountActive: {
-    color: "#E53935",
-  },
-});
+const makeCommentStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, isDark: boolean, fontScale = 1) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
+    container: {
+      paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? c.borderCard : "#E5E5EA",
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 6,
+    },
+    meta: {
+      fontSize: fs(12),
+      color: c.textLight,
+      flex: 1,
+      marginRight: 8,
+    },
+    body: {
+      fontSize: fs(15),
+      fontWeight: "400",
+      color: c.textDark,
+      lineHeight: fs(22),
+    },
+    likeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      marginTop: 8,
+      alignSelf: "flex-start",
+    },
+    likeCount: {
+      fontSize: fs(12),
+      fontWeight: "500",
+      color: c.textLight,
+    },
+    likeCountActive: {
+      color: "#E53935",
+    },
+  });
+};
 
 export default function StoryDetailScreen() {
   const router = useRouter();
@@ -233,7 +245,7 @@ export default function StoryDetailScreen() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [isResponsesExpanded, setIsResponsesExpanded] = useState(false);
+  const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
   const [postAnonymously, setPostAnonymously] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
@@ -621,6 +633,70 @@ export default function StoryDetailScreen() {
   if (audienceHint) metaParts.push(audienceHint);
   const metaLine = metaParts.join(" · ");
 
+  const renderCommentInput = () => {
+    if ((isModeratorMode && story.status === 'pending')) return null;
+
+    if (isAnonymous) {
+      return (
+        <View style={[styles.guestCommentWrapper, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+          <Text style={styles.guestCommentText}>Sign in to comment</Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.commentInputWrapper}>
+        <View style={styles.anonRow}>
+          <Pressable
+            onPress={() => setPostAnonymously((v) => !v)}
+            style={[styles.anonToggle, postAnonymously && styles.anonToggleActive]}
+          >
+            <Ionicons
+              name={postAnonymously ? "eye-off" : "eye-off-outline"}
+              size={13}
+              color={postAnonymously ? colors.primary : COLORS.textLight}
+            />
+            <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
+              {postAnonymously ? "Posting anonymously" : "Post anonymously"}
+            </Text>
+          </Pressable>
+        </View>
+        <Text style={styles.reminderText}>{reminderText}</Text>
+        <View
+          style={[
+            styles.inputBar,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+          ]}
+        >
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Offer support or share your thoughts..."
+            placeholderTextColor={COLORS.inputPlaceholder}
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+            maxLength={500}
+          />
+          <TouchableOpacity
+            onPress={handleSubmitComment}
+            disabled={!commentText.trim() || submitting}
+            style={styles.sendButton}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons
+                name="send"
+                size={22}
+                color={commentText.trim() ? colors.primary : COLORS.textLight}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -801,14 +877,13 @@ export default function StoryDetailScreen() {
             </View>
           )}
 
-          {/* Tags */}
           {story.story_tags && story.story_tags.length > 0 && (
             <View style={styles.tagsContainer}>
               {story.story_tags.map(tag => {
                 const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
                 return (
-                  <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
-                    <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                  <View key={tag} style={[styles.tagBadge, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
+                    <Text style={[styles.tagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
                   </View>
                 );
               })}
@@ -849,14 +924,18 @@ export default function StoryDetailScreen() {
                   </TouchableOpacity>
 
                   {/* Comments count */}
-                  <View style={styles.actionItem}>
+                  <TouchableOpacity
+                    style={styles.actionItem}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    onPress={() => setIsCommentsModalVisible(true)}
+                  >
                     <Ionicons
                       name="chatbubble-outline"
                       size={22}
                       color={COLORS.textLight}
                     />
                     <Text style={styles.actionText}>{comments.length}</Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.actionRight}>
@@ -892,43 +971,17 @@ export default function StoryDetailScreen() {
               {/* Comments section */}
               <Pressable
                 style={styles.commentsHeader}
-                onPress={() => setIsResponsesExpanded(!isResponsesExpanded)}
+                onPress={() => setIsCommentsModalVisible(true)}
               >
                 <Text style={styles.commentsTitle}>
                   {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Response' : 'Responses'}` : 'Responses'}
                 </Text>
                 <Ionicons
-                  name={isResponsesExpanded ? "chevron-up" : "chevron-down"}
+                  name="chevron-forward"
                   size={20}
                   color={COLORS.textLight}
                 />
               </Pressable>
-
-              {isResponsesExpanded && (
-                <View style={styles.commentsListContainer}>
-                  {commentsLoading ? (
-                    <ActivityIndicator
-                      style={{ marginTop: 20 }}
-                      color={colors.primary}
-                    />
-                  ) : comments.length === 0 ? (
-                    <Text style={styles.noComments}>
-                      {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
-                    </Text>
-                  ) : (
-                    comments.map((comment) => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        isOwn={user?.id === comment.author_id}
-                        isLiked={isCommentLiked(comment.id)}
-                        onDelete={() => handleDeleteComment(comment.id)}
-                        onLike={() => handleLikeComment(comment.id)}
-                      />
-                    ))
-                  )}
-                </View>
-              )}
 
               {/* Recommendations */}
               {story && (
@@ -942,59 +995,58 @@ export default function StoryDetailScreen() {
         </ScrollView>
 
         {/* Comment input */}
-        {!(isModeratorMode && story.status === 'pending') && !isAnonymous && (
-          <View style={styles.commentInputWrapper}>
-            <View style={styles.anonRow}>
-              <Pressable
-                onPress={() => setPostAnonymously((v) => !v)}
-                style={[styles.anonToggle, postAnonymously && styles.anonToggleActive]}
-              >
-                <Ionicons
-                  name={postAnonymously ? "eye-off" : "eye-off-outline"}
-                  size={13}
-                  color={postAnonymously ? colors.primary : COLORS.textLight}
-                />
-                <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
-                  {postAnonymously ? "Posting anonymously" : "Post anonymously"}
-                </Text>
-              </Pressable>
-            </View>
-            <Text style={styles.reminderText}>{reminderText}</Text>
-            <View
-              style={[
-                styles.inputBar,
-                { paddingBottom: Math.max(insets.bottom, 12) },
-              ]}
-            >
-              <TextInput
-                style={styles.commentInput}
-                placeholder="Offer support or share your thoughts..."
-                placeholderTextColor={COLORS.inputPlaceholder}
-                value={commentText}
-                onChangeText={setCommentText}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity
-                onPress={handleSubmitComment}
-                disabled={!commentText.trim() || submitting}
-                style={styles.sendButton}
-              >
-                {submitting ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <Ionicons
-                    name="send"
-                    size={22}
-                    color={commentText.trim() ? colors.primary : COLORS.textLight}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        {renderCommentInput()}
         </View>
       </KeyboardAvoidingView>
+
+      {/* Comments Bottom Sheet Modal */}
+      <Modal
+        visible={isCommentsModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsCommentsModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable style={styles.modalBgDismiss} onPress={() => setIsCommentsModalVisible(false)} />
+          <View style={[styles.modalContent, { paddingBottom: 0 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Responses</Text>
+              <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close" size={24} color={colors.textDark || "#1E1E24"} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
+              {commentsLoading ? (
+                <ActivityIndicator
+                  style={{ marginTop: 20 }}
+                  color={colors.primary}
+                />
+              ) : comments.length === 0 ? (
+                <Text style={styles.noComments}>
+                  {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
+                </Text>
+              ) : (
+                comments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    isOwn={user?.id === comment.author_id}
+                    isLiked={isCommentLiked(comment.id)}
+                    onDelete={() => handleDeleteComment(comment.id)}
+                    onLike={() => handleLikeComment(comment.id)}
+                    fontSizeStep={fontSizeStep}
+                  />
+                ))
+              )}
+            </ScrollView>
+            {renderCommentInput()}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <ReportStoryModal
         visible={showReportModal}
@@ -1265,6 +1317,60 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       fontSize: fs(12),
       fontWeight: "500",
       color: COLORS.textLight,
+    },
+    guestCommentWrapper: {
+      backgroundColor: c.white,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: "#E5E5EA",
+      paddingTop: 16,
+      alignItems: 'center',
+    },
+    guestCommentText: {
+      fontSize: fs(14),
+      color: c.textMuted,
+      fontWeight: '500',
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    modalBgDismiss: {
+      flex: 1,
+      width: '100%',
+    },
+    modalContent: {
+      backgroundColor: c.white,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      height: '80%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: '#E5E5EA',
+    },
+    modalTitle: {
+      fontSize: fs(18),
+      fontWeight: '700',
+      color: c.textDark,
+    },
+    modalScroll: {
+      flex: 1,
+    },
+    modalScrollContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      paddingTop: 10,
     },
   });
 };

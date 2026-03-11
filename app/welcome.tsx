@@ -12,7 +12,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { useResponsive } from '../hooks/useResponsive';
 
 import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../constants/onboarding-theme';
@@ -84,19 +83,18 @@ export default function WelcomeScreen() {
     <TouchableWithoutFeedback onPress={!animDone ? skipToEnd : undefined}>
       <View style={styles.flex}>
         <DecorativeBackground variant="welcome" gradientColors={GRADIENTS.welcomeHero}>
-          <AuthWebWrapper variant="welcome">
           <View style={styles.content}>
             <View style={styles.centerContent}>
               <Animated.View style={[iconStyle, styles.logoContainer]}>
                 <Animated.Image
                   source={require('../assets/images/StartLogo.png')}
-                  style={[{ width: isWebDesktop ? 220 : 180, height: isWebDesktop ? 220 : 180, resizeMode: 'contain' }, glowStyle]}
+                  style={[{ width: isWebDesktop ? 400 : 180, height: isWebDesktop ? 400 : 180, resizeMode: 'contain' }, glowStyle]}
                 />
               </Animated.View>
 
               <View style={{ height: 40 }} />
 
-              <Animated.Text style={[styles.tagline, isWebDesktop && { fontSize: 22 }, taglineStyle]}>
+              <Animated.Text style={[styles.tagline, isWebDesktop && { fontSize: 28 }, taglineStyle]}>
                 Support for every school journey
               </Animated.Text>
             </View>
@@ -123,7 +121,6 @@ export default function WelcomeScreen() {
           {isWebDesktop && (
             <Text style={styles.webFooter}>Stanford Byers Center for Biodesign</Text>
           )}
-          </AuthWebWrapper>
         </DecorativeBackground>
       </View>
     </TouchableWithoutFeedback>
