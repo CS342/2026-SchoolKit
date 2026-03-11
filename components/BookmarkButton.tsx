@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { COLORS } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface BookmarkButtonProps {
   resourceId: string;
@@ -11,7 +12,9 @@ interface BookmarkButtonProps {
   color?: string;
 }
 
-export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }: BookmarkButtonProps) {
+export function BookmarkButton({ resourceId, size = 24, color }: BookmarkButtonProps) {
+  const { colors } = useTheme();
+  const themeColor = color || colors.primary;
   const { isBookmarked, addBookmark, removeBookmark } = useOnboarding();
   const { fireEvent } = useAccomplishments();
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -54,7 +57,7 @@ export function BookmarkButton({ resourceId, size = 24, color = COLORS.primary }
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}
           size={size}
-          color={bookmarked ? color : COLORS.textLight}
+          color={bookmarked ? themeColor : colors.textLight}
         />
       </Animated.View>
     </TouchableOpacity>

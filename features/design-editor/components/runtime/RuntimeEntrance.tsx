@@ -7,9 +7,10 @@ interface RuntimeEntranceProps {
   object: InteractiveComponentObject;
   scrollY?: number;
   viewportHeight?: number;
+  isDark?: boolean;
 }
 
-export function RuntimeEntrance({ object, scrollY, viewportHeight }: RuntimeEntranceProps) {
+export function RuntimeEntrance({ object, scrollY, viewportHeight, isDark = false }: RuntimeEntranceProps) {
   const config = object.interactionConfig as EntranceConfig;
   const [hasTriggered, setHasTriggered] = useState(config.trigger !== 'on-scroll');
   const [layoutY, setLayoutY] = useState<number | null>(null);
@@ -55,6 +56,7 @@ export function RuntimeEntrance({ object, scrollY, viewportHeight }: RuntimeEntr
           config={config}
           parentWidth={object.width}
           shouldAnimate={hasTriggered}
+          isDark={isDark}
         />
       ))}
     </View>
@@ -67,12 +69,14 @@ function EntranceChild({
   config,
   parentWidth,
   shouldAnimate,
+  isDark,
 }: {
   child: InteractiveComponentObject['children'][number];
   index: number;
   config: EntranceConfig;
   parentWidth: number;
   shouldAnimate: boolean;
+  isDark: boolean;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(config.animation === 'slide-up' || config.animation === 'bounce' ? 30 : 0)).current;
@@ -141,7 +145,7 @@ function EntranceChild({
         transform: [{ translateY }, { scale }],
       }}
     >
-      <RuntimeObject object={child} parentWidth={parentWidth} />
+      <RuntimeObject object={child} parentWidth={parentWidth} isDark={isDark} />
     </Animated.View>
   );
 }

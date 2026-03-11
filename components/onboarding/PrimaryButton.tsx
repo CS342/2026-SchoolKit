@@ -7,7 +7,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { ANIMATION, TYPOGRAPHY, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface PrimaryButtonProps {
   title: string;
@@ -17,6 +18,7 @@ interface PrimaryButtonProps {
 }
 
 export function PrimaryButton({ title, onPress, disabled = false, icon }: PrimaryButtonProps) {
+  const { colors, shadows, gradients } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -41,23 +43,23 @@ export function PrimaryButton({ title, onPress, disabled = false, icon }: Primar
       accessibilityState={{ disabled }}
       accessibilityLabel={title}
     >
-      <Animated.View style={[animatedStyle, { borderRadius: RADII.button }, !disabled && SHADOWS.button]}>
+      <Animated.View style={[animatedStyle, { borderRadius: RADII.button }, !disabled && shadows.button]}>
         <LinearGradient
-          colors={disabled ? [...GRADIENTS.disabledButton] : [...GRADIENTS.primaryButton]}
+          colors={disabled ? [...gradients.disabledButton] : [...gradients.primaryButton]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
         >
           <View style={styles.innerGlow}>
             <View style={styles.content}>
-              <Text style={[styles.text, disabled && styles.textDisabled]}>
+              <Text style={[styles.text, disabled && { color: colors.disabledText }]}>
                 {title}
               </Text>
               {icon && (
                 <Ionicons
                   name={icon}
                   size={20}
-                  color={disabled ? COLORS.disabledText : COLORS.white}
+                  color={disabled ? colors.disabledText : '#FFFFFF'}
                   style={styles.icon}
                 />
               )}
@@ -87,11 +89,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     ...TYPOGRAPHY.button,
-  },
-  textDisabled: {
-    color: COLORS.disabledText,
   },
   icon: {
     marginLeft: 8,

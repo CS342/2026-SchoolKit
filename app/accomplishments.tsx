@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,13 +18,18 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { CHAPTERS, TOTAL_PIECES } from '../constants/accomplishments';
-import { ANIMATION, COLORS, RADII, SHADOWS, TYPOGRAPHY } from '../constants/onboarding-theme';
+import { ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme';
 import ChapterCard from '../components/puzzle/ChapterCard';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeColors, ThemeShadows } from '../constants/theme';
 
 export default function AccomplishmentsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, shadows, isDark } = useTheme();
   const { visibleChapterIds, earnedPieceIds, fireEvent } = useAccomplishments();
+
+  const styles = useMemo(() => makeStyles(colors, shadows), [colors, shadows]);
 
   const visibleChapters = CHAPTERS.filter(c => visibleChapterIds.has(c.id));
   const totalEarned = earnedPieceIds.size;
@@ -74,13 +79,13 @@ export default function AccomplishmentsScreen() {
           style={styles.backButton}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
+          <Ionicons name="chevron-back" size={24} color={colors.textDark} />
         </TouchableOpacity>
 
-        <Text style={styles.title}>My Puzzles</Text>
+        <Text style={[styles.title, { color: colors.textDark }]}>My Puzzles</Text>
 
         {hasAny && (
-          <Text style={styles.countBadge}>
+          <Text style={[styles.countBadge, { color: colors.textMuted }]}>
             {totalEarned} / {TOTAL_PIECES}
           </Text>
         )}
@@ -107,11 +112,11 @@ export default function AccomplishmentsScreen() {
           ))
         ) : (
           <Animated.View style={[styles.emptyState, emptyStyle]}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="eye-outline" size={40} color={COLORS.textLight} />
+            <View style={[styles.emptyIconCircle, { backgroundColor: colors.backgroundLight }]}>
+              <Ionicons name="eye-outline" size={40} color={colors.textLight} />
             </View>
-            <Text style={styles.emptyTitle}>Still unfolding</Text>
-            <Text style={styles.emptyMessage}>
+            <Text style={[styles.emptyTitle, { color: colors.textDark }]}>Still unfolding</Text>
+            <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
               Your story is still unfolding.{'\n'}
               Explore the app and something{'\n'}
               unexpected might find you.
@@ -123,10 +128,10 @@ export default function AccomplishmentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors, s: ThemeShadows) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.appBackground,
+    backgroundColor: c.appBackground,
   },
   header: {
     flexDirection: 'row',
@@ -140,23 +145,21 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    ...SHADOWS.small,
+    borderColor: c.borderCard,
+    ...s.small,
   },
   title: {
     flex: 1,
     ...TYPOGRAPHY.h2,
-    color: COLORS.textDark,
     letterSpacing: -0.4,
   },
   countBadge: {
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'Raleway_600SemiBold',
-    color: COLORS.textMuted,
     letterSpacing: -0.1,
   },
   placeholder: {
@@ -179,14 +182,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.backgroundLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   emptyTitle: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.textDark,
     marginBottom: 12,
     letterSpacing: -0.3,
   },
@@ -194,7 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     fontFamily: 'Raleway_500Medium',
-    color: COLORS.textMuted,
     textAlign: 'center',
     lineHeight: 24,
   },

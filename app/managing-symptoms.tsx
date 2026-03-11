@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
     View,
     Text,
@@ -320,33 +320,39 @@ function BodyDiagram({
     containerWidth,
     areas,
     onSelectArea,
+    styles,
 }: {
     containerWidth: number;
     areas: SymptomArea[];
     onSelectArea: (area: SymptomArea) => void;
+    styles: any;
 }) {
+    const { colors, isDark } = useTheme();
     if (!containerWidth) return null;
 
     const fL = (containerWidth - FIG_WIDTH) / 2; // figure left edge
     const fR = fL + FIG_WIDTH;                   // figure right edge
     const figBottom = FIG_TOP + FIG_HEIGHT;
 
+    const bodyBg = isDark ? "#2A2440" : "#EDE9FE";
+    const bodyBorder = isDark ? "#6366F1" : "#A78BFA";
+
     return (
         <View style={{ width: "100%", height: DIAGRAM_HEIGHT, position: "relative" }}>
             {/* ── Body figure ── */}
             {/* Head */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.head, { top: FIG_TOP, left: fL + 18 }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.head, { top: FIG_TOP, left: fL + 18, backgroundColor: bodyBg, borderColor: bodyBorder }]} />
             {/* Neck */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.neck,  { top: FIG_TOP + 61,  left: fL + 39 }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.neck,  { top: FIG_TOP + 61,  left: fL + 39, backgroundColor: bodyBg, borderColor: bodyBorder }]} />
             {/* Left arm (angled out like \) */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.arm,   { top: FIG_TOP + 76,  left: fL - 28, transform: [{ rotate: "12deg" }] }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.arm,   { top: FIG_TOP + 76,  left: fL - 28, transform: [{ rotate: "12deg" }], backgroundColor: bodyBg, borderColor: bodyBorder }]} />
             {/* Torso */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.torso, { top: FIG_TOP + 72,  left: fL + 6  }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.torso, { top: FIG_TOP + 72,  left: fL + 6, backgroundColor: bodyBg, borderColor: bodyBorder  }]} />
             {/* Right arm (angled out like /) */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.arm,   { top: FIG_TOP + 76,  left: fL + 100, transform: [{ rotate: "-12deg" }] }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.arm,   { top: FIG_TOP + 76,  left: fL + 100, transform: [{ rotate: "-12deg" }], backgroundColor: bodyBg, borderColor: bodyBorder }]} />
             {/* Legs */}
-            <View style={[FIGURE_PART.base, FIGURE_PART.leg,   { top: FIG_TOP + 178, left: fL + 8  }]} />
-            <View style={[FIGURE_PART.base, FIGURE_PART.leg,   { top: FIG_TOP + 178, left: fL + 54 }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.leg,   { top: FIG_TOP + 178, left: fL + 8, backgroundColor: bodyBg, borderColor: bodyBorder  }]} />
+            <View style={[FIGURE_PART.base, FIGURE_PART.leg,   { top: FIG_TOP + 178, left: fL + 54, backgroundColor: bodyBg, borderColor: bodyBorder }]} />
 
             {/* ── Halo icons + connector lines ── */}
             {areas.map((area) => {
@@ -428,6 +434,7 @@ function ExpandedCardModal({
     onToggleSpeak,
     playbackRate,
     onTogglePlaybackRate,
+    styles,
 }: {
     visible: boolean;
     area: SymptomArea | null;
@@ -437,6 +444,7 @@ function ExpandedCardModal({
     onToggleSpeak: () => void;
     playbackRate: number;
     onTogglePlaybackRate: () => void;
+    styles: any;
 }) {
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -557,7 +565,7 @@ function ExpandedCardModal({
                                             <Text style={[styles.sectionHeading, { color }]}>{section.heading}</Text>
                                         )}
                                         {/* Notice */}
-                                        <View style={[styles.sectionBox, { backgroundColor: color + "10", borderColor: color + "30" }]}>
+                                        <View style={[styles.sectionBox, { backgroundColor: isDark ? color + "20" : color + "10", borderColor: color + "30" }]}>
                                             <View style={styles.sectionLabelRow}>
                                                 <Ionicons name="eye-outline" size={13} color={color} />
                                                 <Text style={[styles.sectionLabel, { color }]}>What you might notice</Text>
@@ -565,12 +573,12 @@ function ExpandedCardModal({
                                             {section.notice.map((item, i) => (
                                                 <View key={i} style={styles.bulletRow}>
                                                     <View style={[styles.bullet, { backgroundColor: color }]} />
-                                                    <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
+                                                    <Text style={[styles.bulletText, { color: colors.textDark }, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>
                                         {/* Helps */}
-                                        <View style={[styles.sectionBox, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0", marginTop: 8 }]}>
+                                        <View style={[styles.sectionBox, { backgroundColor: isDark ? "#103010" : "#F0FDF4", borderColor: isDark ? "#10B98160" : "#BBF7D0", marginTop: 8 }]}>
                                             <View style={styles.sectionLabelRow}>
                                                 <Ionicons name="checkmark-circle-outline" size={13} color="#10B981" />
                                                 <Text style={[styles.sectionLabel, { color: "#10B981" }]}>What helps</Text>
@@ -578,7 +586,7 @@ function ExpandedCardModal({
                                             {section.helps.map((item, i) => (
                                                 <View key={i} style={styles.bulletRow}>
                                                     <View style={[styles.bullet, { backgroundColor: "#10B981" }]} />
-                                                    <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
+                                                    <Text style={[styles.bulletText, { color: colors.textDark }, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -604,7 +612,8 @@ function ExpandedCardModal({
 }
 
 // ─── General Tip Accordion Item ───────────────────────────────────────────────
-function TipAccordion({ tip }: { tip: GeneralTip }) {
+function TipAccordion({ tip, styles }: { tip: GeneralTip; styles: any }) {
+    const { colors, isDark } = useTheme();
     const [expanded, setExpanded] = useState(false);
     const heightAnim = useRef(new Animated.Value(0)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -621,20 +630,20 @@ function TipAccordion({ tip }: { tip: GeneralTip }) {
     const rotate = rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
 
     return (
-        <View style={tipStyles.wrapper}>
+        <View style={[tipStyles.wrapper, { backgroundColor: isDark ? colors.backgroundLight : "#FAFAFE", borderColor: isDark ? colors.borderCard : "#E5E3F8" }]}>
             <TouchableOpacity style={tipStyles.header} onPress={toggle} activeOpacity={0.8}>
                 <View style={[tipStyles.iconCircle, { backgroundColor: PAGE_COLOR + "18" }]}>
                     <Ionicons name={tip.icon as any} size={20} color={PAGE_COLOR} />
                 </View>
-                <Text style={tipStyles.title}>{tip.title}</Text>
+                <Text style={[tipStyles.title, { color: colors.textDark }]}>{tip.title}</Text>
                 <Animated.View style={{ transform: [{ rotate }] }}>
-                    <Ionicons name="chevron-down" size={20} color="#6B6B85" />
+                    <Ionicons name="chevron-down" size={20} color={colors.textLight} />
                 </Animated.View>
             </TouchableOpacity>
 
             {expanded && (
                 <View style={tipStyles.body}>
-                    <View style={[styles.sectionBox, { backgroundColor: PAGE_COLOR + "08", borderColor: PAGE_COLOR + "25" }]}>
+                    <View style={[styles.sectionBox, { backgroundColor: isDark ? PAGE_COLOR + "15" : PAGE_COLOR + "08", borderColor: PAGE_COLOR + "25" }]}>
                         <View style={styles.sectionLabelRow}>
                             <Ionicons name="eye-outline" size={13} color={PAGE_COLOR} />
                             <Text style={[styles.sectionLabel, { color: PAGE_COLOR }]}>What you might notice</Text>
@@ -642,11 +651,11 @@ function TipAccordion({ tip }: { tip: GeneralTip }) {
                         {tip.notice.map((item, i) => (
                             <View key={i} style={styles.bulletRow}>
                                 <View style={[styles.bullet, { backgroundColor: PAGE_COLOR }]} />
-                                <Text style={styles.bulletText}>{item}</Text>
+                                <Text style={[styles.bulletText, { color: colors.textDark }]}>{item}</Text>
                             </View>
                         ))}
                     </View>
-                    <View style={[styles.sectionBox, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0", marginTop: 8 }]}>
+                    <View style={[styles.sectionBox, { backgroundColor: isDark ? "#103010" : "#F0FDF4", borderColor: isDark ? "#10B98160" : "#BBF7D0", marginTop: 8 }]}>
                         <View style={styles.sectionLabelRow}>
                             <Ionicons name="checkmark-circle-outline" size={13} color="#10B981" />
                             <Text style={[styles.sectionLabel, { color: "#10B981" }]}>What helps</Text>
@@ -654,7 +663,7 @@ function TipAccordion({ tip }: { tip: GeneralTip }) {
                         {tip.helps.map((item, i) => (
                             <View key={i} style={styles.bulletRow}>
                                 <View style={[styles.bullet, { backgroundColor: "#10B981" }]} />
-                                <Text style={styles.bulletText}>{item}</Text>
+                                <Text style={[styles.bulletText, { color: colors.textDark }]}>{item}</Text>
                             </View>
                         ))}
                     </View>
@@ -668,8 +677,6 @@ const tipStyles = StyleSheet.create({
     wrapper: {
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: "#E5E3F8",
-        backgroundColor: "#FAFAFE",
         marginBottom: 10,
         overflow: "hidden",
     },
@@ -698,11 +705,12 @@ const tipStyles = StyleSheet.create({
     },
 });
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ManagingSymptomsScreen() {
     const { selectedVoice } = useOnboarding();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { colors, isDark, fontScale } = useTheme();
+    const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
     const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
 
     const [expandedArea, setExpandedArea] = useState<SymptomArea | null>(null);
@@ -837,11 +845,11 @@ export default function ManagingSymptomsScreen() {
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-                    <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+                    <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-                        <Ionicons name="share-outline" size={28} color="#6B6B85" />
+                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
                     <BookmarkButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
@@ -893,19 +901,20 @@ export default function ManagingSymptomsScreen() {
                             containerWidth={diagramWidth}
                             areas={SYMPTOM_AREAS}
                             onSelectArea={setExpandedArea}
+                            styles={styles}
                         />
                     </View>
                 </Animated.View>
 
                 {/* General Tips */}
-                <View style={styles.generalTipsSection}>
+                <View style={[styles.generalTipsSection, { borderColor: isDark ? colors.borderCard : "#E5E3F8" }]}>
                     <View style={[styles.generalTipsHeader, { backgroundColor: PAGE_COLOR }]}>
                         <Ionicons name="sparkles" size={18} color="#FFF" />
                         <Text style={styles.generalTipsTitle}>General Tips & Considerations</Text>
                     </View>
-                    <View style={styles.generalTipsBody}>
+                    <View style={[styles.generalTipsBody, { backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}>
                         {GENERAL_TIPS.map((tip) => (
-                            <TipAccordion key={tip.id} tip={tip} />
+                            <TipAccordion key={tip.id} tip={tip} styles={styles} />
                         ))}
                     </View>
                 </View>
@@ -927,238 +936,240 @@ export default function ManagingSymptomsScreen() {
                 onToggleSpeak={handleSpeak}
                 playbackRate={playbackRate}
                 onTogglePlaybackRate={togglePlaybackRate}
+                styles={styles}
             />
         </View>
     );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#FAFAF8",
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 24,
-        paddingBottom: 16,
-        backgroundColor: "#FFFFFF",
-        borderBottomWidth: 1,
-        borderBottomColor: "#F0F0F0",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 3,
-        zIndex: 10,
-    },
-    backButton: { padding: 8, marginLeft: -8 },
-    scrollContent: {
-        paddingBottom: 48,
-    },
-    pageTitle: {
-        fontSize: 28,
-        fontWeight: "800",
-        color: "#2D2D44",
-        letterSpacing: -0.5,
-        lineHeight: 36,
-        paddingHorizontal: 24,
-        paddingTop: 24,
-        paddingBottom: 4,
-    },
-    introPara: {
-        fontSize: 15,
-        color: "#4B4B6A",
-        lineHeight: 24,
-        paddingHorizontal: 24,
-        marginTop: 12,
-    },
-    callout: {
-        marginHorizontal: 24,
-        marginTop: 16,
-        padding: 14,
-        borderRadius: 14,
-        backgroundColor: "#FFF5F5",
-        borderWidth: 1.5,
-        borderColor: "#FCA5A5",
-    },
-    calloutIconRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        marginBottom: 6,
-    },
-    calloutTitle: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: "#EF4444",
-    },
-    calloutText: {
-        fontSize: 14,
-        color: "#7F1D1D",
-        lineHeight: 21,
-        fontWeight: "500",
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#2D2D44",
-        paddingHorizontal: 24,
-        marginTop: 28,
-        marginBottom: 4,
-    },
-    diagramContainer: {
-        width: "100%",
-        position: "relative",
-        marginTop: 8,
-    },
-    inlineLabelText: {
-        fontSize: 11,
-        fontWeight: "700",
-        lineHeight: 15,
-    },
-    generalTipsSection: {
-        marginHorizontal: 24,
-        marginTop: 32,
-        borderRadius: 20,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "#E5E3F8",
-    },
-    generalTipsHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        padding: 16,
-    },
-    generalTipsTitle: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#FFF",
-    },
-    generalTipsBody: {
-        padding: 12,
-        backgroundColor: "#FFFFFF",
-    },
-    // Shared section/bullet styles (used in modal + accordion)
-    sectionBox: {
-        borderWidth: 1,
-        borderRadius: 10,
-        padding: 10,
-    },
-    sectionLabelRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 5,
-        marginBottom: 6,
-    },
-    sectionLabel: {
-        fontSize: 12,
-        fontWeight: "700",
-        textTransform: "uppercase",
-        letterSpacing: 0.4,
-    },
-    bulletRow: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        gap: 8,
-        marginBottom: 5,
-    },
-    bullet: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        marginTop: 8,
-        flexShrink: 0,
-    },
-    bulletText: {
-        fontSize: 15,
-        color: "#2D2D44",
-        lineHeight: 22,
-        flex: 1,
-    },
-    sectionHeading: {
-        fontSize: 15,
-        fontWeight: "700",
-        marginBottom: 6,
-    },
-    // Modal styles
-    modalOverlay: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.52)",
-    },
-    expandedContainer: {
-        width: "88%",
-        maxWidth: 520,
-        maxHeight: SCREEN_HEIGHT * 0.72,
-    },
-    cardShadow: {
-        width: "100%",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.28,
-        shadowRadius: 20,
-        elevation: 14,
-    },
-    card: {
-        width: "100%",
-        borderRadius: 28,
-        borderWidth: 3,
-        overflow: "hidden",
-        backfaceVisibility: "hidden",
-    },
-    backSide: {
-        position: "absolute",
-        top: 0, left: 0, right: 0,
-    },
-    frontInner: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 28,
-        gap: 12,
-    },
-    frontIconCircle: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    frontTitle: {
-        fontSize: 22,
-        fontWeight: "800",
-        color: "#FFF",
-        textAlign: "center",
-        letterSpacing: -0.3,
-    },
-    flipHint: {
-        fontSize: 15,
-        color: "rgba(255,255,255,0.75)",
-        fontWeight: "500",
-    },
-    backInner: {
-        flex: 1,
-        padding: 20,
-        overflow: "hidden",
-    },
-    backHeaderRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 14,
-    },
-    backLabel: {
-        fontSize: 19,
-        fontWeight: "800",
-        letterSpacing: -0.3,
-    },
-    speakerBtn: { padding: 6 },
-});
+function makeStyles(c: any, isDark: boolean, fontScale: number) {
+    const fs = (size: number) => Math.round(size * fontScale);
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: isDark ? c.appBackground : c.appBackground,
+        },
+        header: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 24,
+            paddingBottom: 16,
+            backgroundColor: isDark ? c.appBackground : "#FFFFFF",
+            borderBottomWidth: 1,
+            borderBottomColor: isDark ? c.borderCard : "#F0F0F0",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.3 : 0.05,
+            shadowRadius: 8,
+            elevation: 3,
+            zIndex: 10,
+        },
+        backButton: { padding: 8, marginLeft: -8 },
+        scrollContent: {
+            paddingBottom: 48,
+        },
+        pageTitle: {
+            fontSize: fs(28),
+            fontWeight: "800",
+            color: c.textDark,
+            letterSpacing: -0.5,
+            lineHeight: fs(36),
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: 4,
+        },
+        introPara: {
+            fontSize: fs(15),
+            color: c.textMuted,
+            lineHeight: fs(24),
+            paddingHorizontal: 24,
+            marginTop: 12,
+        },
+        callout: {
+            marginHorizontal: 24,
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 14,
+            backgroundColor: isDark ? "#1E1A1A" : "#FFF5F5",
+            borderWidth: 1.5,
+            borderColor: isDark ? "#EF444460" : "#FCA5A5",
+        },
+        calloutIconRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 6,
+        },
+        calloutTitle: {
+            fontSize: fs(14),
+            fontWeight: "700",
+            color: "#EF4444",
+        },
+        calloutText: {
+            fontSize: fs(14),
+            color: isDark ? "#A5A5A5" : "#7F1D1D",
+            lineHeight: fs(21),
+            fontWeight: "500",
+        },
+        sectionTitle: {
+            fontSize: fs(16),
+            fontWeight: "700",
+            color: c.textDark,
+            paddingHorizontal: 24,
+            marginTop: 28,
+            marginBottom: 4,
+        },
+        diagramContainer: {
+            width: "100%",
+            position: "relative",
+            marginTop: 8,
+        },
+        inlineLabelText: {
+            fontSize: fs(11),
+            fontWeight: "700",
+            lineHeight: fs(15),
+        },
+        generalTipsSection: {
+            marginHorizontal: 24,
+            marginTop: 32,
+            borderRadius: 20,
+            overflow: "hidden",
+            borderWidth: 1,
+        },
+        generalTipsHeader: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            padding: 16,
+        },
+        generalTipsTitle: {
+            fontSize: fs(15),
+            fontWeight: "700",
+            color: "#FFF",
+        },
+        generalTipsBody: {
+            padding: 12,
+        },
+        // Shared section/bullet styles (used in modal + accordion)
+        sectionBox: {
+            borderWidth: 1,
+            borderRadius: 10,
+            padding: 10,
+        },
+        sectionLabelRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 5,
+            marginBottom: 6,
+        },
+        sectionLabel: {
+            fontSize: fs(12),
+            fontWeight: "700",
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+        },
+        bulletRow: {
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: 8,
+            marginBottom: 5,
+        },
+        bullet: {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            marginTop: 8,
+            flexShrink: 0,
+        },
+        bulletText: {
+            fontSize: fs(15),
+            color: c.textDark,
+            lineHeight: fs(22),
+            flex: 1,
+        },
+        sectionHeading: {
+            fontSize: fs(15),
+            fontWeight: "700",
+            marginBottom: 6,
+        },
+        // Modal styles
+        modalOverlay: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        modalBackdrop: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: "rgba(0,0,0,0.52)",
+        },
+        expandedContainer: {
+            width: "88%",
+            maxWidth: 520,
+            maxHeight: SCREEN_HEIGHT * 0.72,
+        },
+        cardShadow: {
+            width: "100%",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.28,
+            shadowRadius: 20,
+            elevation: 14,
+        },
+        card: {
+            width: "100%",
+            borderRadius: 28,
+            borderWidth: 3,
+            overflow: "hidden",
+            backfaceVisibility: "hidden",
+        },
+        backSide: {
+            position: "absolute",
+            top: 0, left: 0, right: 0,
+        },
+        frontInner: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 28,
+            gap: 12,
+        },
+        frontIconCircle: {
+            width: 68,
+            height: 68,
+            borderRadius: 34,
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        frontTitle: {
+            fontSize: fs(22),
+            fontWeight: "800",
+            color: "#FFF",
+            textAlign: "center",
+            letterSpacing: -0.3,
+        },
+        flipHint: {
+            fontSize: fs(15),
+            color: "rgba(255,255,255,0.75)",
+            fontWeight: "500",
+        },
+        backInner: {
+            flex: 1,
+            padding: 20,
+            overflow: "hidden",
+        },
+        backHeaderRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 14,
+        },
+        backLabel: {
+            fontSize: fs(19),
+            fontWeight: "800",
+            letterSpacing: -0.3,
+        },
+        speakerBtn: { padding: 6 },
+    });
+}

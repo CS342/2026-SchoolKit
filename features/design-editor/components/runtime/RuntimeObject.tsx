@@ -3,6 +3,7 @@ import { View, Text, Image, Platform, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polygon, Line as SvgLine, Defs, Marker, Path } from 'react-native-svg';
 import type { StaticDesignObject, ShadowConfig, GradientConfig } from '../../types/document';
+import { getThemeAwareColor } from '../../utils/theme-mapper';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ function getBlurStyle(blur?: number): Record<string, any> {
 
 // ─── Component ────────────────────────────────────────────────
 
-export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObject; parentWidth: number }) {
+export function RuntimeObject({ object, parentWidth, isDark = false }: { object: StaticDesignObject; parentWidth: number; isDark?: boolean }) {
   const a11y = getA11yProps(object);
   const blend = getBlendStyle(object.blendMode);
   const blur = getBlurStyle((object as any).blur);
@@ -164,7 +165,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
         >
           <Text
             style={{
-              color: object.fill,
+              color: getThemeAwareColor(object.fill, isDark),
               fontSize: object.fontSize,
               fontFamily: object.fontFamily === 'Arial' ? undefined : object.fontFamily,
               fontWeight: resolvedWeight,
@@ -206,7 +207,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             borderRadius: imgCornerRadius,
             overflow: 'hidden',
             borderWidth: imgStrokeWidth || 0,
-            borderColor: imgStroke || 'transparent',
+            borderColor: getThemeAwareColor(imgStroke, isDark) || 'transparent',
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
             ...getShadowStyle(imgShadow),
             ...blend,
@@ -233,7 +234,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
             top: object.y,
             width: object.width || 200,
             height: object.strokeWidth || 2,
-            backgroundColor: object.stroke,
+            backgroundColor: getThemeAwareColor(object.stroke, isDark),
             opacity: object.opacity,
             transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
             ...blend,
@@ -264,7 +265,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       };
 
       const textStyle = {
-        color: object.textColor,
+        color: getThemeAwareColor(object.textColor, isDark),
         fontSize: object.fontSize,
         fontFamily: object.fontFamily === 'Arial' ? undefined : object.fontFamily,
         fontWeight: badgeWeight as any,
@@ -285,7 +286,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
       }
 
       return (
-        <View style={{ ...badgeStyle, backgroundColor: object.fill }} {...a11y}>
+        <View style={{ ...badgeStyle, backgroundColor: getThemeAwareColor(object.fill, isDark) }} {...a11y}>
           <Text style={textStyle}>{badgeText}</Text>
         </View>
       );
@@ -319,8 +320,8 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
           <Svg width={object.width} height={object.height}>
             <Polygon
               points={pts.join(' ')}
-              fill={object.fill}
-              stroke={object.stroke || 'none'}
+              fill={getThemeAwareColor(object.fill, isDark)}
+              stroke={getThemeAwareColor(object.stroke, isDark) || 'none'}
               strokeWidth={object.strokeWidth || 0}
             />
           </Svg>
@@ -346,8 +347,8 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
           <Svg width={object.width} height={object.height}>
             <Polygon
               points={triPts}
-              fill={object.fill}
-              stroke={object.stroke || 'none'}
+              fill={getThemeAwareColor(object.fill, isDark)}
+              stroke={getThemeAwareColor(object.stroke, isDark) || 'none'}
               strokeWidth={object.strokeWidth || 0}
             />
           </Svg>
@@ -387,7 +388,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               >
                 <Path
                   d={`M0,0 L${object.pointerLength ?? 15},${(object.pointerWidth ?? 12) / 2} L0,${object.pointerWidth ?? 12} Z`}
-                  fill={object.fill || object.stroke}
+                  fill={getThemeAwareColor(object.fill || object.stroke, isDark)}
                 />
               </Marker>
             </Defs>
@@ -396,7 +397,7 @@ export function RuntimeObject({ object, parentWidth }: { object: StaticDesignObj
               y1={Math.min(y1, y2) === y1 ? padY : svgH - padY}
               x2={Math.min(x1, x2) === x1 ? svgW - padX : padX}
               y2={Math.min(y1, y2) === y1 ? svgH - padY : padY}
-              stroke={object.stroke}
+              stroke={getThemeAwareColor(object.stroke, isDark)}
               strokeWidth={object.strokeWidth || 2}
               markerEnd={`url(#${markerId})`}
             />

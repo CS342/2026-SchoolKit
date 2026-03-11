@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import type { InteractiveComponentObject, FlipCardConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 
-export function RuntimeFlipCard({ object }: { object: InteractiveComponentObject }) {
+export function RuntimeFlipCard({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as FlipCardConfig;
   const [isFlipped, setIsFlipped] = useState(config.defaultSide === 'back');
   const animValue = useRef(new Animated.Value(config.defaultSide === 'back' ? 180 : 0)).current;
@@ -81,7 +81,7 @@ export function RuntimeFlipCard({ object }: { object: InteractiveComponentObject
           }}
         >
           {frontChildren.map((child) => (
-            <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+            <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
           ))}
           {/* Tap to flip hint */}
           {!isFlipped && (
@@ -123,7 +123,7 @@ export function RuntimeFlipCard({ object }: { object: InteractiveComponentObject
           }}
         >
           {backChildren.map((child) => (
-            <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+            <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
           ))}
         </Animated.View>
       </Animated.View>

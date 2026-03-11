@@ -35,7 +35,7 @@ import {
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useResponsive } from "../../hooks/useResponsive";
-import type { AppTheme } from "../../constants/theme";
+import type { AppTheme, ThemeColors, ThemeShadows } from "../../constants/theme";
 import { getRoleDisplayName, getSchoolStatusText } from "../../utils/profile";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -152,10 +152,10 @@ export default function ProfileScreen() {
   function renderAvatarInner(size = 88) {
     const pic = data.profilePicture;
     if (!pic || pic === 'icon:initial') {
-      return <Text style={[styles.avatarInitial, { fontSize: size * 0.41 }]}>{data.name.charAt(0).toUpperCase()}</Text>;
+      return <Text style={[styles.avatarInitial, { fontSize: size * 0.41, color: '#FFFFFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>;
     }
     if (pic.startsWith('icon:')) {
-      return <Ionicons name={pic.replace('icon:', '') as any} size={size * 0.45} color="#FFF" />;
+      return <Ionicons name={pic.replace('icon:', '') as any} size={size * 0.45} color="#FFFFFF" />;
     }
     return <Image source={{ uri: pic }} style={[styles.avatarImage, { width: size, height: size, borderRadius: size / 2 }]} />;
   }
@@ -190,8 +190,6 @@ export default function ProfileScreen() {
   const roleDisplayName = getRoleDisplayName(data.role);
   const schoolStatusText = getSchoolStatusText(data.schoolStatuses);
 
-
-
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
@@ -212,7 +210,7 @@ export default function ProfileScreen() {
           <View style={styles.modalOverlay}>
             <Pressable style={styles.modalBackdrop} onPress={() => setShowEditProfile(false)} />
             <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 16 }]}>
-              <View style={[styles.editModalHandle, { backgroundColor: colors.borderCard }]} />
+              <View style={[styles.editModalHandle, { backgroundColor: colors.border }]} />
               <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Edit Profile</Text>
               <View style={[styles.groupCard, { backgroundColor: colors.appBackground, marginHorizontal: 0, marginBottom: 0 }]}>
                 <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
@@ -234,7 +232,7 @@ export default function ProfileScreen() {
           <View style={styles.modalOverlay}>
             <Pressable style={styles.modalBackdrop} onPress={() => setShowIconPicker(false)} />
             <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 24 }]}>
-              <View style={[styles.editModalHandle, { backgroundColor: colors.borderCard }]} />
+              <View style={[styles.editModalHandle, { backgroundColor: colors.border }]} />
               <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Choose Avatar</Text>
               <View style={styles.iconPickerGrid}>
                 {AVATAR_OPTIONS.map((opt) => {
@@ -247,9 +245,9 @@ export default function ProfileScreen() {
                     >
                       <View style={[styles.iconPickerCircle, { backgroundColor: colors.primary }]}>
                         {opt.icon ? (
-                          <Ionicons name={opt.icon} size={32} color="#FFF" />
+                          <Ionicons name={opt.icon} size={32} color="#FFFFFF" />
                         ) : (
-                          <Text style={[styles.avatarInitial, { fontSize: 32 }]}>{data.name.charAt(0).toUpperCase()}</Text>
+                          <Text style={[styles.avatarInitial, { fontSize: 32, color: '#FFFFFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>
                         )}
                       </View>
                       <Text style={[styles.iconPickerLabel, { color: colors.textDark }]}>{opt.label}</Text>
@@ -268,7 +266,7 @@ export default function ProfileScreen() {
                 colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.identityCard}
+                style={[styles.identityCard, { borderColor: colors.border }]}
               >
                 <View style={styles.identity}>
                   <Pressable onPress={() => setShowIconPicker(true)}>
@@ -308,7 +306,7 @@ export default function ProfileScreen() {
                         <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
                         <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
                       </View>
-                      <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
+                      <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                       <View style={styles.statItem}>
                         <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
                         <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
@@ -317,7 +315,7 @@ export default function ProfileScreen() {
 
                     <Pressable
                       onPress={() => setShowEditProfile(true)}
-                      style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
+                      style={[styles.editProfileBtn, { borderColor: colors.border }]}
                     >
                       <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
                       <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
@@ -341,19 +339,19 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <LinearGradient
-                    colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.journalGlass}
                   >
                     <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
-                      <Ionicons name="leaf" size={28} color="#FFF" />
+                      <Ionicons name="leaf" size={28} color="#FFFFFF" />
                     </View>
                     <View style={styles.journalInfo}>
                       <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
                       <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
                     </View>
-                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                       <Ionicons name="arrow-forward" size={18} color="#10B981" />
                     </View>
                   </LinearGradient>
@@ -369,19 +367,19 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <LinearGradient
-                    colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.journalGlass}
                   >
                     <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
-                      <Ionicons name="extension-puzzle" size={28} color="#FFF" />
+                      <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
                     </View>
                     <View style={styles.journalInfo}>
                       <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
                       <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
                     </View>
-                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                       <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
                     </View>
                   </LinearGradient>
@@ -400,18 +398,18 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <LinearGradient
-                    colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.journalGlass}
                   >
                     <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
-                      <Ionicons name="journal" size={28} color="#FFF" />
+                      <Ionicons name="journal" size={28} color="#FFFFFF" />
                     </View>
                     <View style={styles.journalInfo}>
                       <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
                     </View>
-                    <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                       <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                     </View>
                   </LinearGradient>
@@ -429,7 +427,7 @@ export default function ProfileScreen() {
               colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.identityCard}
+              style={[styles.identityCard, { borderColor: colors.border }]}
             >
             <View style={styles.identity}>
               <Pressable onPress={() => setShowIconPicker(true)}>
@@ -469,7 +467,7 @@ export default function ProfileScreen() {
                     <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
                   </View>
-                  <View style={[styles.statDivider, { backgroundColor: colors.borderCard }]} />
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.statItem}>
                     <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
@@ -478,7 +476,7 @@ export default function ProfileScreen() {
 
                 <Pressable
                   onPress={() => setShowEditProfile(true)}
-                  style={[styles.editProfileBtn, { borderColor: colors.borderCard }]}
+                  style={[styles.editProfileBtn, { borderColor: colors.border }]}
                 >
                   <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
                   <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
@@ -500,19 +498,19 @@ export default function ProfileScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
                 >
                   <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
-                    <Ionicons name="leaf" size={28} color="#FFF" />
+                    <Ionicons name="leaf" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
                     <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
                     <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
                   </View>
-                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                  <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color="#10B981" />
                   </View>
                 </LinearGradient>
@@ -528,19 +526,19 @@ export default function ProfileScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
                 >
                   <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
-                    <Ionicons name="extension-puzzle" size={28} color="#FFF" />
+                    <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
                     <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
                     <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
                   </View>
-                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                  <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
                   </View>
                 </LinearGradient>
@@ -559,7 +557,7 @@ export default function ProfileScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
@@ -567,12 +565,12 @@ export default function ProfileScreen() {
 
 
                   <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
-                    <Ionicons name="journal" size={28} color="#FFF" />
+                    <Ionicons name="journal" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
                     <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
                   </View>
-                  <View style={[styles.journalArrow, { backgroundColor: 'rgba(255,255,255,0.5)' }]}>
+                  <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                   </View>
                 </LinearGradient>
@@ -603,7 +601,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(123,104,238,0.12)',
   },
   identity: {
     alignItems: "center",
@@ -808,16 +805,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
   },
-
   journalWidget: {
     marginHorizontal: 24,
     borderRadius: 24,
     marginBottom: 24,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)', // Primary color shadow -> back to white border
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    shadowColor: '#000',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
@@ -835,7 +830,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -860,10 +855,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
   },
   iconGlow: {
-    shadowColor: '#7B68EE',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 10,

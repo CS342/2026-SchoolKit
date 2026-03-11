@@ -16,11 +16,11 @@ export default function TopicDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
-  const { fontScale } = useTheme();
+  const { colors, isDark, fontScale } = useTheme();
   const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [checkingDesign, setCheckingDesign] = useState(true);
-  const styles = useMemo(() => makeStyles(fontScale), [fontScale]);
+  const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
   // Check if this topic has a published custom design and redirect to the design viewer
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function TopicDetailScreen() {
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
+            <Ionicons name="share-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
           <DownloadButton resourceId={resourceId} size={24} />
           <BookmarkButton resourceId={resourceId} color={color} size={26} />
@@ -176,12 +176,12 @@ export default function TopicDetailScreen() {
   );
 }
 
-const makeStyles = (fontScale = 1) => {
+const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
   const fs = (size: number) => Math.round(size * fontScale);
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: COLORS.appBackgroundAlt,
+      backgroundColor: c.appBackground,
     },
     header: {
       flexDirection: 'row',
@@ -190,11 +190,11 @@ const makeStyles = (fontScale = 1) => {
       paddingHorizontal: 24,
       paddingTop: 60,
       paddingBottom: 20,
-      backgroundColor: COLORS.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderBottomWidth: 3,
-      shadowColor: COLORS.shadow,
+      shadowColor: isDark ? '#000' : COLORS.shadow,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
+      shadowOpacity: isDark ? 0.3 : 0.1,
       shadowRadius: 12,
       elevation: 5,
     },
@@ -215,14 +215,17 @@ const makeStyles = (fontScale = 1) => {
       paddingBottom: 40,
     },
     titleCard: {
-      backgroundColor: COLORS.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderRadius: RADII.cardLarge,
       padding: 28,
       marginBottom: 24,
       borderWidth: 2,
-      borderColor: COLORS.borderCard,
+      borderColor: isDark ? c.borderCard : COLORS.borderCard,
       alignItems: 'center',
-      ...SHADOWS.cardLarge,
+      shadowColor: isDark ? '#000' : COLORS.shadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: isDark ? 0.4 : 0.08,
+      shadowRadius: 20,
     },
     iconContainer: {
       width: 80,
@@ -235,7 +238,7 @@ const makeStyles = (fontScale = 1) => {
     title: {
       fontSize: fs(26),
       fontWeight: '800',
-      color: COLORS.textDark,
+      color: c.textDark,
       textAlign: 'center',
       lineHeight: fs(34),
     },
@@ -245,25 +248,28 @@ const makeStyles = (fontScale = 1) => {
     sectionTitle: {
       fontSize: fs(22),
       fontWeight: '800',
-      color: COLORS.textDark,
+      color: c.textDark,
       marginBottom: 16,
     },
     description: {
       ...TYPOGRAPHY.bodyDescription,
       fontSize: fs(TYPOGRAPHY.bodyDescription.fontSize ?? 17),
-      color: COLORS.textMuted,
+      color: c.textMuted,
       lineHeight: fs(26),
     },
     resourceItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: COLORS.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       padding: 20,
       borderRadius: 20,
       marginBottom: 12,
       borderWidth: 2,
-      borderColor: COLORS.borderCard,
-      ...SHADOWS.card,
+      borderColor: isDark ? c.borderCard : COLORS.borderCard,
+      shadowColor: isDark ? '#000' : COLORS.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.2 : 0.05,
+      shadowRadius: 8,
     },
     resourceIcon: {
       width: 56,
@@ -279,13 +285,13 @@ const makeStyles = (fontScale = 1) => {
     resourceTitle: {
       fontSize: fs(18),
       fontWeight: '700',
-      color: COLORS.textDark,
+      color: c.textDark,
       marginBottom: 4,
     },
     resourceSubtitle: {
       ...TYPOGRAPHY.labelSmall,
       fontSize: fs(TYPOGRAPHY.labelSmall.fontSize ?? 15),
-      color: COLORS.textLight,
+      color: c.textLight,
     },
   });
 };

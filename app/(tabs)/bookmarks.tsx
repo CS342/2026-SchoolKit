@@ -40,6 +40,7 @@ import {
 import { WebResourceTile, WEB_GRID_GAP, WEB_GRID_COLS } from '../../components/WebResourceTile';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useResponsive } from '../../hooks/useResponsive';
+import { ThemeColors, ThemeShadows } from '../../constants/theme';
 
 const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Design'] as const;
 type CategoryTab = (typeof CATEGORIES)[number];
@@ -79,7 +80,7 @@ function AnimatedSection({ children, delay }: { children: React.ReactNode; delay
 export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, shadows, appStyles, sharedStyles, isDark } = useTheme();
+  const { colors, shadows, gradients, appStyles, sharedStyles, isDark } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -314,7 +315,7 @@ export default function LibraryScreen() {
                     return (
                       <Pressable key={category} onPress={() => setSelectedCategory(category)}>
                         <LinearGradient
-                          colors={[...GRADIENTS.primaryButton] as [string, string, ...string[]]}
+                          colors={[...gradients.primaryButton]}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 0 }}
                           style={[styles.filterChip, styles.filterChipActive]}
@@ -375,12 +376,12 @@ export default function LibraryScreen() {
             ) : (
               <View style={styles.emptyContainer}>
                 <LinearGradient
-                  colors={[...GRADIENTS.primaryButton] as [string, string, ...string[]]}
+                  colors={[...gradients.primaryButton]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.emptyIconCircle}
                 >
-                  <Ionicons name={searchQuery ? 'search-outline' : 'compass-outline'} size={SIZING.iconPage} color={colors.white} />
+                  <Ionicons name={searchQuery ? 'search-outline' : 'compass-outline'} size={SIZING.iconPage} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={sharedStyles.pageTitle}>{searchQuery ? 'No results found' : 'Start exploring'}</Text>
                 <Text style={sharedStyles.pageSubtitle}>
@@ -533,10 +534,7 @@ export default function LibraryScreen() {
   );
 }
 
-type C = typeof import('../../constants/theme').COLORS_LIGHT;
-type S = typeof import('../../constants/theme').SHADOWS_LIGHT;
-
-const makeStyles = (c: C, s: S, isWebDesktop = false) =>
+const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -649,7 +647,6 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
     },
     filterChipActive: {
       borderWidth: 0,
-      ...s.button,
     },
     filterChipText: {
       fontSize: 16,

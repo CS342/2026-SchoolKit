@@ -79,11 +79,17 @@ export type ThemeColors = typeof COLORS_LIGHT;
 // ─── Gradient Palettes ───────────────────────────────────────────
 
 export const GRADIENTS_LIGHT = {
+  primaryButton: ['#7B68EE', '#9B6EE8', '#B06AE4'] as const,
+  authHeader: ['#7B68EE', '#8B60E8', '#B06AE4'] as const,
+  progressFill: ['#7B68EE', '#9B6EE8'] as const,
   screenBackground: ['#F8F5FF', '#FFFFFF', '#FFF5FA'] as const,
   disabledButton: ['#D8D0E8', '#D0C8E0'] as const,
 };
 
 export const GRADIENTS_DARK = {
+  primaryButton: ['#8B78FF', '#A37BEF', '#B876EB'] as const,
+  authHeader: ['#8B78FF', '#9B6EF5', '#B876EB'] as const,
+  progressFill: ['#8B78FF', '#A37BEF'] as const,
   screenBackground: ['#1A1830', '#121220', '#1A1528'] as const,
   disabledButton: ['#2A2845', '#252540'] as const,
 };

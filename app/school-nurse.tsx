@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -118,6 +118,7 @@ function IconCard({
   onPress: () => void;
   index: number;
 }) {
+  const { colors, isDark } = useTheme();
   const scale = useSharedValue(0);
   const pressScale = useSharedValue(1);
 
@@ -145,14 +146,18 @@ function IconCard({
         style={[
           iconCardStyles.card,
           {
-            backgroundColor: COLORS.white,
-            borderColor: section.color + "40",
-            ...SHADOWS.card,
+            backgroundColor: colors.backgroundLight,
+            borderColor: isDark ? section.color + "60" : section.color + "40",
+            shadowColor: isDark ? "#000" : section.color,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.3 : 0.1,
+            shadowRadius: 12,
+            elevation: 4,
           },
         ]}
       >
         {/* Title above icon */}
-        <Text style={[iconCardStyles.title, { color: COLORS.textDark }]}>
+        <Text style={[iconCardStyles.title, { color: colors.textDark }]}>
           {section.cardTitle}
         </Text>
 
@@ -160,7 +165,7 @@ function IconCard({
         <View
           style={[
             iconCardStyles.iconCircle,
-            { backgroundColor: section.color + "20" },
+            { backgroundColor: isDark ? section.color + "30" : section.color + "20" },
           ]}
         >
           <Ionicons name={section.icon as any} size={34} color={section.color} />
@@ -333,7 +338,7 @@ function BottomSheet({
 
         {/* Sheet */}
         <Animated.View
-          style={[sheetStyles.sheet, { transform: [{ translateY }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}
+          style={[sheetStyles.sheet, { transform: [{ translateY }], backgroundColor: colors.white }]}
         >
           {/* Drag handle */}
           <View {...panResponder.panHandlers} style={sheetStyles.handleArea}>
@@ -412,7 +417,7 @@ function BottomSheet({
                     { backgroundColor: section.color },
                   ]}
                 />
-                <Text style={[sheetStyles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(15 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
+                <Text style={[sheetStyles.bulletText, { color: colors.textMuted }, fontSizeStep > 0 && { fontSize: Math.round(15 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
               </Animated.View>
             ))}
           </ScrollView>
@@ -440,11 +445,9 @@ const sheetStyles = StyleSheet.create({
     backgroundColor: "#000",
   },
   sheet: {
-    backgroundColor: COLORS.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     minHeight: SHEET_HEIGHT,
-    ...SHADOWS.cardSelected,
   },
   handleArea: {
     alignItems: "center",
@@ -585,6 +588,7 @@ const accordionStyles = StyleSheet.create({
 function AccordionSection({ section }: { section: SectionData }) {
   const [expanded, setExpanded] = useState(false);
   const { isSpeaking, isLoading, speak, stop } = useTTS();
+  const { colors, isDark } = useTheme();
 
   const handlePress = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -601,9 +605,13 @@ function AccordionSection({ section }: { section: SectionData }) {
       style={[
         accordionStyles.card,
         {
-          backgroundColor: COLORS.white,
-          borderColor: expanded ? section.color + "50" : COLORS.borderCard,
-          ...SHADOWS.card,
+          backgroundColor: colors.backgroundLight,
+          borderColor: expanded ? section.color + "50" : colors.borderCard,
+          shadowColor: isDark ? "#000" : "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.3 : 0.05,
+          shadowRadius: 8,
+          elevation: 2,
         },
       ]}
     >
@@ -611,19 +619,19 @@ function AccordionSection({ section }: { section: SectionData }) {
         <View
           style={[
             accordionStyles.iconCircle,
-            { backgroundColor: section.color + "20" },
+            { backgroundColor: isDark ? section.color + "30" : section.color + "20" },
           ]}
         >
           <Ionicons name={section.icon as any} size={22} color={section.color} />
         </View>
         <View style={accordionStyles.titleRow}>
-          <Text style={[accordionStyles.sectionTitle, { color: COLORS.textDark }]}>
+          <Text style={[accordionStyles.sectionTitle, { color: colors.textDark }]}>
             {section.title}
           </Text>
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
             size={20}
-            color={expanded ? section.color : COLORS.indicatorInactive}
+            color={expanded ? section.color : colors.textLight}
           />
         </View>
       </Pressable>
@@ -633,7 +641,7 @@ function AccordionSection({ section }: { section: SectionData }) {
           <View
             style={[
               accordionStyles.divider,
-              { backgroundColor: COLORS.borderCard },
+              { backgroundColor: colors.borderCard },
             ]}
           />
           <View style={accordionStyles.body}>
@@ -642,7 +650,7 @@ function AccordionSection({ section }: { section: SectionData }) {
                 <View
                   style={[accordionStyles.bullet, { backgroundColor: section.color }]}
                 />
-                <Text style={[accordionStyles.bulletText, { color: COLORS.textMuted }]}>
+                <Text style={[accordionStyles.bulletText, { color: colors.textMuted }]}>
                   {item}
                 </Text>
               </View>
@@ -650,7 +658,7 @@ function AccordionSection({ section }: { section: SectionData }) {
             <View
               style={[
                 accordionStyles.ttsRow,
-                { borderTopColor: COLORS.borderCard },
+                { borderTopColor: colors.borderCard },
               ]}
             >
               <TTSButton
@@ -660,7 +668,7 @@ function AccordionSection({ section }: { section: SectionData }) {
                 size={20}
                 activeColor={section.color}
               />
-              <Text style={[accordionStyles.ttsLabel, { color: COLORS.textLight }]}>
+              <Text style={[accordionStyles.ttsLabel, { color: colors.textLight }]}>
                 {isSpeaking ? "Tap to pause" : "Listen to this section"}
               </Text>
             </View>
@@ -734,24 +742,25 @@ const videoStyles = StyleSheet.create({
   },
   sublabel: {
     fontSize: 13,
-    color: COLORS.textLight,
     marginTop: 2,
   },
 });
 
 function PersonFigure({ scale, offsetTop }: { scale: number; offsetTop: number }) {
+  const { isDark } = useTheme();
   return (
     <View style={{ alignItems: "center", transform: [{ scale }], marginTop: offsetTop }}>
-      <View style={videoStyles.personHead} />
-      <View style={videoStyles.personBody} />
+      <View style={[videoStyles.personHead, { backgroundColor: isDark ? VIDEO_ACCENT + "BB" : VIDEO_ACCENT + "90" }]} />
+      <View style={[videoStyles.personBody, { backgroundColor: isDark ? VIDEO_ACCENT + "BB" : VIDEO_ACCENT + "90" }]} />
     </View>
   );
 }
 
 function VideoPlaceholder() {
+  const { colors, isDark } = useTheme();
   return (
-    <View style={videoStyles.card}>
-      <View style={videoStyles.background} />
+    <View style={[videoStyles.card, { backgroundColor: isDark ? colors.backgroundLight : VIDEO_ACCENT + "15", borderColor: isDark ? colors.borderCard : VIDEO_ACCENT + "50" }]}>
+      <View style={[videoStyles.background, { backgroundColor: isDark ? colors.backgroundLight : VIDEO_ACCENT + "15" }]} />
       <View style={videoStyles.inner}>
         <View style={videoStyles.peopleRow}>
           <PersonFigure scale={0.75} offsetTop={12} />
@@ -761,8 +770,8 @@ function VideoPlaceholder() {
         <View style={videoStyles.playCircle}>
           <Ionicons name="play" size={18} color="#fff" style={{ marginLeft: 2 }} />
         </View>
-        <Text style={videoStyles.label}>Patient Video</Text>
-        <Text style={videoStyles.sublabel}>Coming Soon</Text>
+        <Text style={[videoStyles.label, { color: colors.textDark }]}>Patient Video</Text>
+        <Text style={[videoStyles.sublabel, { color: colors.textLight }]}>Coming Soon</Text>
       </View>
     </View>
   );
@@ -774,6 +783,7 @@ export default function SchoolNurseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [activeSection, setActiveSection] = useState<SectionData | null>(null);
+  const { colors, isDark, fontScale } = useTheme();
 
   const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
@@ -832,6 +842,8 @@ export default function SchoolNurseScreen() {
     transform: [{ translateY: (1 - accordionAnim.value) * 16 }],
   }));
 
+  const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
+
   return (
     <View style={styles.container}>
       {/* Nav header */}
@@ -841,14 +853,14 @@ export default function SchoolNurseScreen() {
           style={styles.backButton}
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
+          <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={28} color="#6B6B85" />
+            <Ionicons name="share-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
-          <DownloadButton resourceId="13" size={28} color="#EF4444" />
-          <BookmarkButton resourceId="13" size={28} color="#EF4444" />
+          <DownloadButton resourceId="13" size={28} color="#E8735A" />
+          <BookmarkButton resourceId="13" size={28} color="#E8735A" />
         </View>
       </View>
 
@@ -908,49 +920,51 @@ export default function SchoolNurseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.appBackground,
-  },
-  navHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: 10,
-    backgroundColor: COLORS.appBackground,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.borderCard,
-    ...SHADOWS.header,
-    zIndex: 1000,
-  },
-  backButton: {
-    padding: SPACING.smallGap,
-    marginLeft: -8,
-  },
-  scrollContent: {
-    padding: SPACING.screenPadding,
-    paddingBottom: 60,
-  },
-  pageTitle: {
-    ...TYPOGRAPHY.display,
-    fontSize: 32,
-    color: COLORS.textDark,
-    marginBottom: 10,
-    marginTop: 8,
-    lineHeight: 42,
-  },
-  pageSubtitle: {
-    fontSize: 17,
-    color: COLORS.textMuted,
-    lineHeight: 26,
-    marginBottom: 28,
-    fontWeight: "400",
-  },
-  iconRow: {
-    flexDirection: "row",
-    gap: 14,
-    marginBottom: 14,
-  },
-});
+const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.appBackground,
+    },
+    navHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.screenPadding,
+      paddingBottom: 10,
+      backgroundColor: c.white,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.borderCard,
+      zIndex: 1000,
+    },
+    backButton: {
+      padding: SPACING.smallGap,
+      marginLeft: -8,
+    },
+    scrollContent: {
+      padding: SPACING.screenPadding,
+      paddingBottom: 60,
+    },
+    pageTitle: {
+      fontSize: fs(32),
+      color: c.textDark,
+      marginBottom: 10,
+      marginTop: 8,
+      lineHeight: fs(42),
+      fontWeight: '800',
+    },
+    pageSubtitle: {
+      fontSize: fs(17),
+      color: c.textMuted,
+      lineHeight: fs(26),
+      marginBottom: 28,
+      fontWeight: "400",
+    },
+    iconRow: {
+      flexDirection: "row",
+      gap: 14,
+      marginBottom: 14,
+    },
+  });
+};

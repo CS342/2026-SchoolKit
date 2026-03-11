@@ -21,6 +21,7 @@ import {
   SPACING,
 } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import { ThemeColors } from '../../constants/theme';
 
 export default function ForYouScreen() {
   const router = useRouter();
@@ -64,12 +65,12 @@ export default function ForYouScreen() {
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             {data.profilePicture && data.profilePicture.startsWith('icon:') ? (
               data.profilePicture === 'icon:initial' || !data.profilePicture.replace('icon:', '')
-                ? <Text style={[styles.avatarInitial, { color: '#FFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>
-                : <Ionicons name={data.profilePicture.replace('icon:', '') as any} size={22} color="#FFF" />
+                ? <Text style={[styles.avatarInitial, { color: '#FFFFFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>
+                : <Ionicons name={data.profilePicture.replace('icon:', '') as any} size={22} color="#FFFFFF" />
             ) : data.profilePicture ? (
               <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
             ) : (
-              <Text style={[styles.avatarInitial, { color: '#FFF' }]}>
+              <Text style={[styles.avatarInitial, { color: '#FFFFFF' }]}>
                 {data.name.charAt(0).toUpperCase()}
               </Text>
             )}
@@ -142,7 +143,7 @@ export default function ForYouScreen() {
   );
 }
 
-const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT, isWebDesktop: boolean) =>
+const makeStyles = (c: ThemeColors, isWebDesktop: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,

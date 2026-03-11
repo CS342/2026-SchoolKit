@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
     View,
     Text,
@@ -203,6 +203,7 @@ const HANDOUTS: Handout[] = [
 
 // ─── Helper: SMART goal rows ──────────────────────────────────────────────────
 function SmartGoalCard({ accentColor }: { accentColor: string }) {
+    const { colors, isDark } = useTheme();
     const letters = [
         { letter: "S", label: "Specific", placeholder: "What exactly will I do?" },
         { letter: "M", label: "Measurable", placeholder: "How will I know it's done?" },
@@ -214,7 +215,7 @@ function SmartGoalCard({ accentColor }: { accentColor: string }) {
     return (
         <View style={smartStyles.container}>
             <Text style={[smartStyles.exampleLabel, { color: accentColor }]}>Example goal:</Text>
-            <Text style={smartStyles.example}>
+            <Text style={[smartStyles.example, { backgroundColor: isDark ? accentColor + "20" : "#F5F3FF", color: colors.textMuted }]}>
                 "I will complete my history essay outline by Thursday at 8 PM so I'm not stressed the night before it's due."
             </Text>
             <Text style={[smartStyles.buildLabel, { color: accentColor }]}>Build your goal:</Text>
@@ -224,8 +225,8 @@ function SmartGoalCard({ accentColor }: { accentColor: string }) {
                         <Text style={smartStyles.letter}>{letter}</Text>
                     </View>
                     <View style={smartStyles.fieldWrapper}>
-                        <Text style={smartStyles.fieldLabel}>{label}</Text>
-                        <Text style={smartStyles.fieldLine}>{placeholder}</Text>
+                        <Text style={[smartStyles.fieldLabel, { color: colors.textDark }]}>{label}</Text>
+                        <Text style={[smartStyles.fieldLine, { color: colors.textLight }]}>{placeholder}</Text>
                         <View style={[smartStyles.line, { backgroundColor: accentColor + "40" }]} />
                     </View>
                 </View>
@@ -237,14 +238,14 @@ function SmartGoalCard({ accentColor }: { accentColor: string }) {
 const smartStyles = StyleSheet.create({
     container: { marginBottom: 16 },
     exampleLabel: { fontSize: 13, fontWeight: "700", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 },
-    example: { fontSize: 14, fontStyle: "italic", color: COLORS.textMuted, lineHeight: 20, marginBottom: 14, backgroundColor: "#F5F3FF", padding: 10, borderRadius: 10 },
+    example: { fontSize: 14, fontStyle: "italic", lineHeight: 20, marginBottom: 14, padding: 10, borderRadius: 10 },
     buildLabel: { fontSize: 13, fontWeight: "700", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
     row: { flexDirection: "row", alignItems: "flex-start", marginBottom: 12 },
     letterBox: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center", marginRight: 10, marginTop: 2 },
     letter: { color: "#fff", fontWeight: "800", fontSize: 16 },
     fieldWrapper: { flex: 1 },
-    fieldLabel: { fontSize: 13, fontWeight: "700", color: COLORS.textDark },
-    fieldLine: { fontSize: 12, color: COLORS.textLight, marginTop: 2 },
+    fieldLabel: { fontSize: 13, fontWeight: "700" },
+    fieldLine: { fontSize: 12, marginTop: 2 },
     line: { height: 1, marginTop: 6, borderRadius: 1 },
 });
 
@@ -254,11 +255,13 @@ function GridCard({
     color,
     index,
     onPress,
+    styles,
 }: {
     item: CardData;
     color: string;
     index: number;
     onPress: () => void;
+    styles: any;
 }) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -286,8 +289,8 @@ function GridCard({
     return (
         <Animated.View style={[styles.gridCardWrapper, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
             <TouchableOpacity activeOpacity={0.9} onPress={handlePress} style={{ flex: 1 }}>
-                <View style={[styles.gridCard, { backgroundColor: color, borderColor: color }]}>
-                    <Ionicons name={item.icon as any} size={30} color="rgba(255,255,255,0.85)" style={{ marginBottom: 10 }} />
+                <View style={[styles.gridCard, { backgroundColor: color, borderColor: color, shadowColor: color }]}>
+                    <Ionicons name={item.icon as any} size={30} color="rgba(255,255,255,0.95)" style={{ marginBottom: 10 }} />
                     <Text style={styles.gridCardText} numberOfLines={3}>{item.front}</Text>
                 </View>
             </TouchableOpacity>
@@ -306,6 +309,7 @@ function ExpandedCardModal({
     onToggleSpeak,
     playbackRate,
     onTogglePlaybackRate,
+    styles,
 }: {
     visible: boolean;
     item: CardData | null;
@@ -316,6 +320,7 @@ function ExpandedCardModal({
     onToggleSpeak: () => void;
     playbackRate: number;
     onTogglePlaybackRate: () => void;
+    styles: any;
 }) {
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -407,7 +412,7 @@ function ExpandedCardModal({
                                         {isLoadingAudio ? (
                                             <ActivityIndicator size="small" color={color} />
                                         ) : (
-                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
+                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : isDark ? colors.textDark : "#2D2D44"} />
                                         )}
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
@@ -448,7 +453,7 @@ function ExpandedCardModal({
 }
 
 // ─── Handout Modal ────────────────────────────────────────────────────────────
-function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: () => void }) {
+function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; onClose: () => void; styles: any }) {
     const { isDark, colors } = useTheme();
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -549,7 +554,8 @@ function HandoutModal({ handout, onClose }: { handout: Handout | null; onClose: 
                                                 </View>
                                                 <Text style={[
                                                     handoutStyles.itemText,
-                                                    checked && handoutStyles.itemTextChecked,
+                                                    { color: isDark ? colors.textMuted : COLORS.textMuted },
+                                                    checked && [handoutStyles.itemTextChecked, { color: colors.textLight }],
                                                 ]}>{item}</Text>
                                             </TouchableOpacity>
                                         );
@@ -584,7 +590,6 @@ const handoutStyles = StyleSheet.create({
     backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "#000" },
     sheet: {
         height: SCREEN_HEIGHT * 0.82,
-        backgroundColor: "#FFFFFF",
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
         shadowColor: "#000",
@@ -594,7 +599,7 @@ const handoutStyles = StyleSheet.create({
         elevation: 20,
     },
     handleArea: { paddingVertical: 12, alignItems: "center" },
-    handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.indicatorInactive },
+    handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#E5E7EB" },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -614,8 +619,8 @@ const handoutStyles = StyleSheet.create({
     sectionHeading: { fontSize: 15, fontWeight: "800", letterSpacing: -0.2, flex: 1 },
     itemRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
     checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, marginRight: 10, marginTop: 2, flexShrink: 0 },
-    itemText: { fontSize: 14, color: COLORS.textMuted, lineHeight: 20, flex: 1 },
-    itemTextChecked: { textDecorationLine: "line-through" as const, color: COLORS.textLight, opacity: 0.6 },
+    itemText: { fontSize: 14, lineHeight: 20, flex: 1 },
+    itemTextChecked: { textDecorationLine: "line-through" as const, opacity: 0.6 },
     disclaimerBox: {
         flexDirection: "row",
         alignItems: "flex-start",
@@ -639,6 +644,8 @@ export default function SchoolLifeBalanceScreen() {
     const { fireResourceOpened, fireResourceScrolledToEnd, fireEvent } = useAccomplishments();
     const [scrolledToEnd, setScrolledToEnd] = useState(false);
     const resourceId = "14"; // Juggling Life ID
+    const { colors, isDark, fontScale } = useTheme();
+    const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -750,11 +757,11 @@ export default function SchoolLifeBalanceScreen() {
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-                    <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+                    <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-                        <Ionicons name="share-outline" size={28} color="#6B6B85" />
+                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId="14" size={28} color="#7B68EE" />
                     <BookmarkButton resourceId="14" size={28} color="#7B68EE" />
@@ -791,6 +798,7 @@ export default function SchoolLifeBalanceScreen() {
                                     color={CARD_COLORS[(rowStart + i) % CARD_COLORS.length]}
                                     index={rowStart + i}
                                     onPress={() => handleCardPress(card)}
+                                    styles={styles}
                                 />
                             ))}
                         </View>
@@ -798,25 +806,28 @@ export default function SchoolLifeBalanceScreen() {
                 </View>
 
                 {/* Handouts section */}
-                <View style={styles.handoutsSection}>
-                    <Text style={styles.handoutsHeading}>📄 Helpful Handouts</Text>
-                    <Text style={styles.handoutsSubtext}>Tap to open and explore.</Text>
-                    <View style={styles.handoutsRow}>
+                <View style={styles.handoutSection}>
+                    <Text style={styles.sectionHeading}>📄 Helpful Handouts</Text>
+                    <Text style={styles.subtitleText}>Tap to open and explore.</Text>
+                    <View style={styles.handoutGrid}>
                         {HANDOUTS.map((handout) => (
                             <TouchableOpacity
                                 key={handout.id}
-                                style={[styles.handoutCard, { borderColor: handout.color + "60", backgroundColor: handout.color + "10" }]}
+                                style={[styles.handoutCard, { 
+                                    borderColor: isDark ? handout.color + "50" : handout.color + "30",
+                                    backgroundColor: isDark ? colors.backgroundLight : handout.color + "08"
+                                }]}
                                 onPress={() => setActiveHandout(handout)}
                                 activeOpacity={0.8}
                             >
-                                <View style={[styles.handoutIconCircle, { backgroundColor: handout.color + "20" }]}>
-                                    <Ionicons name={handout.icon as any} size={26} color={handout.color} />
+                                <View style={[styles.handoutIcon, { backgroundColor: handout.color + "20" }]}>
+                                    <Ionicons name={handout.icon as any} size={24} color={handout.color} />
                                 </View>
-                                <Text style={[styles.handoutCardTitle, { color: handout.color }]}>{handout.title}</Text>
-                                <View style={[styles.handoutOpenBtn, { backgroundColor: handout.color }]}>
-                                    <Text style={styles.handoutOpenText}>Open</Text>
-                                    <Ionicons name="chevron-forward" size={14} color="#fff" />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.handoutName}>{handout.title}</Text>
+                                    <Text style={styles.handoutSub}>Self-management tool</Text>
                                 </View>
+                                <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -824,7 +835,7 @@ export default function SchoolLifeBalanceScreen() {
 
                 {/* Recommendations */}
                 <RecommendationList
-                    currentId="14"
+                    currentId={resourceId}
                     currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']}
                 />
             </ScrollView>
@@ -840,222 +851,109 @@ export default function SchoolLifeBalanceScreen() {
                 onToggleSpeak={handleSpeak}
                 playbackRate={playbackRate}
                 onTogglePlaybackRate={togglePlaybackRate}
+                styles={styles}
             />
 
             {/* Handout modal */}
-            <HandoutModal handout={activeHandout} onClose={() => setActiveHandout(null)} />
+            <HandoutModal handout={activeHandout} onClose={() => setActiveHandout(null)} styles={styles} />
         </View>
     );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#FAFAFD" },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 24,
-        paddingTop: 60,
-        paddingBottom: 20,
-        backgroundColor: "#FFFFFF",
-        borderBottomWidth: 1,
-        borderBottomColor: "#F0F0F0",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 3,
-        zIndex: 1000,
-    },
-    backButton: { padding: 8, marginLeft: -8 },
-    scrollContent: { padding: 24, paddingBottom: 80 },
 
-    pageTitle: {
-        fontSize: 32,
-        fontWeight: "800",
-        color: "#2D2D44",
-        textAlign: "left",
-        marginBottom: 12,
-        marginTop: 8,
-        lineHeight: 40,
-        letterSpacing: -1,
-    },
-    subtitleText: {
-        fontSize: 15,
-        color: "#6B6B85",
-        fontWeight: "400",
-        lineHeight: 22,
-        marginBottom: 16,
-    },
-    instructionText: {
-        fontSize: 14,
-        color: "#8E8EA8",
-        fontWeight: "300",
-        marginBottom: 28,
-    },
 
-    // 2-column grid
-    gridContainer: {
-        gap: 14,
-        marginBottom: 8,
-    },
-    cardRow: {
-        flexDirection: "row",
-        gap: 14,
-    },
-    gridCardWrapper: {
-        flex: 1,
-        borderRadius: 20,
-        backgroundColor: "transparent",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.18,
-        shadowRadius: 12,
-        elevation: 6,
-    },
-    gridCard: {
-        height: GRID_CARD_HEIGHT,
-        borderRadius: 20,
-        borderWidth: 3,
-        padding: 16,
-        paddingTop: 18,
-        overflow: "hidden",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    gridCardText: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#FFFFFF",
-        lineHeight: 21,
-        textAlign: "center",
-        letterSpacing: -0.2,
-    },
-    cardLinesBottom: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 16,
-        paddingBottom: 10,
-        gap: 4,
-    },
-    cardLine: { height: 2, borderRadius: 1, marginTop: 4 },
+const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
+    const fs = (size: number) => Math.round(size * fontScale);
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.appBackground },
+        header: {
+            backgroundColor: c.white,
+            borderBottomWidth: 1,
+            borderBottomColor: c.borderCard,
+            zIndex: 10,
+        },
+        backButton: { padding: 8, marginLeft: -8 },
+        scrollContent: { padding: 24, paddingBottom: 60 },
+        pageTitle: {
+            fontSize: fs(30),
+            fontWeight: "800",
+            color: c.textDark,
+            marginBottom: 16,
+            lineHeight: fs(38),
+            letterSpacing: -1,
+        },
+        subtitleText: {
+            fontSize: fs(16),
+            color: c.textMuted,
+            lineHeight: fs(24),
+            marginBottom: 12,
+        },
+        instructionText: {
+            fontSize: fs(14),
+            color: c.textLight,
+            marginBottom: 24,
+            fontWeight: "500",
+        },
+        gridContainer: { marginBottom: 32 },
+        cardRow: { flexDirection: "row", gap: 14, marginBottom: 14 },
+        gridCardWrapper: { flex: 1 },
+        gridCard: {
+            height: GRID_CARD_HEIGHT,
+            padding: 16,
+            borderRadius: 22,
+            justifyContent: "center",
+            alignItems: "center",
+            borderWidth: 2,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.3 : 0.15,
+            shadowRadius: 10,
+            elevation: 8,
+        },
+        gridCardText: {
+            color: "#fff",
+            fontSize: fs(15),
+            fontWeight: "700",
+            textAlign: "center",
+            lineHeight: fs(19),
+        },
 
-    // Modal
-    modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
-    modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
-    expandedCardContainer: { width: '88%', maxWidth: 560, maxHeight: SCREEN_HEIGHT * 0.7 },
-    expandedCardShadow: {
-        width: "100%",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 15,
-    },
-    expandedCard: {
-        width: "100%",
-        borderRadius: 36,
-        borderWidth: 4,
-        overflow: "hidden",
-        backfaceVisibility: "hidden",
-    },
-    expandedCardBackSide: { position: "absolute", top: 0, left: 0, right: 0 },
-    expandedCardInnerFront: {
-        flex: 1,
-        padding: 28,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    expandedFrontTitle: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#FFFFFF",
-        textAlign: "center",
-        lineHeight: 36,
-        letterSpacing: -0.5,
-        marginBottom: 8,
-    },
-    flipHint: {
-        fontSize: 13,
-        color: "rgba(255,255,255,0.65)",
-        fontWeight: "500",
-        marginTop: 8,
-    },
-    expandedCardLines: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        gap: 6,
-    },
-    expandedCardInner: { padding: 24, flex: 1, overflow: "hidden" },
-    factHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 10,
-    },
-    factBigText: { fontSize: 30, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase" },
-    speakerButton: { padding: 8 },
-    backCardTitle: {
-        fontSize: 17,
-        fontWeight: "700",
-        marginBottom: 12,
-        letterSpacing: -0.3,
-    },
-    backContentScroll: { flex: 1 },
-    backParagraph: {
-        fontSize: 16,
-        fontWeight: "400",
-        color: "#2D2D44",
-        lineHeight: 26,
-        marginBottom: 10,
-    },
+        // Expanded Card
+        modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
+        modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.6)" },
+        expandedCardContainer: { width: SCREEN_WIDTH * 0.9, maxWidth: 400, alignItems: "center" },
+        expandedCardShadow: { width: "100%", borderRadius: 32, shadowColor: "#000", shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 15 },
+        expandedCardBackSide: { position: "absolute", top: 0, left: 0, right: 0 },
+        expandedCard: { width: "100%", borderRadius: 32, padding: 24, borderWidth: 1, overflow: "hidden" },
+        expandedCardInnerFront: { flex: 1, justifyContent: "center", alignItems: "center" },
+        expandedFrontTitle: { color: "#fff", fontSize: fs(28), fontWeight: "900", textAlign: "center", lineHeight: fs(36) },
+        flipHint: { color: "rgba(255,255,255,0.7)", fontSize: fs(14), fontWeight: "700", marginTop: 24 },
+        expandedCardInner: { flex: 1 },
+        factHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
+        factBigText: { fontSize: fs(14), fontWeight: "900", textTransform: "uppercase", letterSpacing: 1.5 },
+        speakerButton: { padding: 4 },
+        backCardTitle: { fontSize: fs(22), fontWeight: "800", marginBottom: 16, lineHeight: fs(28) },
+        backContentScroll: { flex: 1 },
+        backParagraph: { fontSize: fs(15), color: c.textMuted, lineHeight: fs(24), marginBottom: 16, fontWeight: "500" },
+        expandedCardLines: { position: "absolute", bottom: 0, left: 0, right: 0, height: 40, justifyContent: "center", alignItems: "center", gap: 3 },
+        cardLine: { width: 60, height: 2, borderRadius: 1 },
 
-    // Handouts section
-    handoutsSection: { marginTop: 32 },
-    handoutsHeading: { fontSize: 20, fontWeight: "800", color: "#2D2D44", marginBottom: 4 },
-    handoutsSubtext: { fontSize: 14, color: "#8E8EA8", marginBottom: 16 },
-    handoutsRow: { flexDirection: "row", gap: 14 },
-    handoutCard: {
-        flex: 1,
-        borderRadius: 20,
-        borderWidth: 2,
-        padding: 16,
-        alignItems: "center",
-        gap: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
-        elevation: 3,
-    },
-    handoutIconCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    handoutCardTitle: {
-        fontSize: 13,
-        fontWeight: "700",
-        textAlign: "center",
-        lineHeight: 18,
-    },
-    handoutOpenBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        marginTop: 2,
-    },
-    handoutOpenText: { color: "#fff", fontSize: 12, fontWeight: "700" },
-});
+        // Handouts
+        handoutSection: { marginBottom: 32 },
+        sectionHeading: { fontSize: fs(18), fontWeight: "800", color: c.textDark, marginBottom: 16, letterSpacing: -0.3 },
+        handoutGrid: { gap: 12 },
+        handoutCard: {
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            borderRadius: 20,
+            borderWidth: 1.5,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.2 : 0.08,
+            shadowRadius: 10,
+            elevation: 4,
+        },
+        handoutIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center", marginRight: 16 },
+        handoutName: { fontSize: fs(16), fontWeight: "700", color: c.textDark, marginBottom: 2 },
+        handoutSub: { fontSize: fs(13), color: c.textLight, fontWeight: "500" },
+    });
+};

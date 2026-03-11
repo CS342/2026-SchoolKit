@@ -10,6 +10,7 @@ import { RuntimeEntrance } from './RuntimeEntrance';
 import { RuntimeCarousel } from './RuntimeCarousel';
 import { RuntimeTabs } from './RuntimeTabs';
 import { RuntimeQuiz } from './RuntimeQuiz';
+import { getThemeAwareColor } from '../../utils/theme-mapper';
 
 interface RuntimeRendererProps {
   doc: DesignDocument;
@@ -18,9 +19,10 @@ interface RuntimeRendererProps {
   scrollEventThrottle?: number;
   onLayout?: (e: any) => void;
   onContentSizeChange?: (w: number, h: number) => void;
+  isDark?: boolean;
 }
 
-export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onLayout, onContentSizeChange }: RuntimeRendererProps) {
+export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onLayout, onContentSizeChange, isDark = false }: RuntimeRendererProps) {
   const scale = width / doc.canvas.width;
   const scaledHeight = doc.canvas.height * scale;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -41,7 +43,7 @@ export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onL
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: doc.canvas.background }}
+      style={{ flex: 1, backgroundColor: getThemeAwareColor(doc.canvas.background, isDark) }}
       contentContainerStyle={{
         minHeight: scaledHeight,
       }}
@@ -55,18 +57,18 @@ export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onL
           style={{
             width: doc.canvas.width,
             height: doc.canvas.height,
-            backgroundColor: doc.canvas.background,
+            backgroundColor: getThemeAwareColor(doc.canvas.background, isDark),
             transform: [{ scale }],
             ...(Platform.OS === 'web' ? { transformOrigin: 'top left' } as any : {}),
           }}
         >
           {doc.canvas.backgroundGradient && (
-            <CanvasGradientBG gradient={doc.canvas.backgroundGradient} />
+            <CanvasGradientBG gradient={doc.canvas.backgroundGradient} isDark={isDark} />
           )}
           {doc.objects
             .filter((o) => o.visible)
             .map((obj) => (
-              <RuntimeDesignObject key={obj.id} object={obj} scrollY={scrollY} viewportHeight={viewportHeight} />
+              <RuntimeDesignObject key={obj.id} object={obj} scrollY={scrollY} viewportHeight={viewportHeight} isDark={isDark} />
             ))}
         </View>
       </Animated.View>
@@ -74,42 +76,42 @@ export function RuntimeRenderer({ doc, width, onScroll, scrollEventThrottle, onL
   );
 }
 
-function RuntimeDesignObject({ object, scrollY, viewportHeight }: { object: DesignObject; scrollY?: number; viewportHeight?: number }) {
+function RuntimeDesignObject({ object, scrollY, viewportHeight, isDark }: { object: DesignObject; scrollY?: number; viewportHeight?: number; isDark: boolean }) {
   if (object.type === 'interactive') {
-    return <RuntimeInteractive object={object} scrollY={scrollY} viewportHeight={viewportHeight} />;
+    return <RuntimeInteractive object={object} scrollY={scrollY} viewportHeight={viewportHeight} isDark={isDark} />;
   }
-  return <RuntimeObject object={object as StaticDesignObject} parentWidth={0} />;
+  return <RuntimeObject object={object as StaticDesignObject} parentWidth={0} isDark={isDark} />;
 }
 
-function RuntimeInteractive({ object, scrollY, viewportHeight }: { object: InteractiveComponentObject; scrollY?: number; viewportHeight?: number }) {
+function RuntimeInteractive({ object, scrollY, viewportHeight, isDark }: { object: InteractiveComponentObject; scrollY?: number; viewportHeight?: number; isDark: boolean }) {
   switch (object.interactionType) {
     case 'flip-card':
-      return <RuntimeFlipCard object={object} />;
+      return <RuntimeFlipCard object={object} isDark={isDark} />;
     case 'bottom-sheet':
-      return <RuntimeBottomSheet object={object} />;
+      return <RuntimeBottomSheet object={object} isDark={isDark} />;
     case 'expandable':
-      return <RuntimeExpandable object={object} />;
+      return <RuntimeExpandable object={object} isDark={isDark} />;
     case 'entrance':
-      return <RuntimeEntrance object={object} scrollY={scrollY} viewportHeight={viewportHeight} />;
+      return <RuntimeEntrance object={object} scrollY={scrollY} viewportHeight={viewportHeight} isDark={isDark} />;
     case 'carousel':
-      return <RuntimeCarousel object={object} />;
+      return <RuntimeCarousel object={object} isDark={isDark} />;
     case 'tabs':
-      return <RuntimeTabs object={object} />;
+      return <RuntimeTabs object={object} isDark={isDark} />;
     case 'quiz':
-      return <RuntimeQuiz object={object} />;
+      return <RuntimeQuiz object={object} isDark={isDark} />;
     default:
       return null;
   }
 }
 
-function CanvasGradientBG({ gradient }: { gradient: GradientConfig }) {
+function CanvasGradientBG({ gradient, isDark }: { gradient: GradientConfig, isDark: boolean }) {
   const angle = gradient.angle ?? 0;
   const rad = ((angle - 90) * Math.PI) / 180;
   const dx = Math.cos(rad) * 0.5;
   const dy = Math.sin(rad) * 0.5;
   return (
     <LinearGradient
-      colors={gradient.colors as [string, string, ...string[]]}
+      colors={gradient.colors.map(c => getThemeAwareColor(c, isDark)) as [string, string, ...string[]]}
       start={gradient.type === 'radial' ? { x: 0.5, y: 0.5 } : { x: 0.5 - dx, y: 0.5 - dy }}
       end={gradient.type === 'radial' ? { x: 1, y: 1 } : { x: 0.5 + dx, y: 0.5 + dy }}
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}

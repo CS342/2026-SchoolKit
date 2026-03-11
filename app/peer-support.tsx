@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -29,8 +29,6 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import {
-  COLORS,
-  SHADOWS,
   TYPOGRAPHY,
   ANIMATION,
   SPACING,
@@ -38,9 +36,11 @@ import {
   BORDERS,
   withOpacity,
 } from "../constants/onboarding-theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
+import { AppTheme, ThemeColors, ThemeShadows } from "../constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -65,7 +65,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Kindness &\nRespect",
     fullTitle: "Set Clear Expectations for Kindness and Respect",
     icon: "heart-outline",
-    color: "#E07A70", // Darker from #F4978E
+    color: "#E07A70", 
     intro:
       "Children often want to be supportive but need clear guidance on what that looks like.",
     points: [
@@ -82,7 +82,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "School\nCommunity",
     fullTitle: "Involve the Whole School Community",
     icon: "people-outline",
-    color: "#7AC5D8", // Darker from #90E0EF
+    color: "#7AC5D8",
     intro: "Peer support extends beyond the classroom.",
     points: [
       "Collaborate with recess monitors, coaches, and specialty teachers.",
@@ -97,7 +97,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Address\nChallenges",
     fullTitle: "Address Challenges Early",
     icon: "alert-circle-outline",
-    color: "#E0BFA0", // Darker from #FFDAC1
+    color: "#E0BFA0",
     intro: "Social challenges may surface gradually.",
     points: [
       "Watch for signs of exclusion, withdrawal, or subtle bullying.",
@@ -113,9 +113,9 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "What to\nSay",
     fullTitle: "Help Students Know What to Say (and What Not to Say)",
     icon: "chatbubble-ellipses-outline",
-    color: "#C2D5A8", // Darker from #E2F0CB
+    color: "#C2D5A8",
     intro:
-      "Peers may worry about asking the wrong question\u2014or may ask very direct ones.",
+      "Peers may worry about asking the wrong question—or may ask very direct ones.",
     points: [
       "Offer age-appropriate guidance on respectful questions.",
       "Normalize that it's okay not to ask about medical details.",
@@ -130,7 +130,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Structured\nConnection",
     fullTitle: "Use Structured Opportunities for Connection",
     icon: "link-outline",
-    color: "#95D1BB", // Darker from #B5EAD7
+    color: "#95D1BB",
     intro:
       "Intentional structure can reduce social pressure for both the returning student and their peers.",
     points: [
@@ -146,8 +146,8 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Empathy\nNot Pity",
     fullTitle: "Encourage Empathy Without Pity",
     icon: "hand-left-outline",
-    color: "#AAB3D6", // Darker from #C7CEEA
-    intro: "Support should feel empowering\u2014not isolating.",
+    color: "#AAB3D6",
+    intro: "Support should feel empowering—not isolating.",
     points: [
       "Discourage overhelping or excessive attention.",
       "Remind students to follow the returning child's lead.",
@@ -161,7 +161,7 @@ const PEER_TOPICS: PeerTopic[] = [
     title: "Normalize\nDifferences",
     fullTitle: "Normalize Differences and Fluctuating Abilities",
     icon: "sparkles-outline",
-    color: "#B29AC3", // Darker from #CDB4DB
+    color: "#B29AC3",
     intro:
       "Cancer survivors may have visible or invisible changes, including fatigue, hair loss, mobility differences, or cognitive effects.",
     points: [
@@ -200,17 +200,15 @@ const getIconPosition = (index: number, total: number) => {
 };
 
 // --- Person Silhouette Component ---
-function PersonSilhouette({ color }: { color: string }) {
+function PersonSilhouette({ color, styles }: { color: string, styles: any }) {
   return (
     <View style={styles.silhouette}>
-      {/* Head */}
       <View
         style={[
           styles.silhouetteHead,
           { backgroundColor: color },
         ]}
       />
-      {/* Body */}
       <View
         style={[
           styles.silhouetteBody,
@@ -227,11 +225,13 @@ function PersonIcon({
   index,
   position,
   onPress,
+  styles,
 }: {
   topic: PeerTopic;
   index: number;
   position: { left: number; top: number };
   onPress: () => void;
+  styles: any;
 }) {
   const scale = useSharedValue(0);
   const pressScale = useSharedValue(1);
@@ -269,7 +269,7 @@ function PersonIcon({
         onPress={onPress}
         style={styles.personIconPressable}
       >
-        <PersonSilhouette color={topic.color} />
+        <PersonSilhouette color={topic.color} styles={styles} />
         <Text style={[styles.personIconLabel, { color: topic.color }]} numberOfLines={2}>
           {topic.title}
         </Text>
@@ -282,9 +282,11 @@ function PersonIcon({
 function CircleLayout({
   topics,
   onTopicPress,
+  styles,
 }: {
   topics: PeerTopic[];
   onTopicPress: (topic: PeerTopic) => void;
+  styles: any;
 }) {
   const containerOpacity = useSharedValue(0);
   const containerScale = useSharedValue(0.9);
@@ -319,6 +321,7 @@ function CircleLayout({
             index={index}
             position={position}
             onPress={() => onTopicPress(topic)}
+            styles={styles}
           />
         );
       })}
@@ -332,12 +335,17 @@ function BottomSheet({
   topic,
   onClose,
   selectedVoice,
+  theme,
+  styles,
 }: {
   visible: boolean;
   topic: PeerTopic | null;
   onClose: () => void;
   selectedVoice: string;
+  theme: AppTheme;
+  styles: any;
 }) {
+  const { colors, isDark } = theme;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
@@ -394,7 +402,6 @@ function BottomSheet({
       setInternalVisible(true);
       translateY.setValue(SHEET_HEIGHT);
       backdropOpacity.setValue(0);
-
       bulletAnims.forEach((a) => a.setValue(0));
 
       Animated.parallel([
@@ -428,10 +435,8 @@ function BottomSheet({
   }, [visible, topic]);
 
   const handleDismiss = useCallback(() => {
-    // Stop audio on dismiss
     sheetPlayer.pause();
     setIsSheetSpeaking(false);
-
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: SHEET_HEIGHT,
@@ -451,28 +456,23 @@ function BottomSheet({
 
   const handleSheetSpeak = async () => {
     if (!topic) return;
-
     if (isSheetSpeaking) {
       sheetPlayer.pause();
       setIsSheetSpeaking(false);
       return;
     }
-
     if (sheetPlayerStatus.isLoaded && currentTopicIdRef.current === topic.id) {
       sheetPlayer.play();
       setIsSheetSpeaking(true);
       return;
     }
-
     currentTopicIdRef.current = topic.id;
     setIsSheetSpeaking(true);
-
     try {
       setIsSheetLoadingAudio(true);
       const pointsText = topic.points.join(". ");
       const textToSpeak = `${topic.fullTitle}. ${topic.intro}. ${pointsText}. ${topic.summary}`;
       const audioUri = await generateSpeech(textToSpeak, selectedVoice);
-
       if (audioUri) {
         sheetPlayer.replace(audioUri);
         sheetPlayer.play();
@@ -498,7 +498,6 @@ function BottomSheet({
     if (sheetPlayerStatus.isLoaded) sheetPlayer.setPlaybackRate(next);
   };
 
-  // Reset audio when topic changes
   useEffect(() => {
     sheetPlayer.pause();
     setIsSheetSpeaking(false);
@@ -508,7 +507,6 @@ function BottomSheet({
 
   const sheetContent = (
     <View style={styles.sheetOverlay} pointerEvents="box-none">
-        {/* Backdrop */}
         <Pressable style={StyleSheet.absoluteFill} onPress={handleDismiss}>
           <Animated.View
             style={[
@@ -518,25 +516,22 @@ function BottomSheet({
           />
         </Pressable>
 
-        {/* Sheet */}
         <Animated.View
           style={[
             styles.sheetContainer,
-            { transform: [{ translateY }] },
+            { transform: [{ translateY }], backgroundColor: colors.white },
           ]}
         >
-          {/* Drag handle */}
           <View {...panResponder.panHandlers} style={styles.sheetHandleArea}>
-            <View style={styles.sheetHandle} />
+            <View style={[styles.sheetHandle, { backgroundColor: colors.borderCard }]} />
           </View>
 
-          {/* Sheet actions */}
           <View style={styles.sheetActions}>
             <TouchableOpacity onPress={handleSheetSpeak} style={styles.sheetActionButton} accessibilityLabel={isSheetSpeaking ? "Pause reading" : "Read aloud"}>
               {isSheetLoadingAudio ? (
                 <ActivityIndicator size="small" color={topic.color} />
               ) : (
-                <Ionicons name={isSheetSpeaking ? "pause-circle" : "volume-high"} size={22} color={isSheetSpeaking ? topic.color : COLORS.textLight} />
+                <Ionicons name={isSheetSpeaking ? "pause-circle" : "volume-high"} size={22} color={isSheetSpeaking ? topic.color : colors.textLight} />
               )}
             </TouchableOpacity>
             {sheetPlayerStatus.isLoaded && (
@@ -548,11 +543,10 @@ function BottomSheet({
               <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? topic.color : '#9CA3AF' }}>Aa</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.sheetActionButton} onPress={handleDismiss} accessibilityLabel="Close">
-              <Ionicons name="close" size={24} color={COLORS.textLight} />
+              <Ionicons name="close" size={24} color={colors.textLight} />
             </TouchableOpacity>
           </View>
 
-          {/* Title */}
           <View style={[styles.sheetTitleBadge, { backgroundColor: withOpacity(topic.color, 0.15) }]}>
             <Ionicons name={topic.icon as any} size={22} color={topic.color} style={{ marginRight: 10 }} />
             <Text style={[styles.sheetTitleText, { color: topic.color }]} numberOfLines={2}>
@@ -560,30 +554,20 @@ function BottomSheet({
             </Text>
           </View>
 
-          {/* Content */}
           <ScrollView
             style={styles.sheetScrollView}
             contentContainerStyle={styles.sheetScrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Intro */}
             <Animated.View
               style={{
                 opacity: bulletAnims[0],
-                transform: [
-                  {
-                    translateX: bulletAnims[0].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0],
-                    }),
-                  },
-                ],
+                transform: [{ translateX: bulletAnims[0].interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }],
               }}
             >
-              <Text style={styles.sheetIntro}>{topic.intro}</Text>
+              <Text style={[styles.sheetIntro, { color: colors.textDark }]}>{topic.intro}</Text>
             </Animated.View>
 
-            {/* Bullet points */}
             {topic.points.map((point, i) => (
               <Animated.View
                 key={i}
@@ -591,40 +575,23 @@ function BottomSheet({
                   styles.bulletRow,
                   {
                     opacity: bulletAnims[i + 1] || new Animated.Value(1),
-                    transform: [
-                      {
-                        translateX: (bulletAnims[i + 1] || new Animated.Value(1)).interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-20, 0],
-                        }),
-                      },
-                    ],
+                    transform: [{ translateX: (bulletAnims[i + 1] || new Animated.Value(1)).interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }],
                   },
                 ]}
               >
                 <View style={[styles.bulletDot, { backgroundColor: topic.color }]} />
-                <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{point}</Text>
+                <Text style={[styles.bulletText, { color: colors.textMuted }, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{point}</Text>
               </Animated.View>
             ))}
 
-            {/* Summary */}
             <Animated.View
               style={{
                 opacity: bulletAnims[topic.points.length + 1] || new Animated.Value(1),
-                transform: [
-                  {
-                    translateX: (
-                      bulletAnims[topic.points.length + 1] || new Animated.Value(1)
-                    ).interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0],
-                    }),
-                  },
-                ],
+                transform: [{ translateX: (bulletAnims[topic.points.length + 1] || new Animated.Value(1)).interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }],
               }}
             >
-              <View style={[styles.summaryBar, { backgroundColor: withOpacity(topic.color, 0.25) }]} />
-              <Text style={styles.sheetSummary}>{topic.summary}</Text>
+              <View style={[styles.summaryBar, { backgroundColor: isDark ? topic.color + '40' : topic.color + '25' }]} />
+              <Text style={[styles.sheetSummary, { color: colors.textDark }]}>{topic.summary}</Text>
             </Animated.View>
           </ScrollView>
         </Animated.View>
@@ -645,6 +612,8 @@ function BottomSheet({
 export default function PeerSupportScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { colors, shadows, isDark } = theme;
   const { selectedVoice } = useOnboarding();
   const { fireEvent, fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
 
@@ -652,11 +621,13 @@ export default function PeerSupportScreen() {
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [timeSpent10s, setTimeSpent10s] = useState(false);
 
+  const styles = useMemo(() => makeStyles(colors, shadows, isDark), [colors, shadows, isDark]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setTimeSpent10s(true);
       fireEvent('peer_support_read_10s');
-      fireResourceOpened('12'); // resource ID 12 = Peer Support
+      fireResourceOpened('12');
     }, 10_000);
     return () => clearTimeout(timer);
   }, []);
@@ -665,7 +636,7 @@ export default function PeerSupportScreen() {
     if (scrolledToEnd && timeSpent10s) {
       fireResourceScrolledToEnd('12');
     }
-  }, [scrolledToEnd, timeSpent10s, fireResourceScrolledToEnd]);
+  }, [scrolledToEnd, timeSpent10s]);
 
   const handleScroll = ({ nativeEvent }: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
@@ -674,7 +645,6 @@ export default function PeerSupportScreen() {
     }
   };
 
-  // Entrance animations
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(20);
   const quoteOpacity = useSharedValue(0);
@@ -695,12 +665,10 @@ export default function PeerSupportScreen() {
     opacity: titleOpacity.value,
     transform: [{ translateY: titleTranslateY.value }],
   }));
-
   const quoteStyle = useAnimatedStyle(() => ({
     opacity: quoteOpacity.value,
     transform: [{ translateY: quoteTranslateY.value }],
   }));
-
   const sectionStyle = useAnimatedStyle(() => ({
     opacity: sectionOpacity.value,
     transform: [{ translateY: sectionTranslateY.value }],
@@ -715,27 +683,21 @@ export default function PeerSupportScreen() {
     } catch { }
   };
 
-  const handleTopicPress = (topic: PeerTopic) => {
-    setSelectedTopic(topic);
-  };
-
-  const handleCloseSheet = () => {
-    setSelectedTopic(null);
-  };
+  const handleTopicPress = (topic: PeerTopic) => setSelectedTopic(topic);
+  const handleCloseSheet = () => setSelectedTopic(null);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
+    <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 10, borderBottomColor: colors.borderCard, backgroundColor: colors.white }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton]} accessibilityLabel="Go back">
+          <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={28} color={COLORS.textMuted} />
+            <Ionicons name="share-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
-          <DownloadButton resourceId="12" size={28} color={COLORS.studentK8} />
-          <BookmarkButton resourceId="12" size={28} color={COLORS.studentK8} />
+          <DownloadButton resourceId="12" size={28} color={colors.studentK8} />
+          <BookmarkButton resourceId="12" size={28} color={colors.studentK8} />
         </View>
       </View>
 
@@ -745,29 +707,26 @@ export default function PeerSupportScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={100}
       >
-        {/* Page Title */}
         <RNAnimated.View style={titleStyle}>
-          <Text style={styles.pageTitle}>
+          <Text style={[styles.pageTitle, { color: colors.textDark }]}>
             Encouraging{"\n"}
-            <Text style={{ color: COLORS.studentK8 }}>Positive Peer</Text>
+            <Text style={{ color: colors.studentK8 }}>Positive Peer</Text>
             {"\n"}Support
           </Text>
         </RNAnimated.View>
 
-        {/* Quote Card */}
-        <RNAnimated.View style={[styles.quoteCard, quoteStyle]}>
-          <Text style={styles.quoteText}>
+        <RNAnimated.View style={[styles.quoteCard, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card, quoteStyle]}>
+          <Text style={[styles.quoteText, { color: colors.textDark }]}>
             {"\u201C"}Alone we can do so little; together we can do so much.{"\u201D"}
           </Text>
-          <Text style={styles.quoteAuthor}>{"\u2014"} Helen Keller</Text>
+          <Text style={[styles.quoteAuthor, { color: colors.textLight }]}>{"\u2014"} Helen Keller</Text>
         </RNAnimated.View>
 
-        {/* Why Section */}
         <RNAnimated.View style={sectionStyle}>
-          <Text style={styles.sectionHeading}>
+          <Text style={[styles.sectionHeading, { color: colors.textDark }]}>
             Why is peer support important?
           </Text>
-          <Text style={styles.sectionBody}>
+          <Text style={[styles.sectionBody, { color: colors.textMuted }]}>
             After a prolonged absence, a returning student may worry about being
             different, falling behind socially, or being treated differently by
             classmates. Positive peer support helps create a welcoming
@@ -775,42 +734,36 @@ export default function PeerSupportScreen() {
           </Text>
         </RNAnimated.View>
 
-        {/* Instruction */}
         <RNAnimated.View style={sectionStyle}>
-          <Text style={styles.instructionText}>
+          <Text style={[styles.instructionText, { color: colors.textLight }]}>
             Tap each person to learn more.
           </Text>
         </RNAnimated.View>
 
-        {/* Circle Layout */}
         <View style={styles.circleWrapper}>
-          <CircleLayout topics={PEER_TOPICS} onTopicPress={handleTopicPress} />
+          <CircleLayout topics={PEER_TOPICS} onTopicPress={handleTopicPress} styles={styles} />
         </View>
 
-        {/* Recommendations */}
         <RecommendationList
           currentId="12"
           currentTags={['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion']}
         />
       </ScrollView>
 
-      {/* Bottom Sheet */}
       <BottomSheet
         visible={selectedTopic !== null}
         topic={selectedTopic}
         onClose={handleCloseSheet}
         selectedVoice={selectedVoice}
+        theme={theme}
+        styles={styles}
       />
     </View>
   );
 }
 
-// --- Styles ---
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.appBackground,
-  },
+const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.appBackground },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -818,44 +771,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.screenPadding,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderCard,
-    ...SHADOWS.header,
+    borderBottomColor: c.borderCard,
+    ...s.header,
     zIndex: 1000,
   },
-  backButton: {
-    padding: SPACING.smallGap,
-    marginLeft: -8,
-  },
-  scrollContent: {
-    padding: SPACING.screenPadding,
-    paddingBottom: 60,
-  },
+  backButton: { padding: SPACING.smallGap, marginLeft: -8 },
+  scrollContent: { padding: SPACING.screenPadding, paddingBottom: 60 },
   pageTitle: {
     ...TYPOGRAPHY.display,
     fontSize: 34,
-    color: COLORS.textDark,
+    color: c.textDark,
     textAlign: "left",
     marginBottom: 20,
     marginTop: 10,
     lineHeight: 42,
   },
-
-  // Quote
   quoteCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.button,
     borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
+    borderColor: c.borderCard,
     padding: SPACING.screenPadding,
     marginBottom: 28,
-    ...SHADOWS.card,
+    ...s.card,
   },
   quoteText: {
     ...TYPOGRAPHY.body,
     fontStyle: "italic",
-    color: COLORS.textDark,
+    color: c.textDark,
     textAlign: "center",
     lineHeight: 28,
     marginBottom: SPACING.smallGap,
@@ -864,52 +809,33 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.labelSmall,
     fontWeight: "500",
     fontStyle: "italic",
-    color: COLORS.textLight,
+    color: c.textLight,
     textAlign: "center",
   },
-
-  // Section
   sectionHeading: {
     ...TYPOGRAPHY.h2,
     fontWeight: "800",
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 12,
     letterSpacing: -0.5,
   },
   sectionBody: {
     fontSize: 16,
     fontWeight: "400",
-    color: COLORS.textMuted,
+    color: c.textMuted,
     lineHeight: 24,
     marginBottom: SPACING.sectionGap,
   },
   instructionText: {
     ...TYPOGRAPHY.labelSmall,
     fontWeight: "300",
-    color: COLORS.textLight,
+    color: c.textLight,
     marginBottom: SPACING.smallGap,
   },
-
-  // Circle layout
-  circleWrapper: {
-    alignItems: "center",
-    marginTop: SPACING.smallGap,
-    marginBottom: 40,
-  },
-  circleContainer: {
-    position: "relative",
-  },
-
-  // Person silhouette
-  silhouette: {
-    alignItems: "center",
-    height: SILHOUETTE_HEIGHT,
-  },
-  silhouetteHead: {
-    width: HEAD_SIZE,
-    height: HEAD_SIZE,
-    borderRadius: HEAD_SIZE / 2,
-  },
+  circleWrapper: { alignItems: "center", marginTop: SPACING.smallGap, marginBottom: 40 },
+  circleContainer: { position: "relative" },
+  silhouette: { alignItems: "center", height: SILHOUETTE_HEIGHT },
+  silhouetteHead: { width: HEAD_SIZE, height: HEAD_SIZE, borderRadius: HEAD_SIZE / 2 },
   silhouetteBody: {
     width: BODY_WIDTH,
     height: BODY_HEIGHT,
@@ -919,16 +845,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: BODY_WIDTH * 0.25,
     marginTop: 3,
   },
-
-  // Person icon container
-  personIconContainer: {
-    position: "absolute",
-    width: LABEL_WIDTH,
-    alignItems: "center",
-  },
-  personIconPressable: {
-    alignItems: "center",
-  },
+  personIconContainer: { position: "absolute", width: LABEL_WIDTH, alignItems: "center" },
+  personIconPressable: { alignItems: "center" },
   personIconLabel: {
     fontSize: 11,
     fontWeight: "700",
@@ -937,38 +855,22 @@ const styles = StyleSheet.create({
     width: LABEL_WIDTH,
     lineHeight: 14,
   },
-
-  // Bottom sheet
-  sheetOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  sheetBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.shadow,
-  },
+  sheetOverlay: { flex: 1, justifyContent: "flex-end" },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheetContainer: {
     height: SHEET_HEIGHT,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderTopLeftRadius: RADII.userCard,
     borderTopRightRadius: RADII.userCard,
-    shadowColor: COLORS.shadow,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 20,
     overflow: "hidden",
   },
-  sheetHandleArea: {
-    paddingVertical: SPACING.itemGap,
-    alignItems: "center",
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.indicatorInactive,
-  },
+  sheetHandleArea: { paddingVertical: SPACING.itemGap, alignItems: "center" },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: c.indicatorInactive },
   sheetActions: {
     position: "absolute",
     top: 14,
@@ -991,58 +893,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: SPACING.itemGap,
     borderRadius: RADII.input,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
     marginBottom: 16,
   },
-  sheetTitleText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: "800",
-    flex: 1,
-    lineHeight: 24,
-  },
-  sheetScrollView: {
-    flex: 1,
-  },
-  sheetScrollContent: {
-    paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: 40,
-  },
-  sheetIntro: {
-    ...TYPOGRAPHY.bodySmall,
-    fontWeight: "500",
-    color: COLORS.textDark,
-    lineHeight: 24,
-    marginBottom: SPACING.contentPadding,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: SPACING.itemGap,
-  },
-  bulletDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 7,
-    marginRight: 12,
-    flexShrink: 0,
-  },
-  bulletText: {
-    ...TYPOGRAPHY.labelSmall,
-    fontWeight: "400",
-    color: COLORS.textMuted,
-    lineHeight: 22,
-    flex: 1,
-  },
-  summaryBar: {
-    height: 3,
-    borderRadius: 1.5,
-    marginTop: 10,
-    marginBottom: SPACING.itemGap,
-  },
-  sheetSummary: {
-    ...TYPOGRAPHY.labelSmall,
-    fontStyle: "italic",
-    color: COLORS.textMuted,
-    lineHeight: 22,
-  },
+  sheetTitleText: { ...TYPOGRAPHY.body, fontWeight: "800", flex: 1, lineHeight: 24 },
+  sheetScrollView: { flex: 1 },
+  sheetScrollContent: { paddingHorizontal: SPACING.screenPadding, paddingBottom: 40 },
+  sheetIntro: { ...TYPOGRAPHY.bodySmall, fontWeight: "500", color: c.textDark, lineHeight: 24, marginBottom: SPACING.contentPadding },
+  bulletRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: SPACING.itemGap },
+  bulletDot: { width: 8, height: 8, borderRadius: 4, marginTop: 7, marginRight: 12, flexShrink: 0 },
+  bulletText: { ...TYPOGRAPHY.labelSmall, fontWeight: "400", color: c.textMuted, lineHeight: 22, flex: 1 },
+  summaryBar: { height: 3, borderRadius: 1.5, marginTop: 10, marginBottom: SPACING.itemGap },
+  sheetSummary: { ...TYPOGRAPHY.labelSmall, fontStyle: "italic", color: c.textMuted, lineHeight: 22 },
 });

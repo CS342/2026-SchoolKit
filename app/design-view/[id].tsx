@@ -71,7 +71,7 @@ export default function DesignViewPage() {
   const { id, resourceId } = useLocalSearchParams<{ id: string; resourceId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [design, setDesign] = useState<DesignData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +138,7 @@ export default function DesignViewPage() {
           .from('designs')
           .select('title, doc, thumbnail_url, owner_id')
           .eq('id', id)
-          .single();
+          .single() as any;
 
         if (fetchError || !data) {
           setError('Design not found');
@@ -151,7 +151,7 @@ export default function DesignViewPage() {
           .from('profiles')
           .select('name')
           .eq('id', data.owner_id)
-          .single();
+          .single() as any;
 
         setDesign({
           title: data.title,
@@ -244,12 +244,12 @@ export default function DesignViewPage() {
             paddingHorizontal: 24,
             paddingTop: insets.top + 10,
             paddingBottom: 20,
-            backgroundColor: COLORS.white,
+            backgroundColor: isDark ? colors.appBackground : colors.white,
             borderBottomWidth: 3,
             borderBottomColor: colors.primary,
             shadowColor: COLORS.shadow,
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
+            shadowOpacity: isDark ? 0.3 : 0.1,
             shadowRadius: 12,
             elevation: 5,
           }}
@@ -259,7 +259,7 @@ export default function DesignViewPage() {
             style={{ padding: 4 }}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
+            <Ionicons name="arrow-back" size={28} color={colors.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -268,7 +268,7 @@ export default function DesignViewPage() {
               style={{ padding: 8 }}
               accessibilityLabel="Share"
             >
-              <Ionicons name="share-outline" size={24} color={COLORS.textMuted} />
+              <Ionicons name="share-outline" size={24} color={colors.textLight} />
             </TouchableOpacity>
             <DownloadButton resourceId={finalResourceId} size={24} />
             <BookmarkButton resourceId={finalResourceId} color={colors.primary} size={26} />
@@ -357,7 +357,7 @@ export default function DesignViewPage() {
   const screenWidth = Dimensions.get('window').width;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? colors.appBackground : colors.appBackground }}>
       <View
         style={{
           flexDirection: 'row',
@@ -365,7 +365,7 @@ export default function DesignViewPage() {
           paddingHorizontal: 16,
           paddingTop: insets.top + 10,
           paddingBottom: 12,
-          backgroundColor: colors.white,
+          backgroundColor: isDark ? colors.appBackground : colors.white,
           borderBottomWidth: 1,
           borderBottomColor: colors.borderCard,
         }}
@@ -393,6 +393,7 @@ export default function DesignViewPage() {
         scrollEventThrottle={100}
         onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => setContentHeight(h)}
+        isDark={isDark}
       />
     </View>
   );

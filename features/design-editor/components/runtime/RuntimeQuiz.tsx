@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text } from 'react-native';
 import type { InteractiveComponentObject, QuizConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 
-export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) {
+export function RuntimeQuiz({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as QuizConfig;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -33,12 +33,14 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
         }}
       >
         {feedbackChildren.map((child) => (
-          <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+          <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
         ))}
         <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center' }}>
           <Text style={{
             fontSize: 16, fontWeight: '600', marginBottom: 8,
-            color: isCorrect ? (config.correctColor ?? '#22C55E') : (config.incorrectColor ?? '#EF4444'),
+            color: isCorrect
+              ? (config.correctColor ?? (isDark ? '#86EFAC' : '#22C55E'))
+              : (config.incorrectColor ?? (isDark ? '#FCA5A5' : '#EF4444')),
           }}>
             {isCorrect ? config.feedbackCorrect : config.feedbackIncorrect}
           </Text>
@@ -70,7 +72,7 @@ export function RuntimeQuiz({ object }: { object: InteractiveComponentObject }) 
       }}
     >
       {questionChildren.map((child) => (
-        <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+        <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
       ))}
 
       {/* Overlay touch targets aligned with actual option children */}

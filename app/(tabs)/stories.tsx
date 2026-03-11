@@ -41,7 +41,6 @@ import {
   GRADIENTS,
   SHADOWS,
   SIZING,
-  COLORS,
   BORDERS,
   SPACING,
   RADII,
@@ -49,6 +48,8 @@ import {
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { TopicTagsModal } from "../../components/TopicTagsModal";
+import { ThemeColors } from "../../constants/theme";
+import Constants from "expo-constants";
 
 export default function StoriesScreen() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function StoriesScreen() {
   const { stories, storiesLoading, refreshStories, downloadedStories } =
     useStories();
   const { isOnline } = useOffline();
-  const { colors, appStyles, sharedStyles } = useTheme();
+  const { colors, shadows, isDark, fontScale, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showNormsModal, setShowNormsModal] = useState(false);
@@ -194,7 +195,7 @@ export default function StoriesScreen() {
     setRefreshing(false);
   };
 
-  const { isDark, fontScale } = useTheme();
+
   const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
   // ── Web Layout ──────────────────────────────────────────────
@@ -202,25 +203,25 @@ export default function StoriesScreen() {
     return (
       <View style={styles.container}>
         {/* Sticky page header */}
-        <View style={[styles.webPageHeader, { paddingTop: insets.top + 16 }]}>
+        <View style={[styles.webPageHeader, { paddingTop: insets.top + 16, backgroundColor: colors.white, borderBottomColor: colors.border }]}>
           <View style={styles.webPageHeaderInner}>
             <View>
-              <Text style={styles.webPageTitle}>Peer Support</Text>
-              <Text style={styles.headerSubtitle}>Safe space to share and find support.</Text>
+              <Text style={[styles.webPageTitle, { color: colors.textDark }]}>Peer Support</Text>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Safe space to share and find support.</Text>
             </View>
             <View style={styles.headerActions}>
               {isModerator && (
                 <Pressable
                   onPress={() => setIsModeratorMode((v) => !v)}
-                  style={[styles.modBtn, isModeratorMode && styles.modBtnActive]}
+                  style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                   hitSlop={8}
                 >
                   <Ionicons
                     name={isModeratorMode ? "shield" : "shield-outline"}
                     size={17}
-                    color={isModeratorMode ? "#fff" : COLORS.textLight}
+                    color={isModeratorMode ? "#FFFFFF" : colors.textLight}
                   />
-                  {!isModeratorMode && pendingCount > 0 && <View style={styles.modDot} />}
+                  {!isModeratorMode && pendingCount > 0 && <View style={[styles.modDot, { backgroundColor: colors.error, borderColor: colors.white }]} />}
                 </Pressable>
               )}
               <Pressable onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
@@ -232,7 +233,7 @@ export default function StoriesScreen() {
 
         {/* Three-column scrollable area */}
         <ScrollView
-          style={{ flex: 1 }}
+          style={{ flex: 1, backgroundColor: colors.appBackground }}
           contentContainerStyle={styles.webContentArea}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -242,8 +243,8 @@ export default function StoriesScreen() {
           <View style={styles.webThreeCol}>
             {/* ── Left Sidebar ──────────────────────────── */}
             <View style={styles.webLeftCol}>
-              <View style={styles.webSidebarCard}>
-                <Text style={styles.webSidebarLabel}>SORT BY</Text>
+              <View style={[styles.webSidebarCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>SORT BY</Text>
                 {[
                   { id: "new", label: "New", icon: "time-outline" as const },
                   { id: "popular", label: "Popular", icon: "trending-up-outline" as const },
@@ -253,21 +254,21 @@ export default function StoriesScreen() {
                   return (
                     <Pressable
                       key={opt.id}
-                      style={[styles.webSortRow, isActive && styles.webSortRowActive]}
+                      style={[styles.webSortRow, isActive && { backgroundColor: colors.primary + "12" }]}
                       onPress={() => setSort(opt.id as any)}
                     >
                       <Ionicons name={opt.icon} size={16} color={isActive ? colors.primary : colors.textMuted} />
-                      <Text style={[styles.webSortText, isActive && styles.webSortTextActive]}>{opt.label}</Text>
+                      <Text style={[styles.webSortText, { color: isActive ? colors.primary : colors.textMuted }, isActive && styles.webSortTextActive]}>{opt.label}</Text>
                     </Pressable>
                   );
                 })}
 
-                <View style={styles.webDivider} />
+                <View style={[styles.webDivider, { backgroundColor: colors.border }]} />
 
-                <Text style={styles.webSidebarLabel}>FILTER BY TAG</Text>
-                <Pressable style={styles.webTagPickerBtn} onPress={() => setShowTagsModal(true)}>
+                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>FILTER BY TAG</Text>
+                <Pressable style={[styles.webTagPickerBtn, { backgroundColor: colors.primary + "10" }]} onPress={() => setShowTagsModal(true)}>
                   <Ionicons name="options-outline" size={15} color={colors.primary} />
-                  <Text style={styles.webTagPickerText}>
+                  <Text style={[styles.webTagPickerText, { color: colors.primary }]}>
                     {selectedTags.length > 0
                       ? `${selectedTags.length} tag${selectedTags.length > 1 ? "s" : ""} selected`
                       : "Choose tags..."}
@@ -289,7 +290,7 @@ export default function StoriesScreen() {
                       );
                     })}
                     <Pressable onPress={() => setSelectedTags([])}>
-                      <Text style={styles.webClearTags}>Clear all</Text>
+                      <Text style={[styles.webClearTags, { color: colors.textLight }]}>Clear all</Text>
                     </Pressable>
                   </View>
                 )}
@@ -299,37 +300,37 @@ export default function StoriesScreen() {
             {/* ── Main Feed ─────────────────────────────── */}
             <View style={styles.webMidCol}>
               {/* Search bar above the feed */}
-              <View style={[styles.webSearchBox, { marginBottom: 16 }]}>
-                <Ionicons name="search" size={15} color={COLORS.textLight} />
+              <View style={[styles.webSearchBox, { marginBottom: 16, backgroundColor: colors.white, borderColor: colors.border }]}>
+                <Ionicons name="search" size={15} color={colors.textLight} />
                 <TextInput
-                  style={styles.webSearchInput}
+                  style={[styles.webSearchInput, { color: colors.textDark }]}
                   placeholder="Search stories..."
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={colors.textLight}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                   <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-                    <Ionicons name="close-circle" size={15} color={COLORS.textLight} />
+                    <Ionicons name="close-circle" size={15} color={colors.textLight} />
                   </Pressable>
                 )}
               </View>
 
               {isModeratorMode && (
-                <View style={[styles.modModeBar, { borderRadius: 12, marginBottom: 16 }]}>
-                  <Ionicons name="shield" size={13} color={COLORS.primary} />
-                  <Text style={styles.modModeBarText}>Moderator Mode</Text>
+                <View style={[styles.modModeBar, { borderRadius: 12, marginBottom: 16, backgroundColor: colors.primary + "10", borderBottomColor: colors.primary + "30" }]}>
+                  <Ionicons name="shield" size={13} color={colors.primary} />
+                  <Text style={[styles.modModeBarText, { color: colors.primary }]}>Moderator Mode</Text>
                   {pendingCount > 0 && (
-                    <View style={styles.modModeCount}>
-                      <Text style={styles.modModeCountText}>{pendingCount} pending</Text>
+                    <View style={[styles.modModeCount, { backgroundColor: colors.primary + "20" }]}>
+                      <Text style={[styles.modModeCountText, { color: colors.primary }]}>{pendingCount} pending</Text>
                     </View>
                   )}
                 </View>
               )}
               {userPendingCount > 0 && !dismissedPendingNotif && !isModeratorMode && isOnline && (
-                <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12 }]}>
+                <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: isDark ? colors.backgroundLight : "#FFF3E0", borderColor: "#FFB74D40" }]}>
                   <Ionicons name="time-outline" size={15} color="#F57C00" />
-                  <Text style={styles.pendingBannerText}>
+                  <Text style={[styles.pendingBannerText, { color: "#E65100" }]}>
                     {userPendingCount === 1 ? "Your story is" : `${userPendingCount} stories are`} being reviewed
                   </Text>
                   <Pressable onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
@@ -338,18 +339,18 @@ export default function StoriesScreen() {
                 </View>
               )}
               {rejectedCount > 0 && !dismissedRejectedNotif && !isModeratorMode && isOnline && (
-                <View style={[styles.rejectedBanner, { borderRadius: 12, marginBottom: 12 }]}>
+                <View style={[styles.rejectedBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: colors.error + "0D", borderColor: colors.error + "25" }]}>
                   <Pressable style={styles.rejectedBannerContent} onPress={() => router.push("/rejected-stories" as any)}>
                     <View style={styles.rejectedBannerLeft}>
-                      <View style={styles.rejectedDot} />
-                      <Text style={styles.rejectedBannerText}>
+                      <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
+                      <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
                         {rejectedCount} {rejectedCount === 1 ? "story needs" : "stories need"} a revision
                       </Text>
                     </View>
-                    <Text style={styles.rejectedBannerAction}>Review →</Text>
+                    <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>Review →</Text>
                   </Pressable>
                   <Pressable onPress={() => setDismissedRejectedNotif(true)} hitSlop={10} style={{ paddingLeft: 8 }}>
-                    <Ionicons name="close" size={16} color={COLORS.error} />
+                    <Ionicons name="close" size={16} color={colors.error} />
                   </Pressable>
                 </View>
               )}
@@ -390,39 +391,39 @@ export default function StoriesScreen() {
 
             {/* ── Right Sidebar ─────────────────────────── */}
             <View style={styles.webRightCol}>
-                <View style={[styles.webSidebarCard, { marginBottom: 16 }]}>
-                  <Text style={styles.webRightCardTitle}>Share Your Story</Text>
-                  <Text style={styles.webRightCardBody}>
+                <View style={[styles.webSidebarCard, { marginBottom: 16, backgroundColor: colors.white, borderColor: colors.border }]}>
+                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>Share Your Story</Text>
+                  <Text style={[styles.webRightCardBody, { color: colors.textMuted }]}>
                     Your experience can bring comfort and courage to someone walking a similar path.
                   </Text>
                   {isAnonymous ? (
-                    <View style={[styles.webShareBtn, { backgroundColor: '#E5E5EA' }]}>
-                      <Ionicons name="lock-closed-outline" size={15} color={COLORS.textLight} />
-                      <Text style={[styles.webShareBtnText, { color: COLORS.textLight }]}>Sign in to share your story</Text>
+                    <View style={[styles.webShareBtn, { backgroundColor: colors.disabledButton }]}>
+                      <Ionicons name="lock-closed-outline" size={15} color={colors.textLight} />
+                      <Text style={[styles.webShareBtnText, { color: colors.textLight }]}>Sign in to share your story</Text>
                     </View>
                   ) : (
-                    <Pressable style={styles.webShareBtn} onPress={() => router.push("/create-story" as any)}>
-                      <Ionicons name="create-outline" size={15} color="#fff" />
-                      <Text style={styles.webShareBtnText}>Write a Story</Text>
+                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-story" as any)}>
+                      <Ionicons name="create-outline" size={15} color="#FFFFFF" />
+                      <Text style={[styles.webShareBtnText, { color: "#FFFFFF" }]}>Write a Story</Text>
                     </Pressable>
                   )}
                 </View>
-              <Pressable style={styles.webSidebarCard} onPress={() => setShowNormsModal(true)}>
+              <Pressable style={[styles.webSidebarCard, { backgroundColor: colors.white, borderColor: colors.border }]} onPress={() => setShowNormsModal(true)}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
                   <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
-                  <Text style={styles.webRightCardTitle}>Community Norms</Text>
+                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>Community Norms</Text>
                 </View>
                 {WEB_NORMS.map((norm, i) => (
                   <View key={i} style={styles.webNormItem}>
                     <Text style={styles.webNormIcon}>{norm.icon}</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.webNormTitle}>{norm.title}</Text>
-                      <Text style={styles.webNormDesc}>{norm.desc}</Text>
+                      <Text style={[styles.webNormTitle, { color: colors.textDark }]}>{norm.title}</Text>
+                      <Text style={[styles.webNormDesc, { color: colors.textMuted }]}>{norm.desc}</Text>
                     </View>
                   </View>
                 ))}
-                <Pressable onPress={() => setShowNormsModal(true)} style={styles.webNormReadMore}>
-                  <Text style={styles.webNormReadMoreText}>Read full norms →</Text>
+                <Pressable onPress={() => setShowNormsModal(true)} style={[styles.webNormReadMore, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.webNormReadMoreText, { color: colors.primary }]}>Read full norms →</Text>
                 </Pressable>
               </Pressable>
             </View>
@@ -453,16 +454,16 @@ export default function StoriesScreen() {
       <Animated.View
         style={[
           appStyles.tabHeader,
-          { paddingTop: insets.top + 10 },
+          { paddingTop: insets.top + 10, backgroundColor: colors.white, borderBottomColor: colors.border },
           headerStyle,
         ]}
       >
         <View style={styles.headerTitleRow}>
           <View>
-            <Text style={[appStyles.tabHeaderTitle, { marginBottom: 0 }]}>
+            <Text style={[appStyles.tabHeaderTitle, { color: colors.textDark, marginBottom: 0 }]}>
               Peer Support
             </Text>
-            <Text style={styles.headerSubtitle}>
+            <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
               Safe space to share and find support.
             </Text>
           </View>
@@ -471,17 +472,17 @@ export default function StoriesScreen() {
             {isModerator && (
               <Pressable
                 onPress={() => setIsModeratorMode((v) => !v)}
-                style={[styles.modBtn, isModeratorMode && styles.modBtnActive]}
+                style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                 hitSlop={8}
               >
                 <Ionicons
                   name={isModeratorMode ? "shield" : "shield-outline"}
                   size={17}
-                  color={isModeratorMode ? "#fff" : COLORS.textLight}
+                  color={isModeratorMode ? "#FFFFFF" : colors.textLight}
                 />
                 {/* Pending dot — only when mod mode is off */}
                 {!isModeratorMode && pendingCount > 0 && (
-                  <View style={styles.modDot} />
+                  <View style={[styles.modDot, { backgroundColor: colors.error, borderColor: colors.white }]} />
                 )}
               </Pressable>
             )}
@@ -506,17 +507,17 @@ export default function StoriesScreen() {
           <View style={{ paddingBottom: 8 }}>
             {/* Search and Filter */}
             <View style={styles.searchFilterContainer}>
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.white, borderColor: colors.border }]}>
           <Ionicons
             name="search"
             size={18}
-            color={COLORS.textLight}
+            color={colors.textLight}
             style={styles.searchIcon}
           />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.textDark }]}
             placeholder="Search stories..."
-            placeholderTextColor={COLORS.textLight}
+            placeholderTextColor={colors.textLight}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -526,7 +527,7 @@ export default function StoriesScreen() {
               <Ionicons
                 name="close-circle"
                 size={18}
-                color={COLORS.textLight}
+                color={colors.textLight}
               />
             </Pressable>
           )}
@@ -535,12 +536,12 @@ export default function StoriesScreen() {
 
       {/* Sort bar OR mod mode indicator */}
       {isModeratorMode ? (
-        <View style={styles.modModeBar}>
-          <Ionicons name="shield" size={13} color={COLORS.primary} />
-          <Text style={styles.modModeBarText}>Moderator Mode</Text>
+        <View style={[styles.modModeBar, { backgroundColor: colors.primary + "10", borderBottomColor: colors.primary + "30" }]}>
+          <Ionicons name="shield" size={13} color={colors.primary} />
+          <Text style={[styles.modModeBarText, { color: colors.primary }]}>Moderator Mode</Text>
           {Boolean(pendingCount > 0) && (
-            <View style={styles.modModeCount}>
-              <Text style={styles.modModeCountText}>
+            <View style={[styles.modModeCount, { backgroundColor: colors.primary + "20" }]}>
+              <Text style={[styles.modModeCountText, { color: colors.primary }]}>
                 {pendingCount} pending
               </Text>
             </View>
@@ -560,36 +561,34 @@ export default function StoriesScreen() {
           >
             {selectedTags.length > 0 ? (
               <LinearGradient
-                colors={
-                  [...GRADIENTS.primaryButton] as [string, string, ...string[]]
-                }
+                colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.chip, styles.chipActive]}
               >
-                <Ionicons name="options" size={16} color={colors.white} />
-                <Text style={[styles.chipText, styles.chipTextActive]}>
+                <Ionicons name="options" size={16} color="#FFFFFF" />
+                <Text style={[styles.chipText, { color: "#FFFFFF" }, styles.chipTextActive]}>
                   Filter
                 </Text>
                 <View
                   style={[
                     styles.filterBadge,
-                    { borderColor: GRADIENTS.primaryButton[0] },
+                    { backgroundColor: colors.white, borderColor: colors.primary },
                   ]}
                 >
-                  <Text style={styles.filterBadgeText}>
+                  <Text style={[styles.filterBadgeText, { color: colors.primary }]}>
                     {selectedTags.length}
                   </Text>
                 </View>
               </LinearGradient>
             ) : (
-              <View style={styles.chip}>
+              <View style={[styles.chip, { backgroundColor: colors.white, borderColor: colors.border }]}>
                 <Ionicons
                   name="options-outline"
                   size={16}
                   color={colors.textMuted}
                 />
-                <Text style={styles.chipText}>Tags</Text>
+                <Text style={[styles.chipText, { color: colors.textMuted }]}>Tags</Text>
               </View>
             )}
           </Pressable>
@@ -616,13 +615,13 @@ export default function StoriesScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: COLORS.white }]}>
+                  <Text style={[styles.chipText, { color: "#FFFFFF" }]}>
                     {tag}
                   </Text>
                   <Ionicons
                     name="close"
                     size={14}
-                    color={COLORS.white}
+                    color="#FFFFFF"
                     style={{ marginLeft: 4 }}
                   />
                 </View>
@@ -659,10 +658,10 @@ export default function StoriesScreen() {
                 <Ionicons
                   name={option.icon}
                   size={16}
-                  color={isActive ? colors.white : colors.textMuted}
+                  color={isActive ? "#FFFFFF" : colors.textMuted}
                 />
                 <Text
-                  style={[styles.chipText, isActive && styles.chipTextActive]}
+                  style={[styles.chipText, { color: isActive ? "#FFFFFF" : colors.textMuted }, isActive && styles.chipTextActive]}
                 >
                   {option.label}
                 </Text>
@@ -677,13 +676,7 @@ export default function StoriesScreen() {
                   onPress={() => setSort(option.id as any)}
                 >
                   <LinearGradient
-                    colors={
-                      [...GRADIENTS.primaryButton] as [
-                        string,
-                        string,
-                        ...string[]
-                      ]
-                    }
+                    colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={[styles.chip, styles.chipActive]}
@@ -694,7 +687,7 @@ export default function StoriesScreen() {
                     <View
                       style={[
                         styles.modDot,
-                        { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10 },
+                        { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.error, borderColor: colors.white },
                       ]}
                     />
                   )}
@@ -704,7 +697,7 @@ export default function StoriesScreen() {
             return (
               <Pressable
                 key={option.id}
-                style={[styles.chipWrapper, styles.chip]}
+                style={[styles.chipWrapper, styles.chip, { backgroundColor: colors.white, borderColor: colors.border }]}
                 onPress={() => setSort(option.id as any)}
               >
                 {content}
@@ -712,7 +705,7 @@ export default function StoriesScreen() {
                   <View
                     style={[
                       styles.modDot,
-                      { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10 },
+                      { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.error, borderColor: colors.white },
                     ]}
                   />
                 )}
@@ -724,9 +717,9 @@ export default function StoriesScreen() {
 
       {/* Offline banner */}
       {Boolean(!isOnline) && (
-        <View style={styles.offlineBanner}>
-          <Ionicons name="cloud-offline-outline" size={15} color="#5C5C8A" />
-          <Text style={styles.offlineBannerText}>
+        <View style={[styles.offlineBanner, { backgroundColor: isDark ? colors.backgroundLight : "#EDEDF8" }]}>
+          <Ionicons name="cloud-offline-outline" size={15} color={isDark ? colors.textMuted : "#5C5C8A"} />
+          <Text style={[styles.offlineBannerText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>
             You're offline · Showing your downloads
           </Text>
         </View>
@@ -739,9 +732,9 @@ export default function StoriesScreen() {
           !isModeratorMode &&
           isOnline
       ) && (
-        <View style={styles.pendingBanner}>
+        <View style={[styles.pendingBanner, { backgroundColor: isDark ? colors.backgroundLight : "#FFF3E0", borderColor: "#FFB74D40" }]}>
           <Ionicons name="time-outline" size={15} color="#F57C00" />
-          <Text style={styles.pendingBannerText}>
+          <Text style={[styles.pendingBannerText, { color: "#E65100" }]}>
             {userPendingCount === 1
               ? "Your story is"
               : `${userPendingCount} stories are`}{" "}
@@ -763,27 +756,27 @@ export default function StoriesScreen() {
           !isModeratorMode &&
           isOnline
       ) && (
-        <View style={styles.rejectedBanner}>
+        <View style={[styles.rejectedBanner, { backgroundColor: colors.error + "0D", borderColor: colors.error + "25" }]}>
           <Pressable
             style={styles.rejectedBannerContent}
             onPress={() => router.push("/rejected-stories" as any)}
           >
             <View style={styles.rejectedBannerLeft}>
-              <View style={styles.rejectedDot} />
-              <Text style={styles.rejectedBannerText}>
+              <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
+              <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
                 {rejectedCount}{" "}
                 {rejectedCount === 1 ? "story needs" : "stories need"} a
                 revision
               </Text>
             </View>
-            <Text style={styles.rejectedBannerAction}>Review →</Text>
+            <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>Review →</Text>
           </Pressable>
           <Pressable
             onPress={() => setDismissedRejectedNotif(true)}
             hitSlop={10}
             style={{ paddingLeft: 8 }}
           >
-            <Ionicons name="close" size={16} color={COLORS.error} />
+            <Ionicons name="close" size={16} color={colors.error} />
           </Pressable>
         </View>
       )}
@@ -815,7 +808,7 @@ export default function StoriesScreen() {
                 <Ionicons
                   name="cloud-offline-outline"
                   size={SIZING.iconPage}
-                  color="#9090C0"
+                  color={isDark ? colors.textMuted : "#9090C0"}
                 />
               </View>
               <Text style={sharedStyles.pageTitle}>No downloads yet</Text>
@@ -829,13 +822,13 @@ export default function StoriesScreen() {
               <View
                 style={[
                   sharedStyles.pageIconCircle,
-                  { backgroundColor: COLORS.successText + "15" },
+                  { backgroundColor: colors.successBg },
                 ]}
               >
                 <Ionicons
                   name="checkmark-circle-outline"
                   size={SIZING.iconPage}
-                  color={COLORS.successText}
+                  color={colors.successText}
                 />
               </View>
               <Text style={sharedStyles.pageTitle}>All caught up!</Text>
@@ -896,13 +889,11 @@ export default function StoriesScreen() {
       {/* FAB */}
       {Boolean(!isAnonymous && stories.length > 0) && (
         <Pressable
-          style={[styles.fab, SHADOWS.button]}
+          style={[styles.fab, shadows.button]}
           onPress={() => router.push("/create-story" as any)}
         >
           <LinearGradient
-            colors={
-              [...GRADIENTS.primaryButton] as [string, string, ...string[]]
-            }
+            colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fabGradient}
@@ -937,7 +928,7 @@ export default function StoriesScreen() {
 }
 
 const makeStyles = (
-  c: typeof import("../../constants/theme").COLORS_LIGHT,
+  c: ThemeColors,
   isDark: boolean,
   fontScale = 1
 ) => {
@@ -951,7 +942,7 @@ const makeStyles = (
     // ── Header ──────────────────────────────────────────────
     headerSubtitle: {
       fontSize: fs(15),
-      color: COLORS.textLight,
+      color: c.textLight,
       fontWeight: "400",
       marginTop: 2,
     },
@@ -970,13 +961,13 @@ const makeStyles = (
       height: 32,
       borderRadius: 16,
       borderWidth: 1.5,
-      borderColor: "#D1D1D6",
+      borderColor: c.border,
       alignItems: "center",
       justifyContent: "center",
     },
     modBtnActive: {
-      backgroundColor: COLORS.primary,
-      borderColor: COLORS.primary,
+      backgroundColor: c.primary,
+      borderColor: c.primary,
     },
     modDot: {
       position: "absolute",
@@ -985,9 +976,9 @@ const makeStyles = (
       width: 9,
       height: 9,
       borderRadius: 5,
-      backgroundColor: COLORS.error,
-      borderWidth: 1, // Decreased border width
-      borderColor: "#fff",
+      backgroundColor: c.error,
+      borderWidth: 1.5,
+      borderColor: c.white,
     },
 
     // ── Search & Filter ─────────────────────────────────────────────
@@ -1040,20 +1031,20 @@ const makeStyles = (
       backgroundColor: isDark ? c.backgroundLight : c.white,
       borderWidth: BORDERS.card,
       borderColor: isDark ? c.borderCard : c.borderCard,
-      shadowColor: "#2D2D44",
+      shadowColor: c.shadow,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.06,
       shadowRadius: 12,
       elevation: 4,
-      overflow: "visible", // Ensure dot isn't cut off
+      overflow: "visible", 
     },
     chipWrapper: {
       marginRight: SPACING.smallGap,
-      overflow: "visible", // Ensure dot isn't cut off
+      overflow: "visible", 
     },
     chipActive: {
       borderWidth: 0,
-      shadowColor: COLORS.primary,
+      shadowColor: c.primary,
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.4,
       shadowRadius: 20,
@@ -1082,7 +1073,7 @@ const makeStyles = (
     filterBadgeText: {
       fontSize: fs(8),
       fontWeight: "bold",
-      color: COLORS.primary,
+      color: c.primary,
     },
 
     // ── Mod mode indicator bar ───────────────────────────────
@@ -1090,21 +1081,21 @@ const makeStyles = (
       flexDirection: "row",
       alignItems: "center",
       gap: 7,
-      backgroundColor: COLORS.primary + "0D",
+      backgroundColor: c.primary + "0D",
       paddingHorizontal: 16,
       paddingVertical: 9,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: COLORS.primary + "30",
+      borderBottomColor: c.primary + "30",
       marginBottom: 8,
     },
     modModeBarText: {
       fontSize: fs(13),
       fontWeight: "600",
-      color: COLORS.primary,
+      color: c.primary,
       flex: 1,
     },
     modModeCount: {
-      backgroundColor: COLORS.primary + "20",
+      backgroundColor: c.primary + "20",
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 100,
@@ -1112,7 +1103,7 @@ const makeStyles = (
     modModeCountText: {
       fontSize: fs(12),
       fontWeight: "600",
-      color: COLORS.primary,
+      color: c.primary,
     },
 
     // ── Sort bar ─────────────────────────────────────────────
@@ -1134,15 +1125,15 @@ const makeStyles = (
       borderRadius: 100,
     },
     sortTabActive: {
-      backgroundColor: COLORS.primary + "15",
+      backgroundColor: c.primary + "15",
     },
     sortText: {
       fontSize: fs(15),
       fontWeight: "600",
-      color: COLORS.textLight,
+      color: c.textLight,
     },
     sortTextActive: {
-      color: COLORS.primary,
+      color: c.primary,
     },
 
     // ── Offline banner ───────────────────────────────────────
@@ -1155,13 +1146,13 @@ const makeStyles = (
       marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 9,
-      backgroundColor: "#EDEDF8",
+      backgroundColor: isDark ? c.backgroundLight : "#EDEDF8",
       borderRadius: 8,
     },
     offlineBannerText: {
       fontSize: fs(13),
       fontWeight: "600",
-      color: "#5C5C8A",
+      color: isDark ? c.textMuted : "#5C5C8A",
     },
 
     // ── Pending banner ───────────────────────────────────────
@@ -1174,7 +1165,7 @@ const makeStyles = (
       marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      backgroundColor: "#FFF3E0",
+      backgroundColor: isDark ? c.backgroundLight : "#FFF3E0",
       borderRadius: 8,
       borderWidth: 1,
       borderColor: "#FFB74D40",
@@ -1195,10 +1186,10 @@ const makeStyles = (
       marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      backgroundColor: COLORS.error + "0D",
+      backgroundColor: c.error + "0D",
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: COLORS.error + "25",
+      borderColor: c.error + "25",
     },
     rejectedBannerContent: {
       flex: 1,
@@ -1215,17 +1206,17 @@ const makeStyles = (
       width: 7,
       height: 7,
       borderRadius: 4,
-      backgroundColor: COLORS.error,
+      backgroundColor: c.error,
     },
     rejectedBannerText: {
       fontSize: fs(13),
       fontWeight: "600",
-      color: COLORS.error,
+      color: c.error,
     },
     rejectedBannerAction: {
       fontSize: fs(13),
       fontWeight: "600",
-      color: COLORS.error,
+      color: c.error,
     },
 
     // ── List ─────────────────────────────────────────────────
@@ -1268,9 +1259,9 @@ const makeStyles = (
 
     // ── Web Layout ───────────────────────────────────────────
     webPageHeader: {
-      backgroundColor: isDark ? c.backgroundLight : c.white,
+      backgroundColor: c.white,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: isDark ? c.borderCard : "#E5E5EA",
+      borderBottomColor: c.border,
       paddingHorizontal: 24,
       paddingBottom: 14,
     },
@@ -1312,23 +1303,23 @@ const makeStyles = (
       width: 320,
     },
     webSidebarCard: {
-      backgroundColor: isDark ? c.backgroundLight : c.white,
+      backgroundColor: c.white,
       borderRadius: 16,
       padding: 16,
       borderWidth: 1.5,
-      borderColor: isDark ? c.borderCard : "#E8E8F0",
+      borderColor: c.border,
       marginBottom: 0,
     },
     webSearchBox: {
       flexDirection: "row" as const,
       alignItems: "center" as const,
       gap: 8,
-      backgroundColor: isDark ? c.backgroundLight : c.white,
+      backgroundColor: c.white,
       borderRadius: 12,
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderWidth: 1.5,
-      borderColor: isDark ? c.borderCard : "#E5E5EA",
+      borderColor: c.border,
     },
     webSearchInput: {
       flex: 1,
@@ -1354,7 +1345,7 @@ const makeStyles = (
       marginBottom: 2,
     },
     webSortRowActive: {
-      backgroundColor: COLORS.primary + "12",
+      backgroundColor: c.primary + "12",
     },
     webSortText: {
       fontSize: fs(16),
@@ -1362,11 +1353,11 @@ const makeStyles = (
       color: c.textMuted,
     },
     webSortTextActive: {
-      color: COLORS.primary,
+      color: c.primary,
     },
     webDivider: {
       height: 1,
-      backgroundColor: isDark ? c.borderCard : "#E5E5EA",
+      backgroundColor: c.border,
       marginVertical: 14,
     },
     webTagPickerBtn: {
@@ -1375,14 +1366,14 @@ const makeStyles = (
       gap: 8,
       paddingVertical: 8,
       paddingHorizontal: 10,
-      backgroundColor: COLORS.primary + "10",
+      backgroundColor: c.primary + "10",
       borderRadius: 10,
     },
     webTagPickerText: {
       flex: 1,
       fontSize: fs(15),
       fontWeight: "600" as const,
-      color: COLORS.primary,
+      color: c.primary,
     },
     webTagPill: {
       flexDirection: "row" as const,
@@ -1419,14 +1410,14 @@ const makeStyles = (
       alignItems: "center" as const,
       justifyContent: "center" as const,
       gap: 8,
-      backgroundColor: COLORS.primary,
+      backgroundColor: c.primary,
       paddingVertical: 10,
       borderRadius: 100,
     },
     webShareBtnText: {
       fontSize: fs(16),
       fontWeight: "700" as const,
-      color: "#fff",
+      color: "#FFFFFF",
     },
     webNormLine: {
       fontSize: fs(13),
@@ -1459,12 +1450,12 @@ const makeStyles = (
       marginTop: 8,
       paddingTop: 14,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: isDark ? c.borderCard : "#E5E5EA",
+      borderTopColor: c.border,
     },
     webNormReadMoreText: {
       fontSize: fs(15),
       fontWeight: "600" as const,
-      color: COLORS.primary,
+      color: c.primary,
     },
   });
-}
+};

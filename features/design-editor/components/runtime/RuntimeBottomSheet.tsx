@@ -4,7 +4,7 @@ import type { InteractiveComponentObject, BottomSheetConfig } from '../../types/
 import { RuntimeObject } from './RuntimeObject';
 import { COLORS, SHADOWS } from '../../../../constants/onboarding-theme';
 
-export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObject }) {
+export function RuntimeBottomSheet({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as BottomSheetConfig;
   const [openSheetIndex, setOpenSheetIndex] = useState<number | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -99,7 +99,7 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
       <TouchableOpacity activeOpacity={0.8} onPress={() => openSheet(0)} style={{ flex: 1 }}>
         <View style={{ position: 'relative', width: object.width, height: object.height }}>
           {triggerChildren.map((child) => (
-            <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+            <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
           ))}
         </View>
       </TouchableOpacity>
@@ -140,8 +140,12 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
             transform: [{ translateY }],
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            backgroundColor: COLORS.white,
-            ...SHADOWS.cardSelected,
+            backgroundColor: isDark ? '#1C1C2E' : COLORS.white,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: isDark ? 0.3 : 0.1,
+            shadowRadius: 10,
+            elevation: 8,
             overflow: 'hidden',
           }}
         >
@@ -152,7 +156,7 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
                 width: 40,
                 height: 4,
                 borderRadius: 2,
-                backgroundColor: COLORS.borderCard,
+                backgroundColor: isDark ? '#3A3A52' : COLORS.borderCard,
               }}
             />
           </View>
@@ -182,7 +186,7 @@ export function RuntimeBottomSheet({ object }: { object: InteractiveComponentObj
           )}
 
           {activeContentChildren.map((child) => (
-            <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+            <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
           ))}
 
           {/* Next sheet button */}

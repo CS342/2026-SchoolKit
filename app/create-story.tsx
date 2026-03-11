@@ -45,7 +45,7 @@ export default function CreateStoryScreen() {
   const { createStory, updateStory, deleteStory, stories } = useStories();
   const { fireEvent } = useAccomplishments();
   const { data: onboardingData } = useOnboarding();
-  const { colors, appStyles } = useTheme();
+  const { colors, isDark, fontScale, appStyles } = useTheme();
 
   const userGroup = useMemo(() => {
     if (onboardingData.role === 'student-k8' || onboardingData.role === 'student-hs') return 'Students';
@@ -171,7 +171,7 @@ export default function CreateStoryScreen() {
     }
   };
 
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
   return (
     <View style={[styles.container, Platform.OS === 'web' && styles.webContainer as any]}>
@@ -193,20 +193,20 @@ export default function CreateStoryScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable style={styles.topicReminder} onPress={handleViewNorms}>
-            <Ionicons name="school-outline" size={16} color="#5C5C8A" />
-            <Text style={styles.topicReminderText}>Stories must relate to school and cancer.</Text>
+          <Pressable style={[styles.topicReminder, { backgroundColor: isDark ? colors.backgroundLight : '#EEEEF6' }]} onPress={handleViewNorms}>
+            <Ionicons name="school-outline" size={16} color={isDark ? colors.textMuted : "#5C5C8A"} />
+            <Text style={[styles.topicReminderText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>Stories must relate to school and cancer.</Text>
             <View style={styles.topicReminderLink}>
-              <Text style={styles.topicReminderLinkText}>Review norms</Text>
-              <Ionicons name="chevron-forward" size={13} color="#5C5C8A" />
+              <Text style={[styles.topicReminderLinkText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>Review norms</Text>
+              <Ionicons name="chevron-forward" size={13} color={isDark ? colors.textMuted : "#5C5C8A"} />
             </View>
           </Pressable>
 
           {isEditing && existingStory?.status === 'rejected' && existingStory.rejected_norms && existingStory.rejected_norms.length > 0 && (
-            <View style={styles.normsContainer}>
+            <View style={[styles.normsContainer, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
               <View style={styles.normsHeader}>
-                <Text style={styles.normsLabel}>{isExhausted ? 'Limit Reached' : 'Action Required'}</Text>
-                <Text style={styles.normsAttemptText}>
+                <Text style={[styles.normsLabel, { color: colors.error }]}>{isExhausted ? 'Limit Reached' : 'Action Required'}</Text>
+                <Text style={[styles.normsAttemptText, { color: colors.error }]}>
                   Attempt {existingStory.attempt_count || 1} of 2
                 </Text>
               </View>
@@ -217,7 +217,7 @@ export default function CreateStoryScreen() {
               </Text>
               {existingStory.rejected_norms.map((norm, idx) => (
                 <View key={idx} style={styles.normItem}>
-                  <Ionicons name="close-circle" size={16} color={COLORS.error} />
+                  <Ionicons name="close-circle" size={16} color={colors.error} />
                   <Text style={styles.normText}>{norm}</Text>
                 </View>
               ))}
@@ -225,9 +225,9 @@ export default function CreateStoryScreen() {
           )}
 
           <TextInput
-            style={[styles.titleInput, isExhausted && { color: COLORS.textMuted }]}
+            style={[styles.titleInput, isExhausted && { color: colors.textMuted }]}
             placeholder="Title"
-            placeholderTextColor={COLORS.inputPlaceholder}
+            placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
             maxLength={120}
@@ -267,9 +267,9 @@ export default function CreateStoryScreen() {
           )}
 
           <TextInput
-            style={[styles.bodyInput, isExhausted && { backgroundColor: colors.backgroundLight, color: COLORS.textMuted }]}
+            style={[styles.bodyInput, isExhausted && { backgroundColor: isDark ? colors.appBackground : colors.backgroundLight, color: colors.textMuted }]}
             placeholder="Share your experience navigating cancer and school..."
-            placeholderTextColor={COLORS.inputPlaceholder}
+            placeholderTextColor={colors.textMuted}
             value={body}
             onChangeText={setBody}
             multiline
@@ -527,9 +527,9 @@ export default function CreateStoryScreen() {
     </View>
   );
 }
-
-const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
-  StyleSheet.create({
+const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
+  const fs = (size: number) => Math.round(size * fontScale);
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: c.appBackground,
@@ -544,11 +544,11 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       flex: 1,
     },
     titleInput: {
-      fontSize: 22,
+      fontSize: fs(22),
       fontWeight: '700',
       color: c.textDark,
       borderBottomWidth: 2,
-      borderBottomColor: c.borderCard,
+      borderBottomColor: isDark ? c.borderCard : c.borderCard,
       paddingVertical: 16,
       marginBottom: 4,
     },
@@ -579,26 +579,63 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       marginBottom: 20,
     },
     bodyInput: {
-      fontSize: 17,
+      fontSize: fs(17),
       fontWeight: '500',
       color: c.textDark,
-      lineHeight: 26,
+      lineHeight: fs(26),
       minHeight: 200,
       padding: 16,
-      backgroundColor: c.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderRadius: 16,
       borderWidth: 1.5,
-      borderColor: c.borderCard,
+      borderColor: isDark ? c.borderCard : c.borderCard,
+    },
+    previewContainer: {
+      marginBottom: 20,
+      padding: 12,
+      backgroundColor: isDark ? c.backgroundLight : c.backgroundLight,
+      borderRadius: 12,
+    },
+    audiencePreviewText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: c.primary,
+      marginBottom: 8,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tagBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 100,
+    },
+    tagText: {
+      fontSize: 11,
+      fontWeight: '700',
+    },
+    lookingForPreview: {
+      marginTop: 16,
+      padding: 12,
+      backgroundColor: isDark ? c.backgroundLight : '#F0F0F7',
+      borderRadius: 12,
+    },
+    lookingForText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: c.textMuted,
     },
     anonymousRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginTop: 20,
-      backgroundColor: c.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderRadius: RADII.card,
-      borderWidth: BORDERS.card,
-      borderColor: c.borderCard,
+      borderWidth: 1.5,
+      borderColor: isDark ? c.borderCard : c.borderCard,
       padding: 16,
     },
     anonymousInfo: {
@@ -619,6 +656,42 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       color: c.textLight,
       marginTop: 2,
     },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    settingsModalContent: {
+      backgroundColor: isDark ? c.background : c.white,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+      paddingTop: 24,
+      paddingHorizontal: 24,
+      maxHeight: '90%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: c.textDark,
+    },
+    modalDoneBtn: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    modalDoneBtnText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.primary,
+    },
+    settingsScroll: {
+      marginBottom: 20,
+    },
     sectionHeading: {
       fontSize: 16,
       fontWeight: '700',
@@ -634,10 +707,10 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     chip: {
       paddingHorizontal: 16,
       paddingVertical: 10,
-      backgroundColor: c.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderRadius: 100,
       borderWidth: 1.5,
-      borderColor: c.borderCard,
+      borderColor: isDark ? c.borderCard : c.borderCard,
     },
     chipSelected: {
       backgroundColor: c.primary + '15',
@@ -655,9 +728,9 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: c.white,
+      backgroundColor: isDark ? c.backgroundLight : c.white,
       borderWidth: 1.5,
-      borderColor: c.borderCard,
+      borderColor: isDark ? c.borderCard : c.borderCard,
       borderRadius: 12,
       paddingHorizontal: 16,
       paddingVertical: 14,
@@ -690,12 +763,10 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       fontWeight: '600',
     },
     normsContainer: {
-      backgroundColor: COLORS.error + '10',
       padding: 16,
       borderRadius: RADII.card,
       marginBottom: 24,
       borderWidth: 1,
-      borderColor: COLORS.error + '30',
     },
     normsHeader: {
       flexDirection: 'row',
@@ -706,14 +777,12 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     normsLabel: {
       fontSize: 14,
       fontWeight: '700',
-      color: COLORS.error,
       textTransform: 'uppercase',
       letterSpacing: 0.8,
     },
     normsAttemptText: {
       fontSize: 13,
       fontWeight: '600',
-      color: COLORS.error,
     },
     normsDesc: {
       fontSize: 14,
@@ -762,17 +831,17 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
       color: c.textLight,
     },
     deleteBtn: {
-      backgroundColor: c.white,
+      backgroundColor: isDark ? c.appBackground : c.white,
       borderWidth: 1.5,
-      borderColor: COLORS.error,
+      borderColor: '#E53935',
     },
     deleteBtnText: {
       fontSize: 16,
       fontWeight: '700',
-      color: COLORS.error,
+      color: '#E53935',
     },
     deleteBtnSolid: {
-      backgroundColor: COLORS.error,
+      backgroundColor: '#E53935',
       borderWidth: 0,
     },
     deleteBtnTextSolid: {
@@ -783,7 +852,6 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     topicReminder: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#EEEEF6',
       borderRadius: 10,
       paddingHorizontal: 12,
       paddingVertical: 10,
@@ -793,7 +861,6 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     topicReminderText: {
       flex: 1,
       fontSize: 13,
-      color: '#5C5C8A',
       fontWeight: '500',
     },
     topicReminderLink: {
@@ -804,77 +871,6 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     topicReminderLinkText: {
       fontSize: 13,
       fontWeight: '700',
-      color: '#5C5C8A',
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.4)",
-      justifyContent: "flex-end",
-    },
-    settingsModalContent: {
-      backgroundColor: c.white,
-      borderTopLeftRadius: RADII.cardLarge || 24,
-      borderTopRightRadius: RADII.cardLarge || 24,
-      paddingTop: 24,
-      paddingHorizontal: 20,
-      maxHeight: "85%",
-    },
-    modalHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 16,
-    },
-    modalTitle: {
-      ...TYPOGRAPHY.h2,
-      color: c.textDark,
-    },
-    modalDoneBtn: {
-      backgroundColor: c.primary + "15",
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 16,
-    },
-    modalDoneBtnText: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: c.primary,
-    },
-    settingsScroll: {
-      marginBottom: 10,
-    },
-    previewContainer: {
-      marginBottom: 20,
-      marginTop: -8,
-    },
-    audiencePreviewText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: c.textLight,
-      marginBottom: 6,
-    },
-    tagsContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-    },
-    tagBadge: {
-      paddingHorizontal: 9,
-      paddingVertical: 4,
-      borderRadius: 100,
-    },
-    tagText: {
-      fontSize: 12,
-      fontWeight: '600',
-    },
-    lookingForPreview: {
-      marginTop: 8,
-      paddingHorizontal: 4,
-    },
-    lookingForText: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: '#8E8E93',
-      fontStyle: 'italic',
     },
   });
+};

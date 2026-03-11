@@ -21,7 +21,7 @@ interface ChapterCardProps {
 }
 
 export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }: ChapterCardProps) {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const earnedCount = chapter.pieces.filter(p => earnedPieceIds.has(p.id)).length;
   const isComplete = earnedCount === chapter.pieceCount;
 
@@ -42,7 +42,7 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }:
 
   return (
     <TouchableOpacity activeOpacity={onPress ? 0.85 : 1} onPress={onPress} disabled={!onPress}>
-      <Animated.View style={[styles.card, { backgroundColor: colors.white }, animStyle]}>
+      <Animated.View style={[styles.card, { backgroundColor: colors.white }, shadows.card, animStyle]}>
         {/* Gradient header strip */}
         <LinearGradient
           colors={chapter.gradientColors}
@@ -82,11 +82,9 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress }:
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
     borderRadius: RADII.card,
     overflow: 'hidden',
     marginBottom: 20,
-    ...SHADOWS.card,
   },
   header: {
     paddingHorizontal: 20,
@@ -103,7 +101,7 @@ const styles = StyleSheet.create({
   chapterTitle: {
     fontSize: 18,
     fontFamily: 'Raleway_800ExtraBold',
-    color: COLORS.white,
+    color: '#FFF',
     letterSpacing: -0.3,
   },
   chapterSubtitle: {
@@ -129,7 +127,7 @@ const styles = StyleSheet.create({
   completeBadgeText: {
     fontSize: 12,
     fontFamily: 'Raleway_700Bold',
-    color: COLORS.white,
+    color: '#FFF',
     letterSpacing: 0.2,
   },
   gridContainer: {

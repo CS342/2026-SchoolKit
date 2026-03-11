@@ -4,7 +4,7 @@ import type { InteractiveComponentObject, CarouselConfig } from '../../types/doc
 import { RuntimeObject } from './RuntimeObject';
 import { SHADOWS } from '../../../../constants/onboarding-theme';
 
-export function RuntimeCarousel({ object }: { object: InteractiveComponentObject }) {
+export function RuntimeCarousel({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as CarouselConfig;
   const slideGroups = object.groups.filter((g) => g.role.startsWith('slide-'));
   const [activeSlide, setActiveSlide] = useState(0);
@@ -89,7 +89,7 @@ export function RuntimeCarousel({ object }: { object: InteractiveComponentObject
     >
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateX: translateAnim }] }}>
         {visibleChildren.map((child) => (
-          <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+          <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
         ))}
       </Animated.View>
 

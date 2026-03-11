@@ -3,6 +3,7 @@ import { TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { COLORS } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface DownloadButtonProps {
   resourceId: string;
@@ -10,7 +11,9 @@ interface DownloadButtonProps {
   color?: string;
 }
 
-export function DownloadButton({ resourceId, size = 24, color = COLORS.primary }: DownloadButtonProps) {
+export function DownloadButton({ resourceId, size = 24, color }: DownloadButtonProps) {
+  const { colors } = useTheme();
+  const themeColor = color || colors.primary;
   const { isDownloaded, downloadResource, removeDownload } = useOnboarding();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const downloaded = isDownloaded(resourceId);
@@ -51,7 +54,7 @@ export function DownloadButton({ resourceId, size = 24, color = COLORS.primary }
         <Ionicons
           name={downloaded ? 'checkmark-circle' : 'download-outline'}
           size={size}
-          color={downloaded ? COLORS.staff : COLORS.textLight}
+          color={downloaded ? colors.staff : colors.textLight}
         />
       </Animated.View>
     </TouchableOpacity>

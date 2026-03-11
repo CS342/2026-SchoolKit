@@ -64,7 +64,7 @@ export function ResourceCard({
   opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
   }, []);
 
-  const { isDark, colors, fontScale } = useTheme();
+  const { isDark, colors, shadows, fontScale } = useTheme();
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -83,20 +83,33 @@ export function ResourceCard({
 
   return (
     <Pressable onPress={handlePress}>
-      <Animated.View style={[styles.card, { backgroundColor: isDark ? colors.backgroundLight : COLORS.white, borderColor: isDark ? colors.borderCard : COLORS.borderCard }, SHADOWS.card, cardStyle]}>
+      <Animated.View style={[
+        styles.card, 
+        { 
+          backgroundColor: colors.backgroundLight, 
+          borderColor: colors.borderCard 
+        }, 
+        shadows.card, 
+        cardStyle
+      ]}>
         <LinearGradient
           colors={[...gradient] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.iconCircle}
         >
-          <Ionicons name={icon as any} size={SIZING.iconRole} color={COLORS.white} />
+          <Ionicons name={icon as any} size={SIZING.iconRole} color="#FFF" />
         </LinearGradient>
 
         {category ? (
           <View style={styles.content}>
+<<<<<<< Updated upstream
             <Text style={[styles.title, { color: colors.textDark, fontSize: 18 }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.1) }]}>
+=======
+            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(22 * fontScale * FONT_STEPS[fontSizeStep]) }]}>{title}</Text>
+            <View style={[styles.categoryBadge, { backgroundColor: isDark ? color + '33' : withOpacity(color, 0.1) }]}>
+>>>>>>> Stashed changes
               <Text style={[styles.categoryText, { color, fontSize: Math.round(16 * fontScale) }]}>{category}</Text>
             </View>
           </View>

@@ -9,7 +9,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export function RuntimeExpandable({ object }: { object: InteractiveComponentObject }) {
+export function RuntimeExpandable({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as ExpandableConfig;
   const [isExpanded, setIsExpanded] = useState(config.defaultExpanded);
   const chevronRotation = useRef(new Animated.Value(config.defaultExpanded ? 1 : 0)).current;
@@ -72,16 +72,17 @@ export function RuntimeExpandable({ object }: { object: InteractiveComponentObje
         borderRadius: RADII.card,
         borderWidth: BORDERS.card,
         overflow: 'hidden',
-        backgroundColor: COLORS.white,
-        borderColor: isExpanded ? COLORS.primary + '50' : COLORS.borderCard,
+        backgroundColor: isDark ? '#1C1C2E' : COLORS.white,
+        borderColor: isExpanded ? COLORS.primary + '50' : (isDark ? '#2A2A42' : COLORS.borderCard),
         ...SHADOWS.card,
+        shadowColor: isDark ? '#000' : SHADOWS.card.shadowColor,
       }}
     >
       {/* Header */}
       <TouchableOpacity activeOpacity={0.8} onPress={toggle}>
         <View style={{ position: 'relative', width: object.width, height: headerHeight, overflow: 'hidden' }}>
           {headerChildren.map((child) => (
-            <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+            <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
           ))}
           {/* Animated chevron */}
           <Animated.View
@@ -112,13 +113,13 @@ export function RuntimeExpandable({ object }: { object: InteractiveComponentObje
           <View
             style={{
               height: StyleSheet.hairlineWidth,
-              backgroundColor: COLORS.borderCard,
+              backgroundColor: isDark ? '#2A2A42' : COLORS.borderCard,
               marginHorizontal: 16,
             }}
           />
           <View style={{ position: 'relative', width: object.width, height: bodyHeight + 20, overflow: 'hidden' }}>
             {bodyChildren.map((child) => (
-              <RuntimeObject key={child.id} object={child} parentWidth={object.width} />
+              <RuntimeObject key={child.id} object={child} parentWidth={object.width} isDark={isDark} />
             ))}
           </View>
         </>

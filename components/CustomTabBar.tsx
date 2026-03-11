@@ -234,7 +234,7 @@ function SidebarNav({ state, descriptors, navigation }: BottomTabBarProps) {
       style={[
         sidebarStyles.container,
         {
-          backgroundColor: isDark ? '#1C1C2E' : '#FFFFFF',
+          backgroundColor: colors.white,
           borderRightColor: colors.border,
         },
       ]}

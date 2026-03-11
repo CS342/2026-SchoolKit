@@ -41,10 +41,11 @@ const CONTACTS_2 = ["Child Life Specialist", "Nursing Staff", "Social Worker", "
 
 // ─── Video Placeholder (section 1 only) ──────────────────────────────────────
 function VideoPlaceholder({ icon }: { icon: string }) {
+    const { colors, isDark } = useTheme();
     return (
         <View style={vidStyles.wrapper}>
-            <View style={vidStyles.box}>
-                <View style={vidStyles.iconCircle}>
+            <View style={[vidStyles.box, { backgroundColor: isDark ? colors.backgroundLight : "#FFF8F5", borderColor: PAGE_COLOR + "40" }]}>
+                <View style={[vidStyles.iconCircle, { backgroundColor: PAGE_COLOR + "18" }]}>
                     <Ionicons name={icon as any} size={36} color={PAGE_COLOR} />
                 </View>
                 <View style={vidStyles.badge}>
@@ -74,17 +75,18 @@ const vidStyles = StyleSheet.create({
 
 // ─── Illustration: Video Call Scene ──────────────────────────────────────────
 function VideoCallIllustration() {
+    const { isDark, colors } = useTheme();
     return (
-        <View style={illCard.frame}>
-            <View style={[illCard.iconCircle, { backgroundColor: "#D0EEF8" }]}>
+        <View style={[illCard.frame, { backgroundColor: isDark ? colors.backgroundLight : "#EDF7FC", borderColor: PAGE_COLOR + "30" }]}>
+            <View style={[illCard.iconCircle, { backgroundColor: isDark ? "#1A3A4A" : "#D0EEF8" }]}>
                 <Ionicons name="videocam" size={32} color="#2A9DC8" />
             </View>
             <View style={illCard.iconRow}>
-                <View style={[illCard.smallCircle, { backgroundColor: "#E8F5E9" }]}>
+                <View style={[illCard.smallCircle, { backgroundColor: isDark ? "#1E3A20" : "#E8F5E9" }]}>
                     <Ionicons name="person" size={16} color="#4CAF50" />
                 </View>
                 <Ionicons name="arrow-forward" size={14} color={PAGE_COLOR + "80"} />
-                <View style={[illCard.smallCircle, { backgroundColor: "#FFF3E0" }]}>
+                <View style={[illCard.smallCircle, { backgroundColor: isDark ? "#3E2A1A" : "#FFF3E0" }]}>
                     <Ionicons name="people" size={16} color="#FF9800" />
                 </View>
             </View>
@@ -95,19 +97,20 @@ function VideoCallIllustration() {
 
 // ─── Illustration: Personalised Hospital Room ─────────────────────────────────
 function PersonalizedRoomIllustration() {
+    const { isDark, colors } = useTheme();
     return (
-        <View style={[illCard.frame, { backgroundColor: "#FFF8F2" }]}>
-            <View style={[illCard.iconCircle, { backgroundColor: "#FFE8D6" }]}>
+        <View style={[illCard.frame, { backgroundColor: isDark ? colors.backgroundLight : "#FFF8F2", borderColor: PAGE_COLOR + "30" }]}>
+            <View style={[illCard.iconCircle, { backgroundColor: isDark ? "#3E2A1A" : "#FFE8D6" }]}>
                 <Ionicons name="home" size={32} color={PAGE_COLOR} />
             </View>
             <View style={illCard.iconRow}>
-                <View style={[illCard.smallCircle, { backgroundColor: "#FCE4EC" }]}>
+                <View style={[illCard.smallCircle, { backgroundColor: isDark ? "#3A1E2B" : "#FCE4EC" }]}>
                     <Ionicons name="image" size={16} color="#E91E8C" />
                 </View>
-                <View style={[illCard.smallCircle, { backgroundColor: "#F3E5F5" }]}>
+                <View style={[illCard.smallCircle, { backgroundColor: isDark ? "#2A1E3A" : "#F3E5F5" }]}>
                     <Ionicons name="star" size={16} color="#9C27B0" />
                 </View>
-                <View style={[illCard.smallCircle, { backgroundColor: "#E8F5E9" }]}>
+                <View style={[illCard.smallCircle, { backgroundColor: isDark ? "#1E3A20" : "#E8F5E9" }]}>
                     <Ionicons name="heart" size={16} color="#4CAF50" />
                 </View>
             </View>
@@ -179,23 +182,24 @@ function FlipHint({ label }: { label: string }) {
     );
 }
 
-function ContactsBack({ contacts, flipped, fontSizeStep, onAaPress }: { contacts: string[]; flipped: boolean; fontSizeStep: number; onAaPress: () => void }) {
+function ContactsBack({ contacts, flipped, fontSizeStep, onAaPress, styles }: { contacts: string[]; flipped: boolean; fontSizeStep: number; onAaPress: () => void; styles: any }) {
+    const { colors } = useTheme();
     return (
         <>
-            <Text style={sharedFlip.backTitle}>Need Help? Contact:</Text>
+            <Text style={[sharedFlip.backTitle, { color: colors.textDark }]}>Need Help? Contact:</Text>
             <View style={sharedFlip.list}>
                 {contacts.map((c, i) => (
                     <View key={i} style={sharedFlip.row}>
                         <View style={sharedFlip.bullet}>
                             <Ionicons name="person-outline" size={11} color="#FFF" />
                         </View>
-                        <Text style={[sharedFlip.contact, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]) }]}>{c}</Text>
+                        <Text style={[sharedFlip.contact, { color: colors.textDark }, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]) }]}>{c}</Text>
                     </View>
                 ))}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); onAaPress(); }} hitSlop={10} activeOpacity={0.7}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : '#9CA3AF' }}>Aa</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : colors.textLight }}>Aa</Text>
                 </TouchableOpacity>
                 <FlipHint label={flipped ? "Tap to go back" : "Tap for Help Contacts"} />
             </View>
@@ -214,33 +218,45 @@ const sharedFlip = StyleSheet.create({
 });
 
 // ─── List Flip Card — numbered list front, contacts back ──────────────────────
-function ListFlipCard({ items, contacts, style }: { items: NumberedItem[]; contacts: string[]; style?: object }) {
+function ListFlipCard({ items, contacts, style, styles }: { items: NumberedItem[]; contacts: string[]; style?: object; styles: any }) {
     const { toggle, frontRotate, backRotate, frontOpacity, backOpacity, flipped } = useFlip();
     const [fontSizeStep, setFontSizeStep] = useState(0);
+    const { colors, isDark } = useTheme();
     return (
         <TouchableOpacity activeOpacity={0.95} onPress={toggle} style={[listFlip.container, style]}>
             <View style={listFlip.inner}>
-                <Animated.View style={[listFlip.card, listFlip.front, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity }]}>
+                <Animated.View style={[listFlip.card, listFlip.front, { 
+                    transform: [{ perspective: 1000 }, { rotateY: frontRotate }], 
+                    opacity: frontOpacity,
+                    backgroundColor: isDark ? colors.backgroundLight : "#FFF8F5",
+                    borderColor: PAGE_COLOR + "40"
+                }]}>
                     <View style={listFlip.itemList}>
                         {items.map((item, idx) => (
                             <View key={idx} style={listFlip.itemRow}>
                                 <View style={listFlip.badge}><Text style={listFlip.badgeText}>{idx + 1}</Text></View>
-                                <View style={listFlip.iconCircle}>
+                                <View style={[listFlip.iconCircle, { backgroundColor: PAGE_COLOR + "18" }]}>
                                     <Ionicons name={item.icon as any} size={14} color={PAGE_COLOR} />
                                 </View>
-                                <Text style={[listFlip.itemText, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(17 * FONT_STEPS[fontSizeStep]) }]} numberOfLines={2}>{item.text}</Text>
+                                <Text style={[listFlip.itemText, { color: colors.textDark }, fontSizeStep > 0 && { fontSize: Math.round(12 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(17 * FONT_STEPS[fontSizeStep]) }]} numberOfLines={2}>{item.text}</Text>
                             </View>
                         ))}
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); setFontSizeStep(s => (s + 1) % FONT_STEPS.length); }} hitSlop={10} activeOpacity={0.7}>
-                            <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : '#9CA3AF' }}>Aa</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? PAGE_COLOR : colors.textLight }}>Aa</Text>
                         </TouchableOpacity>
                         <FlipHint label="Tap for Help Contacts" />
                     </View>
                 </Animated.View>
-                <Animated.View style={[listFlip.card, listFlip.back, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, backfaceVisibility: "hidden" }]}>
-                    <ContactsBack contacts={contacts} flipped={flipped} fontSizeStep={fontSizeStep} onAaPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} />
+                <Animated.View style={[listFlip.card, listFlip.back, { 
+                    transform: [{ perspective: 1000 }, { rotateY: backRotate }], 
+                    opacity: backOpacity, 
+                    backfaceVisibility: "hidden",
+                    backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF",
+                    borderColor: PAGE_COLOR + "40"
+                }]}>
+                    <ContactsBack contacts={contacts} flipped={flipped} fontSizeStep={fontSizeStep} onAaPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} styles={styles} />
                 </Animated.View>
             </View>
         </TouchableOpacity>
@@ -251,28 +267,27 @@ const listFlip = StyleSheet.create({
     container: { flex: 3 },
     inner: { height: 240 },
     card: {
-        borderRadius: 22, borderWidth: 2, borderColor: PAGE_COLOR + "40",
+        borderRadius: 22, borderWidth: 2,
         padding: 16, height: 240,
         shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
         backfaceVisibility: "hidden", justifyContent: "space-between",
     },
-    front: { backgroundColor: "#FFF8F5", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-    back: { backgroundColor: "#FFFFFF", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+    front: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+    back: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
     itemList: { flex: 1, justifyContent: "center", gap: 10 },
     itemRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     badge: { width: 24, height: 24, borderRadius: 12, backgroundColor: PAGE_COLOR, alignItems: "center", justifyContent: "center", flexShrink: 0 },
     badgeText: { fontSize: 12, fontWeight: "800", color: "#FFF" },
-    iconCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: PAGE_COLOR + "18", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    itemText: { fontSize: 12, fontWeight: "500", color: "#2D2D44", flex: 1, lineHeight: 17 },
+    iconCircle: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+    itemText: { fontSize: 12, fontWeight: "500", flex: 1, lineHeight: 17 },
 });
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function CopingAwayFromHomeScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { fontScale } = useTheme();
-    const fs = (size: number) => Math.round(size * fontScale);
+    const { colors, isDark, fontScale } = useTheme();
 
     const titleFade = useRef(new Animated.Value(0)).current;
     const titleSlide = useRef(new Animated.Value(20)).current;
@@ -307,18 +322,18 @@ export default function CopingAwayFromHomeScreen() {
         try { await Share.share({ message: 'Check out "Coping When Away From Home" on SchoolKit — tips for staying connected and making your hospital room feel more like home.' }); } catch { }
     };
 
-    const styles = useMemo(() => makeStyles(fs), [fontScale]);
+    const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
     return (
         <View style={styles.container}>
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-                    <Ionicons name="arrow-back" size={28} color="#2D2D44" />
+                    <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
-                        <Ionicons name="share-outline" size={28} color="#6B6B85" />
+                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
                     <BookmarkButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
@@ -372,7 +387,7 @@ export default function CopingAwayFromHomeScreen() {
                     <Text style={styles.sectionSubtitle}>Small rituals can make a big difference.</Text>
                     <View style={styles.sideBySideRow}>
                         {/* List flip card (left) */}
-                        <ListFlipCard items={STAYING_CONNECTED} contacts={CONTACTS_1} style={{}} />
+                        <ListFlipCard items={STAYING_CONNECTED} contacts={CONTACTS_1} style={{}} styles={styles} />
                         {/* Cartoon illustration (right, static) */}
                         <VideoCallIllustration />
                     </View>
@@ -386,7 +401,7 @@ export default function CopingAwayFromHomeScreen() {
                     <Text style={styles.sectionSubtitle}>Make it yours — bring a little home with you.</Text>
                     <View style={styles.sideBySideRow}>
                         {/* List flip card (left) */}
-                        <ListFlipCard items={PERSONALIZING_ROOM} contacts={CONTACTS_2} style={{}} />
+                        <ListFlipCard items={PERSONALIZING_ROOM} contacts={CONTACTS_2} style={{}} styles={styles} />
                         {/* Cartoon illustration (right, static) */}
                         <PersonalizedRoomIllustration />
                     </View>
@@ -401,49 +416,50 @@ export default function CopingAwayFromHomeScreen() {
     );
 }
 
-function makeStyles(fs: (n: number) => number) {
+function makeStyles(c: any, isDark: boolean, fontScale: number) {
+    const fs = (size: number) => Math.round(size * fontScale);
     return StyleSheet.create({
-        container: { flex: 1, backgroundColor: "#FAFAFD" },
+        container: { flex: 1, backgroundColor: c.appBackground },
         header: {
             flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-            paddingHorizontal: 24, paddingBottom: 20, backgroundColor: "#FFFFFF",
-            borderBottomWidth: 1, borderBottomColor: "#F0F0F0",
+            paddingHorizontal: 24, paddingBottom: 20, backgroundColor: c.white,
+            borderBottomWidth: 1, borderBottomColor: c.borderCard,
             shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05, shadowRadius: 8, elevation: 3, zIndex: 1000,
+            shadowOpacity: isDark ? 0.3 : 0.05, shadowRadius: 8, elevation: 3, zIndex: 1000,
         },
         backButton: { padding: 8, marginLeft: -8 },
         scrollContent: { padding: 24, paddingBottom: 80 },
 
         pageTitle: {
-            fontSize: fs(30), fontWeight: "800", color: "#2D2D44",
+            fontSize: fs(30), fontWeight: "800", color: c.textDark,
             marginBottom: 20, marginTop: 8, lineHeight: fs(38), letterSpacing: -1,
         },
         quoteCard: {
-            backgroundColor: "#FFFFFF", borderRadius: 20, borderWidth: 2,
+            backgroundColor: isDark ? c.backgroundLight : "#FFFFFF", borderRadius: 20, borderWidth: 2,
             borderColor: PAGE_COLOR + "30", padding: 22, marginBottom: 28, alignItems: "center",
             shadowColor: PAGE_COLOR, shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
         },
         quoteText: {
             fontSize: fs(16), fontWeight: "500", fontStyle: "italic",
-            color: "#2D2D44", textAlign: "center", lineHeight: fs(26), marginBottom: 8,
+            color: c.textDark, textAlign: "center", lineHeight: fs(26), marginBottom: 8,
         },
-        quoteAuthor: { fontSize: fs(13), fontWeight: "500", fontStyle: "italic", color: "#8E8EA8", textAlign: "center" },
+        quoteAuthor: { fontSize: fs(13), fontWeight: "500", fontStyle: "italic", color: c.textLight, textAlign: "center" },
 
-        sectionTitle: { fontSize: fs(18), fontWeight: "800", color: "#2D2D44", letterSpacing: -0.3, marginBottom: 4 },
-        sectionSubtitle: { fontSize: fs(13), color: "#8E8EA8", fontWeight: "400", marginBottom: 16 },
+        sectionTitle: { fontSize: fs(18), fontWeight: "800", color: c.textDark, letterSpacing: -0.3, marginBottom: 4 },
+        sectionSubtitle: { fontSize: fs(13), color: c.textMuted, fontWeight: "400", marginBottom: 16 },
 
         videoRow: { flexDirection: "row", marginHorizontal: -6, marginBottom: 28 },
 
         introCard: {
-            flexDirection: "row", backgroundColor: "#FFFFFF", borderRadius: 20,
+            flexDirection: "row", backgroundColor: isDark ? c.backgroundLight : "#FFFFFF", borderRadius: 20,
             marginBottom: 28, overflow: "hidden",
             shadowColor: PAGE_COLOR, shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
         },
         introAccent: { width: 5, borderRadius: 2 },
         introContent: { flex: 1, padding: 20 },
-        introText: { fontSize: fs(16), fontWeight: "400", color: "#2D2D44", lineHeight: fs(26) },
+        introText: { fontSize: fs(16), fontWeight: "400", color: c.textDark, lineHeight: fs(26) },
 
         sideBySideRow: {
             flexDirection: "row",
