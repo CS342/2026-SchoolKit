@@ -155,6 +155,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           AsyncStorage.setItem('@schoolkit_selected_voice', profile.voice_id);
         }
 
+        // Set language from profile if available
+        if (profile.preferred_language) {
+          const lang = profile.preferred_language as 'english' | 'spanish';
+          setPreferredLanguage(lang);
+          AsyncStorage.setItem('@schoolkit_preferred_language', lang);
+        }
+
         // Fetch bookmarks
         fetchBookmarks(userId);
       }
@@ -417,6 +424,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const updatePreferredLanguage = async (lang: 'english' | 'spanish') => {
     setPreferredLanguage(lang);
     await AsyncStorage.setItem('@schoolkit_preferred_language', lang);
+    
+    // Automatically sync default voice
+    const defaultVoice = lang === 'spanish' ? VOICES.SOFIA : VOICES.PETER;
+    await updateVoice(defaultVoice);
+    
+    await updateProfile({ preferred_language: lang });
   };
 
   return (

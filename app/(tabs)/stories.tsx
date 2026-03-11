@@ -102,7 +102,7 @@ export default function StoriesScreen() {
         ? stories.filter(
             (s) =>
               s.status === "pending" ||
-              (s.status === "approved" && s.report_count > 0)
+              (s.status === "approved" && (s.report_count > 0 || s.comment_report_count > 0))
           )
         : stories.filter((s) => s.status === "approved");
 
@@ -177,7 +177,7 @@ export default function StoriesScreen() {
     return stories.filter(
       (s) =>
         s.status === "pending" ||
-        (s.status === "approved" && s.report_count > 0)
+        (s.status === "approved" && (s.report_count > 0 || s.comment_report_count > 0))
     ).length;
   }, [stories]);
 

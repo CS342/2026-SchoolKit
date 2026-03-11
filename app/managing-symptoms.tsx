@@ -852,7 +852,7 @@ export default function ManagingSymptomsScreen() {
                         <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
-                    <BookmarkButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
+                    <BookmarkButton resourceId={RESOURCE_ID} size={27} color={PAGE_COLOR} />
                 </View>
             </View>
 

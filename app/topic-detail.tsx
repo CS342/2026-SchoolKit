@@ -136,7 +136,7 @@ export default function TopicDetailScreen() {
             <Ionicons name="share-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
           <DownloadButton resourceId={resourceId} size={24} />
-          <BookmarkButton resourceId={resourceId} color={color} size={26} />
+          <BookmarkButton resourceId={resourceId} color={color} size={27} />
         </View>
       </View>
 

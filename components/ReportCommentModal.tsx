@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { AppTheme } from '../constants/theme';
 import { PrimaryButton } from './onboarding/PrimaryButton';
 
-interface ReportStoryModalProps {
+interface ReportCommentModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (reason: string, details: string) => void;
@@ -21,7 +21,7 @@ const REPORT_REASONS = [
   'Other'
 ];
 
-export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModalProps) {
+export function ReportCommentModal({ visible, onClose, onSubmit }: ReportCommentModalProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
@@ -74,14 +74,14 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
         
         <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom + 20, 20) }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Report Story</Text>
+            <Text style={styles.title}>Report Comment</Text>
             <Pressable onPress={handleClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>
 
           <Text style={styles.subtitle}>
-            Please select a reason for reporting this story to help our moderators understand the issue.
+            Why are you reporting this comment? This helps our moderators keep the community safe.
           </Text>
 
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

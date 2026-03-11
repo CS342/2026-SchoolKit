@@ -860,7 +860,7 @@ export default function SchoolNurseScreen() {
             <Ionicons name="share-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
           <DownloadButton resourceId="13" size={28} color="#E8735A" />
-          <BookmarkButton resourceId="13" size={28} color="#E8735A" />
+          <BookmarkButton resourceId="13" size={27} color="#E8735A" />
         </View>
       </View>
 

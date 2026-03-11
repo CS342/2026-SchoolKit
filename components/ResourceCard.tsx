@@ -114,7 +114,7 @@ export function ResourceCard({
 
         <View style={styles.actions}>
           {showDownloadIndicator && <DownloadIndicator resourceId={id} size={32} />}
-          <BookmarkButton resourceId={id} color={color} size={40} />
+          <BookmarkButton resourceId={id} color={color} size={27} />
           <Ionicons name="chevron-forward" size={32} color={colors.textLight} />
         </View>
       </Animated.View>

@@ -58,6 +58,13 @@ CREATE POLICY "Authors can delete own stories"
   TO authenticated
   USING (auth.uid() = author_id);
 
+CREATE POLICY "Moderators can delete any story"
+  ON stories FOR DELETE
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'email'::text) = ANY (ARRAY['janinatroper@gmail.com'::text, 'lvalsote@stanford.edu'::text, 'ngounder@stanford.edu'::text])
+  );
+
 -- Comment policies
 CREATE POLICY "Anyone authenticated can read comments"
   ON story_comments FOR SELECT
@@ -73,6 +80,13 @@ CREATE POLICY "Authors can delete own comments"
   ON story_comments FOR DELETE
   TO authenticated
   USING (auth.uid() = author_id);
+
+CREATE POLICY "Moderators can delete any comment"
+  ON story_comments FOR DELETE
+  TO authenticated
+  USING (
+    (auth.jwt() ->> 'email'::text) = ANY (ARRAY['janinatroper@gmail.com'::text, 'lvalsote@stanford.edu'::text, 'ngounder@stanford.edu'::text])
+  );
 
 -- Bookmark policies
 CREATE POLICY "Users can view own story bookmarks"
@@ -104,7 +118,17 @@ CREATE TABLE story_likes (
   UNIQUE(user_id, story_id)
 );
 
+-- Comment likes
+CREATE TABLE comment_likes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  comment_id UUID NOT NULL REFERENCES story_comments(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, comment_id)
+);
+
 ALTER TABLE story_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comment_likes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Anyone authenticated can read likes"
   ON story_likes FOR SELECT
@@ -118,6 +142,22 @@ CREATE POLICY "Users can create own likes"
 
 CREATE POLICY "Users can delete own likes"
   ON story_likes FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Comment likes policies
+CREATE POLICY "Users can read all comment likes"
+  ON comment_likes FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Users can create own comment likes"
+  ON comment_likes FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own comment likes"
+  ON comment_likes FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
 

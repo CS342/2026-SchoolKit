@@ -20,7 +20,7 @@ serve(async (req) => {
       })
     }
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY')
+    const openAiKey = Deno.env.get('EXPO_PUBLIC_OPEN_AI_MODERATION_KEY') || Deno.env.get('OPENAI_API_KEY')
     
     if (!openAiKey) {
       console.error('Missing OpenAI API Key in environment secrets')

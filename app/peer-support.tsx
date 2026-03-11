@@ -697,7 +697,7 @@ export default function PeerSupportScreen() {
             <Ionicons name="share-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
           <DownloadButton resourceId="12" size={28} color={colors.studentK8} />
-          <BookmarkButton resourceId="12" size={28} color={colors.studentK8} />
+          <BookmarkButton resourceId="12" size={27} color={colors.studentK8} />
         </View>
       </View>
 

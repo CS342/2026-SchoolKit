@@ -622,7 +622,7 @@ export default function UnderstandingCancerScreen() {
             <Ionicons name="share-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
           <DownloadButton resourceId="11" size={28} color={colors.primary} />
-          <BookmarkButton resourceId="11" size={28} color={colors.primary} />
+          <BookmarkButton resourceId="11" size={27} color={colors.primary} />
         </View>
       </View>
 

@@ -169,7 +169,8 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
     if (showAuthorStatus && story.status === 'rejected') {
       router.push(`/create-story?edit=true&id=${story.id}` as any);
     } else {
-      router.push(`/story-detail?id=${story.id}` as any);
+      const openComments = allowModeration && (story.comment_report_count || 0) > 0;
+      router.push(`/story-detail?id=${story.id}${openComments ? '&openComments=true' : ''}` as any);
     }
   };
 
@@ -206,21 +207,36 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             </Text>
           </View>
         )}
-        {story.status === 'approved' && allowModeration && story.report_count > 0 && (
-          <View style={[styles.modBanner, { backgroundColor: colors.error + '15', alignSelf: 'stretch' }]}>
-            <Text style={[styles.modBannerText, { color: colors.error }]}>
-              Reported {story.report_count} time(s)
-            </Text>
-            {story.reports && story.reports.length > 0 && (
-              <View style={styles.reportsList}>
-                {story.reports.map((report: any, idx: number) => (
-                  <View key={`report-${idx}`} style={styles.reportItem}>
-                    <Text style={styles.reportReason}>• {report.reason}</Text>
-                    {report.details ? (
-                      <Text style={styles.reportDetails}>"{report.details}"</Text>
-                    ) : null}
+        {story.status === 'approved' && allowModeration && (story.report_count > 0 || (story.comment_report_count || 0) > 0) && (
+          <View style={[styles.modBanner, { backgroundColor: colors.error + '15', alignSelf: 'stretch' }, isMyStory && { paddingRight: 48 }]}>
+            {story.report_count > 0 && (
+              <View style={{ marginBottom: (story.comment_report_count || 0) > 0 ? 8 : 0 }}>
+                <Text style={[styles.modBannerText, { color: colors.error }]}>
+                  Story Reported {story.report_count} time(s)
+                </Text>
+                {story.reports && story.reports.length > 0 && (
+                  <View style={styles.reportsList}>
+                    {story.reports.map((report: any, idx: number) => (
+                      <View key={`report-story-${idx}`} style={styles.reportItem}>
+                        <Text style={styles.reportReason}>• {report.reason}</Text>
+                        {report.details ? (
+                          <Text style={styles.reportDetails}>"{report.details}"</Text>
+                        ) : null}
+                      </View>
+                    ))}
                   </View>
-                ))}
+                )}
+              </View>
+            )}
+            
+            {(story.comment_report_count || 0) > 0 && (
+              <View style={{ marginTop: story.report_count > 0 ? 8 : 0 }}>
+                <Text style={[styles.modBannerText, { color: colors.error }]}>
+                  {story.comment_report_count} Comment Report(s)
+                </Text>
+                <Text style={[styles.reportDetails, { fontStyle: 'normal', color: colors.textMuted, marginTop: 4 }]}>
+                  Click to review reported responses.
+                </Text>
               </View>
             )}
           </View>

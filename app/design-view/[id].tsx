@@ -272,7 +272,7 @@ export default function DesignViewPage() {
               <Ionicons name="share-outline" size={24} color={colors.textLight} />
             </TouchableOpacity>
             <DownloadButton resourceId={finalResourceId} size={24} />
-            <BookmarkButton resourceId={finalResourceId} color={colors.primary} size={26} />
+            <BookmarkButton resourceId={finalResourceId} color={colors.primary} size={27} />
           </View>
         </View>
 

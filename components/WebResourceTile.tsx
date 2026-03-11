@@ -74,7 +74,7 @@ export function WebResourceTile({
         )}
         <View style={styles.actions}>
           {showDownloadIndicator && <DownloadIndicator resourceId={id} size={32} />}
-          <BookmarkButton resourceId={id} color={color} size={40} />
+          <BookmarkButton resourceId={id} color={color} size={27} />
         </View>
       </Pressable>
     </Animated.View>

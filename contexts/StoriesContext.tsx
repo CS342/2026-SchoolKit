@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useOnboarding, UserRole } from './OnboardingContext';
@@ -29,6 +29,7 @@ export interface Story {
   reports?: { reason: string; details: string | null; created_at: string }[];
   previous_title?: string;
   previous_body?: string;
+  comment_report_count: number;
 }
 
 export interface StoryComment {
@@ -40,6 +41,8 @@ export interface StoryComment {
   author_role: UserRole | null;
   created_at: string;
   like_count: number;
+  report_count: number;
+  reports?: { reason: string; details?: string | null; created_at: string }[];
 }
 
 interface StoriesContextType {
@@ -63,6 +66,7 @@ interface StoriesContextType {
   toggleLike: (storyId: string) => Promise<void>;
   rejectStory: (storyId: string, rejectedNorms: string[]) => Promise<void>;
   dismissReport: (storyId: string) => Promise<void>;
+  dismissCommentReports: (commentId: string, storyId: string) => Promise<void>;
   approveStory: (storyId: string) => Promise<void>;
   updateStory: (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }) => Promise<Story | null>;
   reportStory: (storyId: string, reason: string, details?: string) => Promise<void>;
@@ -72,6 +76,9 @@ interface StoriesContextType {
   removeStoryDownload: (storyId: string) => void;
   reportedStoryIds: string[];
   isStoryReported: (storyId: string) => boolean;
+  reportedCommentIds: string[];
+  isCommentReported: (commentId: string) => boolean;
+  reportComment: (commentId: string, reason: string, details?: string) => Promise<void>;
 }
 
 const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
@@ -82,6 +89,7 @@ const STORY_LIKES_KEY = '@schoolkit_story_likes';
 const COMMENT_LIKES_KEY = '@schoolkit_comment_likes';
 const STORY_DOWNLOADS_KEY = '@schoolkit_story_downloads';
 const REPORTED_STORIES_KEY = '@schoolkit_reported_stories';
+const REPORTED_COMMENTS_KEY = '@schoolkit_reported_comments';
 
 export function StoriesProvider({ children }: { children: ReactNode }) {
   const { user, isAnonymous } = useAuth();
@@ -94,6 +102,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const [commentLikes, setCommentLikes] = useState<string[]>([]);
   const [downloadedStories, setDownloadedStories] = useState<Story[]>([]);
   const [reportedStoryIds, setReportedStoryIds] = useState<string[]>([]);
+  const [reportedCommentIds, setReportedCommentIds] = useState<string[]>([]);
 
   // Load downloads once on mount — available offline regardless of auth state
   useEffect(() => {
@@ -128,12 +137,14 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       fetchStoryLikes();
       fetchCommentLikes();
       fetchReportedStories();
+      fetchReportedComments();
     } else {
       setStories([]);
       setStoryBookmarks([]);
       setStoryLikes([]);
       setCommentLikes([]);
       setReportedStoryIds([]);
+      setReportedCommentIds([]);
       setStoriesLoading(false);
     }
   }, [user?.id]);
@@ -157,6 +168,29 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
        try {
          const cached = await AsyncStorage.getItem(REPORTED_STORIES_KEY);
          if (cached) setReportedStoryIds(JSON.parse(cached));
+       } catch {}
+    }
+  };
+
+  const fetchReportedComments = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await (supabase as any)
+        .from('comment_reports')
+        .select('comment_id')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      if (data) {
+        const ids = data.map((r: any) => r.comment_id);
+        setReportedCommentIds(ids);
+        AsyncStorage.setItem(REPORTED_COMMENTS_KEY, JSON.stringify(ids));
+      }
+    } catch (error) {
+       console.error('Error fetching reported comments:', error);
+       try {
+         const cached = await AsyncStorage.getItem(REPORTED_COMMENTS_KEY);
+         if (cached) setReportedCommentIds(JSON.parse(cached));
        } catch {}
     }
   };
@@ -194,24 +228,44 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       if (storiesData) {
-        const storyIds = storiesData.map(s => s.id);
+        const storyIds = (storiesData as any[]).map(s => s.id);
         let commentCounts: Record<string, number> = {};
+        let commentReportCounts: Record<string, number> = {};
 
         if (storyIds.length > 0) {
-          const { data: comments, error: countError } = await supabase
+          // 1. Fetch total comment counts and build commentId -> storyId map
+          const { data: comments } = await (supabase as any)
             .from('story_comments')
-            .select('story_id')
+            .select('id, story_id')
             .in('story_id', storyIds);
 
-          if (!countError && comments) {
-            commentCounts = comments.reduce((acc: Record<string, number>, c) => {
-              acc[c.story_id] = (acc[c.story_id] || 0) + 1;
-              return acc;
-            }, {});
+          const commentToStoryMap: Record<string, string> = {};
+          if (comments) {
+            comments.forEach((c: any) => {
+              commentCounts[c.story_id] = (commentCounts[c.story_id] || 0) + 1;
+              commentToStoryMap[c.id] = c.story_id;
+            });
+
+            // 2. Fetch actual report counts from comment_reports
+            // We fetch ALL reports for the comments we just found
+            const { data: commentReports } = await (supabase as any)
+              .from('comment_reports')
+              .select('comment_id')
+              .in('comment_id', Object.keys(commentToStoryMap));
+
+            if (commentReports) {
+              commentReports.forEach((r: any) => {
+                const sId = commentToStoryMap[r.comment_id];
+                if (sId) {
+                  commentReportCounts[sId] = (commentReportCounts[sId] || 0) + 1;
+                }
+              });
+            }
           }
         }
 
         const enriched: Story[] = storiesData.map((s: any) => {
+          // ... (parsing logic remains same)
           let parsedLookingFor: string[] = [];
           if (Array.isArray(s.looking_for)) {
             parsedLookingFor = s.looking_for;
@@ -265,6 +319,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             reports: [],
             previous_title: s.previous_title,
             previous_body: s.previous_body,
+            comment_report_count: commentReportCounts[s.id] || 0,
           };
         });
 
@@ -274,7 +329,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           const { data: reportsData } = await supabase
             .from('story_reports')
             .select('story_id, reason, details, created_at')
-            .in('story_id', storiesToFetchReports.map(s => s.id));
+            .in('story_id', storiesToFetchReports.map(s => s.id)) as any;
             
           if (reportsData) {
             const reportsByStoryId = reportsData.reduce((acc: Record<string, any[]>, r) => {
@@ -380,6 +435,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       looking_for: lookingFor,
       target_audiences: targetAudiences,
       story_tags: storyTags,
+      comment_report_count: 0,
     };
 
     setStories(prev => [optimisticStory, ...prev]);
@@ -400,7 +456,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           story_tags: storyTags,
         })
         .select()
-        .single();
+        .single() as any;
 
       if (error) throw error;
 
@@ -413,6 +469,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         status: data.status,
         attempt_count: data.attempt_count,
         rejected_norms: data.rejected_norms,
+        comment_report_count: 0,
       };
 
       setStories(prev => {
@@ -458,7 +515,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     ));
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('stories')
         .update({ status: 'rejected', rejected_norms: rejectedNorms })
         .eq('id', storyId);
@@ -471,13 +528,43 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+
+
+
+  const dismissCommentReports = async (commentId: string, storyId: string) => {
+    try {
+      // Get count of reports being dismissed so we can decrement the story's comment_report_count
+      const { count: deletedCount } = await supabase
+        .from('comment_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('comment_id', commentId);
+
+      const { error } = await supabase
+        .from('comment_reports')
+        .delete()
+        .eq('comment_id', commentId);
+
+      if (error) throw error;
+
+      // Update the story's comment_report_count in local state so it disappears from the moderator portal
+      setStories(prev => prev.map(s =>
+        s.id === storyId
+          ? { ...s, comment_report_count: Math.max(0, (s.comment_report_count || 0) - (deletedCount || 0)) }
+          : s
+      ));
+    } catch (error) {
+      console.error('Error dismissing comment reports:', error);
+      throw error;
+    }
+  };
+
   const approveStory = async (storyId: string) => {
     setStories(prev => prev.map(s =>
       s.id === storyId ? { ...s, status: 'approved' } : s
     ));
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('stories')
         .update({ status: 'approved' })
         .eq('id', storyId);
@@ -505,7 +592,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       
       // Also manually reset report_count to 0 on the story, just in case
-      await supabase
+      await (supabase as any)
         .from('stories')
         .update({ report_count: 0 })
         .eq('id', storyId);
@@ -577,7 +664,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchComments = async (storyId: string): Promise<StoryComment[]> => {
+  const fetchComments = useCallback(async (storyId: string): Promise<StoryComment[]> => {
     try {
       const { data, error } = await supabase
         .from('story_comments')
@@ -588,22 +675,37 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       const commentData = data || [];
 
-      // Fetch like counts for these comments
+      // Fetch like counts and report details for these comments
       let likeCounts: Record<string, number> = {};
+      let reportCounts: Record<string, number> = {};
+      let commentReports: any[] = [];
+      
       if (commentData.length > 0) {
-        const { data: likes } = await supabase
-          .from('comment_likes')
-          .select('comment_id')
-          .in('comment_id', commentData.map(c => c.id));
+        const commentIds = commentData.map(c => c.id);
+        
+        // Parallel fetch for likes and reports
+        const [{ data: likes }, { data: reports }] = await Promise.all([
+          supabase.from('comment_likes').select('comment_id').in('comment_id', commentIds),
+          (supabase as any).from('comment_reports').select('comment_id, reason, details, created_at').in('comment_id', commentIds)
+        ]);
+
         if (likes) {
-          likeCounts = likes.reduce((acc: Record<string, number>, l) => {
+          likeCounts = (likes as any[]).reduce((acc: Record<string, number>, l) => {
             acc[l.comment_id] = (acc[l.comment_id] || 0) + 1;
+            return acc;
+          }, {});
+        }
+
+        if (reports) {
+          commentReports = reports;
+          reportCounts = (reports as any[]).reduce((acc: Record<string, number>, r) => {
+            acc[r.comment_id] = (acc[r.comment_id] || 0) + 1;
             return acc;
           }, {});
         }
       }
 
-      return commentData.map(c => ({
+      return (commentData as any[]).map(c => ({
         id: c.id,
         story_id: c.story_id,
         author_id: c.author_id,
@@ -612,12 +714,16 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_role: c.author_role as UserRole | null,
         created_at: c.created_at,
         like_count: likeCounts[c.id] || 0,
+        report_count: reportCounts[c.id] || 0,
+        reports: commentReports
+          .filter((r: any) => r.comment_id === c.id)
+          .map((r: any) => ({ reason: r.reason, details: r.details, created_at: r.created_at })),
       }));
     } catch (error) {
       console.error('Error fetching comments:', error);
       return [];
     }
-  };
+  }, []);
 
   const addComment = async (storyId: string, body: string, postAnonymously = false): Promise<StoryComment | null> => {
     if (!user?.id || isAnonymous) return null;
@@ -641,7 +747,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           author_role: displayRole,
         })
         .select()
-        .single();
+        .single() as any;
 
       if (error) throw error;
 
@@ -662,6 +768,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         author_role: data.author_role as UserRole | null,
         created_at: data.created_at,
         like_count: 0,
+        report_count: 0,
       };
     } catch (error) {
       throw error;
@@ -708,7 +815,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.from('comment_likes').delete().eq('user_id', user.id).eq('comment_id', commentId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('comment_likes').insert({ user_id: user.id, comment_id: commentId });
+        const { error } = await (supabase as any).from('comment_likes').insert({ user_id: user.id, comment_id: commentId });
         if (error && error.code !== '23505') throw error;
       }
     } catch {
@@ -737,7 +844,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { error } = await supabase.from('story_bookmarks').insert({ user_id: user.id, story_id: storyId });
+    const { error } = await (supabase as any).from('story_bookmarks').insert({ user_id: user.id, story_id: storyId });
     if (error) {
       if (error.code === '23505') return;
       console.error('Error adding story bookmark:', error);
@@ -807,7 +914,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
           .eq('story_id', storyId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('story_likes')
           .insert({ user_id: user.id, story_id: storyId });
         if (error && error.code !== '23505') throw error;
@@ -818,7 +925,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         .select('*', { count: 'exact', head: true })
         .eq('story_id', storyId);
       const actualCount = count ?? optimisticCount;
-      await supabase.from('stories').update({ likes_count: actualCount }).eq('id', storyId);
+      await (supabase as any).from('stories').update({ likes_count: actualCount }).eq('id', storyId);
       setStories(prev => prev.map(s =>
         s.id === storyId ? { ...s, like_count: actualCount } : s
       ));
@@ -856,7 +963,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     ));
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('story_reports')
         .insert({
           story_id: storyId,
@@ -874,14 +981,44 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       // Revert optimistic update
       setReportedStoryIds(prev => prev.filter(id => id !== storyId));
       setStories(prev => prev.map(s =>
-        s.id === storyId 
-          ? { 
-              ...s, 
+        s.id === storyId
+          ? {
+              ...s,
               report_count: Math.max(0, s.report_count - 1),
               reports: (s.reports || []).filter(r => r.created_at !== newReport.created_at)
-            } 
+            }
           : s
       ));
+      throw error;
+    }
+  };
+
+  const isCommentReported = (commentId: string) => reportedCommentIds.includes(commentId);
+
+  const reportComment = async (commentId: string, reason: string, details?: string) => {
+    if (!user?.id || isCommentReported(commentId)) return;
+
+    // Optimistic UI update
+    setReportedCommentIds(prev => [commentId, ...prev]);
+
+    try {
+      const { error } = await (supabase as any)
+        .from('comment_reports')
+        .insert({
+          user_id: user.id,
+          comment_id: commentId,
+          reason,
+          details,
+        });
+
+      if (error && error.code !== '23505') { // ignore duplicate unique violation
+        throw error;
+      }
+      AsyncStorage.setItem(REPORTED_COMMENTS_KEY, JSON.stringify([commentId, ...reportedCommentIds]));
+    } catch (error) {
+      console.error('Error reporting comment:', error);
+      // Revert optimism
+      setReportedCommentIds(prev => prev.filter(id => id !== commentId));
     }
   };
 
@@ -905,6 +1042,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         toggleLike,
         rejectStory,
         dismissReport,
+        dismissCommentReports,
         approveStory,
         updateStory,
         reportStory,
@@ -917,6 +1055,9 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         removeStoryDownload,
         reportedStoryIds,
         isStoryReported,
+        reportedCommentIds,
+        isCommentReported,
+        reportComment,
       }}
     >
       {children}

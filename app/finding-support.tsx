@@ -519,7 +519,7 @@ export default function FindingSupportScreen() {
                         <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId="15" size={28} color={colors.primary} />
-                    <BookmarkButton resourceId="15" size={28} color={colors.primary} />
+                    <BookmarkButton resourceId="15" size={27} color={colors.primary} />
                 </View>
             </View>
 

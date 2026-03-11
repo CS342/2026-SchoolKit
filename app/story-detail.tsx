@@ -28,9 +28,11 @@ import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
 import { ReportStoryModal } from "../components/ReportStoryModal";
+import { ReportCommentModal } from "../components/ReportCommentModal";
 import { RecommendationList } from "../components/RecommendationList";
 import { diffWords } from "diff";
 import { FeedbackBanner } from "../components/FeedbackBanner";
+import { useResponsive } from "../hooks/useResponsive";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const AUDIENCE_DISPLAY: Record<string, string> = {
@@ -103,15 +105,23 @@ function CommentItem({
   comment,
   isOwn,
   isLiked,
+  isReported,
   onDelete,
   onLike,
+  onReport,
+  onDismissReport,
+  isModerator,
   fontSizeStep = 0,
 }: {
   comment: StoryComment;
   isOwn: boolean;
   isLiked: boolean;
+  isReported: boolean;
   onDelete: () => void;
   onLike: () => void;
+  onReport: () => void;
+  onDismissReport: () => void;
+  isModerator: boolean;
   fontSizeStep?: number;
 }) {
   const { colors, isDark, fontScale } = useTheme();
@@ -127,15 +137,97 @@ function CommentItem({
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.meta} numberOfLines={1}>
-          {metaLine}
-        </Text>
-        {isOwn && (
+        <View style={{ flex: 1 }}>
+          <Text style={styles.meta} numberOfLines={1}>
+            {metaLine}
+          </Text>
+          {isModerator && comment.report_count > 0 && (
+            <View style={{ marginTop: 8, gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ 
+                  flexDirection: 'row', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  backgroundColor: colors.error + '12', 
+                  paddingHorizontal: 8, 
+                  paddingVertical: 4, 
+                  borderRadius: 6, 
+                  alignSelf: 'flex-start',
+                  borderWidth: 1,
+                  borderColor: colors.error + '25'
+                }}>
+                  <Ionicons name="alert-circle" size={14} color={colors.error} />
+                  <Text style={{ fontSize: 11, color: colors.error, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Reported ({comment.report_count})
+                  </Text>
+                </View>
+
+                {/* Dismiss Button for Moderators */}
+                <TouchableOpacity 
+                  onPress={onDismissReport}
+                  style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    gap: 4,
+                    backgroundColor: colors.primary + '12',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: colors.primary + '25'
+                  }}
+                >
+                  <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
+                  <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>Dismiss</Text>
+                </TouchableOpacity>
+              </View>
+
+              {comment.reports && comment.reports.length > 0 && (
+                <View style={{ 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', 
+                  padding: 10, 
+                  borderRadius: 8,
+                  borderLeftWidth: 3,
+                  borderLeftColor: colors.error + '60'
+                }}>
+                  {comment.reports.map((r, idx) => (
+                    <View key={idx} style={{ marginBottom: idx < (comment.reports?.length || 0) - 1 ? 8 : 0 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                        <Ionicons name="flag" size={12} color={colors.error} />
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.error }}>{r.reason}</Text>
+                      </View>
+                      {r.details ? (
+                        <Text style={{ 
+                          fontSize: 12, 
+                          color: colors.textDark, 
+                          fontStyle: 'italic', 
+                          marginLeft: 18,
+                          lineHeight: 16
+                        }}>
+                          "{r.details}"
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        {isOwn || isModerator ? (
           <TouchableOpacity
             onPress={onDelete}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="trash-outline" size={15} color={colors.error} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={onReport}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            disabled={isReported}
+          >
+            <Ionicons name={isReported ? "flag" : "flag-outline"} size={16} color={isReported ? colors.primary : colors.textLight} />
           </TouchableOpacity>
         )}
       </View>
@@ -205,7 +297,7 @@ const makeCommentStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, 
 export default function StoryDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, openComments } = useLocalSearchParams<{ id: string, openComments?: string }>();
   const { user, isAnonymous } = useAuth();
   const { selectedVoice, data: onboardingData, preferredLanguage } = useOnboarding();
   const {
@@ -219,6 +311,10 @@ export default function StoryDetailScreen() {
     removeStoryBookmark,
     isStoryLiked,
     toggleLike,
+    dismissReport,
+    dismissCommentReports,
+    approveStory,
+    updateStory,
     reportStory,
     isCommentLiked,
     toggleCommentLike,
@@ -227,9 +323,13 @@ export default function StoryDetailScreen() {
     downloadStory,
     removeStoryDownload,
     isStoryReported,
+    isCommentReported,
+    reportComment,
   } = useStories();
   const { colors, appStyles, isDark, fontScale } = useTheme();
   const { fireEvent } = useAccomplishments();
+  const { isWeb, isDesktop, isTablet } = useResponsive();
+  const isLargeWeb = isWeb && (isDesktop || isTablet);
 
   const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
   const isModeratorMode = Boolean(user?.email && MODERATOR_EMAILS.includes(user.email));
@@ -246,11 +346,19 @@ export default function StoryDetailScreen() {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isCommentsModalVisible, setIsCommentsModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (openComments === 'true') {
+      setIsCommentsModalVisible(true);
+    }
+  }, [openComments]);
   const [postAnonymously, setPostAnonymously] = useState(false);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
   const downloadScale = useRef(new RNAnimated.Value(1)).current;
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showCommentReportModal, setShowCommentReportModal] = useState(false);
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [showOriginalVersion, setShowOriginalVersion] = useState(false);
   const [fontSizeStep, setFontSizeStep] = useState(0);
   const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -380,6 +488,7 @@ export default function StoryDetailScreen() {
   };
 
   const handleLikeComment = (commentId: string) => {
+    if (isAnonymous) return;
     const liked = isCommentLiked(commentId);
     toggleCommentLike(commentId);
     setComments((prev) =>
@@ -417,8 +526,34 @@ export default function StoryDetailScreen() {
     }
   };
 
-  const handleLike = () => {
+  const handleDismissCommentReports = async (commentId: string) => {
+    try {
+      // Optimistic UI update for comments
+      setComments(prev => prev.map(c => 
+        c.id === commentId ? { ...c, report_count: 0, reports: [] } : c
+      ));
+      
+      await dismissCommentReports(commentId, id || "");
+    } catch (error) {
+      if (id) {
+        const fresh = await fetchComments(id);
+        setComments(fresh);
+      }
+    }
+  };
+
+  const handleDismissStoryReport = async () => {
     if (!id) return;
+    try {
+      await dismissReport(id);
+      Alert.alert("Success", "Story reports dismissed.");
+    } catch (error) {
+      Alert.alert("Error", "Failed to dismiss story reports.");
+    }
+  };
+
+  const handleLike = () => {
+    if (!id || isAnonymous) return;
     RNAnimated.sequence([
       RNAnimated.timing(likeScale, {
         toValue: 1.4,
@@ -632,7 +767,6 @@ export default function StoryDetailScreen() {
   const audienceHint = getAudienceHint(story.target_audiences);
   if (audienceHint) metaParts.push(audienceHint);
   const metaLine = metaParts.join(" · ");
-
   const renderCommentInput = () => {
     if ((isModeratorMode && story.status === 'pending')) return null;
 
@@ -645,29 +779,9 @@ export default function StoryDetailScreen() {
     }
     
     return (
-      <View style={styles.commentInputWrapper}>
-        <View style={styles.anonRow}>
-          <Pressable
-            onPress={() => setPostAnonymously((v) => !v)}
-            style={[styles.anonToggle, postAnonymously && styles.anonToggleActive]}
-          >
-            <Ionicons
-              name={postAnonymously ? "eye-off" : "eye-off-outline"}
-              size={13}
-              color={postAnonymously ? colors.primary : COLORS.textLight}
-            />
-            <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
-              {postAnonymously ? "Posting anonymously" : "Post anonymously"}
-            </Text>
-          </Pressable>
-        </View>
+      <View style={[styles.commentInputWrapper, Platform.OS === 'web' && styles.webMaxWidth]}>
         <Text style={styles.reminderText}>{reminderText}</Text>
-        <View
-          style={[
-            styles.inputBar,
-            { paddingBottom: Math.max(insets.bottom, 12) },
-          ]}
-        >
+        <View style={styles.inputBar}>
           <TextInput
             style={styles.commentInput}
             placeholder="Offer support or share your thoughts..."
@@ -693,9 +807,79 @@ export default function StoryDetailScreen() {
             )}
           </TouchableOpacity>
         </View>
+        <View style={[styles.anonRow, { paddingBottom: Math.max(insets.bottom + 4, 12) }]}>
+          <Pressable
+            onPress={() => setPostAnonymously((v) => !v)}
+            style={[styles.anonToggle, postAnonymously && styles.anonToggleActive]}
+          >
+            <Ionicons
+              name={postAnonymously ? "eye-off" : "eye-off-outline"}
+              size={13}
+              color={postAnonymously ? colors.primary : COLORS.textLight}
+            />
+            <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
+              {postAnonymously ? "Posting anonymously" : "Post anonymously"}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     );
   };
+
+  const renderCommentsContent = () => (
+    <View style={[
+      styles.modalContent, 
+      { paddingBottom: 0, flex: 1 }, 
+      Platform.OS === "web" && !isLargeWeb && { width: '90%', maxWidth: 800, borderRadius: 24, height: '85%', overflow: 'hidden', alignSelf: 'center' },
+      isLargeWeb && { borderTopLeftRadius: 0, borderTopRightRadius: 0, height: '100%', borderLeftWidth: 1, borderLeftColor: colors.borderCard }
+    ]}>
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Responses</Text>
+        <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="close" size={24} color={colors.textDark || "#1E1E24"} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
+        {commentsLoading ? (
+          <ActivityIndicator
+            style={{ marginTop: 20 }}
+            color={colors.primary}
+          />
+        ) : comments.length === 0 ? (
+          <Text style={styles.noComments}>
+            {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
+          </Text>
+        ) : (
+          comments.map((comment) => {
+            const isOwn = user?.id === comment.author_id;
+            const isLiked = isCommentLiked(comment.id);
+            const isReported = isCommentReported(comment.id);
+            return (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                isOwn={isOwn}
+                isLiked={isLiked}
+                isReported={isReported}
+                isModerator={isModeratorMode}
+                onDelete={() => handleDeleteComment(comment.id)}
+                onLike={() => handleLikeComment(comment.id)}
+                onReport={() => {
+                  if (!isReported) {
+                    setSelectedCommentId(comment.id);
+                    setShowCommentReportModal(true);
+                  }
+                }}
+                onDismissReport={() => handleDismissCommentReports(comment.id)}
+                fontSizeStep={fontSizeStep}
+              />
+            );
+          })
+        )}
+      </ScrollView>
+      {renderCommentInput()}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -714,16 +898,7 @@ export default function StoryDetailScreen() {
               <Ionicons name="trash-outline" size={22} color={colors.error} />
             </Pressable>
           ) : (
-            <Pressable 
-              onPress={() => !isStoryReported(id || "") && setShowReportModal(true)} 
-              style={{ padding: 8 }}
-            >
-              <Ionicons 
-                name={isStoryReported(id || "") ? "flag" : "flag-outline"} 
-                size={22} 
-                color={isStoryReported(id || "") ? colors.primary : colors.textLight} 
-              />
-            </Pressable>
+            <View style={{ width: 38 }} />
           )}
         </View>
       </View>
@@ -733,8 +908,12 @@ export default function StoryDetailScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
-        <View style={Platform.OS === "web" ? styles.webContainer : { flex: 1 }}>
+        <View style={[
+          Platform.OS === "web" ? styles.webContainer : { flex: 1 },
+          isLargeWeb && isCommentsModalVisible && { flexDirection: 'row', maxWidth: 1200, alignItems: 'stretch' }
+        ]}>
         <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -939,6 +1118,40 @@ export default function StoryDetailScreen() {
                 </View>
 
                 <View style={styles.actionRight}>
+                  {!isOwnStory && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (!isStoryReported(id || "")) {
+                            setShowReportModal(true);
+                          }
+                        }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons
+                          name={isStoryReported(id || "") ? "flag" : "flag-outline"}
+                          size={22}
+                          color={isStoryReported(id || "") ? colors.error : COLORS.textLight}
+                        />
+                      </TouchableOpacity>
+                      {isModeratorMode && isStoryReported(id || "") && (
+                        <TouchableOpacity
+                          onPress={handleDismissStoryReport}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          style={{
+                            backgroundColor: colors.primary + '12',
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 6,
+                            borderWidth: 1,
+                            borderColor: colors.primary + '25',
+                          }}
+                        >
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>Dismiss</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
                   <TouchableOpacity
                     onPress={handleDownload}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -968,21 +1181,6 @@ export default function StoryDetailScreen() {
                 </View>
               </View>
 
-              {/* Comments section */}
-              <Pressable
-                style={styles.commentsHeader}
-                onPress={() => setIsCommentsModalVisible(true)}
-              >
-                <Text style={styles.commentsTitle}>
-                  {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Response' : 'Responses'}` : 'Responses'}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={COLORS.textLight}
-                />
-              </Pressable>
-
               {/* Recommendations */}
               {story && (
                 <RecommendationList
@@ -994,70 +1192,94 @@ export default function StoryDetailScreen() {
           )}
         </ScrollView>
 
-        {/* Comment input */}
-        {renderCommentInput()}
+        {/* Comment input - only on mobile/native when sidebar is NOT used */}
+        {!isLargeWeb && renderCommentInput()}
+        {/* Web Sidebar Comments */}
+        {isLargeWeb && isCommentsModalVisible && (
+          <View style={styles.webSidebar}>
+            {renderCommentsContent()}
+          </View>
+        )}
         </View>
       </KeyboardAvoidingView>
 
-      {/* Comments Bottom Sheet Modal */}
-      <Modal
-        visible={isCommentsModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsCommentsModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={0}
+      {/* Comments Bottom Sheet Modal - Only for mobile/native */}
+      {!isLargeWeb && (
+        <Modal
+          visible={isCommentsModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setIsCommentsModalVisible(false)}
         >
-          <Pressable style={styles.modalBgDismiss} onPress={() => setIsCommentsModalVisible(false)} />
-          <View style={[styles.modalContent, { paddingBottom: 0 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Responses</Text>
-              <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={24} color={colors.textDark || "#1E1E24"} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
-              {commentsLoading ? (
-                <ActivityIndicator
-                  style={{ marginTop: 20 }}
-                  color={colors.primary}
-                />
-              ) : comments.length === 0 ? (
-                <Text style={styles.noComments}>
-                  {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
-                </Text>
-              ) : (
-                comments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    isOwn={user?.id === comment.author_id}
-                    isLiked={isCommentLiked(comment.id)}
-                    onDelete={() => handleDeleteComment(comment.id)}
-                    onLike={() => handleLikeComment(comment.id)}
-                    fontSizeStep={fontSizeStep}
-                  />
-                ))
-              )}
-            </ScrollView>
-            {renderCommentInput()}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+          <KeyboardAvoidingView
+            style={[
+              styles.modalOverlay, 
+              Platform.OS === 'web' && { 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                position: 'fixed' as any,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 1000,
+                backgroundColor: 'rgba(0,0,0,0.5)'
+              }
+            ]}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={0}
+          >
+            <Pressable 
+              style={[
+                styles.modalBgDismiss, 
+                Platform.OS === 'web' && { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }
+              ]} 
+              onPress={() => setIsCommentsModalVisible(false)} 
+            />
+            {renderCommentsContent()}
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
+
+      <ReportCommentModal
+        visible={showCommentReportModal}
+        onClose={() => setShowCommentReportModal(false)}
+        onSubmit={async (reason, details) => {
+          if (selectedCommentId) {
+            await reportComment(selectedCommentId, reason, details);
+            if (Platform.OS === 'web') {
+              window.alert("Report received. Our moderators will review this comment shortly.");
+            } else {
+              Alert.alert("Report Received", "Our moderators will review this comment shortly.");
+            }
+            setSelectedCommentId(null);
+          }
+        }}
+      />
 
       <ReportStoryModal
         visible={showReportModal}
         onClose={() => setShowReportModal(false)}
-        onSubmit={(reason, details) => {
-          if (story) {
-            reportStory(story.id, reason, details);
-            setShowReportBanner(true);
+        onSubmit={async (reason, details) => {
+          if (!story) return;
+          try {
+            await reportStory(story.id, reason, details);
+            if (Platform.OS === 'web') {
+              window.alert("Story reported. Our moderators will review it shortly.");
+            } else {
+              Alert.alert("Report Received", "Our moderators will review this story shortly.");
+            }
+          } catch (error) {
+            if (Platform.OS === 'web') {
+              window.alert("Failed to submit report. Please try again.");
+            } else {
+              Alert.alert("Error", "Failed to submit report. Please try again.");
+            }
           }
         }}
       />
+
+
     </View>
   );
 }
@@ -1082,6 +1304,16 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       maxWidth: 800 as any,
       alignSelf: "center" as any,
       flex: 1,
+    },
+    webSidebar: {
+      width: 400,
+      height: '100%',
+      backgroundColor: c.white,
+    },
+    webMaxWidth: {
+      width: "100%" as any,
+      maxWidth: 800 as any,
+      alignSelf: "center" as any,
     },
     scrollContent: {
       paddingHorizontal: 20,

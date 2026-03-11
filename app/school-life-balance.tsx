@@ -764,7 +764,7 @@ export default function SchoolLifeBalanceScreen() {
                         <Ionicons name="share-outline" size={28} color={colors.textLight} />
                     </TouchableOpacity>
                     <DownloadButton resourceId="14" size={28} color="#7B68EE" />
-                    <BookmarkButton resourceId="14" size={28} color="#7B68EE" />
+                    <BookmarkButton resourceId="14" size={27} color="#7B68EE" />
                 </View>
             </View>
 

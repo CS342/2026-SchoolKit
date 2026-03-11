@@ -40,7 +40,7 @@ if (Platform.OS === 'android') {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type SheetView = 'main' | 'voice' | 'appearance' | 'about' | 'faq' | 'feedback';
+type SheetView = 'main' | 'voice' | 'appearance' | 'about' | 'faq' | 'feedback' | 'language';
 
 const FAQS = [
   { q: 'How do I change the reading voice?', a: 'Go to Settings → Voice. You can preview and select from several different voices.' },
@@ -98,6 +98,52 @@ function SheetRow({
         </View>
       </View>
     </AnimatedPressable>
+  );
+}
+
+// ── Language view ──────────────────────────────────────────────────────────
+
+function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { colors, shadows } = theme;
+  const { preferredLanguage, updatePreferredLanguage } = useOnboarding();
+
+  const options = [
+    { key: 'english' as const, label: 'English', icon: 'language-outline' as const, desc: 'Use English for resources and navigation' },
+    { key: 'spanish' as const, label: 'Español', icon: 'language-outline' as const, desc: 'Usar español para recursos y navegación' },
+  ];
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.subHeader}>
+        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+          <Ionicons name="chevron-back" size={22} color={colors.textDark} />
+        </Pressable>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>Language</Text>
+        <View style={{ width: 32 }} />
+      </View>
+      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>Choose your preferred language</Text>
+      <View style={{ gap: 10, marginTop: 8 }}>
+        {options.map((option) => {
+          const isSelected = preferredLanguage === option.key;
+          return (
+            <Pressable
+              key={option.key}
+              style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
+              onPress={() => updatePreferredLanguage(option.key)}
+            >
+              <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center' }]}>
+                <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
+              </View>
+              <View style={styles.voiceInfo}>
+                <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{option.label}</Text>
+                <Text style={[styles.voiceDesc, { color: colors.textLight }]}>{option.desc}</Text>
+              </View>
+              {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -467,7 +513,7 @@ export function SettingsSheet() {
   const theme = useTheme();
   const { colors, shadows } = theme;
   const { signOut } = useAuth();
-  const { downloadAllResources, downloads, selectedVoice, updateVoice, resetOnboarding } = useOnboarding();
+  const { downloadAllResources, downloads, selectedVoice, updateVoice, resetOnboarding, preferredLanguage } = useOnboarding();
   const [currentView, setCurrentView] = React.useState<SheetView>('main');
 
   // Reset to main view whenever sheet opens
@@ -535,6 +581,7 @@ export function SettingsSheet() {
 
   const appearanceLabel = theme.themePreference === 'system' ? 'System' : theme.themePreference === 'light' ? 'Light' : 'Dark';
   const voiceName = Object.values(VOICE_META).find(m => m.id === selectedVoice)?.name || 'Peter';
+  const languageLabel = preferredLanguage === 'english' ? 'English' : 'Español';
 
   const isWeb = Platform.OS === 'web';
 
@@ -558,6 +605,7 @@ export function SettingsSheet() {
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
                 <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
                   <SheetRow icon="moon-outline" label="Appearance" value={appearanceLabel} onPress={() => setCurrentView('appearance')} theme={theme} />
+                  <SheetRow icon="language-outline" label="Language" value={languageLabel} onPress={() => setCurrentView('language')} theme={theme} />
                   <SheetRow icon="mic-outline" label="Voice" value={voiceName} onPress={() => setCurrentView('voice')} theme={theme} />
                   {Platform.OS === 'web' && (
                     <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
@@ -601,6 +649,12 @@ export function SettingsSheet() {
           {currentView === 'faq' && (
             <View style={{ flex: 1 }}>
               <FAQView theme={theme} onBack={() => setCurrentView('main')} />
+            </View>
+          )}
+
+          {currentView === 'language' && (
+            <View style={{ flex: 1 }}>
+              <LanguageView theme={theme} onBack={() => setCurrentView('main')} />
             </View>
           )}
 
