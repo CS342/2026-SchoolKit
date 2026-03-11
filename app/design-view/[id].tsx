@@ -11,6 +11,7 @@ import { DownloadButton } from '../../components/DownloadButton';
 import { COLORS } from '../../constants/onboarding-theme';
 import type { DesignDocument } from '../../features/design-editor/types/document';
 import { RuntimeRenderer } from '../../features/design-editor/components/runtime/RuntimeRenderer';
+import { getThemeAwareColor } from '../../features/design-editor/utils/theme-mapper';
 
 // Dynamically import Konva components only on web
 let Stage: any = null;

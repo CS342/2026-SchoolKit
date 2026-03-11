@@ -84,7 +84,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
         borderRadius: object.cornerRadius,
         opacity: object.opacity,
         borderWidth: object.strokeWidth || 0,
-        borderColor: object.stroke || 'transparent',
+        borderColor: getThemeAwareColor(object.stroke, isDark) || 'transparent',
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
         ...blend,
@@ -105,7 +105,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
         );
       }
 
-      return <View style={{ ...baseStyle, backgroundColor: object.fill }} {...a11y} />;
+      return <View style={{ ...baseStyle, backgroundColor: getThemeAwareColor(object.fill, isDark) }} {...a11y} />;
     }
 
     case 'ellipse': {
@@ -118,7 +118,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
         borderRadius: 9999,
         opacity: object.opacity,
         borderWidth: object.strokeWidth || 0,
-        borderColor: object.stroke || 'transparent',
+        borderColor: getThemeAwareColor(object.stroke, isDark) || 'transparent',
         transform: object.rotation ? [{ rotate: `${object.rotation}deg` }] : undefined,
         ...getShadowStyle(object.shadow),
         ...blend,
@@ -139,7 +139,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
         );
       }
 
-      return <View style={{ ...baseStyle, backgroundColor: object.fill }} {...a11y} />;
+      return <View style={{ ...baseStyle, backgroundColor: getThemeAwareColor(object.fill, isDark) }} {...a11y} />;
     }
 
     case 'text': {

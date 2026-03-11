@@ -103,13 +103,8 @@ export function ResourceCard({
 
         {category ? (
           <View style={styles.content}>
-<<<<<<< Updated upstream
-            <Text style={[styles.title, { color: colors.textDark, fontSize: 18 }]}>{title}</Text>
-            <View style={[styles.categoryBadge, { backgroundColor: withOpacity(color, 0.1) }]}>
-=======
-            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(22 * fontScale * FONT_STEPS[fontSizeStep]) }]}>{title}</Text>
+            <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: isDark ? color + '33' : withOpacity(color, 0.1) }]}>
->>>>>>> Stashed changes
               <Text style={[styles.categoryText, { color, fontSize: Math.round(16 * fontScale) }]}>{category}</Text>
             </View>
           </View>

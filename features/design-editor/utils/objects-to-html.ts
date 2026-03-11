@@ -1,7 +1,8 @@
 import type { StaticDesignObject } from '../types/document';
+import { getThemeAwareColor } from '../utils/theme-mapper';
 
 /** Convert a static design object's properties into React inline CSS styles. */
-export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
+export function objectToStyle(obj: StaticDesignObject, isDark = false): React.CSSProperties {
   const blendMode = (obj as any).blendMode;
   const base: React.CSSProperties = {
     position: 'absolute',
@@ -16,7 +17,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
   };
 
   // Add gradient CSS if applicable
-  const gradientStyle = getGradientCSS(obj);
+  const gradientStyle = getGradientCSS(obj, isDark);
   // Add shadow CSS if applicable
   const shadowStyle = getShadowCSS(obj);
   // Add blur CSS if applicable
@@ -26,7 +27,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
     case 'rect':
       return {
         ...base,
-        backgroundColor: obj.gradient ? undefined : obj.fill,
+        backgroundColor: obj.gradient ? undefined : getThemeAwareColor(obj.fill, isDark),
         ...gradientStyle,
         border: obj.stroke && obj.strokeWidth
           ? `${obj.strokeWidth}px solid ${obj.stroke}`
@@ -39,7 +40,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
     case 'ellipse':
       return {
         ...base,
-        backgroundColor: obj.gradient ? undefined : obj.fill,
+        backgroundColor: obj.gradient ? undefined : getThemeAwareColor(obj.fill, isDark),
         ...gradientStyle,
         borderRadius: '50%',
         border: obj.stroke && obj.strokeWidth
@@ -52,7 +53,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
     case 'text':
       return {
         ...base,
-        color: obj.fill,
+        color: getThemeAwareColor(obj.fill, isDark),
         fontSize: obj.fontSize,
         fontFamily: obj.fontFamily,
         fontStyle: obj.fontStyle.includes('italic') ? 'italic' : 'normal',
@@ -87,14 +88,14 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
       return {
         ...base,
         height: obj.strokeWidth || 2,
-        backgroundColor: obj.stroke,
+        backgroundColor: getThemeAwareColor(obj.stroke, isDark),
         transformOrigin: '0 0',
       };
 
     case 'star':
       return {
         ...base,
-        backgroundColor: obj.fill,
+        backgroundColor: getThemeAwareColor(obj.fill, isDark),
         // Star approximation via clip-path isn't perfect, but good enough for preview
         clipPath: getStarClipPath(obj.points, obj.innerRadius),
         ...shadowStyle,
@@ -103,7 +104,7 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
     case 'triangle':
       return {
         ...base,
-        backgroundColor: obj.gradient ? undefined : obj.fill,
+        backgroundColor: obj.gradient ? undefined : getThemeAwareColor(obj.fill, isDark),
         ...gradientStyle,
         clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)',
         ...shadowStyle,
@@ -113,14 +114,14 @@ export function objectToStyle(obj: StaticDesignObject): React.CSSProperties {
       return {
         ...base,
         height: obj.strokeWidth || 2,
-        backgroundColor: obj.stroke,
+        backgroundColor: getThemeAwareColor(obj.stroke, isDark),
         transformOrigin: '0 0',
       };
 
     case 'badge':
       return {
         ...base,
-        backgroundColor: obj.gradient ? undefined : obj.fill,
+        backgroundColor: obj.gradient ? undefined : getThemeAwareColor(obj.fill, isDark),
         ...gradientStyle,
         borderRadius: obj.cornerRadius,
         display: 'flex',
@@ -141,10 +142,10 @@ export function getTextContent(obj: StaticDesignObject): string | null {
   return null;
 }
 
-function getGradientCSS(obj: StaticDesignObject): React.CSSProperties {
+function getGradientCSS(obj: StaticDesignObject, isDark: boolean): React.CSSProperties {
   const gradient = (obj as any).gradient;
   if (!gradient) return {};
-  const colors = gradient.colors?.join(', ') || '#7B68EE, #0EA5E9';
+  const colors = gradient.colors?.map((c: any) => getThemeAwareColor(c, isDark)).join(', ') || '#7B68EE, #0EA5E9';
   if (gradient.type === 'radial') {
     return { background: `radial-gradient(circle, ${colors})` };
   }
