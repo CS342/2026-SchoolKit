@@ -23,7 +23,10 @@ function InnerLayout() {
   const isWebDesktop = isWeb && (isDesktop || isTablet);
   const pathname = usePathname();
   const isWelcomePage = pathname === '/welcome' || pathname === '/welcome/';
+  const isOnboardingPage = pathname.startsWith('/onboarding');
+  const isAuthPage = pathname === '/auth' || pathname.startsWith('/auth');
   const isEditorPage = pathname.startsWith('/design/');
+  const hideSidebar = isWelcomePage || isOnboardingPage || isAuthPage || isEditorPage;
 
   const navigationTheme = isDark
     ? {
@@ -65,7 +68,7 @@ function InnerLayout() {
       <OfflineBanner />
       {isWebDesktop ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          {!isWelcomePage && !isEditorPage && <PersistentSidebar />}
+          {!hideSidebar && <PersistentSidebar />}
           <View style={{ flex: 1 }}>
             {stack}
             <PieceRevealOverlay />
