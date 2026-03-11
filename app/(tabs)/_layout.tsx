@@ -14,7 +14,7 @@ function GearButton() {
   const { colors } = useTheme();
   const pathname = usePathname();
 
-  if (pathname === '/stories') return null;
+  if (pathname !== '/profile') return null;
 
   return (
     <View style={{ position: 'absolute', top: insets.top + 14, right: 20, zIndex: 1000 }}>
