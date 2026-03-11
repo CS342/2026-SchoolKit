@@ -313,8 +313,8 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
          piece_id: p.id,
          earned_at: new Date(earnedAtRef.current[p.id] || Date.now()).toISOString(),
        }));
-       (supabase as any).from('earned_accomplishments').upsert(toInsert, { onConflict: 'user_id, piece_id' }).catch((e: any) => {
-         console.warn('[Accomplishments] Failed to push on earn:', e.message);
+       (supabase as any).from('earned_accomplishments').upsert(toInsert, { onConflict: 'user_id, piece_id' }).then(({ error }: any) => {
+         if (error) console.warn('[Accomplishments] Failed to push on earn:', error.message);
        });
     }
 

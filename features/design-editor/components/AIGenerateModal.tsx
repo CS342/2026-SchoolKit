@@ -27,10 +27,10 @@ const ACCENT_SWATCHES = [
 const STYLE_OPTIONS = ['Modern', 'Playful', 'Minimal', 'Bold'];
 
 const EXAMPLE_PROMPTS = [
-  '10 myth vs fact flip cards about nutrition',
-  'A pastel card grid about study tips with badges',
-  'A carousel walkthrough of the water cycle with 5 steps',
-  'An info page about stress management with expandable sections',
+  'A step-by-step guide for returning to school after a cancer diagnosis',
+  'Myth vs fact flip cards about childhood cancer treatments',
+  'A feelings check-in card with emotions kids may experience during treatment',
+  'Tips for talking to friends and classmates about your diagnosis',
 ];
 
 const EDIT_EXAMPLE_PROMPTS = [

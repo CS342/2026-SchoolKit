@@ -39,9 +39,9 @@ serve(async (req) => {
   }
 
   // Call OpenAI — prefer server secret, fall back to client-provided key
-  const openaiKey = Deno.env.get('OPENAI_API_KEY') || (body as Record<string, unknown>).apiKey as string;
+  const openaiKey = Deno.env.get('EXPO_PUBLIC_OPEN_AI_MODERATION_KEY') || (body as Record<string, unknown>).apiKey as string;
   if (!openaiKey) {
-    return jsonResponse({ error: 'OpenAI API key not configured. Set OPENAI_API_KEY secret or pass apiKey in body.' }, 502);
+    return jsonResponse({ error: 'OpenAI API key not configured. Set EXPO_PUBLIC_OPEN_AI_MODERATION_KEY secret in Supabase.' }, 502);
   }
 
   try {

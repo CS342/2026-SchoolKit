@@ -668,6 +668,9 @@ export function useAIGenerate(): UseAIGenerateReturn {
 
         const userPrompt = buildUserPrompt(request, templateSkeleton);
 
+        const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+        console.log('[AI Generate] apiKey present:', !!apiKey, 'length:', apiKey?.length);
+
         const { data, error: fnError } = await supabase.functions.invoke('generate-design', {
           body: {
             messages: [
@@ -676,9 +679,11 @@ export function useAIGenerate(): UseAIGenerateReturn {
             ],
             temperature: isEditMode ? 0.4 : 0.7,
             max_tokens: 16384,
-            apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY,
+            apiKey,
           },
         });
+
+        console.log('[AI Generate] fnError:', fnError, 'data type:', typeof data);
 
         if (fnError) {
           // Try to read the response body for the actual error message

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle, G, Text as SvgText, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -10,12 +10,9 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Dimensions } from 'react-native';
 import { ALL_RESOURCES, Resource } from '../../constants/resources';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ARTBOARD_W = 500;
 const ARTBOARD_H = 750;
@@ -254,10 +251,11 @@ function Leaf({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type Props = { isResourceFullyViewed: (id: string) => boolean; resources: Resource[] };
+type Props = { isResourceFullyViewed: (id: string) => boolean; resources: Resource[]; containerWidth?: number };
 
-export default function KnowledgeTree({ isResourceFullyViewed, resources }: Props) {
-  const RENDER_W = SCREEN_WIDTH;
+export default function KnowledgeTree({ isResourceFullyViewed, resources, containerWidth }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
+  const RENDER_W = Math.min(containerWidth ?? windowWidth, ARTBOARD_W);
   const RENDER_H = RENDER_W * (ARTBOARD_H / ARTBOARD_W);
   const SCALE = RENDER_W / ARTBOARD_W;
 
