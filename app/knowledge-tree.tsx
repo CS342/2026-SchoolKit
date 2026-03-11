@@ -23,7 +23,8 @@ export default function KnowledgeTreeScreen() {
   const { isDark, colors } = useTheme();
   const { resources } = useResources();
 
-  const litCount = resources.filter(r => isResourceFullyViewed(r.id)).length;
+  const treeResources = resources.filter(r => !r.designOnly);
+  const litCount = treeResources.filter(r => isResourceFullyViewed(r.id)).length;
 
   const headerOpacity = useSharedValue(0);
   const headerY = useSharedValue(-12);
@@ -57,7 +58,7 @@ export default function KnowledgeTreeScreen() {
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.textDark }]}>Knowledge Tree</Text>
         <Text style={[styles.countBadge, { color: colors.textMuted }]}>
-          {litCount} / {resources.length}
+          {litCount} / {treeResources.length}
         </Text>
       </Animated.View>
 
@@ -67,7 +68,7 @@ export default function KnowledgeTreeScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <KnowledgeTree isResourceFullyViewed={isResourceFullyViewed} resources={resources} />
+        <KnowledgeTree isResourceFullyViewed={isResourceFullyViewed} resources={treeResources} />
       </ScrollView>
     </View>
   );
