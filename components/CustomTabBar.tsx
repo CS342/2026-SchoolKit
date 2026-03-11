@@ -208,7 +208,7 @@ function SidebarNavItem({ routeName, label, isFocused, onPress }: {
     >
       <Ionicons
         name={iconName}
-        size={20}
+        size={24}
         color={isFocused ? colors.primary : colors.textLight}
       />
       <Text
@@ -341,13 +341,13 @@ const sidebarStyles = {
     marginBottom: 8,
   },
   brandIcon: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
   brandText: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700' as const,
   },
   navList: {
@@ -362,7 +362,7 @@ const sidebarStyles = {
     borderRadius: 10,
   },
   navLabel: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '500' as const,
   },
   navLabelActive: {

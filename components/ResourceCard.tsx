@@ -107,12 +107,12 @@ export function ResourceCard({
         )}
 
         <View style={styles.actions}>
-          {showDownloadIndicator && <DownloadIndicator resourceId={id} />}
-          <BookmarkButton resourceId={id} color={color} size={22} />
+          {showDownloadIndicator && <DownloadIndicator resourceId={id} size={32} />}
+          <BookmarkButton resourceId={id} color={color} size={40} />
           <TouchableOpacity onPress={(e: any) => { e.stopPropagation?.(); setFontSizeStep(s => (s + 1) % FONT_STEPS.length); }} hitSlop={10} activeOpacity={0.7}>
             <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? color : colors.textLight }}>Aa</Text>
           </TouchableOpacity>
-          <Ionicons name="chevron-forward" size={22} color={colors.textLight} />
+          <Ionicons name="chevron-forward" size={32} color={colors.textLight} />
         </View>
       </Animated.View>
     </Pressable>

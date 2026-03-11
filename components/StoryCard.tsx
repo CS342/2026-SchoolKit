@@ -293,7 +293,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           <View style={styles.actionLeft}>
             <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7}>
               <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
-                <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={liked ? '#E53935' : colors.textLight} />
+                <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? '#E53935' : colors.textLight} />
               </RNAnimated.View>
               <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
                 {story.like_count || 0}
@@ -301,7 +301,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/story-detail?id=${story.id}#comments` as any)} hitSlop={10}>
-              <Ionicons name="chatbubble-outline" size={18} color={colors.textLight} style={{ transform: [{ scaleX: -1 }] }} />
+              <Ionicons name="chatbubble-outline" size={26} color={colors.textLight} style={{ transform: [{ scaleX: -1 }] }} />
               <Text style={styles.actionText}>Discuss</Text>
             </TouchableOpacity>
           </View>
@@ -312,7 +312,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             </TouchableOpacity>
             <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7}>
               <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
-                <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={19} color={bookmarked ? colors.primary : colors.textLight} />
+                <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={27} color={bookmarked ? colors.primary : colors.textLight} />
               </RNAnimated.View>
             </TouchableOpacity>
           </View>
@@ -359,9 +359,9 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
   return StyleSheet.create({
   card: {
     backgroundColor: isDark ? c.backgroundLight : c.white,
-    padding: 20,
-    borderRadius: 24,
-    marginBottom: 16,
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 12,
     borderWidth: 1.5,
     borderColor: isDark ? c.borderCard : '#E8E8F0',
     shadowColor: isDark ? '#000' : '#2D2D44',
@@ -458,14 +458,14 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     fontSize: 14,
     color: c.textLight,
     fontWeight: '400',
-    marginBottom: 7,
+    marginBottom: 4,
   },
   title: {
     fontSize: fs(22),
     fontWeight: '700',
     color: c.textDark,
     lineHeight: fs(28),
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: -0.2,
   },
   bodyPreview: {
@@ -473,13 +473,13 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
       fontWeight: '400',
       color: c.textMuted,
       lineHeight: fs(24),
-      marginBottom: 14,
+      marginBottom: 10,
     },
     tagsContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 6,
-      marginBottom: 14,
+      marginBottom: 10,
     },
     tagBadge: {
       paddingHorizontal: 9,
@@ -494,7 +494,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     backgroundColor: c.error + '10',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: c.error + '30',
   },
@@ -520,14 +520,14 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 10,
+    paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: isDark ? c.borderCard : '#E5E5EA',
   },
   actionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 18,
   },
   actionItem: {
     flexDirection: 'row',

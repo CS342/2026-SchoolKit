@@ -37,7 +37,7 @@ function NavItem({ label, path, activeIcon, inactiveIcon, isFocused }: {
     >
       <Ionicons
         name={isFocused ? activeIcon : inactiveIcon}
-        size={20}
+        size={24}
         color={isFocused ? colors.primary : colors.textLight}
       />
       <Text
@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   brandIcon: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandText: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
   },
   navList: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navLabel: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '500',
   },
   navLabelActive: {

@@ -304,7 +304,7 @@ export default function LibraryScreen() {
                   const iconName = CATEGORY_ICONS[category] || 'ellipse';
                   const chipContent = (
                     <>
-                      <Ionicons name={iconName} size={15} color={isActive ? colors.white : colors.textMuted} />
+                      <Ionicons name={iconName} size={20} color={isActive ? colors.white : colors.textMuted} />
                       <Text style={[styles.filterChipText, { color: isActive ? colors.white : colors.textMuted }]}>
                         {category}
                       </Text>
@@ -640,11 +640,11 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       borderRadius: RADII.badge,
       borderWidth: BORDERS.card,
-      marginRight: SPACING.smallGap,
+      marginRight: 10,
       ...s.card,
     },
     filterChipActive: {
@@ -652,7 +652,7 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
       ...s.button,
     },
     filterChipText: {
-      fontSize: 13,
+      fontSize: 16,
       fontWeight: '700',
     },
     scrollContent: {
@@ -660,7 +660,7 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
       paddingTop: SPACING.itemGap,
       paddingBottom: 40,
     },
-    sectionContainer: { marginBottom: SPACING.sectionGap },
+    sectionContainer: { marginBottom: 20 },
     sectionTitle: {
       fontSize: 18,
       fontWeight: '700',
@@ -668,9 +668,9 @@ const makeStyles = (c: C, s: S, isWebDesktop = false) =>
     },
     resourcesContainer: isWebDesktop
       ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
-      : { gap: SPACING.itemGap },
+      : { gap: 10 },
     storiesContainer: {
-      gap: SPACING.itemGap,
+      gap: 10,
       width: '100%',
     },
     emptyContainer: {

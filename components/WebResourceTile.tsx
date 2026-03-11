@@ -73,8 +73,8 @@ export function WebResourceTile({
           </View>
         )}
         <View style={styles.actions}>
-          {showDownloadIndicator && <DownloadIndicator resourceId={id} />}
-          <BookmarkButton resourceId={id} color={color} size={18} />
+          {showDownloadIndicator && <DownloadIndicator resourceId={id} size={32} />}
+          <BookmarkButton resourceId={id} color={color} size={40} />
         </View>
       </Pressable>
     </Animated.View>
@@ -124,9 +124,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actions: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
+    zIndex: 10,
   },
 });
