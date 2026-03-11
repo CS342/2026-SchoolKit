@@ -299,7 +299,7 @@ function AboutView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
         <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card, width: '100%', padding: 16 }]}>
           <Text style={[styles.cardLabel, { color: colors.textLight }]}>OUR MISSION</Text>
           <Text style={[styles.cardBody, { color: colors.textDark }]}>
-            Cancer survivors who are returning to school, their parents, and their education team need a centralized, accessible platform that addresses the shared educational and social challenges of re-entry — in order to support a smoother transition back into the school environment.
+            To facilitate a smoother transition from cancer treatment back to school in young cancer survivors and their support system in order to reduce anxiety, confusion, and feelings of isolation during reintegration
           </Text>
         </View>
 
@@ -536,17 +536,21 @@ export function SettingsSheet() {
   const appearanceLabel = theme.themePreference === 'system' ? 'System' : theme.themePreference === 'light' ? 'Light' : 'Dark';
   const voiceName = Object.values(VOICE_META).find(m => m.id === selectedVoice)?.name || 'Peter';
 
+  const isWeb = Platform.OS === 'web';
+
   return (
-    <Modal visible={isOpen} transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.overlay}>
+    <Modal visible={isOpen} transparent animationType={isWeb ? 'fade' : 'slide'} onRequestClose={handleClose}>
+      <View style={[styles.overlay, isWeb && styles.overlayWeb]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose}>
           <View style={styles.backdrop} />
         </Pressable>
 
-        <View style={[styles.sheet, { backgroundColor: colors.appBackground }]}>
-          <View style={styles.handleArea} {...panResponder.panHandlers}>
-            <View style={[styles.handle, { backgroundColor: colors.borderCard }]} />
-          </View>
+        <View style={[styles.sheet, { backgroundColor: colors.appBackground }, isWeb && styles.sheetWeb]}>
+          {!isWeb && (
+            <View style={styles.handleArea} {...panResponder.panHandlers}>
+              <View style={[styles.handle, { backgroundColor: colors.borderCard }]} />
+            </View>
+          )}
 
           {currentView === 'main' && (
             <>
@@ -617,6 +621,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
+  overlayWeb: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'stretch',
+  },
   backdrop: { flex: 1 },
   sheet: {
     borderTopLeftRadius: 24,
@@ -625,6 +634,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 40,
     height: '88%',
+  },
+  sheetWeb: {
+    width: 380,
+    height: '100%',
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingTop: 48,
   },
   handleArea: {
     alignSelf: 'stretch',
