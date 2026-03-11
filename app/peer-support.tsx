@@ -44,8 +44,6 @@ import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const FONT_STEPS = [1.0, 1.2, 1.45];
-
 // --- Types ---
 type PeerTopic = {
   id: string;
@@ -343,8 +341,6 @@ function BottomSheet({
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
 
-  const [fontSizeStep, setFontSizeStep] = useState(0);
-
   // TTS state for bottom sheet
   const sheetPlayer = useAudioPlayer();
   const sheetPlayerStatus = useAudioPlayerStatus(sheetPlayer);
@@ -544,9 +540,6 @@ function BottomSheet({
                 <Text style={{ fontSize: 12, fontWeight: '700', color: topic.color }}>{sheetPlaybackRate}x</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7} style={styles.sheetActionButton}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? topic.color : '#9CA3AF' }}>Aa</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.sheetActionButton} onPress={handleDismiss} accessibilityLabel="Close">
               <Ionicons name="close" size={24} color={COLORS.textLight} />
             </TouchableOpacity>
@@ -603,7 +596,7 @@ function BottomSheet({
                 ]}
               >
                 <View style={[styles.bulletDot, { backgroundColor: topic.color }]} />
-                <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{point}</Text>
+                <Text style={styles.bulletText}>{point}</Text>
               </Animated.View>
             ))}
 

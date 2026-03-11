@@ -30,8 +30,6 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const RESOURCE_ID = "17";
 const PAGE_COLOR = "#6366F1";
 
-const FONT_STEPS = [1.0, 1.2, 1.45];
-
 // Body diagram layout constants (figureLeft computed from containerWidth in BodyDiagram)
 const FIG_WIDTH = 100;
 const ICON_SIZE = 42;
@@ -443,7 +441,6 @@ function ExpandedCardModal({
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
     const underlineAnim = useRef(new Animated.Value(0)).current;
-    const [fontSizeStep, setFontSizeStep] = useState(0);
 
     useEffect(() => {
         if (visible) {
@@ -544,9 +541,6 @@ function ExpandedCardModal({
                                             />
                                         )}
                                     </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
-                                        <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? color : '#9CA3AF' }}>Aa</Text>
-                                    </TouchableOpacity>
                                 </View>
                             </View>
 
@@ -565,7 +559,7 @@ function ExpandedCardModal({
                                             {section.notice.map((item, i) => (
                                                 <View key={i} style={styles.bulletRow}>
                                                     <View style={[styles.bullet, { backgroundColor: color }]} />
-                                                    <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
+                                                    <Text style={styles.bulletText}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -578,7 +572,7 @@ function ExpandedCardModal({
                                             {section.helps.map((item, i) => (
                                                 <View key={i} style={styles.bulletRow}>
                                                     <View style={[styles.bullet, { backgroundColor: "#10B981" }]} />
-                                                    <Text style={[styles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(14 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(22 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
+                                                    <Text style={styles.bulletText}>{item}</Text>
                                                 </View>
                                             ))}
                                         </View>

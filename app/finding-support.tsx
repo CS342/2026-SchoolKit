@@ -28,8 +28,6 @@ import { useTheme } from "../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const FONT_STEPS = [1.0, 1.2, 1.45];
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 type StoryData = {
     id: string;
@@ -352,7 +350,6 @@ function ExpandedCardModal({
     const scaleAnim = useRef(new Animated.Value(0.85)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
-    const [fontSizeStep, setFontSizeStep] = useState(0);
 
     useEffect(() => {
         if (visible) {
@@ -529,9 +526,6 @@ function ExpandedCardModal({
                                             <Text style={{ fontSize: 12, fontWeight: '700', color }}>{playbackRate}x</Text>
                                         </TouchableOpacity>
                                     )}
-                                    <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
-                                        <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? color : '#9CA3AF' }}>Aa</Text>
-                                    </TouchableOpacity>
                                 </View>
 
                                 <View style={[modalStyles.divider, { backgroundColor: color + "30" }]} />
@@ -550,7 +544,7 @@ function ExpandedCardModal({
                                                 color={color}
                                                 style={{ marginTop: 2, marginRight: 10, flexShrink: 0 }}
                                             />
-                                            <Text style={[modalStyles.backText, fontSizeStep > 0 && { fontSize: Math.round(16 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * FONT_STEPS[fontSizeStep]) }]}>{para}</Text>
+                                            <Text style={modalStyles.backText}>{para}</Text>
                                         </View>
                                     ))}
                                 </ScrollView>

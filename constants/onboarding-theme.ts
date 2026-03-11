@@ -522,7 +522,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       elevation: 5,
     },
     tabHeaderTitle: {
-      fontSize: fs(30),
+      fontSize: 30,
       fontWeight: '800',
       color: c.textDark,
       marginBottom: 6,
