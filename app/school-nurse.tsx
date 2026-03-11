@@ -50,6 +50,8 @@ if (Platform.OS === "android") {
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.55;
 
+const FONT_STEPS = [1.0, 1.2, 1.45];
+
 // --- Data ---
 type SectionData = {
   id: string;
@@ -220,6 +222,7 @@ function BottomSheet({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [internalVisible, setInternalVisible] = useState(false);
   const bulletAnims = useRef<Animated.Value[]>([]).current;
+  const [fontSizeStep, setFontSizeStep] = useState(0);
   const { isSpeaking, isLoading, speak, stop, playbackRate, togglePlaybackRate, isAudioLoaded } = useTTS();
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);
@@ -369,6 +372,9 @@ function BottomSheet({
                 <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textLight }}>{playbackRate}x</Text>
               </TouchableOpacity>
             )}
+            <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? section.color : '#9CA3AF' }}>Aa</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={handleDismiss} style={{ padding: 4 }}>
               <Ionicons name="close" size={24} color={COLORS.textLight} />
             </TouchableOpacity>
@@ -406,7 +412,7 @@ function BottomSheet({
                     { backgroundColor: section.color },
                   ]}
                 />
-                <Text style={sheetStyles.bulletText}>{item}</Text>
+                <Text style={[sheetStyles.bulletText, fontSizeStep > 0 && { fontSize: Math.round(15 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * FONT_STEPS[fontSizeStep]) }]}>{item}</Text>
               </Animated.View>
             ))}
           </ScrollView>

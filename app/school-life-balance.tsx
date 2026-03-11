@@ -28,6 +28,8 @@ import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+const FONT_STEPS = [1.0, 1.2, 1.45];
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 type CardData = {
     id: string;
@@ -320,6 +322,7 @@ function ExpandedCardModal({
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const flipAnim = useRef(new Animated.Value(0)).current;
     const underlineAnim = useRef(new Animated.Value(0)).current;
+    const [fontSizeStep, setFontSizeStep] = useState(0);
 
     useEffect(() => {
         if (visible) {
@@ -407,6 +410,9 @@ function ExpandedCardModal({
                                             <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : "#2D2D44"} />
                                         )}
                                     </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
+                                        <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? color : '#9CA3AF' }}>Aa</Text>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
 
@@ -414,7 +420,7 @@ function ExpandedCardModal({
 
                             <ScrollView style={styles.backContentScroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                                 {item.back.split("\n\n").map((para, idx) => (
-                                    <Text key={idx} style={styles.backParagraph}>{para}</Text>
+                                    <Text key={idx} style={[styles.backParagraph, fontSizeStep > 0 && { fontSize: Math.round(15 * FONT_STEPS[fontSizeStep]), lineHeight: Math.round(24 * FONT_STEPS[fontSizeStep]) }]}>{para}</Text>
                                 ))}
                             </ScrollView>
                         </View>
