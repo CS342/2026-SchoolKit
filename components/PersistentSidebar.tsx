@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
   brandIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

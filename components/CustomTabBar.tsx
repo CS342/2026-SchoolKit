@@ -343,7 +343,6 @@ const sidebarStyles = {
   brandIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
