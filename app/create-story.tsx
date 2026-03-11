@@ -147,14 +147,24 @@ export default function CreateStoryScreen() {
 
     if (result) {
       fireEvent('story_created');
-      if (!isEditing || (isEditing && existingStory?.status === 'rejected')) {
-        Alert.alert(
-          'Story Submitted',
-          'Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)/stories' as any) }]
-        );
-      } else {
+      const goToStories = () => {
+        // Use a more robust way to navigate to the tab
         router.replace('/(tabs)/stories' as any);
+      };
+
+      if (!isEditing || (isEditing && existingStory?.status === 'rejected')) {
+        if (Platform.OS === 'web') {
+          alert('Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.');
+          goToStories();
+        } else {
+          Alert.alert(
+            'Story Submitted',
+            'Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.',
+            [{ text: 'OK', onPress: goToStories }]
+          );
+        }
+      } else {
+        goToStories();
       }
     } else {
       Alert.alert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
