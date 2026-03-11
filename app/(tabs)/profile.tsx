@@ -5,14 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
-  Image,
   Platform,
   Modal,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import Constants from "expo-constants";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -142,6 +140,25 @@ export default function ProfileScreen() {
   const myStoriesCount = stories.filter(s => s.author_id === user?.id).length;
   const savedCount = bookmarks.length + storyBookmarks.length;
   const [showEditProfile, setShowEditProfile] = React.useState(false);
+  const [showIconPicker, setShowIconPicker] = React.useState(false);
+
+  const AVATAR_OPTIONS = [
+    { key: 'icon:star',    icon: 'star'    as const, label: 'Star'    },
+    { key: 'icon:heart',   icon: 'heart'   as const, label: 'Heart'   },
+    { key: 'icon:sparkles', icon: 'sparkles' as const, label: 'Sparkle' },
+    { key: 'icon:initial', icon: null,                label: 'Initial' },
+  ] as const;
+
+  function renderAvatarInner(size = 88) {
+    const pic = data.profilePicture;
+    if (!pic || pic === 'icon:initial') {
+      return <Text style={[styles.avatarInitial, { fontSize: size * 0.41 }]}>{data.name.charAt(0).toUpperCase()}</Text>;
+    }
+    if (pic.startsWith('icon:')) {
+      return <Ionicons name={pic.replace('icon:', '') as any} size={size * 0.45} color="#FFF" />;
+    }
+    return <Image source={{ uri: pic }} style={[styles.avatarImage, { width: size, height: size, borderRadius: size / 2 }]} />;
+  }
 
   // Avatar entrance
   const avatarScale = useSharedValue(0);
@@ -173,53 +190,6 @@ export default function ProfileScreen() {
   const roleDisplayName = getRoleDisplayName(data.role);
   const schoolStatusText = getSchoolStatusText(data.schoolStatuses);
 
-  const handleTakePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Camera permission is required to take photos.");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled && result.assets[0].base64) {
-      // Create data URI for profile picture
-      const dataUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      await updateProfilePicture(dataUri);
-    }
-  };
-
-  const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Photo library permission is required.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled && result.assets[0].base64) {
-      // Create data URI for profile picture
-      const dataUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      await updateProfilePicture(dataUri);
-    }
-  };
-
-  const handleProfilePicture = () => {
-    Alert.alert("Profile Picture", "Choose an option", [
-      { text: "Take Photo", onPress: handleTakePhoto },
-      { text: "Choose from Library", onPress: handlePickImage },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
 
 
   return (
@@ -254,6 +224,43 @@ export default function ProfileScreen() {
           </View>
         </Modal>
 
+        {/* Icon picker modal */}
+        <Modal
+          visible={showIconPicker}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowIconPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setShowIconPicker(false)} />
+            <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 24 }]}>
+              <View style={[styles.editModalHandle, { backgroundColor: colors.borderCard }]} />
+              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Choose Avatar</Text>
+              <View style={styles.iconPickerGrid}>
+                {AVATAR_OPTIONS.map((opt) => {
+                  const isSelected = (data.profilePicture ?? 'icon:initial') === opt.key;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={async () => { await updateProfilePicture(opt.key); setShowIconPicker(false); }}
+                      style={[styles.iconPickerItem, isSelected && { borderColor: colors.primary, borderWidth: 2.5 }, { backgroundColor: colors.backgroundLight }]}
+                    >
+                      <View style={[styles.iconPickerCircle, { backgroundColor: colors.primary }]}>
+                        {opt.icon ? (
+                          <Ionicons name={opt.icon} size={32} color="#FFF" />
+                        ) : (
+                          <Text style={[styles.avatarInitial, { fontSize: 32 }]}>{data.name.charAt(0).toUpperCase()}</Text>
+                        )}
+                      </View>
+                      <Text style={[styles.iconPickerLabel, { color: colors.textDark }]}>{opt.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {isWebDesktop ? (
           <View style={styles.webColumns}>
             <View style={styles.webLeft}>
@@ -264,19 +271,13 @@ export default function ProfileScreen() {
                 style={styles.identityCard}
               >
                 <View style={styles.identity}>
-                  <Pressable onPress={handleProfilePicture}>
+                  <Pressable onPress={() => setShowIconPicker(true)}>
                     <Animated.View style={avatarStyle}>
                       <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                        {data.profilePicture ? (
-                          <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
-                        ) : (
-                          <Text style={styles.avatarInitial}>
-                            {data.name.charAt(0).toUpperCase()}
-                          </Text>
-                        )}
+                        {renderAvatarInner()}
                       </View>
                       <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
-                        <Ionicons name="camera" size={14} color="#FFFFFF" />
+                        <Ionicons name="pencil" size={13} color="#FFFFFF" />
                       </View>
                     </Animated.View>
                   </Pressable>
@@ -420,19 +421,13 @@ export default function ProfileScreen() {
               style={styles.identityCard}
             >
             <View style={styles.identity}>
-              <Pressable onPress={handleProfilePicture}>
+              <Pressable onPress={() => setShowIconPicker(true)}>
                 <Animated.View style={avatarStyle}>
                   <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                    {data.profilePicture ? (
-                      <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
-                    ) : (
-                      <Text style={styles.avatarInitial}>
-                        {data.name.charAt(0).toUpperCase()}
-                      </Text>
-                    )}
+                    {renderAvatarInner()}
                   </View>
                   <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
-                    <Ionicons name="camera" size={14} color="#FFFFFF" />
+                    <Ionicons name="pencil" size={13} color="#FFFFFF" />
                   </View>
                 </Animated.View>
               </Pressable>
@@ -843,6 +838,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 4,
+  },
+  iconPickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  iconPickerItem: {
+    width: 120,
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  iconPickerCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconPickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,

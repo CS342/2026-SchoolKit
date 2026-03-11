@@ -242,6 +242,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfilePicture = async (uri: string | null) => {
+    // Icon keys (e.g. 'icon:star') are stored directly, no upload needed
+    if (uri?.startsWith('icon:')) {
+      setData(prev => ({ ...prev, profilePicture: uri }));
+      await updateProfile({ profile_picture_url: uri });
+      return;
+    }
+
     // If we have a new image, upload it to Supabase Storage
     let publicUrl = uri;
 

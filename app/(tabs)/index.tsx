@@ -62,7 +62,11 @@ export default function ForYouScreen() {
       <Animated.View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }, headerStyle]}>
         <View style={styles.headerRow}>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            {data.profilePicture ? (
+            {data.profilePicture && data.profilePicture.startsWith('icon:') ? (
+              data.profilePicture === 'icon:initial' || !data.profilePicture.replace('icon:', '')
+                ? <Text style={[styles.avatarInitial, { color: '#FFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>
+                : <Ionicons name={data.profilePicture.replace('icon:', '') as any} size={22} color="#FFF" />
+            ) : data.profilePicture ? (
               <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
             ) : (
               <Text style={[styles.avatarInitial, { color: '#FFF' }]}>
@@ -87,7 +91,7 @@ export default function ForYouScreen() {
             return schoolStatus !== 'Not set' ? (
               <View style={[sharedStyles.badge, styles.roleBadge]}>
                 <Ionicons name="school-outline" size={16} color={colors.primary} />
-                <Text style={[sharedStyles.badgeText, styles.roleBadgeText]}>{schoolStatus}</Text>
+                <Text style={[sharedStyles.badgeText, styles.roleBadgeText]} numberOfLines={1} ellipsizeMode="tail">{schoolStatus}</Text>
               </View>
             ) : null;
           })()}
@@ -194,9 +198,12 @@ const makeStyles = (c: typeof import('../../constants/theme').COLORS_LIGHT, isWe
       alignItems: 'center',
       alignSelf: 'flex-start',
       gap: 6,
+      maxWidth: '100%',
+      flexShrink: 1,
     },
     roleBadgeText: {
       marginLeft: 0,
+      flexShrink: 1,
     },
     scrollContent: {
       paddingHorizontal: SPACING.screenPadding,
