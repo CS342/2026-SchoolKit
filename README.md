@@ -1,17 +1,27 @@
-# SchoolKit
+<p align="center">
+  <img src="assets/images/SchoolKit-transparent.png" alt="SchoolKit Logo" width="200" />
+</p>
 
-SchoolKit is a cross-platform application developed for the CS342: Building for Digital Health course at Stanford University (Winter 2026). This project aims to support young cancer survivors by providing coordinated academic and social support from parents and teachers to ensure a smoother, more successful transition back into the classroom.
+<h1 align="center">SchoolKit</h1>
 
-**GitHub Repository:** [https://github.com/CS342/2026-SchoolKit](https://github.com/CS342/2026-SchoolKit)
+<p align="center">
+  Supporting young cancer survivors' transition back to school
+</p>
 
-## Need Statement
+<p align="center">
+  <a href="https://schoolkit-five.vercel.app/welcome">Web App</a> · <a href="https://github.com/CS342/2026-SchoolKit">GitHub</a>
+</p>
 
-Young cancer survivors returning to school need coordinated academic and social support from parents and teachers to ensure a smoother, more successful transition back into the classroom.
+---
+
+SchoolKit is a cross-platform application developed for the CS342: Building for Digital Health course at Stanford University (Winter 2026). It facilitates a smoother transition from cancer treatment back to school for young cancer survivors and their support systems — reducing anxiety, confusion, and feelings of isolation during reintegration.
 
 ## Download / Access
 
-- **iOS:** Download via [TestFlight](https://testflight.apple.com/) (invite required)
-- **Web:** Access the live web version at [https://schoolkit-five.vercel.app](https://schoolkit-five.vercel.app)
+| Platform | Link |
+| -------- | ---- |
+| **Web** | [schoolkit-five.vercel.app/welcome](https://schoolkit-five.vercel.app/welcome) |
+| **iOS** | [TestFlight](https://testflight.apple.com/) (invite required) |
 
 ## Getting Started
 
@@ -26,32 +36,37 @@ Young cancer survivors returning to school need coordinated academic and social 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/CS342/2026-SchoolKit.git
    cd 2026-SchoolKit
    ```
 
-2. Install dependencies:
+2. Install dependencies (the `--legacy-peer-deps` flag is required due to peer dependency conflicts between React 19 and some packages):
+
    ```bash
    npm install --legacy-peer-deps
    ```
 
-3. Set up environment variables:
-   - Create a `.env` file in the root directory with your Supabase credentials.
+3. Set up environment variables — create a `.env` file in the root directory:
+
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   EXPO_PUBLIC_OPEN_AI_MODERATION_KEY=your_openai_key
+   ```
 
 ### Running the App
 
-**Mobile (iOS / Android):**
-```bash
-npx expo start
-```
-Scan the QR code with the Expo Go app on your device, or press `i` for iOS simulator / `a` for Android emulator.
+| Command | Description |
+| ------- | ----------- |
+| `npm start` | Start the Expo dev server |
+| `npm run ios` | Start on iOS simulator |
+| `npm run android` | Start on Android emulator |
+| `npm run web` | Launch in browser at `http://localhost:8081` |
+| `npm run lint` | Run ESLint |
 
-**Web:**
-```bash
-npm run web
-```
-This launches the app in your browser at `http://localhost:8081`.
+For mobile, scan the QR code with the Expo Go app on your device, or press `i` for iOS simulator / `a` for Android emulator.
 
 ## Implemented Features
 
@@ -59,11 +74,11 @@ This launches the app in your browser at `http://localhost:8081`.
 - Email/password sign-up and sign-in with password strength validation
 - Email confirmation flow
 - Guest access (anonymous sign-in)
-- Multi-step onboarding: name entry, role selection (student K-8, student high school, parent, staff), grade level, school journey status, topic preferences, and AI voice selection
-- Web-optimized split layout for auth/onboarding pages (branded panel + form)
+- Multi-step onboarding: name, role selection (student K–8, student high school, parent, staff), grade level, school journey status, topic preferences, and AI voice selection
+- Web-optimized split layout for auth/onboarding pages
 
 ### Home Feed (For You)
-- Personalized topic recommendations based on user role and selected interests
+- Personalized topic recommendations based on user role and interests
 - Topic cards with category-based icons and gradients
 - Topic detail pages with in-depth educational content
 
@@ -72,71 +87,99 @@ This launches the app in your browser at `http://localhost:8081`.
 - Finding Support
 - Peer Support
 - School-Life Balance
+- Managing Symptoms
+- Coping Away From Home
 - School Nurse resources
 - Help & Support page
 
 ### Stories
 - Community stories shared by other users
-- Story creation with text input
-- Story detail view
-- Moderation system with rejected stories tracking
+- Story creation with text input and tags
+- Story detail view with moderation system and rejected stories tracking
 
 ### Library (Bookmarks)
 - Save and organize favorite resources
 - Segmented tabs: All, Saved, Downloaded
 - Offline access to downloaded content
 
+### Knowledge Tree & Accomplishments
+- Visual knowledge tree tracking learning progress
+- Accomplishment badges for completed topics and milestones
+
 ### Journal
 - Personal journal entries for reflection
 - Create, view, and manage journal entries
 
+### Design Editor
+- Visual design editor with Konva canvas
+- Design templates and custom creation
+- Undo/redo support via Zustand + Zundo
+- Shareable designs via unique token links
+
 ### Profile & Settings
 - Role-based user profiles
 - Edit name, role, grade level, school status, and topic preferences
+- Language selection
 - Dark mode / light mode toggle
-- About page
-- Sign out
+- About page and sign out
 
-### Design Editor
-- Visual design editor with canvas
-- Design templates and custom creation
-- Shareable designs via unique token links
+### Accessibility & Internationalization
+- Text-to-Speech for content read-aloud
+- Language selection support
 
 ### Cross-Platform (iOS, Android, Web)
 - Single shared codebase using React Native + Expo
 - Responsive web layout with sidebar navigation on desktop/tablet and bottom tabs on mobile
-- Web-specific adaptations: `window.confirm()` dialogs, layout-aware width calculations, split-layout auth pages
-- Dark mode support across all platforms
+- Platform-specific adaptations and dark mode support across all platforms
 
-## Architecture
-
-- **Frontend:** React Native + Expo with Expo Router (file-based routing) and TypeScript
-- **Backend:** Supabase (Auth, PostgreSQL database, auto-generated REST API)
-- **State Management:** React Context (Auth, Onboarding, Theme) + Zustand
-- **AI Integration:** OpenAI API for content generation and voice features
-- **Styling:** React Native StyleSheet with responsive breakpoints via `useResponsive` hook
+### Offline Support
+- Download content for offline access
+- Network status detection and graceful degradation
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | [React Native](https://reactnative.dev/) + [Expo](https://expo.dev/) |
-| Routing | [Expo Router](https://docs.expo.dev/router/introduction/) |
-| Language | [TypeScript](https://www.typescriptlang.org/) |
-| Backend | [Supabase](https://supabase.io/) (Auth, PostgreSQL, APIs) |
-| AI | [OpenAI API](https://platform.openai.com/) |
-| State | React Context + [Zustand](https://github.com/pmndrs/zustand) |
+| ----- | ---------- |
+| Framework | [React Native](https://reactnative.dev/) 0.81 + [Expo](https://expo.dev/) 54 |
+| Routing | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based) |
+| Language | [TypeScript](https://www.typescriptlang.org/) 5.9 |
+| UI | [React](https://react.dev/) 19 |
+| Backend | [Supabase](https://supabase.io/) (Auth, PostgreSQL, REST API) |
+| AI | [OpenAI API](https://platform.openai.com/) (content generation, moderation) |
+| TTS | [Expo Speech](https://docs.expo.dev/versions/latest/sdk/speech/) + [ElevenLabs](https://elevenlabs.io/) (fallback) |
+| State | [React Context](https://react.dev/reference/react/createContext) + [Zustand](https://github.com/pmndrs/zustand) |
+| Undo/Redo | [Zundo](https://github.com/charkour/zundo) + [Immer](https://immerjs.github.io/immer/) |
+| Canvas | [Konva](https://konvajs.org/) + [react-konva](https://github.com/konvajs/react-konva) |
 | Animations | [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) |
+
+## Project Structure
+
+```
+├── app/            # Screens and routes (Expo Router file-based routing)
+├── components/     # Reusable UI components
+├── constants/      # Theme, colors, and configuration
+├── contexts/       # React Context providers (Auth, Onboarding, Theme)
+├── features/       # Feature-specific modules
+├── hooks/          # Custom React hooks
+├── lib/            # Library utilities and clients
+├── services/       # API and backend service layers
+├── supabase/       # Supabase migrations and configuration
+├── types/          # TypeScript type definitions
+├── utils/          # General utility functions
+└── assets/         # Images, fonts, and static assets
+```
 
 ## The Team
 
 ### Project Leads
+
 - Dr. Yosiah Yarbrough
 - Nicole Fernandez-Vina
 
 ### CS342 Student Team
+
 | Name | GitHub |
-|------|--------|
+| ---- | ------ |
 | Yuzhou Bian | [yuzhoubian](https://github.com/yuzhoubian) |
 | Yihan Zhao | [ehan1han](https://github.com/ehan1han) |
 | Janina Troper | [troper01](https://github.com/troper01) |
