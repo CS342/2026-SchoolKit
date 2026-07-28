@@ -48,7 +48,8 @@ const BLOCK_SCHEMAS: Record<BlockType, z.ZodTypeAny> = {
   cardGrid: z.object({ ...idOpt, type: z.literal('cardGrid'), heading: Str, subheading: z.string().optional(), items: z.array(CardItem) }),
   stepper: z.object({ ...idOpt, type: z.literal('stepper'), heading: Str, subheading: z.string().optional(), steps: z.array(StepItem) }),
   linkList: z.object({ ...idOpt, type: z.literal('linkList'), heading: Str, subheading: z.string().optional(), items: z.array(LinkItem) }),
-  resourceRefList: z.object({ ...idOpt, type: z.literal('resourceRefList'), heading: Str, subheading: z.string().optional(), ranked: z.boolean().optional(), resourceIds: z.array(z.string()) }),
+  // resourceIds coerced to strings — models often emit them as numbers (13 not "13").
+  resourceRefList: z.object({ ...idOpt, type: z.literal('resourceRefList'), heading: Str, subheading: z.string().optional(), ranked: z.boolean().optional(), resourceIds: z.array(z.coerce.string()) }),
   recommendations: z.object({ ...idOpt, type: z.literal('recommendations') }),
 };
 
@@ -81,9 +82,17 @@ export function parseContentDoc(input: unknown): ParseResult {
 
   const kept: ContentBlock[] = [];
   for (const raw of input.blocks as unknown[]) {
-    const err = validateBlock(raw, true);
-    if (err) { warnings.push(`dropped block — ${err}`); continue; }
-    kept.push(raw as ContentBlock);
+    if (!isObj(raw)) { warnings.push('dropped block — not an object'); continue; }
+    if (!isNonEmpty(raw.id)) { warnings.push('dropped block — missing id'); continue; }
+    const schema = BLOCK_SCHEMAS[raw.type as BlockType];
+    if (!schema) { warnings.push(`dropped block — unknown type "${String(raw.type)}"`); continue; }
+    const res = schema.safeParse(raw);
+    if (!res.success) {
+      const i = res.error.issues[0];
+      warnings.push(`dropped block — ${String(raw.type)}${i.path.length ? '.' + i.path.join('.') : ''}: ${i.message}`);
+      continue;
+    }
+    kept.push(res.data as ContentBlock); // cleaned: coercions applied, unknown fields stripped
   }
 
   const doc: ContentDoc = {

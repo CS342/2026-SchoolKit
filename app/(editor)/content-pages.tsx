@@ -6,18 +6,31 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
-import { listContentPages, PageListItem } from '../../features/content/editor/crud';
+import { listContentPages, saveContentPage, PageListItem } from '../../features/content/editor/crud';
+import { generatePage } from '../../features/content/ai/client';
+import { NewPageModal } from '../../components/content-editor/NewPageModal';
 
 export default function ContentPagesDashboard() {
   const router = useRouter();
   const { colors, shadows } = useTheme();
   const [items, setItems] = useState<PageListItem[] | null>(null);
+  const [showNew, setShowNew] = useState(false);
 
   const refresh = useCallback(() => {
     listContentPages().then(setItems).catch(() => setItems([]));
   }, []);
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
   useEffect(() => { refresh(); }, [refresh]);
+
+  const handleGenerate = async (prompt: string): Promise<string | undefined> => {
+    const res = await generatePage(prompt);
+    if ('error' in res) return res.error;
+    const saved = await saveContentPage(null, res.doc, 'draft');
+    if ('error' in saved) return saved.error;
+    setShowNew(false);
+    router.push(`/(editor)/content/${saved.id}`);
+    return undefined;
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
@@ -34,7 +47,7 @@ export default function ContentPagesDashboard() {
               <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, marginTop: 4 }}>Write and edit the guides that appear in the app.</Text>
             </View>
             <Pressable
-              onPress={() => router.push('/(editor)/content/new')}
+              onPress={() => setShowNew(true)}
               style={({ hovered }: any) => ([{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: 'pointer' as any, opacity: hovered ? 0.92 : 1 }, shadows.button])}
             >
               <Ionicons name="add" size={18} color="#fff" />
@@ -61,6 +74,13 @@ export default function ContentPagesDashboard() {
           )}
         </View>
       </ScrollView>
+
+      <NewPageModal
+        visible={showNew}
+        onClose={() => setShowNew(false)}
+        onBlank={() => { setShowNew(false); router.push('/(editor)/content/new'); }}
+        onGenerate={handleGenerate}
+      />
     </View>
   );
 }

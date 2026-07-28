@@ -480,6 +480,12 @@ Writes are moderator-gated (RLS) — researcher accounts need the `moderator` ro
 (`set_user_role` RPC or dashboard) to author pages. The seed generator lives at
 `scratchpad/gen-seed.js`; regenerate the seed after editing the finances fixture.
 
+**AI (Phase 5)** — deploy the edge function so the in-editor AI works:
+`supabase functions deploy generate-content`. It reuses the existing `OPENAI_API_KEY`
+secret (shared with generate-design), returns raw JSON, and the client validates with
+zod. In the editor: "New page → describe" generates a draft; the "Ask AI" bar edits via
+ops. The prompt lives in `features/content/ai/prompt.ts` (mirrors PLAYBOOK.md).
+
 **Deps added this phase:** `zod` (validation), `nanoid`@3 (`/non-secure` ids), `jest`@29 +
 `ts-jest` (`npm test`). Install with `--legacy-peer-deps` (pre-existing react-konva peer conflict).
 ```

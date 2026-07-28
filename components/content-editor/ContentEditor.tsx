@@ -11,6 +11,7 @@ import { BlockCard } from './BlockCard';
 import { AddBlockMenu } from './AddBlockMenu';
 import { PageSettingsCard } from './PageSettingsCard';
 import { PreviewPane } from './PreviewPane';
+import { AIBar } from './AIBar';
 
 type Status = 'draft' | 'published';
 
@@ -77,7 +78,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
       <View style={{ flex: 1, flexDirection: 'row' }}>
         {/* Edit pane */}
         <View style={{ width: 460, borderRightWidth: 1, borderRightColor: colors.borderCard, backgroundColor: colors.appBackground }}>
-          <ScrollView contentContainerStyle={{ padding: 18, gap: 10, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 18, gap: 10, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             <PageSettingsCard />
             <View style={{ height: 4 }} />
             {doc.blocks.map((b, i) => (
@@ -91,6 +92,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
             <View style={{ height: 4 }} />
             <AddBlockMenu />
           </ScrollView>
+          <AIBar />
         </View>
 
         {/* Preview pane */}
