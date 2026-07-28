@@ -7,7 +7,16 @@ import Animated, {
   withSpring,
   withDelay,
 } from 'react-native-reanimated';
-import { DECORATIVE_SHAPES } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+
+interface DecorativeShape {
+  size: number;
+  color: string;
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+}
 
 interface DecorativeBackgroundProps {
   variant: 'welcome' | 'step' | 'loading' | 'auth' | 'confirm';
@@ -19,7 +28,7 @@ function AnimatedCircle({
   shape,
   index,
 }: {
-  shape: (typeof DECORATIVE_SHAPES)['welcome'][number];
+  shape: DecorativeShape;
   index: number;
 }) {
   const opacity = useSharedValue(0);
@@ -61,7 +70,8 @@ export function DecorativeBackground({
   gradientColors,
   children,
 }: DecorativeBackgroundProps) {
-  const shapes = DECORATIVE_SHAPES[variant] || [];
+  const { decorativeShapes } = useTheme();
+  const shapes = decorativeShapes[variant] || [];
 
   const content = (
     <>

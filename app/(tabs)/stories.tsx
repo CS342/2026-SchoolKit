@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { ScreenHeader } from "../../components/ui";
 import { useRouter } from "expo-router";
 
 const WEB_NORMS = [
@@ -58,7 +59,7 @@ export default function StoriesScreen() {
   const { stories, storiesLoading, refreshStories, downloadedStories } =
     useStories();
   const { isOnline } = useOffline();
-  const { colors, shadows, isDark, fontScale, appStyles, sharedStyles } = useTheme();
+  const { colors, gradients, shadows, isDark, fontScale, appStyles, sharedStyles } = useTheme();
   const headerOpacity = useSharedValue(0);
   const [refreshing, setRefreshing] = useState(false);
   const [showNormsModal, setShowNormsModal] = useState(false);
@@ -195,13 +196,11 @@ export default function StoriesScreen() {
     return (
       <View style={styles.container}>
         {/* Sticky page header */}
-        <View style={[styles.webPageHeader, { paddingTop: insets.top + 16, backgroundColor: colors.white, borderBottomColor: colors.border }]}>
-          <View style={styles.webPageHeaderInner}>
-            <View>
-              <Text style={[styles.webPageTitle, { color: colors.textDark }]}>Peer Support</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Safe space to share and find support.</Text>
-            </View>
-            <View style={styles.headerActions}>
+        <ScreenHeader
+          title="Peer Support"
+          subtitle="Safe space to share and find support."
+          right={
+            <>
               {isModerator && (
                 <Pressable
                   onPress={() => setIsModeratorMode((v) => !v)}
@@ -211,7 +210,7 @@ export default function StoriesScreen() {
                   <Ionicons
                     name={isModeratorMode ? "shield" : "shield-outline"}
                     size={17}
-                    color={isModeratorMode ? "#FFFFFF" : colors.textLight}
+                    color={isModeratorMode ? colors.white : colors.textLight}
                   />
                   {!isModeratorMode && pendingCount > 0 && <View style={[styles.modDot, { backgroundColor: colors.error, borderColor: colors.white }]} />}
                 </Pressable>
@@ -219,9 +218,9 @@ export default function StoriesScreen() {
               <Pressable onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
                 <Ionicons name="information-circle-outline" size={22} color={colors.textLight} />
               </Pressable>
-            </View>
-          </View>
-        </View>
+            </>
+          }
+        />
 
         {/* Three-column scrollable area */}
         <ScrollView
@@ -320,13 +319,13 @@ export default function StoriesScreen() {
                 </View>
               )}
               {userPendingCount > 0 && !dismissedPendingNotif && !isModeratorMode && isOnline && (
-                <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: isDark ? colors.backgroundLight : "#FFF3E0", borderColor: "#FFB74D40" }]}>
-                  <Ionicons name="time-outline" size={15} color="#F57C00" />
-                  <Text style={[styles.pendingBannerText, { color: "#E65100" }]}>
+                <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: colors.warningBg, borderColor: colors.warningText + "40" }]}>
+                  <Ionicons name="time-outline" size={15} color={colors.warningText} />
+                  <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
                     {userPendingCount === 1 ? "Your story is" : `${userPendingCount} stories are`} being reviewed
                   </Text>
                   <Pressable onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
-                    <Ionicons name="close" size={16} color="#F57C00" />
+                    <Ionicons name="close" size={16} color={colors.warningText} />
                   </Pressable>
                 </View>
               )}
@@ -390,13 +389,13 @@ export default function StoriesScreen() {
                   </Text>
                   {isAnonymous ? (
                     <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/auth" as any)}>
-                      <Ionicons name="lock-closed-outline" size={15} color="#FFFFFF" />
-                      <Text style={[styles.webShareBtnText, { color: "#FFFFFF" }]}>Sign in to share your story</Text>
+                      <Ionicons name="lock-closed-outline" size={15} color={colors.white} />
+                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>Sign in to share your story</Text>
                     </Pressable>
                   ) : (
                     <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-story" as any)}>
-                      <Ionicons name="create-outline" size={15} color="#FFFFFF" />
-                      <Text style={[styles.webShareBtnText, { color: "#FFFFFF" }]}>Write a Story</Text>
+                      <Ionicons name="create-outline" size={15} color={colors.white} />
+                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>Write a Story</Text>
                     </Pressable>
                   )}
                 </View>
@@ -470,7 +469,7 @@ export default function StoriesScreen() {
                 <Ionicons
                   name={isModeratorMode ? "shield" : "shield-outline"}
                   size={17}
-                  color={isModeratorMode ? "#FFFFFF" : colors.textLight}
+                  color={isModeratorMode ? colors.white : colors.textLight}
                 />
                 {/* Pending dot — only when mod mode is off */}
                 {!isModeratorMode && pendingCount > 0 && (
@@ -553,13 +552,13 @@ export default function StoriesScreen() {
           >
             {selectedTags.length > 0 ? (
               <LinearGradient
-                colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
+                colors={gradients.primaryButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.chip, styles.chipActive]}
               >
-                <Ionicons name="options" size={16} color="#FFFFFF" />
-                <Text style={[styles.chipText, { color: "#FFFFFF" }, styles.chipTextActive]}>
+                <Ionicons name="options" size={16} color={colors.white} />
+                <Text style={[styles.chipText, { color: colors.white }, styles.chipTextActive]}>
                   Filter
                 </Text>
                 <View
@@ -607,13 +606,13 @@ export default function StoriesScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: "#FFFFFF" }]}>
+                  <Text style={[styles.chipText, { color: colors.white }]}>
                     {tag}
                   </Text>
                   <Ionicons
                     name="close"
                     size={14}
-                    color="#FFFFFF"
+                    color={colors.white}
                     style={{ marginLeft: 4 }}
                   />
                 </View>
@@ -650,10 +649,10 @@ export default function StoriesScreen() {
                 <Ionicons
                   name={option.icon}
                   size={16}
-                  color={isActive ? "#FFFFFF" : colors.textMuted}
+                  color={isActive ? colors.white : colors.textMuted}
                 />
                 <Text
-                  style={[styles.chipText, { color: isActive ? "#FFFFFF" : colors.textMuted }, isActive && styles.chipTextActive]}
+                  style={[styles.chipText, { color: isActive ? colors.white : colors.textMuted }, isActive && styles.chipTextActive]}
                 >
                   {option.label}
                 </Text>
@@ -668,7 +667,7 @@ export default function StoriesScreen() {
                   onPress={() => setSort(option.id as any)}
                 >
                   <LinearGradient
-                    colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
+                    colors={gradients.primaryButton}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={[styles.chip, styles.chipActive]}
@@ -709,9 +708,9 @@ export default function StoriesScreen() {
 
       {/* Offline banner */}
       {Boolean(!isOnline) && (
-        <View style={[styles.offlineBanner, { backgroundColor: isDark ? colors.backgroundLight : "#EDEDF8" }]}>
-          <Ionicons name="cloud-offline-outline" size={15} color={isDark ? colors.textMuted : "#5C5C8A"} />
-          <Text style={[styles.offlineBannerText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>
+        <View style={[styles.offlineBanner, { backgroundColor: colors.appBackgroundAlt }]}>
+          <Ionicons name="cloud-offline-outline" size={15} color={colors.textMuted} />
+          <Text style={[styles.offlineBannerText, { color: colors.textMuted }]}>
             You're offline · Showing your downloads
           </Text>
         </View>
@@ -724,9 +723,9 @@ export default function StoriesScreen() {
           !isModeratorMode &&
           isOnline
       ) && (
-        <View style={[styles.pendingBanner, { backgroundColor: isDark ? colors.backgroundLight : "#FFF3E0", borderColor: "#FFB74D40" }]}>
-          <Ionicons name="time-outline" size={15} color="#F57C00" />
-          <Text style={[styles.pendingBannerText, { color: "#E65100" }]}>
+        <View style={[styles.pendingBanner, { backgroundColor: colors.warningBg, borderColor: colors.warningText + "40" }]}>
+          <Ionicons name="time-outline" size={15} color={colors.warningText} />
+          <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
             {userPendingCount === 1
               ? "Your story is"
               : `${userPendingCount} stories are`}{" "}
@@ -736,7 +735,7 @@ export default function StoriesScreen() {
             onPress={() => setDismissedPendingNotif(true)}
             hitSlop={10}
           >
-            <Ionicons name="close" size={16} color="#F57C00" />
+            <Ionicons name="close" size={16} color={colors.warningText} />
           </Pressable>
         </View>
       )}
@@ -800,7 +799,7 @@ export default function StoriesScreen() {
                 <Ionicons
                   name="cloud-offline-outline"
                   size={SIZING.iconPage}
-                  color={isDark ? colors.textMuted : "#9090C0"}
+                  color={colors.textMuted}
                 />
               </View>
               <Text style={sharedStyles.pageTitle}>No downloads yet</Text>
@@ -885,12 +884,12 @@ export default function StoriesScreen() {
           onPress={() => router.push("/create-story" as any)}
         >
           <LinearGradient
-            colors={isDark ? ['#8B78FF', '#A37BEF', '#B876EB'] : ['#7B68EE', '#9B6EE8', '#B06AE4']}
+            colors={gradients.primaryButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fabGradient}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Ionicons name="add" size={28} color={colors.white} />
           </LinearGradient>
         </Pressable>
       )}
@@ -991,7 +990,7 @@ const makeStyles = (
       paddingVertical: 10,
       borderRadius: 12,
       borderWidth: 1.5,
-      borderColor: isDark ? c.borderCard : "#E5E5EA",
+      borderColor: c.borderCard,
     },
     searchIcon: {
       marginRight: 8,
@@ -1105,7 +1104,7 @@ const makeStyles = (
       paddingHorizontal: 8,
       paddingVertical: 6,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: isDark ? c.borderCard : "#E5E5EA",
+      borderBottomColor: c.borderCard,
       marginBottom: 8,
     },
     sortTab: {
@@ -1138,13 +1137,13 @@ const makeStyles = (
       marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 9,
-      backgroundColor: isDark ? c.backgroundLight : "#EDEDF8",
+      backgroundColor: c.appBackgroundAlt,
       borderRadius: 8,
     },
     offlineBannerText: {
       fontSize: fs(13),
       fontWeight: "600",
-      color: isDark ? c.textMuted : "#5C5C8A",
+      color: c.textMuted,
     },
 
     // ── Pending banner ───────────────────────────────────────
@@ -1157,16 +1156,16 @@ const makeStyles = (
       marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      backgroundColor: isDark ? c.backgroundLight : "#FFF3E0",
+      backgroundColor: c.warningBg,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: "#FFB74D40",
+      borderColor: c.warningText + "40",
     },
     pendingBannerText: {
       flex: 1,
       fontSize: fs(13),
       fontWeight: "600",
-      color: "#E65100",
+      color: c.warningText,
     },
 
     // ── Rejected banner ──────────────────────────────────────
@@ -1409,7 +1408,7 @@ const makeStyles = (
     webShareBtnText: {
       fontSize: fs(16),
       fontWeight: "700" as const,
-      color: "#FFFFFF",
+      color: c.white,
     },
     webNormLine: {
       fontSize: fs(13),

@@ -117,10 +117,18 @@ export default function CreateStoryScreen() {
   };
   const audienceHint = getAudienceHint();
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handlePreSubmit = () => {
     if (!canSubmit) return;
     if (isAnonymous) {
-      Alert.alert('Sign In Required', 'You need to create an account to share stories.');
+      showAlert('Sign In Required', 'You need to create an account to share stories.');
       return;
     }
     setNormsMode('submit');
@@ -167,7 +175,7 @@ export default function CreateStoryScreen() {
         goToStories();
       }
     } else {
-      Alert.alert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
+      showAlert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
     }
   };
 
@@ -474,7 +482,7 @@ export default function CreateStoryScreen() {
                       onPress={() => {
                         if (isExhausted) return;
                         if (option === userGroup) {
-                          Alert.alert('Required', `As a signed-in member of this community, you must share your story with ${option}.`);
+                          showAlert('Required', `As a signed-in member of this community, you must share your story with ${option}.`);
                           return;
                         }
                         if (isSelected) {

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import type { AppRole } from '../lib/database.types';
 import { Session, User } from '@supabase/supabase-js';
@@ -114,6 +115,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.warn('Server sign-out failed, clearing local session:', (error as Error).message);
       await supabase.auth.signOut({ scope: 'local' });
+    }
+
+    // Clear the app's cached user data so the next user on a shared device
+    // doesn't inherit the previous user's downloads, bookmarks, story caches,
+    // pending offline changes, etc. Best-effort: never block sign-out on it.
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const schoolkitKeys = keys.filter((k) => k.startsWith('@schoolkit_'));
+      if (schoolkitKeys.length > 0) {
+        await AsyncStorage.multiRemove(schoolkitKeys);
+      }
+    } catch (storageError) {
+      console.warn('Failed to clear cached user data on sign-out:', (storageError as Error).message);
     }
   };
 

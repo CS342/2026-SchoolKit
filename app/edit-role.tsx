@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
+import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -74,22 +75,24 @@ export default function EditRoleScreen() {
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select your role</Text>
+        <ContentColumn width="reading">
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select your role</Text>
 
-        <View style={styles.cardsContainer}>
-          {ROLE_OPTIONS.map((option, index) => (
-            <AnimatedCardWrapper key={option.value} index={index}>
-              <SelectableCard
-                title={option.label}
-                icon={option.icon}
-                color={option.color}
-                selected={selectedRole === option.value}
-                onPress={() => setSelectedRole(option.value)}
-                multiSelect={false}
-              />
-            </AnimatedCardWrapper>
-          ))}
-        </View>
+          <View style={styles.cardsContainer}>
+            {ROLE_OPTIONS.map((option, index) => (
+              <AnimatedCardWrapper key={option.value} index={index}>
+                <SelectableCard
+                  title={option.label}
+                  icon={option.icon}
+                  color={option.color}
+                  selected={selectedRole === option.value}
+                  onPress={() => setSelectedRole(option.value)}
+                  multiSelect={false}
+                />
+              </AnimatedCardWrapper>
+            ))}
+          </View>
+        </ContentColumn>
       </ScrollView>
     </View>
   );

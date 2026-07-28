@@ -13,11 +13,13 @@ import { DecorativeBackground } from '../components/onboarding/DecorativeBackgro
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 import { useResponsive } from '../hooks/useResponsive';
-import { GRADIENTS, ANIMATION, COLORS, SHARED_STYLES } from '../constants/onboarding-theme';
+import { ANIMATION } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function ConfirmEmailScreen() {
   const router = useRouter();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
 
   const iconOpacity = useSharedValue(0);
@@ -44,19 +46,19 @@ export default function ConfirmEmailScreen() {
   const buttonStyle = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
 
   return (
-    <DecorativeBackground variant="confirm" gradientColors={GRADIENTS.screenBackground}>
+    <DecorativeBackground variant="confirm" gradientColors={gradients.screenBackground}>
       <AuthWebWrapper variant="confirm">
       <View style={styles.container}>
         <View style={[styles.content, isWebDesktop && { paddingTop: 48, maxWidth: 480, width: '100%', alignSelf: 'center' as const }]}>
-          <Animated.View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
-            <Ionicons name="mail-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+          <Animated.View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
+            <Ionicons name="mail-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
           </Animated.View>
 
-          <Animated.Text style={[SHARED_STYLES.pageTitle, titleStyle]}>
+          <Animated.Text style={[sharedStyles.pageTitle, titleStyle]}>
             Check your email
           </Animated.Text>
 
-          <Animated.Text style={[SHARED_STYLES.pageSubtitle, subtitleStyle]}>
+          <Animated.Text style={[sharedStyles.pageSubtitle, subtitleStyle]}>
             We sent a verification link to your email.{'\n'}
             Tap the link to confirm your account, then sign in.
           </Animated.Text>
@@ -70,12 +72,12 @@ export default function ConfirmEmailScreen() {
             />
           </Animated.View>
         ) : (
-          <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
+          <Animated.View style={[sharedStyles.buttonContainer, buttonStyle]}>
             <PrimaryButton
               title="Go to Sign In"
               onPress={() => router.replace('/auth?mode=signin')}
             />
-            <View style={SHARED_STYLES.skipPlaceholder} />
+            <View style={sharedStyles.skipPlaceholder} />
           </Animated.View>
         )}
       </View>

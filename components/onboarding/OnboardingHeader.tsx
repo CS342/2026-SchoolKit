@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +11,9 @@ import Animated, {
 import { ProgressBar } from './ProgressBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../hooks/useResponsive';
-import { COLORS, TYPOGRAPHY, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { TYPOGRAPHY, BORDERS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 interface OnboardingHeaderProps {
   currentStep: number;
@@ -26,6 +28,9 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const webStyles = useMemo(() => makeWebStyles(colors), [colors]);
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(0);
 
@@ -53,7 +58,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="chevron-back" size={18} color={COLORS.textMuted} />
+            <Ionicons name="chevron-back" size={18} color={colors.textMuted} />
             <Text style={webStyles.backText}>Back</Text>
           </Pressable>
         ) : (
@@ -80,12 +85,12 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="chevron-back" size={22} color={COLORS.textMuted} />
+            <Ionicons name="chevron-back" size={22} color={colors.textMuted} />
           </Pressable>
         )}
 
-        <View style={SHARED_STYLES.badge}>
-          <Text style={SHARED_STYLES.badgeText}>{currentStep} of {totalSteps}</Text>
+        <View style={sharedStyles.badge}>
+          <Text style={sharedStyles.badgeText}>{currentStep} of {totalSteps}</Text>
         </View>
 
         <View style={styles.placeholder}>{rightAction}</View>
@@ -104,7 +109,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     paddingTop: 60,
     paddingBottom: 20,
@@ -121,9 +126,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: BORDERS.backButton,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: TYPOGRAPHY.caption.fontSize,
-    color: COLORS.textLight,
+    color: c.textLight,
     textAlign: 'center',
     marginTop: 12,
     paddingHorizontal: 40,
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const webStyles = StyleSheet.create({
+const makeWebStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     paddingTop: 16,
     paddingBottom: 8,
@@ -166,12 +171,12 @@ const webStyles = StyleSheet.create({
   backText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: c.textMuted,
     marginLeft: 4,
   },
   helperText: {
     fontSize: TYPOGRAPHY.caption.fontSize,
-    color: COLORS.textLight,
+    color: c.textLight,
     textAlign: 'center',
     marginTop: 8,
     fontStyle: 'italic',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions, Platform } from 'react-native';
 import Svg, { Path, Circle, G, Text as SvgText, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -372,7 +372,11 @@ export default function KnowledgeTree({ isResourceFullyViewed, resources, contai
 
   return (
     <View
-      style={{ flex: 1 }}
+      // On web, center the illustration within its measured area so it doesn't
+      // float to one edge of the canvas. Native layout is left untouched.
+      style={Platform.OS === 'web'
+        ? { flex: 1, alignItems: 'center', justifyContent: 'center' }
+        : { flex: 1 }}
       onLayout={(e) => {
         const { width, height } = e.nativeEvent.layout;
         if (width > 0 && height > 0) setLayoutSize({ w: width, h: height });

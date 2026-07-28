@@ -3,10 +3,11 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { COLORS } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Index() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const { data, loading: onboardingLoading } = useOnboarding();
 
@@ -27,8 +28,8 @@ export default function Index() {
   }, [authLoading, onboardingLoading, user, data.isCompleted]);
 
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={COLORS.primary} />
+    <View style={[styles.container, { backgroundColor: colors.appBackgroundAlt }]}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
 }
@@ -36,7 +37,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.appBackgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },

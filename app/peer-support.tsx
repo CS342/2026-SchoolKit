@@ -37,6 +37,7 @@ import {
   withOpacity,
 } from "../constants/onboarding-theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../contexts/OnboardingContext";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
@@ -686,6 +687,97 @@ export default function PeerSupportScreen() {
   const handleTopicPress = (topic: PeerTopic) => setSelectedTopic(topic);
   const handleCloseSheet = () => setSelectedTopic(null);
 
+  const actionsNode = (
+    <>
+      <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+        <Ionicons name="share-outline" size={28} color={colors.textLight} />
+      </TouchableOpacity>
+      <DownloadButton resourceId="12" size={28} color={colors.studentK8} />
+      <BookmarkButton resourceId="12" size={27} color={colors.studentK8} />
+    </>
+  );
+
+  const titleNode = (
+    <RNAnimated.View style={titleStyle}>
+      <Text style={[styles.pageTitle, { color: colors.textDark }]}>
+        Encouraging{"\n"}
+        <Text style={{ color: colors.studentK8 }}>Positive Peer</Text>
+        {"\n"}Support
+      </Text>
+    </RNAnimated.View>
+  );
+
+  const articleBody = (
+    <>
+      <RNAnimated.View style={[styles.quoteCard, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card, quoteStyle]}>
+        <Text style={[styles.quoteText, { color: colors.textDark }]}>
+          {"\u201C"}Alone we can do so little; together we can do so much.{"\u201D"}
+        </Text>
+        <Text style={[styles.quoteAuthor, { color: colors.textLight }]}>{"\u2014"} Helen Keller</Text>
+      </RNAnimated.View>
+
+      <RNAnimated.View nativeID="peer-why" style={sectionStyle}>
+        <Text style={[styles.sectionHeading, { color: colors.textDark }]}>
+          Why is peer support important?
+        </Text>
+        <Text style={[styles.sectionBody, { color: colors.textMuted }]}>
+          After a prolonged absence, a returning student may worry about being
+          different, falling behind socially, or being treated differently by
+          classmates. Positive peer support helps create a welcoming
+          environment where every student feels they belong.
+        </Text>
+      </RNAnimated.View>
+
+      <RNAnimated.View style={sectionStyle}>
+        <Text style={[styles.instructionText, { color: colors.textLight }]}>
+          Tap each person to learn more.
+        </Text>
+      </RNAnimated.View>
+
+      <View nativeID="peer-explore" style={styles.circleWrapper}>
+        <CircleLayout topics={PEER_TOPICS} onTopicPress={handleTopicPress} styles={styles} />
+      </View>
+    </>
+  );
+
+  const RELATED_TAGS = ['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion'];
+
+  const bottomSheet = (
+    <BottomSheet
+      visible={selectedTopic !== null}
+      topic={selectedTopic}
+      onClose={handleCloseSheet}
+      selectedVoice={selectedVoice}
+      theme={theme}
+      styles={styles}
+    />
+  );
+
+  // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+  if (Platform.OS === "web") {
+    return (
+      <View style={{ flex: 1 }}>
+        <ArticleLayout
+          breadcrumb={[
+            { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+            { label: "Social" },
+            { label: "Encouraging Positive Peer Support" },
+          ]}
+          title={titleNode}
+          actions={actionsNode}
+          sections={[
+            { id: "peer-why", label: "Why It Matters" },
+            { id: "peer-explore", label: "Explore Topics" },
+          ]}
+          aside={<RecommendationList currentId="12" currentTags={RELATED_TAGS} variant="rail" />}
+        >
+          {articleBody}
+        </ArticleLayout>
+        {bottomSheet}
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[styles.header, { paddingTop: insets.top + 10, borderBottomColor: colors.borderCard, backgroundColor: colors.white }]}>
@@ -693,11 +785,7 @@ export default function PeerSupportScreen() {
           <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={28} color={colors.textLight} />
-          </TouchableOpacity>
-          <DownloadButton resourceId="12" size={28} color={colors.studentK8} />
-          <BookmarkButton resourceId="12" size={27} color={colors.studentK8} />
+          {actionsNode}
         </View>
       </View>
 
@@ -707,57 +795,17 @@ export default function PeerSupportScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={100}
       >
-        <RNAnimated.View style={titleStyle}>
-          <Text style={[styles.pageTitle, { color: colors.textDark }]}>
-            Encouraging{"\n"}
-            <Text style={{ color: colors.studentK8 }}>Positive Peer</Text>
-            {"\n"}Support
-          </Text>
-        </RNAnimated.View>
-
-        <RNAnimated.View style={[styles.quoteCard, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card, quoteStyle]}>
-          <Text style={[styles.quoteText, { color: colors.textDark }]}>
-            {"\u201C"}Alone we can do so little; together we can do so much.{"\u201D"}
-          </Text>
-          <Text style={[styles.quoteAuthor, { color: colors.textLight }]}>{"\u2014"} Helen Keller</Text>
-        </RNAnimated.View>
-
-        <RNAnimated.View style={sectionStyle}>
-          <Text style={[styles.sectionHeading, { color: colors.textDark }]}>
-            Why is peer support important?
-          </Text>
-          <Text style={[styles.sectionBody, { color: colors.textMuted }]}>
-            After a prolonged absence, a returning student may worry about being
-            different, falling behind socially, or being treated differently by
-            classmates. Positive peer support helps create a welcoming
-            environment where every student feels they belong.
-          </Text>
-        </RNAnimated.View>
-
-        <RNAnimated.View style={sectionStyle}>
-          <Text style={[styles.instructionText, { color: colors.textLight }]}>
-            Tap each person to learn more.
-          </Text>
-        </RNAnimated.View>
-
-        <View style={styles.circleWrapper}>
-          <CircleLayout topics={PEER_TOPICS} onTopicPress={handleTopicPress} styles={styles} />
-        </View>
-
+        <ContentColumn width="reading">
+        {titleNode}
+        {articleBody}
         <RecommendationList
           currentId="12"
-          currentTags={['social', 'peer', 'support', 'kindness', 'empathy', 'inclusion']}
+          currentTags={RELATED_TAGS}
         />
+        </ContentColumn>
       </ScrollView>
 
-      <BottomSheet
-        visible={selectedTopic !== null}
-        topic={selectedTopic}
-        onClose={handleCloseSheet}
-        selectedVoice={selectedVoice}
-        theme={theme}
-        styles={styles}
-      />
+      {bottomSheet}
     </View>
   );
 }

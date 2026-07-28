@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useResponsive } from '../hooks/useResponsive';
 import { useTheme } from '../contexts/ThemeContext';
-import { COLORS, GRADIENTS } from '../constants/onboarding-theme';
+import type { ThemeColors } from '../constants/theme';
 
 interface StepInfo {
   current: number;
@@ -18,104 +17,152 @@ interface AuthWebWrapperProps {
   step?: StepInfo;
 }
 
-const STEP_LABELS = [
-  'Your name',
-  'About you',
-  'Grade level',
-  'School journey',
-  'Topics',
-  'Voice',
+/* ─── Single source of truth for the onboarding flow ───────────────
+ * The step counter used to be hardcoded (and inconsistent) on every
+ * screen. Derive current/total/label from one per-role flow instead.
+ *
+ * Navigation reality (see step2.handleContinue):
+ *   students SKIP the grade screen (step2b) → shorter flow.
+ *   parents / staff DO answer grade → one extra step.
+ *
+ *   student flow (6):     name → language → role → journey → topics → voice
+ *   guardian flow (7):    name → language → role → grade → journey → topics → voice
+ *
+ * The three pre-role screens (name/language/role) don't yet know the
+ * role, so they default to the student flow; a guardian's total ticks
+ * up by one once they reach the grade screen.
+ */
+export type OnboardingScreenKey =
+  | 'name'
+  | 'language'
+  | 'role'
+  | 'grade'
+  | 'journey'
+  | 'topics'
+  | 'voice';
+
+const ONBOARDING_LABELS: Record<OnboardingScreenKey, string> = {
+  name: 'Your name',
+  language: 'Language',
+  role: 'About you',
+  grade: 'Grade level',
+  journey: 'School journey',
+  topics: 'Topics',
+  voice: 'Voice',
+};
+
+const STUDENT_FLOW: OnboardingScreenKey[] = [
+  'name', 'language', 'role', 'journey', 'topics', 'voice',
+];
+const GUARDIAN_FLOW: OnboardingScreenKey[] = [
+  'name', 'language', 'role', 'grade', 'journey', 'topics', 'voice',
 ];
 
 /**
- * Horizontal stepper bar for onboarding steps (web desktop only).
- * Frosted glass effect, logo left, step circles center, step label right.
+ * Resolve the consistent step position for an onboarding screen.
+ * Pass `isStudent` once the role is known (step3 onward + the grade
+ * screen); leave it undefined on the pre-role screens.
  */
-function WebStepperBar({ step }: { step: StepInfo }) {
+export function getOnboardingStep(
+  screen: OnboardingScreenKey,
+  isStudent?: boolean,
+): StepInfo {
+  const flow = isStudent === false ? GUARDIAN_FLOW : STUDENT_FLOW;
+  const idx = flow.indexOf(screen);
+  return {
+    current: idx >= 0 ? idx + 1 : 1,
+    total: flow.length,
+    label: ONBOARDING_LABELS[screen],
+  };
+}
+
+/**
+ * Warm brand panel shown on the LEFT at desktop/tablet web widths.
+ * Wordmark + reassuring headline + horizontal progress stepper.
+ */
+function BrandPanel({ step, narrow }: { step?: StepInfo; narrow: boolean }) {
+  const { gradients } = useTheme();
+  const s = useMemo(() => makeBrandStyles(), []);
   return (
-    <View style={stepperStyles.bar}>
-      <View style={stepperStyles.inner}>
-        {/* Left: Logo + brand name */}
-        <View style={stepperStyles.brand}>
+    <LinearGradient
+      colors={[...gradients.authHeader]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[s.panel, narrow && s.panelNarrow]}
+    >
+      {/* Soft decorative orbs for depth */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <View style={[s.orb, s.orb1]} />
+        <View style={[s.orb, s.orb2]} />
+      </View>
+
+      {/* Brand */}
+      <View style={s.brand}>
+        <View style={s.logoChip}>
           <Image
             source={require('../assets/images/HeaderLogo.png')}
-            style={stepperStyles.logo}
+            style={s.logo}
           />
-          <Text style={stepperStyles.brandName}>SchoolKit</Text>
         </View>
+        <Text style={s.brandName}>SchoolKit</Text>
+      </View>
 
-        {/* Center: Step circles with connecting lines */}
-        <View style={stepperStyles.stepsRow}>
-          {Array.from({ length: step.total }, (_, i) => {
-            const stepNum = i + 1;
-            const isActive = stepNum === step.current;
-            const isComplete = stepNum < step.current;
+      {/* Welcoming headline */}
+      <View style={s.headlineBlock}>
+        <Text style={s.headline}>Let's set up your SchoolKit</Text>
+        <Text style={s.subcopy}>
+          A few quick questions so we can tailor everything to you.
+          You can change any answer later.
+        </Text>
+      </View>
 
-            return (
-              <React.Fragment key={i}>
-                {i > 0 && (
-                  <View
-                    style={[
-                      stepperStyles.connector,
-                      isComplete && stepperStyles.connectorComplete,
-                    ]}
-                  />
-                )}
-                {isComplete ? (
-                  <LinearGradient
-                    colors={[...GRADIENTS.primaryButton]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={stepperStyles.circleComplete}
-                  >
-                    <Ionicons name="checkmark" size={15} color="#FFFFFF" />
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={[
-                      stepperStyles.circle,
-                      isActive && stepperStyles.circleActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        stepperStyles.circleText,
-                        isActive && stepperStyles.circleTextActive,
-                      ]}
-                    >
-                      {stepNum}
-                    </Text>
-                  </View>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </View>
-
-        {/* Right: Current step label */}
-        <View style={stepperStyles.labelContainer}>
-          <Text style={stepperStyles.stepLabel}>
-            {step.label || STEP_LABELS[step.current - 1] || `Step ${step.current}`}
+      {/* Horizontal progress stepper */}
+      {step ? (
+        <View style={s.stepperBlock}>
+          <View style={s.segments}>
+            {Array.from({ length: step.total }, (_, i) => {
+              const stepNum = i + 1;
+              const done = stepNum < step.current;
+              const active = stepNum === step.current;
+              return (
+                <View
+                  key={i}
+                  style={[
+                    s.segment,
+                    done && s.segmentDone,
+                    active && s.segmentActive,
+                  ]}
+                />
+              );
+            })}
+          </View>
+          <Text style={s.stepCaption}>
+            Step {step.current} of {step.total}
+            {step.label ? `  ·  ${step.label}` : ''}
           </Text>
         </View>
-      </View>
-    </View>
+      ) : (
+        <View style={s.stepperBlock} />
+      )}
+    </LinearGradient>
   );
 }
 
 /**
  * Wrapper for auth & onboarding pages.
- * On web desktop:
+ * On web desktop / tablet (width >= 768):
  *   - welcome: pass-through (gradient fills entire screen from DecorativeBackground)
  *   - auth/confirm: centered card with logo top bar on gradient background
- *   - onboarding: horizontal stepper bar at top + wide centered content
- * On mobile: pass-through (no-op).
+ *   - onboarding: two-panel frame — warm brand panel (left) + screen content (right)
+ * On mobile / narrow web: pass-through (renders exactly as before).
  */
 export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrapperProps) {
-  const { isWeb, isMobile } = useResponsive();
-  const { isDark } = useTheme();
+  const { isWeb, isMobile, isTablet } = useResponsive();
+  const { colors } = useTheme();
+  const stepperStyles = useMemo(() => makeStepperStyles(colors), [colors]);
+  const onboardingStyles = useMemo(() => makeOnboardingStyles(colors), [colors]);
 
-  // On native or narrow web, pass through
+  // On native or narrow web, pass through (single centered column as before)
   if (!isWeb || isMobile) {
     return <>{children}</>;
   }
@@ -125,7 +172,7 @@ export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrap
     return <>{children}</>;
   }
 
-  // Auth / Confirm: same layout as onboarding with logo-only top bar
+  // Auth / Confirm: same layout as before with logo-only top bar
   if (variant === 'auth' || variant === 'confirm') {
     return (
       <View style={onboardingStyles.wrapper}>
@@ -154,25 +201,130 @@ export function AuthWebWrapper({ children, variant = 'auth', step }: AuthWebWrap
     );
   }
 
-  // Onboarding: stepper bar at top + wide centered content
+  // Onboarding: two-panel frame (brand panel left, screen content right)
   return (
-    <View style={onboardingStyles.wrapper}>
-      {step && <WebStepperBar step={step} />}
-      {/* Subtle radial gradient background */}
-      <View style={onboardingStyles.bgLayer}>
-        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb1]} />
-        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb2]} />
-        <View style={[onboardingStyles.bgOrb, onboardingStyles.bgOrb3]} />
-      </View>
-      <View style={onboardingStyles.contentArea}>
+    <View style={onboardingStyles.twoPanel}>
+      <BrandPanel step={step} narrow={isTablet} />
+      <View style={onboardingStyles.rightPanel}>
         {children}
       </View>
     </View>
   );
 }
 
-/* ─── Stepper bar styles (frosted glass) ──────────── */
-const stepperStyles = StyleSheet.create({
+/* ─── Brand panel styles (left, warm gradient) ─────────────────────
+ * The gradient (authHeader) is purple in both light & dark themes, so
+ * white foreground reads well in both — the panel is intentionally
+ * theme-stable while the right panel follows the theme. */
+const makeBrandStyles = () => StyleSheet.create({
+  panel: {
+    width: 440,
+    flexShrink: 0,
+    paddingHorizontal: 48,
+    paddingVertical: 56,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  panelNarrow: {
+    width: 320,
+    paddingHorizontal: 32,
+    paddingVertical: 44,
+  },
+  orb: {
+    position: 'absolute',
+    borderRadius: 9999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  orb1: {
+    width: 340,
+    height: 340,
+    top: -120,
+    right: -140,
+  },
+  orb2: {
+    width: 240,
+    height: 240,
+    bottom: -90,
+    left: -110,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  brandName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginLeft: 12,
+    letterSpacing: -0.4,
+    fontFamily: 'Raleway_600SemiBold',
+  },
+  headlineBlock: {
+    marginVertical: 24,
+  },
+  headline: {
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.6,
+    marginBottom: 14,
+  },
+  subcopy: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: 'rgba(255,255,255,0.86)',
+    fontWeight: '500',
+    maxWidth: 320,
+  },
+  stepperBlock: {
+    gap: 12,
+  },
+  segments: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  segment: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  segmentDone: {
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  segmentActive: {
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 14px rgba(255,255,255,0.5)',
+      },
+    }),
+  },
+  stepCaption: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.92)',
+    letterSpacing: 0.2,
+  },
+});
+
+/* ─── Stepper bar styles (frosted glass, used by auth/confirm) ─────── */
+const makeStepperStyles = (c: ThemeColors) => StyleSheet.create({
   bar: {
     backgroundColor: 'rgba(255,255,255,0.82)',
     borderBottomWidth: 1,
@@ -208,86 +360,30 @@ const stepperStyles = StyleSheet.create({
   brandName: {
     fontSize: 19,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: c.primary,
     marginLeft: 10,
     letterSpacing: -0.4,
     fontFamily: 'Raleway_600SemiBold',
   },
-  stepsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  connector: {
-    height: 2,
-    width: 36,
-    backgroundColor: 'rgba(123,104,238,0.12)',
-    borderRadius: 1,
-    marginHorizontal: 4,
-  },
-  connectorComplete: {
-    backgroundColor: COLORS.primary,
-  },
-  circle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0EEF9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  circleActive: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2.5,
-    borderColor: COLORS.primary,
-    ...Platform.select({
-      web: {
-        boxShadow: `0 0 0 4px rgba(123,104,238,0.12), 0 0 20px rgba(123,104,238,0.18)`,
-      },
-    }),
-  },
-  circleComplete: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      web: {
-        boxShadow: '0 2px 8px rgba(123,104,238,0.25)',
-      },
-    }),
-  },
-  circleText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: 'rgba(0,0,0,0.3)',
-  },
-  circleTextActive: {
-    color: COLORS.primary,
-    fontWeight: '800',
-  },
-  labelContainer: {
-    minWidth: 150,
-    alignItems: 'flex-end',
-  },
-  stepLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textMuted,
-    letterSpacing: 0.2,
-  },
 });
 
 /* ─── Onboarding layout styles ────────────────────── */
-const onboardingStyles = StyleSheet.create({
+const makeOnboardingStyles = (c: ThemeColors) => StyleSheet.create({
+  // Two-panel frame (onboarding, web desktop/tablet)
+  twoPanel: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: c.appBackground,
+  },
+  rightPanel: {
+    flex: 1,
+    backgroundColor: c.appBackground,
+    overflow: 'hidden',
+  },
+  // Auth/confirm single-column frame
   wrapper: {
     flex: 1,
-    backgroundColor: '#F8F7FF',
+    backgroundColor: c.appBackground,
   },
   bgLayer: {
     ...StyleSheet.absoluteFillObject,

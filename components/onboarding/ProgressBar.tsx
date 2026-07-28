@@ -6,7 +6,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { GRADIENTS, ANIMATION, COLORS } from '../../constants/onboarding-theme';
+import { ANIMATION } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ProgressBarProps {
   currentStep: number;
@@ -14,6 +15,7 @@ interface ProgressBarProps {
 }
 
 function Pill({ state }: { state: 'completed' | 'active' | 'inactive' }) {
+  const { colors, gradients } = useTheme();
   const width = useSharedValue(10);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ function Pill({ state }: { state: 'completed' | 'active' | 'inactive' }) {
     return (
       <Animated.View style={[styles.pill, animatedStyle, { overflow: 'hidden' }]}>
         <LinearGradient
-          colors={[...GRADIENTS.progressFill]}
+          colors={[...gradients.progressFill]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -43,7 +45,7 @@ function Pill({ state }: { state: 'completed' | 'active' | 'inactive' }) {
         styles.pill,
         animatedStyle,
         {
-          backgroundColor: state === 'completed' ? COLORS.primary : COLORS.border,
+          backgroundColor: state === 'completed' ? colors.primary : colors.border,
         },
       ]}
     />

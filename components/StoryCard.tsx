@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TouchableOpacity, Animated as RNAnimated, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { COLORS, ANIMATION, SHADOWS } from '../constants/onboarding-theme';
 import { AppTheme } from '../constants/theme';
 import { CommunityNormsModal } from './CommunityNormsModal';
+import { StatusLabel } from './ui';
 
 interface StoryCardProps {
   story: Story;
@@ -102,6 +103,17 @@ export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
 
 export const DEFAULT_TAG_COLOR = { bg: '#EEEEF6', text: '#5C5C8A' };
 
+// Surface moderator-action failures so the UI never silently rolls back and
+// leaves the moderator believing the action succeeded. Alert.alert is a no-op
+// on web, so use window.alert there.
+function showModError(message: string) {
+  if (Platform.OS === 'web') {
+    window.alert(message);
+  } else {
+    Alert.alert('Action failed', message);
+  }
+}
+
 function getRelativeTime(dateString: string): string {
   const now = Date.now();
   const date = new Date(dateString).getTime();
@@ -132,6 +144,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   const scale = useSharedValue(1);
   const translateY = useSharedValue(20);
   const opacity = useSharedValue(0);
+  const hoverLift = useSharedValue(0);
   const bookmarkScale = useRef(new RNAnimated.Value(1)).current;
   const likeScale = useRef(new RNAnimated.Value(1)).current;
   const [showRejectModal, setShowRejectModal] = React.useState(false);
@@ -157,7 +170,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   }, []);
 
   const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    transform: [{ translateY: translateY.value + hoverLift.value }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
@@ -197,7 +210,15 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
   };
 
   return (
-    <Pressable onPress={handlePress}>
+    <Pressable
+      onPress={handlePress}
+      {...(Platform.OS === 'web'
+        ? {
+            onHoverIn: () => { hoverLift.value = withTiming(-2, { duration: 150 }); },
+            onHoverOut: () => { hoverLift.value = withTiming(0, { duration: 150 }); },
+          }
+        : {})}
+    >
       <Animated.View style={[styles.card, (isMyStory && story.status === 'approved' && !showAuthorStatus) && styles.myStoryCard, cardStyle]}>
         {/* Moderator banners */}
         {story.status === 'pending' && allowModeration && (
@@ -244,22 +265,20 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
 
         {/* Author status banner (In Review / Rejected) */}
         {showAuthorStatus && story.status === 'pending' && (
-          <View style={styles.authorPendingBanner}>
-            <Ionicons name="time" size={12} color={isDark ? '#FCA5A5' : '#F57C00'} style={{ marginRight: 4 }} />
-            <Text style={styles.authorPendingText}>In Review</Text>
+          <View style={styles.authorStatusRow}>
+            <StatusLabel status="pending" />
           </View>
         )}
         {showAuthorStatus && story.status === 'rejected' && (
-          <View style={styles.authorRejectedBanner}>
-            <Ionicons name="alert-circle" size={12} color={colors.error} style={{ marginRight: 4 }} />
-            <Text style={styles.authorRejectedText}>Action Required</Text>
+          <View style={styles.authorStatusRow}>
+            <StatusLabel status="rejected" />
           </View>
         )}
 
         {/* Your Story Badge */}
         {isMyStory && story.status === 'approved' && !showAuthorStatus && (
           <View style={styles.myStoryIcon}>
-            <Ionicons name="person" size={14} color={isDark ? '#E9D5FF' : colors.primary} />
+            <Ionicons name="person" size={14} color={colors.primary} />
           </View>
         )}
 
@@ -305,7 +324,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {story.status === 'approved' && (
         <View style={styles.actionRow}>
           <View style={styles.actionLeft}>
-            <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={liked ? 'Unlike story' : 'Like story'}>
               <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
                 <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? '#E53935' : colors.textLight} />
               </RNAnimated.View>
@@ -321,7 +340,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7}>
+            <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark story'}>
               <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
                 <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={27} color={bookmarked ? colors.primary : colors.textLight} />
               </RNAnimated.View>
@@ -337,7 +356,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             <Ionicons name="close-circle-outline" size={16} color={colors.error} />
             <Text style={styles.modRejectText}>Reject</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id); }}>
+          <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id).catch(() => showModError("Couldn't approve this story. Please try again.")); }}>
             <Ionicons name="checkmark-circle-outline" size={16} color={colors.white} />
             <Text style={styles.modApproveText}>Approve</Text>
           </TouchableOpacity>
@@ -346,11 +365,11 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
       
       {allowModeration && story.status === 'approved' && story.report_count > 0 && (
         <View style={styles.modActions}>
-          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); /* Reject completely here or unpublish */ rejectStory(story.id, []); }}>
+          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); /* Reject completely here or unpublish */ rejectStory(story.id, []).catch(() => showModError("Couldn't take down this story. Please try again.")); }}>
             <Ionicons name="close-circle-outline" size={16} color={colors.error} />
             <Text style={styles.modRejectText}>Take Down</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.modButton, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={(e) => { e.stopPropagation(); dismissReport(story.id); }}>
+          <TouchableOpacity style={[styles.modButton, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={(e) => { e.stopPropagation(); dismissReport(story.id).catch(() => showModError("Couldn't dismiss the flags. Please try again.")); }}>
             <Ionicons name="checkmark-done-outline" size={16} color={colors.textLight} />
             <Text style={[styles.actionText, { color: colors.textLight }]}>Dismiss Flags</Text>
           </TouchableOpacity>
@@ -358,7 +377,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
       )}
 
       {showRejectModal && (
-        <CommunityNormsModal visible={true} onClose={() => setShowRejectModal(false)} onAgree={(norms) => { rejectStory(story.id, norms); setShowRejectModal(false); }} mode="select" />
+        <CommunityNormsModal visible={true} onClose={() => setShowRejectModal(false)} onAgree={(norms) => { rejectStory(story.id, norms).catch(() => showModError("Couldn't reject this story. Please try again.")); setShowRejectModal(false); }} mode="select" />
       )}
     </Animated.View>
     </Pressable>
@@ -374,8 +393,8 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1.5,
-    borderColor: isDark ? c.borderCard : '#E8E8F0',
-    shadowColor: isDark ? '#000' : '#2D2D44',
+    borderColor: c.borderCard,
+    shadowColor: c.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: isDark ? 0.3 : 0.04,
     shadowRadius: 12,
@@ -383,10 +402,10 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } as any : {}),
   },
   myStoryCard: {
-    backgroundColor: isDark ? '#322447' : '#F4F0FC',
+    backgroundColor: c.primarySoft,
   },
   modBanner: {
-    backgroundColor: isDark ? '#3A2000' : '#FFF3E0',
+    backgroundColor: c.warningBg,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -396,7 +415,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
   modBannerText: {
     fontSize: 13,
     fontWeight: '700',
-    color: isDark ? '#FCA5A5' : '#E65100',
+    color: c.warningText,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -423,39 +442,11 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     fontStyle: 'italic',
     paddingLeft: 8,
   },
-  authorPendingBanner: {
+  authorStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? '#3A2000' : '#FFF8E1',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 100,
     marginBottom: 12,
     alignSelf: 'flex-start',
-  },
-  authorPendingText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: isDark ? '#FCA5A5' : '#F57C00',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  authorRejectedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: c.error + '15',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 100,
-    marginBottom: 12,
-    alignSelf: 'flex-start',
-  },
-  authorRejectedText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: c.error,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
   },
   myStoryIcon: {
     position: 'absolute',
@@ -533,7 +524,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     justifyContent: 'space-between',
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: isDark ? c.borderCard : '#E5E5EA',
+    borderTopColor: c.borderCard,
   },
   actionLeft: {
     flexDirection: 'row',
@@ -559,7 +550,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: isDark ? c.borderCard : '#E5E5EA',
+    borderTopColor: c.borderCard,
   },
   modButton: {
     flex: 1,
@@ -588,7 +579,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     gap: 6,
   },
   modApproveText: {
-    color: '#FFF',
+    color: c.white,
     fontWeight: '600',
     fontSize: 13,
   },

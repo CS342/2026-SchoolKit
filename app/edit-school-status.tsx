@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding, SchoolStatus } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
+import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -73,23 +74,25 @@ export default function EditSchoolStatusScreen() {
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select all that apply</Text>
-        <Text style={[styles.selectedCount, { color: colors.primary }]}>
-          {selectedStatuses.length} status{selectedStatuses.length !== 1 ? 'es' : ''} selected
-        </Text>
+        <ContentColumn width="reading">
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select all that apply</Text>
+          <Text style={[styles.selectedCount, { color: colors.primary }]}>
+            {selectedStatuses.length} status{selectedStatuses.length !== 1 ? 'es' : ''} selected
+          </Text>
 
-        <View style={styles.cardsContainer}>
-          {SCHOOL_STATUS_OPTIONS.map((option, index) => (
-            <AnimatedCardWrapper key={option.value} index={index}>
-              <SelectableCard
-                title={option.label}
-                selected={selectedStatuses.includes(option.value)}
-                onPress={() => toggleStatus(option.value)}
-                multiSelect={true}
-              />
-            </AnimatedCardWrapper>
-          ))}
-        </View>
+          <View style={styles.cardsContainer}>
+            {SCHOOL_STATUS_OPTIONS.map((option, index) => (
+              <AnimatedCardWrapper key={option.value} index={index}>
+                <SelectableCard
+                  title={option.label}
+                  selected={selectedStatuses.includes(option.value)}
+                  onPress={() => toggleStatus(option.value)}
+                  multiSelect={true}
+                />
+              </AnimatedCardWrapper>
+            ))}
+          </View>
+        </ContentColumn>
       </ScrollView>
     </View>
   );

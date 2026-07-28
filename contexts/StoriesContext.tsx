@@ -525,6 +525,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       setStories(prev => prev.map(s =>
         s.id === storyId ? { ...s, status: 'pending', rejected_norms: [] } : s
       ));
+      throw error;
     }
   };
 
@@ -574,6 +575,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       setStories(prev => prev.map(s =>
         s.id === storyId ? { ...s, status: 'pending' } : s
       ));
+      throw error;
     }
   };
 
@@ -599,6 +601,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error dismissing reports:', error);
       fetchStories(); // Refresh if failed
+      throw error;
     }
   };
 
@@ -791,6 +794,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Error deleting comment:', error);
+      throw error;
     }
   };
 
@@ -1021,6 +1025,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       console.error('Error reporting comment:', error);
       // Revert optimism
       setReportedCommentIds(prev => prev.filter(id => id !== commentId));
+      throw error;
     }
   };
 

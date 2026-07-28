@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
+import { ScreenHeader, ResourceRow } from "../../components/ui";
+import { BookmarkButton } from '../../components/BookmarkButton';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,9 +39,9 @@ import {
   RADII,
   BORDERS,
 } from '../../constants/onboarding-theme';
-import { WebResourceTile, WEB_GRID_GAP, WEB_GRID_COLS } from '../../components/WebResourceTile';
+import { WEB_GRID_GAP } from '../../components/WebResourceTile';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive, gridColumns, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { ThemeColors, ThemeShadows } from '../../constants/theme';
 
 const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Designs'] as const;
@@ -87,13 +89,21 @@ export default function LibraryScreen() {
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const [activeSegment, setActiveSegment] = useState<SegmentType>('all');
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
+  const [webViewMode, setWebViewMode] = useState<'grid' | 'list'>('grid');
 
   const indicatorPosition = useSharedValue(0);
 
   const { isWeb, isDesktop } = useResponsive();
   const isWebDesktop = isWeb && isDesktop;
   const [gridWidth, setGridWidth] = useState(0);
-  const tileSize = gridWidth > 0 ? Math.floor((gridWidth - WEB_GRID_GAP * (WEB_GRID_COLS - 1)) / WEB_GRID_COLS) : 0;
+  // Web catalog grid (ResourceRow) — denser, responsive, capped at app width.
+  const WEB_ROW_GAP = 16;
+  const webRowCols = webViewMode === 'list'
+    ? 1
+    : (gridWidth > 0 ? gridColumns(gridWidth, 300) : 1);
+  const webRowWidth = gridWidth > 0
+    ? Math.floor((gridWidth - WEB_ROW_GAP * (webRowCols - 1)) / webRowCols)
+    : undefined;
 
   const { bookmarksWithTimestamps, downloads = [] } = useOnboarding();
   const { stories, storyBookmarks, downloadedStories } = useStories();
@@ -205,14 +215,36 @@ export default function LibraryScreen() {
 
   const styles = useMemo(() => makeStyles(colors, shadows, isWebDesktop), [colors, shadows, isWebDesktop]);
 
+  // Web-only: dense, left-aligned catalog grid of compact ResourceRow cards.
+  const renderWebRows = (list: Resource[], keyPrefix = '') => (
+    <View
+      style={styles.webRowsContainer}
+      onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
+    >
+      {list.map(resource => (
+        <ResourceRow
+          key={`${keyPrefix}${resource.id}`}
+          title={resource.title}
+          icon={resource.icon as keyof typeof Ionicons.glyphMap}
+          color={resource.color}
+          category={resource.category}
+          description={resource.shortDescription}
+          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+          right={<BookmarkButton resourceId={resource.id} size={20} />}
+          style={webRowWidth ? { width: webRowWidth } : undefined}
+        />
+      ))}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Animated.View style={[appStyles.tabHeader, shadows.header, { paddingTop: insets.top + 10 }, headerStyle]}>
-        <Text style={appStyles.tabHeaderTitle}>Library</Text>
-
+      <ScreenHeader title="Library" subtitle="Your resources, saved items, and downloads" />
+      <Animated.View style={[styles.headerWrap, headerStyle]}>
+        <View style={isWebDesktop ? styles.webToolbarRow : undefined}>
         {/* Search bar */}
-        <View style={[styles.searchContainer, isFocused && styles.searchContainerFocused]}>
+        <View style={[styles.searchContainer, isFocused && styles.searchContainerFocused, isWebDesktop && styles.searchContainerWeb]}>
           <Ionicons
             name="search"
             size={20}
@@ -238,12 +270,12 @@ export default function LibraryScreen() {
         </View>
 
         {/* 3-segment toggle */}
-        <View style={styles.segmentContainer}>
+        <View style={[styles.segmentContainer, isWebDesktop && styles.segmentContainerWeb]}>
           <View
             style={[styles.segmentBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)' }]}
             onLayout={(e) => setSegmentContainerWidth(e.nativeEvent.layout.width)}
           >
-            <Animated.View style={[styles.segmentIndicator, { width: SEGMENT_WIDTH, backgroundColor: colors.white }, indicatorStyle]} />
+            <Animated.View style={[styles.segmentIndicator, { width: SEGMENT_WIDTH, backgroundColor: colors.white, shadowColor: colors.shadow }, indicatorStyle]} />
             {(['all', 'saved', 'downloaded'] as SegmentType[]).map(seg => (
               <TouchableOpacity
                 key={seg}
@@ -257,6 +289,32 @@ export default function LibraryScreen() {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* View toggle (web only) */}
+        {isWebDesktop && (
+          <View style={[styles.viewToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)' }]}>
+            {(['grid', 'list'] as const).map(mode => {
+              const active = webViewMode === mode;
+              return (
+                <Pressable
+                  key={mode}
+                  onPress={() => setWebViewMode(mode)}
+                  style={[styles.viewToggleBtn, active && { backgroundColor: colors.white, shadowColor: colors.shadow }]}
+                  accessibilityLabel={mode === 'grid' ? 'Grid view' : 'List view'}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Ionicons
+                    name={mode === 'grid' ? 'grid-outline' : 'list-outline'}
+                    size={18}
+                    color={active ? colors.primary : colors.textLight}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
         </View>
       </Animated.View>
 
@@ -298,7 +356,7 @@ export default function LibraryScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.filtersContainer}
+                style={[styles.filtersContainer, isWebDesktop && styles.filtersContainerWeb]}
                 contentContainerStyle={styles.filtersContent}
               >
                 {CATEGORIES.map(category => {
@@ -340,24 +398,9 @@ export default function LibraryScreen() {
             </AnimatedSection>
 
             {allFilteredResources.length > 0 ? (
-              <View
-                style={styles.resourcesContainer}
-                onLayout={isWebDesktop ? (e) => setGridWidth(e.nativeEvent.layout.width) : undefined}
-              >
-                {allFilteredResources.map((resource, index) => (
-                  isWebDesktop && tileSize > 0 ? (
-                    <WebResourceTile
-                      key={resource.id}
-                      id={resource.id}
-                      title={resource.title}
-                      category={resource.category}
-                      icon={resource.icon}
-                      color={resource.color}
-                      onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                      tileSize={tileSize}
-                      showDownloadIndicator
-                    />
-                  ) : (
+              isWebDesktop ? renderWebRows(allFilteredResources) : (
+                <View style={styles.resourcesContainer}>
+                  {allFilteredResources.map((resource, index) => (
                     <ResourceCard
                       key={resource.id}
                       id={resource.id}
@@ -371,9 +414,9 @@ export default function LibraryScreen() {
                       animationBaseDelay={200}
                       staggerDelay={ANIMATION.fastStaggerDelay}
                     />
-                  )
-                ))}
-              </View>
+                  ))}
+                </View>
+              )
             ) : (
               <View style={styles.emptyContainer}>
                 <LinearGradient
@@ -414,21 +457,9 @@ export default function LibraryScreen() {
                   {bookmarkedStories.length > 0 && (
                     <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Resources</Text>
                   )}
-                  <View style={styles.resourcesContainer}>
-                    {bookmarkedResources.map((resource, index) => (
-                      isWebDesktop && tileSize > 0 ? (
-                        <WebResourceTile
-                          key={resource.id}
-                          id={resource.id}
-                          title={resource.title}
-                          category={resource.category}
-                          icon={resource.icon}
-                          color={resource.color}
-                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                          tileSize={tileSize}
-                          showDownloadIndicator
-                        />
-                      ) : (
+                  {isWebDesktop ? renderWebRows(bookmarkedResources) : (
+                    <View style={styles.resourcesContainer}>
+                      {bookmarkedResources.map((resource, index) => (
                         <ResourceCard
                           key={resource.id}
                           id={resource.id}
@@ -440,9 +471,9 @@ export default function LibraryScreen() {
                           index={index}
                           showDownloadIndicator
                         />
-                      )
-                    ))}
-                  </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </>
@@ -485,21 +516,9 @@ export default function LibraryScreen() {
                   {filteredDownloadedStories.length > 0 && (
                     <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Resources</Text>
                   )}
-                  <View style={styles.resourcesContainer}>
-                    {downloadedResources.map((resource, index) => (
-                      isWebDesktop && tileSize > 0 ? (
-                        <WebResourceTile
-                          key={`dl-${resource.id}`}
-                          id={resource.id}
-                          title={resource.title}
-                          category={resource.category}
-                          icon={resource.icon}
-                          color={resource.color}
-                          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-                          tileSize={tileSize}
-                          showDownloadIndicator
-                        />
-                      ) : (
+                  {isWebDesktop ? renderWebRows(downloadedResources, 'dl-') : (
+                    <View style={styles.resourcesContainer}>
+                      {downloadedResources.map((resource, index) => (
                         <ResourceCard
                           key={`dl-${resource.id}`}
                           id={resource.id}
@@ -511,9 +530,9 @@ export default function LibraryScreen() {
                           index={index}
                           showDownloadIndicator
                         />
-                      )
-                    ))}
-                  </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </>
@@ -544,6 +563,56 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
     container: {
       flex: 1,
       backgroundColor: c.appBackground,
+    },
+    headerWrap: isWebDesktop
+      ? {
+          paddingHorizontal: SPACING.screenPadding,
+          paddingTop: 20,
+          paddingBottom: 10,
+          alignItems: 'center' as const,
+        }
+      : { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 4 },
+    webToolbarRow: {
+      width: '100%' as const,
+      maxWidth: CONTENT_WIDTH.app,
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 16,
+      flexWrap: 'wrap' as const,
+    },
+    searchContainerWeb: {
+      marginTop: 0,
+      width: 360,
+      maxWidth: '100%' as const,
+    },
+    segmentContainerWeb: {
+      marginTop: 0,
+      marginBottom: 0,
+      width: 300,
+    },
+    viewToggle: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      borderRadius: 12,
+      padding: 4,
+      gap: 4,
+    },
+    viewToggleBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+      borderRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    webRowsContainer: {
+      flexDirection: 'row' as const,
+      flexWrap: 'wrap' as const,
+      gap: 16,
+      width: '100%' as const,
+      maxWidth: CONTENT_WIDTH.app,
+      alignSelf: 'center' as const,
     },
     searchContainer: {
       flexDirection: 'row',
@@ -585,7 +654,6 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       left: 4,
       bottom: 4,
       borderRadius: 8,
-      shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -634,6 +702,11 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       marginLeft: 5,
     },
     filtersContainer: { marginBottom: SPACING.smallGap },
+    filtersContainerWeb: {
+      width: '100%' as const,
+      maxWidth: CONTENT_WIDTH.app,
+      alignSelf: 'center' as const,
+    },
     filtersContent: {
       paddingVertical: 4,
       flexDirection: 'row',
@@ -669,7 +742,14 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       marginBottom: 12,
     },
     resourcesContainer: isWebDesktop
-      ? { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: WEB_GRID_GAP }
+      ? {
+          flexDirection: 'row' as const,
+          flexWrap: 'wrap' as const,
+          gap: WEB_GRID_GAP,
+          width: '100%' as const,
+          maxWidth: CONTENT_WIDTH.app,
+          alignSelf: 'center' as const,
+        }
       : { gap: 10 },
     storiesContainer: {
       flexDirection: 'row',

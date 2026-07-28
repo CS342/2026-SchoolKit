@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,16 +9,20 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
 
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, ANIMATION, COLORS, RADII, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { ANIMATION, RADII } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 import { PAGE_TOPICS } from '../../constants/resources';
 
 function CounterPill({ count }: { count: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const scale = useSharedValue(1);
 
   React.useEffect(() => {
@@ -51,11 +55,14 @@ export default function Step4Screen() {
   const router = useRouter();
   const { data, updateTopics, completeOnboarding } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
 
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const stepInfo = getOnboardingStep('topics', isStudent);
 
   const availableTopics = PAGE_TOPICS;
 
@@ -79,12 +86,12 @@ export default function Step4Screen() {
 
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 5 : 4, total: isStudent ? 6 : 5, label: 'Topics' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
         <OnboardingHeader
-          currentStep={isStudent ? 5 : 4}
-          totalSteps={isStudent ? 6 : 5}
+          currentStep={stepInfo.current}
+          totalSteps={stepInfo.total}
         />
 
         <ScrollView
@@ -92,12 +99,12 @@ export default function Step4Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48 }]}>
-            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="sparkles-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="sparkles-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={[SHARED_STYLES.pageTitle, { lineHeight: 36 }]}>What would you like support with?</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, styles.subtitleOverride]}>
+            <Text style={[sharedStyles.pageTitle, { lineHeight: 36 }]}>What would you like support with?</Text>
+            <Text style={[sharedStyles.pageSubtitle, styles.subtitleOverride]}>
               Choose what feels right - you can always explore more later.
             </Text>
 
@@ -127,8 +134,8 @@ export default function Step4Screen() {
                   disabled={selectedTopics.length === 0}
                   icon="arrow-forward"
                 />
-                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+                  <Text style={sharedStyles.skipText}>Skip for now</Text>
                 </Pressable>
               </View>
             )}
@@ -136,15 +143,15 @@ export default function Step4Screen() {
         </ScrollView>
 
         {!isWebDesktop && (
-        <View style={SHARED_STYLES.buttonContainer}>
+        <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
             title="Get Started"
             onPress={handleFinish}
             disabled={selectedTopics.length === 0}
             icon="arrow-forward"
           />
-          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+          <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+            <Text style={sharedStyles.skipText}>Skip for now</Text>
           </Pressable>
         </View>
         )}
@@ -154,7 +161,7 @@ export default function Step4Screen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -180,20 +187,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   counterPillActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: c.primary,
   },
   counterPillInactive: {
-    backgroundColor: COLORS.border,
+    backgroundColor: c.border,
   },
   counterText: {
     fontSize: 15,
     fontWeight: '700',
   },
   counterTextActive: {
-    color: COLORS.white,
+    color: c.white,
   },
   counterTextInactive: {
-    color: COLORS.textLight,
+    color: c.textLight,
   },
   topicsContainer: {
     width: '100%',

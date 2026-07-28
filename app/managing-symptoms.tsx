@@ -24,6 +24,7 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -405,7 +406,7 @@ function BodyDiagram({
                                 elevation: 5, zIndex: 10,
                             }}
                         >
-                            <Ionicons name={area.icon as any} size={20} color="#FFF" />
+                            <Ionicons name={area.icon as any} size={20} color={colors.white} />
                         </TouchableOpacity>
 
                         {/* Label */}
@@ -509,7 +510,7 @@ function ExpandedCardModal({
                     <View style={[styles.card, { height: "100%", backgroundColor: color, borderColor: color }]}>
                         <View style={styles.frontInner}>
                             <View style={[styles.frontIconCircle, { backgroundColor: "rgba(255,255,255,0.25)" }]}>
-                                <Ionicons name={area.icon as any} size={36} color="#FFF" />
+                                <Ionicons name={area.icon as any} size={36} color={colors.white} />
                             </View>
                             <Text style={styles.frontTitle}>{area.label}</Text>
                             <Text style={styles.flipHint}>Flip for details →</Text>
@@ -522,7 +523,7 @@ function ExpandedCardModal({
                     transform: [{ perspective: 1000 }, { rotateY: backRotate }],
                     opacity: backOpacity, height: cardHeight,
                 }]}>
-                    <View style={[styles.card, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
+                    <View style={[styles.card, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : colors.white, borderColor: color }]}>
                         <View style={styles.backInner}>
                             {/* Header row */}
                             <View style={styles.backHeaderRow}>
@@ -548,7 +549,7 @@ function ExpandedCardModal({
                                             <Ionicons
                                                 name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"}
                                                 size={26}
-                                                color={isSpeaking ? "#FF6B6B" : "#2D2D44"}
+                                                color={isSpeaking ? colors.error : colors.textDark}
                                             />
                                         )}
                                     </TouchableOpacity>
@@ -630,7 +631,7 @@ function TipAccordion({ tip, styles }: { tip: GeneralTip; styles: any }) {
     const rotate = rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
 
     return (
-        <View style={[tipStyles.wrapper, { backgroundColor: isDark ? colors.backgroundLight : "#FAFAFE", borderColor: isDark ? colors.borderCard : "#E5E3F8" }]}>
+        <View style={[tipStyles.wrapper, { backgroundColor: isDark ? colors.backgroundLight : colors.white, borderColor: colors.borderCard }]}>
             <TouchableOpacity style={tipStyles.header} onPress={toggle} activeOpacity={0.8}>
                 <View style={[tipStyles.iconCircle, { backgroundColor: PAGE_COLOR + "18" }]}>
                     <Ionicons name={tip.icon as any} size={20} color={PAGE_COLOR} />
@@ -840,6 +841,120 @@ export default function ManagingSymptomsScreen() {
         });
     }, []);
 
+    const titleNode = (
+        <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
+            <Text style={styles.pageTitle}>
+                Tips for{" "}
+                <Text style={{ color: PAGE_COLOR }}>Managing Symptoms</Text>
+            </Text>
+        </Animated.View>
+    );
+
+    const actionsNode = (
+        <>
+            <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+                <Ionicons name="share-outline" size={26} color={colors.textLight} />
+            </TouchableOpacity>
+            <DownloadButton resourceId={RESOURCE_ID} size={26} color={PAGE_COLOR} />
+            <BookmarkButton resourceId={RESOURCE_ID} size={25} color={PAGE_COLOR} />
+        </>
+    );
+
+    const articleBody = (
+        <>
+            {/* Intro paragraphs */}
+            <Animated.View nativeID="symptoms-overview" style={{ opacity: introFade, transform: [{ translateY: introSlide }] }}>
+                <Text style={styles.introPara}>
+                    Your body is going through a lot right now. Cancer and its treatments can affect many different parts of your body. You are not weak for feeling tired, uncomfortable, or overwhelmed.
+                </Text>
+
+                {/* Emergency callout */}
+                <View style={styles.callout}>
+                    <View style={styles.calloutIconRow}>
+                        <Ionicons name="alert-circle" size={20} color="#EF4444" />
+                        <Text style={styles.calloutTitle}>Important</Text>
+                    </View>
+                    <Text style={styles.calloutText}>
+                        If you ever feel very unwell or have any symptoms your care team instructed you to call them about, contact your care team right away or go to the nearest emergency department.
+                    </Text>
+                </View>
+            </Animated.View>
+
+            {/* Body Diagram */}
+            <Animated.View nativeID="symptoms-body" style={{ opacity: diagFade, transform: [{ translateY: diagSlide }] }}>
+                <Text style={styles.sectionTitle}>Tap a body area to learn more about symptom areas</Text>
+
+                {/* Diagram */}
+                <View
+                    style={[styles.diagramContainer, { height: DIAGRAM_HEIGHT }]}
+                    onLayout={(e) => setDiagramWidth(e.nativeEvent.layout.width)}
+                >
+                    <BodyDiagram
+                        containerWidth={diagramWidth}
+                        areas={SYMPTOM_AREAS}
+                        onSelectArea={setExpandedArea}
+                        styles={styles}
+                    />
+                </View>
+            </Animated.View>
+
+            {/* General Tips */}
+            <View nativeID="symptoms-tips" style={[styles.generalTipsSection, { borderColor: colors.borderCard }]}>
+                <View style={[styles.generalTipsHeader, { backgroundColor: PAGE_COLOR }]}>
+                    <Ionicons name="sparkles" size={18} color={colors.white} />
+                    <Text style={styles.generalTipsTitle}>General Tips & Considerations</Text>
+                </View>
+                <View style={[styles.generalTipsBody, { backgroundColor: isDark ? colors.backgroundLight : colors.white }]}>
+                    {GENERAL_TIPS.map((tip) => (
+                        <TipAccordion key={tip.id} tip={tip} styles={styles} />
+                    ))}
+                </View>
+            </View>
+        </>
+    );
+
+    const RELATED_TAGS = ["health", "symptoms", "cancer", "treatment", "managing"];
+
+    const expandedModal = (
+        <ExpandedCardModal
+            visible={expandedArea !== null}
+            area={expandedArea}
+            onClose={closeCard}
+            isSpeaking={isSpeaking}
+            isLoadingAudio={isLoadingAudio}
+            onToggleSpeak={handleSpeak}
+            playbackRate={playbackRate}
+            onTogglePlaybackRate={togglePlaybackRate}
+            styles={styles}
+        />
+    );
+
+    // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+    if (Platform.OS === "web") {
+        return (
+            <>
+                <ArticleLayout
+                    breadcrumb={[
+                        { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+                        { label: "Health" },
+                        { label: "Tips for Managing Symptoms" },
+                    ]}
+                    title={titleNode}
+                    actions={actionsNode}
+                    sections={[
+                        { id: "symptoms-overview", label: "Overview" },
+                        { id: "symptoms-body", label: "Body Areas" },
+                        { id: "symptoms-tips", label: "General Tips" },
+                    ]}
+                    aside={<RecommendationList currentId={RESOURCE_ID} currentTags={RELATED_TAGS} variant="rail" />}
+                >
+                    {articleBody}
+                </ArticleLayout>
+                {expandedModal}
+            </>
+        );
+    }
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -848,11 +963,7 @@ export default function ManagingSymptomsScreen() {
                     <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
-                    </TouchableOpacity>
-                    <DownloadButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
-                    <BookmarkButton resourceId={RESOURCE_ID} size={27} color={PAGE_COLOR} />
+                    {actionsNode}
                 </View>
             </View>
 
@@ -862,82 +973,19 @@ export default function ManagingSymptomsScreen() {
                 onScroll={handleScroll}
                 scrollEventThrottle={100}
             >
-                {/* Title */}
-                <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
-                    <Text style={styles.pageTitle}>
-                        Tips for{" "}
-                        <Text style={{ color: PAGE_COLOR }}>Managing Symptoms</Text>
-                    </Text>
-                </Animated.View>
-
-                {/* Intro paragraphs */}
-                <Animated.View style={{ opacity: introFade, transform: [{ translateY: introSlide }] }}>
-                    <Text style={styles.introPara}>
-                        Your body is going through a lot right now. Cancer and its treatments can affect many different parts of your body. You are not weak for feeling tired, uncomfortable, or overwhelmed.
-                    </Text>
-
-                    {/* Emergency callout */}
-                    <View style={styles.callout}>
-                        <View style={styles.calloutIconRow}>
-                            <Ionicons name="alert-circle" size={20} color="#EF4444" />
-                            <Text style={styles.calloutTitle}>Important</Text>
-                        </View>
-                        <Text style={styles.calloutText}>
-                            If you ever feel very unwell or have any symptoms your care team instructed you to call them about, contact your care team right away or go to the nearest emergency department.
-                        </Text>
-                    </View>
-                </Animated.View>
-
-                {/* Body Diagram */}
-                <Animated.View style={{ opacity: diagFade, transform: [{ translateY: diagSlide }] }}>
-                    <Text style={styles.sectionTitle}>Tap a body area to learn more about symptom areas</Text>
-
-                    {/* Diagram */}
-                    <View
-                        style={[styles.diagramContainer, { height: DIAGRAM_HEIGHT }]}
-                        onLayout={(e) => setDiagramWidth(e.nativeEvent.layout.width)}
-                    >
-                        <BodyDiagram
-                            containerWidth={diagramWidth}
-                            areas={SYMPTOM_AREAS}
-                            onSelectArea={setExpandedArea}
-                            styles={styles}
-                        />
-                    </View>
-                </Animated.View>
-
-                {/* General Tips */}
-                <View style={[styles.generalTipsSection, { borderColor: isDark ? colors.borderCard : "#E5E3F8" }]}>
-                    <View style={[styles.generalTipsHeader, { backgroundColor: PAGE_COLOR }]}>
-                        <Ionicons name="sparkles" size={18} color="#FFF" />
-                        <Text style={styles.generalTipsTitle}>General Tips & Considerations</Text>
-                    </View>
-                    <View style={[styles.generalTipsBody, { backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}>
-                        {GENERAL_TIPS.map((tip) => (
-                            <TipAccordion key={tip.id} tip={tip} styles={styles} />
-                        ))}
-                    </View>
-                </View>
-
-                {/* Recommendations */}
-                <RecommendationList
-                    currentId={RESOURCE_ID}
-                    currentTags={["health", "symptoms", "cancer", "treatment", "managing"]}
-                />
+                <ContentColumn width="reading">
+                    {titleNode}
+                    {articleBody}
+                    {/* Recommendations */}
+                    <RecommendationList
+                        currentId={RESOURCE_ID}
+                        currentTags={RELATED_TAGS}
+                    />
+                </ContentColumn>
             </ScrollView>
 
             {/* Expanded card modal */}
-            <ExpandedCardModal
-                visible={expandedArea !== null}
-                area={expandedArea}
-                onClose={closeCard}
-                isSpeaking={isSpeaking}
-                isLoadingAudio={isLoadingAudio}
-                onToggleSpeak={handleSpeak}
-                playbackRate={playbackRate}
-                onTogglePlaybackRate={togglePlaybackRate}
-                styles={styles}
-            />
+            {expandedModal}
         </View>
     );
 }
@@ -956,9 +1004,9 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
             justifyContent: "space-between",
             paddingHorizontal: 24,
             paddingBottom: 16,
-            backgroundColor: isDark ? c.appBackground : "#FFFFFF",
+            backgroundColor: isDark ? c.appBackground : c.white,
             borderBottomWidth: 1,
-            borderBottomColor: isDark ? c.borderCard : "#F0F0F0",
+            borderBottomColor: c.borderCard,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.3 : 0.05,
@@ -1047,7 +1095,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         generalTipsTitle: {
             fontSize: fs(15),
             fontWeight: "700",
-            color: "#FFF",
+            color: c.white,
         },
         generalTipsBody: {
             padding: 12,
@@ -1145,7 +1193,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         frontTitle: {
             fontSize: fs(22),
             fontWeight: "800",
-            color: "#FFF",
+            color: c.white,
             textAlign: "center",
             letterSpacing: -0.3,
         },

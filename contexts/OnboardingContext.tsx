@@ -258,6 +258,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     // If we have a new image, upload it to Supabase Storage
     let publicUrl = uri;
+    let uploadFailed = false;
 
     if (uri && user?.id && !uri.startsWith('http')) {
       try {
@@ -285,13 +286,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         publicUrl = urlData.publicUrl;
       } catch (error) {
-        // Fall back to local URI if upload fails
-        publicUrl = uri;
+        // Upload failed: keep the picked image in-memory for this session's UI,
+        // but do NOT persist a local file:// URI to the DB — other devices would
+        // get a dead image. Leave the previous remote value untouched.
+        console.error('Avatar upload failed; not persisting local URI to DB:', error);
+        uploadFailed = true;
       }
     }
 
+    // Show the selected image locally so the UI updates immediately.
     setData(prev => ({ ...prev, profilePicture: publicUrl }));
-    await updateProfile({ profile_picture_url: publicUrl });
+
+    // Only write remote (http/https) URLs — or an explicit clear (null) — to the
+    // DB column. Never persist a local file:// path.
+    const isRemote = typeof publicUrl === 'string' && publicUrl.startsWith('http');
+    const isClearing = publicUrl === null;
+    if (!uploadFailed && (isRemote || isClearing)) {
+      await updateProfile({ profile_picture_url: publicUrl });
+    }
   };
 
   const completeOnboarding = async () => {

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { useStories, Story } from '../contexts/StoriesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { StoryCard } from '../components/StoryCard';
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 import { COLORS, RADII, BORDERS, SPACING, TYPOGRAPHY } from '../constants/onboarding-theme';
 
 export default function RejectedStoriesScreen() {
@@ -62,6 +63,11 @@ const makeStyles = (c: typeof import('../constants/theme').COLORS_LIGHT) =>
     scrollContent: {
       padding: SPACING.screenPadding,
       paddingBottom: 40,
+      // Web-only: cap and center the list column so rows don't stretch
+      // edge-to-edge on desktop. No-op on native.
+      ...(Platform.OS === 'web'
+        ? { width: '100%', maxWidth: CONTENT_WIDTH.reading, alignSelf: 'center' as const }
+        : {}),
     },
     emptyContainer: {
       alignItems: 'center',

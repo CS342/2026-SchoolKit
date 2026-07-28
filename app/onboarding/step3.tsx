@@ -4,13 +4,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { SelectableCard } from '../../components/onboarding/SelectableCard';
 
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, COLORS, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { COLORS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const SCHOOL_STATUS_OPTIONS: {
   value: SchoolStatus;
@@ -28,6 +29,7 @@ export default function Step3Screen() {
   const router = useRouter();
   const { data, updateSchoolStatuses } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
 
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
@@ -35,6 +37,7 @@ export default function Step3Screen() {
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
   const isSchoolStaff = data.role === 'staff';
   const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
+  const stepInfo = getOnboardingStep('journey', isStudent);
 
 
 
@@ -57,12 +60,12 @@ export default function Step3Screen() {
   };
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 4 : 3, total: isStudent ? 6 : 5, label: 'School journey' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
         <OnboardingHeader
-          currentStep={isStudent ? 4 : 3}
-          totalSteps={isStudent ? 6 : 5}
+          currentStep={stepInfo.current}
+          totalSteps={stepInfo.total}
         />
 
         <ScrollView
@@ -70,17 +73,17 @@ export default function Step3Screen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, paddingBottom: 0 }]}>
-            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="compass-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="compass-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>{title}</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, styles.subtitleOverride]}>
+            <Text style={sharedStyles.pageTitle}>{title}</Text>
+            <Text style={[sharedStyles.pageSubtitle, styles.subtitleOverride]}>
               Every path is valid - we're here to support yours.
             </Text>
 
-            <View style={[SHARED_STYLES.badge, { paddingHorizontal: 16, marginBottom: 24 }]}>
-              <Text style={SHARED_STYLES.badgeText}>Select all that apply</Text>
+            <View style={[sharedStyles.badge, { paddingHorizontal: 16, marginBottom: 24 }]}>
+              <Text style={sharedStyles.badgeText}>Select all that apply</Text>
             </View>
 
             <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
@@ -106,8 +109,8 @@ export default function Step3Screen() {
                   onPress={handleContinue}
                   disabled={selectedStatuses.length === 0}
                 />
-                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+                  <Text style={sharedStyles.skipText}>Skip for now</Text>
                 </Pressable>
               </View>
             )}
@@ -115,14 +118,14 @@ export default function Step3Screen() {
         </ScrollView>
 
         {!isWebDesktop && (
-        <View style={SHARED_STYLES.buttonContainer}>
+        <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={selectedStatuses.length === 0}
           />
-          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+          <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+            <Text style={sharedStyles.skipText}>Skip for now</Text>
           </Pressable>
         </View>
         )}

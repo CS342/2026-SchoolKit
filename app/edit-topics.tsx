@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
+import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { PAGE_TOPICS } from '../constants/resources';
@@ -67,25 +68,27 @@ export default function EditTopicsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select topics you're interested in</Text>
-        <Text style={[styles.selectedCount, { color: colors.primary }]}>
-          {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
-        </Text>
+        <ContentColumn width="reading">
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select topics you're interested in</Text>
+          <Text style={[styles.selectedCount, { color: colors.primary }]}>
+            {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
+          </Text>
 
-        <View style={styles.cardsContainer}>
-          {PAGE_TOPICS.map((topic, index) => (
-            <AnimatedCardWrapper key={topic.label} index={index}>
-              <SelectableCard
-                title={topic.label}
-                color={topic.color}
-                icon={topic.icon as any}
-                selected={selectedTopics.includes(topic.label)}
-                onPress={() => toggleTopic(topic.label)}
-                multiSelect={true}
-              />
-            </AnimatedCardWrapper>
-          ))}
-        </View>
+          <View style={styles.cardsContainer}>
+            {PAGE_TOPICS.map((topic, index) => (
+              <AnimatedCardWrapper key={topic.label} index={index}>
+                <SelectableCard
+                  title={topic.label}
+                  color={topic.color}
+                  icon={topic.icon as any}
+                  selected={selectedTopics.includes(topic.label)}
+                  onPress={() => toggleTopic(topic.label)}
+                  multiSelect={true}
+                />
+              </AnimatedCardWrapper>
+            ))}
+          </View>
+        </ContentColumn>
       </ScrollView>
     </View>
   );

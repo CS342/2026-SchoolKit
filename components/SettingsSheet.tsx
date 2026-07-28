@@ -552,7 +552,14 @@ export function SettingsSheet() {
   const handleDownloadAll = () => {
     const allDownloaded = downloads.length >= ALL_RESOURCES.length;
     if (allDownloaded) {
-      Alert.alert('Already Downloaded', 'All resources are already available offline.');
+      if (Platform.OS === 'web') {
+        window.alert('Already Downloaded\nAll resources are already available offline.');
+      } else {
+        Alert.alert('Already Downloaded', 'All resources are already available offline.');
+      }
+    } else if (Platform.OS === 'web') {
+      if (!window.confirm('Download All Resources\nThis will save all resources for offline access.')) return;
+      downloadAllResources().then(() => { window.alert('Success\nAll resources are now available offline!'); });
     } else {
       Alert.alert('Download All Resources', 'This will save all resources for offline access.', [
         { text: 'Cancel', style: 'cancel' },

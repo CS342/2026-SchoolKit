@@ -701,7 +701,23 @@ export function useAIGenerate(): UseAIGenerateReturn {
         );
 
         if (fnError) {
-          throw new Error(fnError.message ?? 'Design generation failed');
+          // supabase-js throws a FunctionsHttpError with a generic
+          // ".message" ("Edge Function returned a non-2xx status code").
+          // The real error (rate limit, unauthorized, oversized prompt,
+          // invalid AI output) lives in ".context", a Response we must read.
+          let message = fnError.message ?? 'Design generation failed';
+          const context = (fnError as { context?: unknown }).context;
+          if (context instanceof Response) {
+            try {
+              const body = await context.json();
+              const detail =
+                body?.error ?? body?.message ?? body?.msg;
+              if (detail) message = String(detail);
+            } catch {
+              // Response body wasn't JSON / already consumed — keep fallback.
+            }
+          }
+          throw new Error(message);
         }
         if (data?.error) {
           throw new Error(String(data.error));

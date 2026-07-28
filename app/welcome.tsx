@@ -13,12 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { useResponsive } from '../hooks/useResponsive';
+import { useTheme } from '../contexts/ThemeContext';
 
-import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { isWeb, isMobile } = useResponsive();
+  const { sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
 
   const [animDone, setAnimDone] = useState(false);
@@ -100,7 +102,7 @@ export default function WelcomeScreen() {
             </View>
           </View>
 
-          <Animated.View style={[SHARED_STYLES.buttonContainer, isWebDesktop && { maxWidth: 400, alignSelf: 'center', width: '100%' }, buttonAnimStyle]}>
+          <Animated.View style={[sharedStyles.buttonContainer, isWebDesktop && { maxWidth: 400, alignSelf: 'center', width: '100%' }, buttonAnimStyle]}>
             <Pressable
               onPress={handleGetStarted}
               onPressIn={() => {
@@ -112,10 +114,10 @@ export default function WelcomeScreen() {
             >
               <View style={[styles.button, isWebDesktop && styles.buttonWeb]}>
                 <Text style={[styles.buttonText, isWebDesktop && { fontSize: 22 }]}>Get Started</Text>
-                {isWebDesktop && <Ionicons name="arrow-forward" size={20} color={COLORS.primary} style={{ marginLeft: 8 }} />}
+                {isWebDesktop && <Ionicons name="arrow-forward" size={20} color="#6B5AD6" style={{ marginLeft: 8 }} />}
               </View>
             </Pressable>
-            <View style={SHARED_STYLES.skipPlaceholder} />
+            <View style={sharedStyles.skipPlaceholder} />
           </Animated.View>
 
           {isWebDesktop && (
@@ -145,18 +147,18 @@ const styles = StyleSheet.create({
   },
   tagline: {
     ...TYPOGRAPHY.body,
-    color: COLORS.whiteOverlay75,
+    color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
   },
   button: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 32,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    shadowColor: COLORS.shadow,
+    shadowColor: '#2C2A3A',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: '#6B5AD6',
   },
   webFooter: {
     fontSize: 12,

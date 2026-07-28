@@ -24,6 +24,7 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 import { ThemeColors, ThemeShadows } from "../constants/theme";
 import { TYPOGRAPHY, SPACING, RADII, BORDERS } from "../constants/onboarding-theme";
 
@@ -358,7 +359,7 @@ function ExpandedCardModal({
                                     </View>
                                     <Text style={[styles.backTitle, { color }]}>{card.front}</Text>
                                     <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerBtn} disabled={isLoadingAudio}>
-                                        {isLoadingAudio ? <ActivityIndicator size="small" color={color} /> : <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={26} color={isSpeaking ? "#FF6B6B" : colors.textDark} />}
+                                        {isLoadingAudio ? <ActivityIndicator size="small" color={color} /> : <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={26} color={isSpeaking ? colors.error : colors.textDark} />}
                                     </TouchableOpacity>
                                     {isAudioLoaded && (
                                         <TouchableOpacity onPress={onTogglePlaybackRate} style={styles.speakerBtn}>
@@ -508,6 +509,95 @@ export default function FindingSupportScreen() {
     const storyScrollRef = useRef<FlatList>(null);
     const [activeStoryIndex, setActiveStoryIndex] = useState(0);
 
+    const actionsNode = (
+        <>
+            <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+                <Ionicons name="share-outline" size={26} color={colors.textLight} />
+            </TouchableOpacity>
+            <DownloadButton resourceId="15" size={26} color={colors.primary} />
+            <BookmarkButton resourceId="15" size={25} color={colors.primary} />
+        </>
+    );
+
+    const titleNode = (
+        <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
+            <Text style={[styles.pageTitle, { color: colors.textDark }]}>
+                How to Find People Who <Text style={{ color: colors.primary }}>Understand</Text> Your Journey
+            </Text>
+        </Animated.View>
+    );
+
+    const articleBody = (
+        <>
+            <Animated.View nativeID="support-quote" style={[styles.quoteCard, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card, { opacity: quoteFade, transform: [{ translateY: quoteSlide }] }]}>
+                <Ionicons name="chatbubble-outline" size={22} color={colors.primary} style={{ marginBottom: 8, opacity: 0.6 }} />
+                <Text style={[styles.quoteText, { color: colors.textDark }]}>
+                    {"\u201C"}A friend is someone who knows all about you and still loves you.{"\u201D"}
+                </Text>
+                <Text style={[styles.quoteAuthor, { color: colors.textLight }]}>{"\u2014"} Elbert Hubbard</Text>
+            </Animated.View>
+
+            <Animated.View nativeID="support-stories" style={{ opacity: storiesFade, transform: [{ translateY: storiesSlide }] }}>
+                <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Making New Friends: Shining Examples</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Real stories from young people who found their way.</Text>
+                <FlatList ref={storyScrollRef} data={STORIES} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }} snapToInterval={STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2} decelerationRate="fast" renderItem={({ item }) => <StoryFlipCard story={item} isDark={isDark} colors={colors} styles={styles} />} onMomentumScrollEnd={(e) => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / (STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2));
+                    setActiveStoryIndex(idx);
+                }} />
+                <View style={styles.dotsRow}>
+                    {STORIES.map((s, i) => (
+                        <View key={s.id} style={[styles.dot, { backgroundColor: i === activeStoryIndex ? s.color : colors.indicatorInactive, width: i === activeStoryIndex ? 20 : 8 }]} />
+                    ))}
+                </View>
+                <Text style={[styles.sourceText, { color: colors.textLight }]}>Source: Alex's Lemonade Stand Foundation</Text>
+            </Animated.View>
+
+            <Animated.View nativeID="support-steps" style={{ opacity: sectionFade, transform: [{ translateY: sectionSlide }] }}>
+                <Text style={[styles.sectionTitle, { color: colors.textDark, marginTop: 32 }]}>Steps to Build Your Circle</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Tap each step to learn more.</Text>
+                <View style={styles.pathContainer}>
+                    {TIP_CARDS.map((card, index) => (
+                        <React.Fragment key={card.id}>
+                            <MapBubble card={card} index={index} onPress={() => setExpandedCard(card)} styles={styles} />
+                            {index < TIP_CARDS.length - 1 && <MapConnector fromIndex={index} styles={styles} />}
+                        </React.Fragment>
+                    ))}
+                </View>
+            </Animated.View>
+        </>
+    );
+
+    const RELATED_TAGS = ['social', 'friends', 'support', 'survivors', 'connections', 'peer'];
+
+    const sections = [
+        { id: "support-quote", label: "Overview" },
+        { id: "support-stories", label: "Real Stories" },
+        { id: "support-steps", label: "Build Your Circle" },
+    ];
+
+    // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+    if (Platform.OS === "web") {
+        return (
+            <>
+                <ArticleLayout
+                    breadcrumb={[
+                        { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+                        { label: "Social" },
+                        { label: "How to Find People Who Understand Your Journey" },
+                    ]}
+                    title={titleNode}
+                    actions={actionsNode}
+                    sections={sections}
+                    aside={<RecommendationList currentId="15" currentTags={RELATED_TAGS} variant="rail" />}
+                >
+                    {articleBody}
+                </ArticleLayout>
+
+                <ExpandedCardModal visible={expandedCard !== null} card={expandedCard} onClose={closeExpandedCard} isSpeaking={isCardSpeaking} isLoadingAudio={isCardLoadingAudio} onToggleSpeak={handleCardSpeak} playbackRate={cardPlaybackRate} onTogglePlaybackRate={toggleCardPlaybackRate} isAudioLoaded={cardPlayerStatus.isLoaded} isDark={isDark} colors={colors} styles={styles} />
+            </>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.white, borderBottomColor: colors.borderCard }]}>
@@ -515,58 +605,16 @@ export default function FindingSupportScreen() {
                     <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
-                    </TouchableOpacity>
-                    <DownloadButton resourceId="15" size={28} color={colors.primary} />
-                    <BookmarkButton resourceId="15" size={27} color={colors.primary} />
+                    {actionsNode}
                 </View>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
-                    <Text style={[styles.pageTitle, { color: colors.textDark }]}>
-                        How to Find People Who <Text style={{ color: colors.primary }}>Understand</Text> Your Journey
-                    </Text>
-                </Animated.View>
-
-                <Animated.View style={[styles.quoteCard, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card, { opacity: quoteFade, transform: [{ translateY: quoteSlide }] }]}>
-                    <Ionicons name="chatbubble-outline" size={22} color={colors.primary} style={{ marginBottom: 8, opacity: 0.6 }} />
-                    <Text style={[styles.quoteText, { color: colors.textDark }]}>
-                        {"\u201C"}A friend is someone who knows all about you and still loves you.{"\u201D"}
-                    </Text>
-                    <Text style={[styles.quoteAuthor, { color: colors.textLight }]}>{"\u2014"} Elbert Hubbard</Text>
-                </Animated.View>
-
-                <Animated.View style={{ opacity: storiesFade, transform: [{ translateY: storiesSlide }] }}>
-                    <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Making New Friends: Shining Examples</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Real stories from young people who found their way.</Text>
-                    <FlatList ref={storyScrollRef} data={STORIES} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }} snapToInterval={STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2} decelerationRate="fast" renderItem={({ item }) => <StoryFlipCard story={item} isDark={isDark} colors={colors} styles={styles} />} onMomentumScrollEnd={(e) => {
-                        const idx = Math.round(e.nativeEvent.contentOffset.x / (STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2));
-                        setActiveStoryIndex(idx);
-                    }} />
-                    <View style={styles.dotsRow}>
-                        {STORIES.map((s, i) => (
-                            <View key={s.id} style={[styles.dot, { backgroundColor: i === activeStoryIndex ? s.color : isDark ? colors.indicatorInactive : "#D0D0E0", width: i === activeStoryIndex ? 20 : 8 }]} />
-                        ))}
-                    </View>
-                    <Text style={[styles.sourceText, { color: colors.textLight }]}>Source: Alex's Lemonade Stand Foundation</Text>
-                </Animated.View>
-
-                <Animated.View style={{ opacity: sectionFade, transform: [{ translateY: sectionSlide }] }}>
-                    <Text style={[styles.sectionTitle, { color: colors.textDark, marginTop: 32 }]}>Steps to Build Your Circle</Text>
-                    <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Tap each step to learn more.</Text>
-                    <View style={styles.pathContainer}>
-                        {TIP_CARDS.map((card, index) => (
-                            <React.Fragment key={card.id}>
-                                <MapBubble card={card} index={index} onPress={() => setExpandedCard(card)} styles={styles} />
-                                {index < TIP_CARDS.length - 1 && <MapConnector fromIndex={index} styles={styles} />}
-                            </React.Fragment>
-                        ))}
-                    </View>
-                </Animated.View>
-
-                <RecommendationList currentId="15" currentTags={['social', 'friends', 'support', 'survivors', 'connections', 'peer']} />
+                <ContentColumn width="reading">
+                {titleNode}
+                {articleBody}
+                <RecommendationList currentId="15" currentTags={RELATED_TAGS} />
+                </ContentColumn>
             </ScrollView>
 
             <ExpandedCardModal visible={expandedCard !== null} card={expandedCard} onClose={closeExpandedCard} isSpeaking={isCardSpeaking} isLoadingAudio={isCardLoadingAudio} onToggleSpeak={handleCardSpeak} playbackRate={cardPlaybackRate} onTogglePlaybackRate={toggleCardPlaybackRate} isAudioLoaded={cardPlayerStatus.isLoaded} isDark={isDark} colors={colors} styles={styles} />
@@ -600,7 +648,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     sourceText: { ...TYPOGRAPHY.caption, fontStyle: "italic", textAlign: "center", marginTop: 6 },
     storyCard: { width: STORY_CARD_WIDTH, borderRadius: 24, borderWidth: 2, padding: 20, height: 260, justifyContent: "center", alignItems: "center", backfaceVisibility: "hidden" },
     storyEmoji: { fontSize: 40, marginBottom: 12 },
-    storyFrontTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF", textAlign: "center", lineHeight: 24 },
+    storyFrontTitle: { fontSize: 18, fontWeight: "700", color: c.white, textAlign: "center", lineHeight: 24 },
     storyTapHint: { fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: "500", marginTop: 10 },
     storyText: { fontSize: 14, fontWeight: "400", lineHeight: 22, fontStyle: "italic" },
     pathContainer: { paddingBottom: 10 },
@@ -620,7 +668,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     modalCard: { width: "100%", borderRadius: 32, borderWidth: 4, overflow: "hidden", backfaceVisibility: "hidden" },
     backSide: { position: "absolute", top: 0, left: 0, right: 0 },
     frontInner: { flex: 1, padding: 32, alignItems: "center", justifyContent: "center" },
-    frontTitle: { fontSize: 26, fontWeight: "700", color: "#FFFFFF", textAlign: "center", lineHeight: 34, letterSpacing: -0.5 },
+    frontTitle: { fontSize: 26, fontWeight: "700", color: c.white, textAlign: "center", lineHeight: 34, letterSpacing: -0.5 },
     backInner: { padding: 24, flex: 1, overflow: "hidden" },
     backHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
     backIconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },

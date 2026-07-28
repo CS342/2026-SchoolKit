@@ -22,14 +22,26 @@ import { ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme';
 import ChapterCard from '../components/puzzle/ChapterCard';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeColors, ThemeShadows } from '../constants/theme';
+import { useResponsive, useWebLayout, gridColumns, CONTENT_WIDTH } from '../hooks/useResponsive';
 
 export default function AccomplishmentsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, isDark } = useTheme();
   const { visibleChapterIds, earnedPieceIds, fireEvent } = useAccomplishments();
+  const webLayout = useWebLayout();
+  const { width } = useResponsive();
 
   const styles = useMemo(() => makeStyles(colors, shadows), [colors, shadows]);
+
+  // Web trophy-case grid metrics
+  const WEB_H_PAD = 24;
+  const WEB_GAP = 20;
+  const webContentW = Math.min(width, CONTENT_WIDTH.app);
+  const webColumns = gridColumns(webContentW, 300);
+  const webCardWidth = Math.floor(
+    (webContentW - WEB_H_PAD * 2 - WEB_GAP * (webColumns - 1)) / webColumns,
+  );
 
   const visibleChapters = CHAPTERS.filter(c => visibleChapterIds.has(c.id));
   const totalEarned = earnedPieceIds.size;
@@ -69,6 +81,67 @@ export default function AccomplishmentsScreen() {
     opacity: emptyOpacity.value,
     transform: [{ translateY: emptyY.value }],
   }));
+
+  // ─── Web trophy-case layout ────────────────────────────────────────────────
+  if (webLayout) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 40, alignItems: 'center' }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View
+            style={[styles.webColumn, { maxWidth: CONTENT_WIDTH.app, paddingHorizontal: WEB_H_PAD }]}
+          >
+            <Animated.View style={[styles.webHeader, headerStyle]}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.backButton}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="chevron-back" size={24} color={colors.textDark} />
+              </TouchableOpacity>
+              <Text style={[styles.title, { color: colors.textDark }]}>My Puzzles</Text>
+              {hasAny && (
+                <Text style={[styles.countBadge, { color: colors.textMuted }]}>
+                  {totalEarned} / {TOTAL_PIECES}
+                </Text>
+              )}
+            </Animated.View>
+
+            {hasAny ? (
+              <View style={[styles.webGrid, { gap: WEB_GAP }]}>
+                {visibleChapters.map((chapter, index) => (
+                  <ChapterCard
+                    key={chapter.id}
+                    chapter={chapter}
+                    earnedPieceIds={earnedPieceIds}
+                    index={index}
+                    web
+                    cardWidth={webCardWidth}
+                    onPress={() => router.push({ pathname: '/chapter-detail' as any, params: { chapterId: chapter.id } })}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Animated.View style={[styles.emptyState, emptyStyle]}>
+                <View style={[styles.emptyIconCircle, { backgroundColor: colors.backgroundLight }]}>
+                  <Ionicons name="eye-outline" size={40} color={colors.textLight} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: colors.textDark }]}>Still unfolding</Text>
+                <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
+                  Your story is still unfolding.{'\n'}
+                  Explore the app and something{'\n'}
+                  unexpected might find you.
+                </Text>
+              </Animated.View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -171,6 +244,23 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
+  },
+  webColumn: {
+    width: '100%',
+    alignSelf: 'center',
+    paddingTop: 8,
+  },
+  webHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  webGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
   },
   emptyState: {
     flex: 1,

@@ -41,6 +41,7 @@ import {
   ANIMATION,
 } from "../constants/onboarding-theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 if (Platform.OS === "android") {
@@ -768,7 +769,7 @@ function VideoPlaceholder() {
           <PersonFigure scale={0.8} offsetTop={10} />
         </View>
         <View style={videoStyles.playCircle}>
-          <Ionicons name="play" size={18} color="#fff" style={{ marginLeft: 2 }} />
+          <Ionicons name="play" size={18} color={colors.white} style={{ marginLeft: 2 }} />
         </View>
         <Text style={[videoStyles.label, { color: colors.textDark }]}>Patient Video</Text>
         <Text style={[videoStyles.sublabel, { color: colors.textLight }]}>Coming Soon</Text>
@@ -844,6 +845,92 @@ export default function SchoolNurseScreen() {
 
   const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
+  const actionsNode = (
+    <>
+      <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+        <Ionicons name="share-outline" size={26} color={colors.textLight} />
+      </TouchableOpacity>
+      <DownloadButton resourceId="13" size={26} color="#E8735A" />
+      <BookmarkButton resourceId="13" size={25} color="#E8735A" />
+    </>
+  );
+
+  const titleNode = (
+    <RNAnimated.View style={headerStyle}>
+      <Text style={styles.pageTitle}>
+        The School Nurse:{"\n"}
+        <Text style={{ color: "#E8735A" }}>Your Ally at School</Text>
+      </Text>
+    </RNAnimated.View>
+  );
+
+  const articleBody = (
+    <>
+      {/* Subtitle */}
+      <RNAnimated.View style={headerStyle}>
+        <Text style={styles.pageSubtitle}>
+          Your health helper when you're back in class!
+        </Text>
+      </RNAnimated.View>
+
+      {/* Video placeholder */}
+      <RNAnimated.View nativeID="nurse-video" style={videoStyle}>
+        <VideoPlaceholder />
+      </RNAnimated.View>
+
+      {/* Icon cards — 2 columns */}
+      <RNAnimated.View nativeID="nurse-cards" style={[styles.iconRow, cardsStyle]}>
+        {ICON_SECTIONS.map((section, i) => (
+          <IconCard
+            key={section.id}
+            section={section}
+            index={i}
+            onPress={() => setActiveSection(section)}
+          />
+        ))}
+      </RNAnimated.View>
+
+      {/* Accordion section */}
+      <RNAnimated.View nativeID="nurse-before" style={accordionStyle}>
+        <AccordionSection section={ACCORDION_SECTION} />
+      </RNAnimated.View>
+    </>
+  );
+
+  const RELATED_TAGS = ['school', 'nurse', 'health', 'medicine', 'support', 'back to school'];
+
+  const sections = [
+    { id: "nurse-video", label: "Overview" },
+    { id: "nurse-cards", label: "Nurse Basics" },
+    { id: "nurse-before", label: "Before School" },
+  ];
+
+  // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+  if (Platform.OS === "web") {
+    return (
+      <>
+        <ArticleLayout
+          breadcrumb={[
+            { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+            { label: "School" },
+            { label: "The School Nurse: Your Ally at School" },
+          ]}
+          title={titleNode}
+          actions={actionsNode}
+          sections={sections}
+          aside={<RecommendationList currentId="13" currentTags={RELATED_TAGS} variant="rail" />}
+        >
+          {articleBody}
+        </ArticleLayout>
+        <BottomSheet
+          visible={activeSection !== null}
+          section={activeSection}
+          onClose={() => setActiveSection(null)}
+        />
+      </>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Nav header */}
@@ -856,11 +943,7 @@ export default function SchoolNurseScreen() {
           <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={28} color={colors.textLight} />
-          </TouchableOpacity>
-          <DownloadButton resourceId="13" size={28} color="#E8735A" />
-          <BookmarkButton resourceId="13" size={27} color="#E8735A" />
+          {actionsNode}
         </View>
       </View>
 
@@ -870,44 +953,15 @@ export default function SchoolNurseScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={100}
       >
-        {/* Title + subtitle */}
-        <RNAnimated.View style={headerStyle}>
-          <Text style={styles.pageTitle}>
-            The School Nurse:{"\n"}
-            <Text style={{ color: "#E8735A" }}>Your Ally at School</Text>
-          </Text>
-          <Text style={styles.pageSubtitle}>
-            Your health helper when you're back in class!
-          </Text>
-        </RNAnimated.View>
-
-        {/* Video placeholder */}
-        <RNAnimated.View style={videoStyle}>
-          <VideoPlaceholder />
-        </RNAnimated.View>
-
-        {/* Icon cards — 2 columns */}
-        <RNAnimated.View style={[styles.iconRow, cardsStyle]}>
-          {ICON_SECTIONS.map((section, i) => (
-            <IconCard
-              key={section.id}
-              section={section}
-              index={i}
-              onPress={() => setActiveSection(section)}
-            />
-          ))}
-        </RNAnimated.View>
-
-        {/* Accordion section */}
-        <RNAnimated.View style={accordionStyle}>
-          <AccordionSection section={ACCORDION_SECTION} />
-        </RNAnimated.View>
-
+        <ContentColumn width="reading">
+        {titleNode}
+        {articleBody}
         {/* Recommendations */}
         <RecommendationList
           currentId="13"
-          currentTags={['school', 'nurse', 'health', 'medicine', 'support', 'back to school']}
+          currentTags={RELATED_TAGS}
         />
+        </ContentColumn>
       </ScrollView>
 
       {/* Bottom sheet */}

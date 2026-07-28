@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, StyleSheet, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -9,7 +9,9 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
-import { SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { ANIMATION, TYPOGRAPHY, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 interface SelectableCardProps {
   title: string;
@@ -28,10 +30,13 @@ export function SelectableCard({
   selected,
   onPress,
   multiSelect = false,
-  color = COLORS.primary,
+  color: colorProp,
   icon,
   index = 0,
 }: SelectableCardProps) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const color = colorProp ?? colors.primary;
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
@@ -77,9 +82,9 @@ export function SelectableCard({
             backgroundColor: color + '08',
             borderColor: color,
             borderWidth: BORDERS.cardSelected,
-            ...SHADOWS.cardSelected,
+            ...shadows.cardSelected,
           },
-          !selected && SHADOWS.card,
+          !selected && shadows.card,
           animatedStyle,
         ]}
       >
@@ -89,11 +94,11 @@ export function SelectableCard({
           </View>
         )}
         <View style={styles.textContainer}>
-          <Text style={[styles.title, selected && { color: COLORS.textDark }]}>
+          <Text style={[styles.title, selected && { color: colors.textDark }]}>
             {title}
           </Text>
           {subtitle && (
-            <Text style={[styles.subtitle, selected && { color: COLORS.textMuted }]}>
+            <Text style={[styles.subtitle, selected && { color: colors.textMuted }]}>
               {subtitle}
             </Text>
           )}
@@ -107,7 +112,7 @@ export function SelectableCard({
             ]}
           >
             <Animated.View style={indicatorAnimStyle}>
-              {selected && <Ionicons name="checkmark" size={20} color={COLORS.white} />}
+              {selected && <Ionicons name="checkmark" size={20} color={colors.white} />}
             </Animated.View>
           </View>
         ) : (
@@ -126,14 +131,14 @@ export function SelectableCard({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.card,
     padding: 18,
     marginBottom: 14,
     borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
+    borderColor: c.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -151,21 +156,21 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 15,
     fontWeight: '500',
-    color: COLORS.textLight,
+    color: c.textLight,
   },
   checkbox: {
     width: 30,
     height: 30,
     borderRadius: 15,
     borderWidth: BORDERS.cardSelected,
-    borderColor: COLORS.indicatorInactive,
-    backgroundColor: COLORS.white,
+    borderColor: c.indicatorInactive,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,8 +179,8 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: BORDERS.cardSelected,
-    borderColor: COLORS.indicatorInactive,
-    backgroundColor: COLORS.white,
+    borderColor: c.indicatorInactive,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
