@@ -80,21 +80,33 @@ COLOR USAGE:
 - Text on colored card backgrounds: use #2D2D44 (dark) for pastels, #FFFFFF for dark backgrounds.
 
 ═══════════════════════════════════════════
-TYPOGRAPHY (SPECIFIC SIZES)
+TYPOGRAPHY (RALEWAY ONLY — SchoolKit brand font)
 ═══════════════════════════════════════════
 
-Use fontFamily "Georgia" for display/headlines. Use fontFamily "Arial" for body text and UI labels.
+This app uses Raleway exclusively. Pick a weight via fontFamily; set fontStyle to "normal" (the weight is baked into the family name — do NOT also set fontStyle:"bold").
 
-- Page titles: fontSize 32-34, fontStyle "bold", fontFamily "Georgia", lineHeight 1.2. Make key words a different fill color (accent pastel or brand color) for visual interest.
-- Section headings: fontSize 20-24, fontStyle "bold", fontFamily "Georgia"
-- Body text: fontSize 15-18, fontStyle "normal", fontFamily "Arial", lineHeight 1.5-1.6
-- Captions/labels: fontSize 13-15, fill #8E8EA8 or #6B6B85
-- Card titles: fontSize 18-24, fontStyle "bold"
-- Large display numbers: fontSize 32-40, fontStyle "bold" (for stats, counters)
+Available fontFamily values (use these EXACT strings):
+- "Raleway_400Regular" — body text, captions
+- "Raleway_500Medium" — body text emphasis
+- "Raleway_600SemiBold" — section headings, card titles
+- "Raleway_700Bold" — page titles, prominent labels
+- "Raleway_800ExtraBold" — display titles, stat numbers
+- "Raleway_400Regular_Italic" — italic accent
 
-Use font size contrast dramatically — a 34px title next to 13px caption creates energy.
+Sizes (matched to the app's TYPOGRAPHY tokens):
+- Display title: fontSize 38-44, fontFamily "Raleway_800ExtraBold", letterSpacing -1, lineHeight 1.1
+- Page title: fontSize 30-34, fontFamily "Raleway_800ExtraBold", letterSpacing -0.5, lineHeight 1.15
+- Section heading: fontSize 22-26, fontFamily "Raleway_700Bold", letterSpacing -0.3
+- Card title: fontSize 18-22, fontFamily "Raleway_700Bold"
+- Body large: fontSize 17-18, fontFamily "Raleway_600SemiBold", lineHeight 1.5
+- Body: fontSize 15-16, fontFamily "Raleway_500Medium", lineHeight 1.5
+- Caption / label: fontSize 13-14, fontFamily "Raleway_600SemiBold", fill "#8E8EA8" or "#6B6B85"
+- Uppercase label: fontSize 11-13, fontFamily "Raleway_700Bold", letterSpacing 0.5-0.8 (apply by adding spaces between letters since textTransform may not render)
+- Stat number: fontSize 32-44, fontFamily "Raleway_800ExtraBold"
 
-CORNER RADII: cards 20, buttons 16, small badges/pills 12, full-round for circles.
+In titles, color ONE key word in a brand or accent color for visual interest. Use font-size contrast dramatically — a 34px title next to a 13px caption creates energy.
+
+CORNER RADII (matched to the app's RADII tokens): cards 20, large cards 24, user/profile cards 28, buttons 16, inputs 14, badges 20, small badges 10, pill 100.
 
 ═══════════════════════════════════════════
 CARD-BASED LAYOUT PATTERNS
@@ -119,7 +131,7 @@ STACKED CARD PATTERN (vertical list):
 CARD STYLING (apply to ALL cards):
 - Border: strokeWidth 2-3, stroke color is a darker shade of the fill color
 - Corner radius: 20
-- Shadow: shadow:{color:"rgba(0,0,0,0.1)",offsetX:0,offsetY:6,blur:12} — REQUIRED on every card
+- Shadow: shadow:{color:"rgba(123,104,238,0.12)",offsetX:0,offsetY:4,blur:8} — REQUIRED on every card. Use the brand purple-tinted shadow (#7B68EE → rgba(123,104,238)) at 0.06-0.15 opacity, NEVER black. Larger cards or hero shapes can go to offsetY:6, blur:16, opacity:0.18.
 - Padding: place text children 16-20px inset from card edges
 
 INDEX CARD LINES (signature detail — add to cards):
@@ -161,9 +173,13 @@ DECORATIVE TECHNIQUES (use 2-3 per design):
 VISUAL EFFECTS GUIDELINES
 ═══════════════════════════════════════════
 
-- Shadows on ALL cards — REQUIRED, not optional: shadow:{color:"rgba(0,0,0,0.1)",offsetX:0,offsetY:6,blur:12}
+- Shadows on ALL cards — REQUIRED, not optional, and ALWAYS purple-tinted (never black): shadow:{color:"rgba(123,104,238,0.12)",offsetX:0,offsetY:4,blur:8}. For colored icon circles or themed accents, MATCH the shadow color to the icon's fill (emerald icon → rgba(16,185,129,0.25), pink icon → rgba(236,72,153,0.25), etc.) — this "colored glow" is a SchoolKit signature.
 - Card borders (2-3px) as a signature detail — every card rect needs a stroke matching its fill hue but darker
-- Gradients on hero backgrounds and CTA sections: gradient:{type:"linear",colors:["#7B68EE","#5B4BC7"],angle:135}
+- Gradients on hero backgrounds and CTA sections — use the brand gradient tokens:
+  - Primary button: ["#7B68EE","#9B6EE8","#B06AE4"] angle 135
+  - Welcome hero: ["#7B68EE","#9B59E8","#C45CD6"] angle 135
+  - Role: student K-8: ["#0EA5E9","#38BDF8"]; HS: ["#7B68EE","#9B6EE8"]; parent: ["#EC4899","#F472B6"]; staff: ["#66D9A6","#86EFAC"]
+  - Accent amber: ["#F59E0B","#FBBF24"]; cyan: ["#06B6D4","#22D3EE"]; violet: ["#8B5CF6","#A78BFA"]; orange: ["#F97316","#FB923C"]; emerald: ["#10B981","#34D399"]; error: ["#EF4444","#F87171"]; info: ["#3B82F6","#60A5FA"]
 - Index card lines at bottom of cards (see CARD-BASED LAYOUT PATTERNS)
 - Badges for category labels, status indicators, and tags
 
@@ -184,8 +200,9 @@ CANVAS: The user specifies width and height. All objects must stay within bounds
    Optional effects: gradient, shadow (same as rect)
 
 3. text — Text label
-   Fields: type:"text", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, text (string), fontSize, fontFamily:"Arial"|"Georgia", fontStyle:"normal"|"bold"|"italic"|"bold italic", fill (hex), align:"left"|"center"|"right", lineHeight
-   Optional: shadow (same as rect, useful for text on images)
+   Fields: type:"text", id, name, x, y, width, height, rotation:0, opacity:1, visible:true, locked:false, text (string), fontSize, fontFamily (Raleway variant — see TYPOGRAPHY section), fontStyle:"normal" (always — weight is in the fontFamily), fill (hex), align:"left"|"center"|"right", lineHeight
+   Optional: shadow (same as rect, useful for text on images), letterSpacing
+   IMPORTANT: fontFamily MUST be one of the Raleway variants listed in TYPOGRAPHY. Never use "Arial" or "Georgia".
 
 4. line — Straight line
    Fields: type:"line", id, name, x:0, y:0, width:0, height:0, rotation:0, opacity:1, visible:true, locked:false, points:[x1,y1,x2,y2], stroke (hex), strokeWidth, lineCap:"round", lineJoin:"round"
@@ -389,11 +406,10 @@ CRITICAL REMINDERS:
 - PASTEL PALETTE: Pick 5-8 coordinated pastels based on the content topic. Each card gets its own pastel fill color.
 - CARD BORDERS: Every card rect needs strokeWidth 2-3 with a stroke color that's a darker shade of its fill.
 - INDEX CARD LINES: Add 2-3 thin rects (height 2, cornerRadius 1) at the bottom of each card with decreasing opacity (0.4, 0.3, 0.2).
-- SHADOWS: Every card MUST have shadow:{color:"rgba(0,0,0,0.1)",offsetX:0,offsetY:6,blur:12}. No exceptions.
+- SHADOWS: Every card MUST have a PURPLE-TINTED shadow (NEVER black). Default: shadow:{color:"rgba(123,104,238,0.12)",offsetX:0,offsetY:4,blur:8}. For larger / hero cards, use offsetY:6, blur:16, opacity:0.18. For colored icon circles, match the shadow color to the icon's fill (e.g. emerald icon → rgba(16,185,129,0.25)).
 - ENTRANCE ANIMATIONS: Wrap card sequences in an entrance interactive with staggerDelay:100 for polished reveal.
 - TWO-COLUMN GRIDS: For grid layouts on 390px canvas, use left card x=20 w=167, right card x=203 w=167.
-- TYPOGRAPHY: Page titles 32-34px bold Georgia, section headings 20-24px bold, body 15-18px Arial, captions 13-15px.
-- Use Georgia for headlines, Arial for body text.
+- TYPOGRAPHY: Use Raleway exclusively. Page titles fontFamily "Raleway_800ExtraBold" 30-34px, section headings "Raleway_700Bold" 22-26px, body "Raleway_500Medium" 15-18px, captions "Raleway_600SemiBold" 13-14px. Set fontStyle:"normal" always — weight is encoded in the fontFamily name.
 - Aim for 15-40 objects — educational pages need more objects to feel content-rich and polished.
 Return ONLY the JSON object.`);
 
@@ -423,8 +439,8 @@ function processStaticObject(obj: Record<string, unknown>, boundsW: number, boun
   if (type === 'text') {
     if (!VALID_FONT_STYLES.has(base.fontStyle as string)) base.fontStyle = 'normal';
     if (!VALID_ALIGNS.has(base.align as string)) base.align = 'left';
-    if (!isValidHex(base.fill as string)) base.fill = '#111111';
-    base.fontFamily = base.fontFamily || 'Arial';
+    if (!isValidHex(base.fill as string)) base.fill = '#2D2D44';
+    base.fontFamily = base.fontFamily || 'Raleway_600SemiBold';
     base.fontSize = base.fontSize || 24;
     base.lineHeight = base.lineHeight || 1.2;
     base.text = base.text ?? '';
@@ -506,8 +522,8 @@ function processStaticObject(obj: Record<string, unknown>, boundsW: number, boun
     if (!isValidHex(base.textColor as string)) base.textColor = '#FFFFFF';
     base.text = base.text ?? 'Badge';
     base.fontSize = base.fontSize ?? 14;
-    base.fontFamily = base.fontFamily || 'Arial';
-    if (!VALID_FONT_STYLES.has(base.fontStyle as string)) base.fontStyle = 'bold';
+    base.fontFamily = base.fontFamily || 'Raleway_700Bold';
+    if (!VALID_FONT_STYLES.has(base.fontStyle as string)) base.fontStyle = 'normal';
     base.cornerRadius = base.cornerRadius ?? 18;
     base.paddingX = base.paddingX ?? 16;
     base.paddingY = base.paddingY ?? 8;
@@ -536,10 +552,10 @@ function sanitizeGradient(g: Record<string, unknown>): Record<string, unknown> |
 
 function sanitizeShadow(s: Record<string, unknown>): Record<string, unknown> | null {
   return {
-    color: typeof s.color === 'string' ? s.color : 'rgba(0,0,0,0.1)',
+    color: typeof s.color === 'string' ? s.color : 'rgba(123,104,238,0.12)',
     offsetX: typeof s.offsetX === 'number' ? s.offsetX : 0,
     offsetY: typeof s.offsetY === 'number' ? s.offsetY : 4,
-    blur: typeof s.blur === 'number' ? clamp(s.blur as number, 0, 50) : 12,
+    blur: typeof s.blur === 'number' ? clamp(s.blur as number, 0, 100) : 8,
   };
 }
 
@@ -668,49 +684,30 @@ export function useAIGenerate(): UseAIGenerateReturn {
 
         const userPrompt = buildUserPrompt(request, templateSkeleton);
 
-        const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-        console.log('[AI Generate] apiKey present:', !!apiKey, 'length:', apiKey?.length);
-
-        const { data, error: fnError } = await supabase.functions.invoke('generate-design', {
-          body: {
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: userPrompt },
-            ],
-            temperature: isEditMode ? 0.4 : 0.7,
-            max_tokens: 16384,
-            apiKey,
+        // The generate-design Edge Function proxies OpenAI so the API key
+        // stays server-side. It requires a signed-in user session.
+        const { data, error: fnError } = await supabase.functions.invoke(
+          'generate-design',
+          {
+            body: {
+              temperature: isEditMode ? 0.4 : 0.7,
+              max_tokens: 16384,
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt },
+              ],
+            },
           },
-        });
-
-        console.log('[AI Generate] fnError:', fnError, 'data type:', typeof data);
+        );
 
         if (fnError) {
-          // Try to read the response body for the actual error message
-          let errMsg = 'AI generation failed. Please try again.';
-          try {
-            if (fnError.context?.json) {
-              const body = await fnError.context.json();
-              console.error('Edge function error body:', body);
-              errMsg = body?.error || errMsg;
-            } else {
-              console.error('Edge function error:', fnError.message, 'data:', data);
-              errMsg = data?.error || fnError?.message || errMsg;
-            }
-          } catch {
-            console.error('Edge function error:', fnError.message);
-          }
-          throw new Error(errMsg);
+          throw new Error(fnError.message ?? 'Design generation failed');
+        }
+        if (data?.error) {
+          throw new Error(String(data.error));
         }
 
-        const parsed = (typeof data === 'string' ? JSON.parse(data) : data);
-
-        // Edge function may return { error: "..." } with 200 status
-        if (parsed?.error) {
-          throw new Error(parsed.error);
-        }
-
-        const raw = parsed as DesignDocument;
+        const raw = data as DesignDocument;
 
         if (!raw.canvas || !Array.isArray(raw.objects)) {
           throw new Error('AI returned an invalid design structure.');

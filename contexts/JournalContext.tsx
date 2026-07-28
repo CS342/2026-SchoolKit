@@ -345,8 +345,9 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (notebook && user) {
                 const allImageUris = notebook.pages.flatMap(p => p.images.map(img => img.uri));
                 for (const uri of allImageUris) {
-                    // Extract storage path from URL: .../journal-images/userId/filename
-                    const match = uri.match(/journal-images\/(.+)$/);
+                    // Extract storage path from a public or signed URL:
+                    // .../journal-images/userId/filename[?token=…]
+                    const match = uri.match(/journal-images\/([^?]+)/);
                     if (match) {
                         await supabase.storage.from('journal-images').remove([match[1]]);
                     }
@@ -395,7 +396,7 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
                     return null;
                 }
 
-                const base64 = await file.text({ encoding: 'base64' });
+                const base64 = await file.base64();
                 const { error } = await supabase.storage
                     .from('journal-images')
                     .upload(storagePath, decode(base64), { contentType: 'image/jpeg' });
@@ -403,12 +404,21 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 if (error) throw error;
             }
 
-            // Return public URL
-            const { data } = supabase.storage
+            // The journal-images bucket is private, so return a signed URL.
+            // Long expiry (10 years) because the URL is persisted in the page's
+            // images jsonb; the underlying object is unreachable without this
+            // token, and the row itself is protected by journal_pages RLS.
+            const TEN_YEARS_SECONDS = 60 * 60 * 24 * 365 * 10;
+            const { data, error: signError } = await supabase.storage
                 .from('journal-images')
-                .getPublicUrl(storagePath);
+                .createSignedUrl(storagePath, TEN_YEARS_SECONDS);
 
-            return data.publicUrl;
+            if (signError || !data) {
+                console.error('Failed to sign journal image URL', signError);
+                return null;
+            }
+
+            return data.signedUrl;
         } catch (e) {
             console.error('Failed to upload journal image', e);
             return null;

@@ -31,8 +31,8 @@ export function useDesignAssets() {
       // Add to store assets map right away
       addAsset(assetId, dataUrl, file.name);
 
-      // Upload to Supabase in the background (non-blocking)
-      // Once complete, swap the data URL for a remote URL to save space
+      // Upload in the background; the data URL above keeps the image rendering
+      // even if the upload fails.
       if (user && designId) {
         const ext = file.name.split('.').pop() || 'png';
         const storagePath = `${user.id}/assets/${designId}/${assetId}.${ext}`;
@@ -64,7 +64,7 @@ export function useDesignAssets() {
               }
             }
 
-            // Track in design_assets table
+            // Track in design_assets table (builders only execute when awaited)
             supabase.from('design_assets').insert({
               design_id: designId,
               owner_id: user.id,
@@ -72,6 +72,10 @@ export function useDesignAssets() {
               storage_path: storagePath,
               mime_type: file.type,
               file_size: file.size,
+            }).then(({ error: insertError }) => {
+              if (insertError) {
+                console.warn('Failed to record design asset:', insertError.message);
+              }
             });
           })
           .catch((err) => {

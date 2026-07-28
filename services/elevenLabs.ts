@@ -253,8 +253,10 @@ import { supabaseUrl, supabase, supabaseAnonKey } from '../lib/supabase';
 
 export const generateSpeech = async (text: string, voiceId: string = VOICES.RACHEL): Promise<string | null> => {
   try {
-    // Use the anon key for authorization to ensure consistency and avoid session token issues
-    const token = supabaseAnonKey;
+    // The edge function requires a signed-in user; fall back to the anon key
+    // only if no session exists (the function will reject it with a 401).
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? supabaseAnonKey;
 
     console.log('Sending TTS request to Edge Function...');
     const response = await fetch(`${supabaseUrl}/functions/v1/generate-tts`, {

@@ -23,7 +23,7 @@ import { useStories, StoryComment } from "../contexts/StoriesContext";
 import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
-import { supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 import { generateSpeech } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
@@ -298,7 +298,7 @@ export default function StoryDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id, openComments } = useLocalSearchParams<{ id: string, openComments?: string }>();
-  const { user, isAnonymous } = useAuth();
+  const { user, isAnonymous, isModerator } = useAuth();
   const { selectedVoice, data: onboardingData, preferredLanguage } = useOnboarding();
   const {
     stories,
@@ -331,8 +331,7 @@ export default function StoryDetailScreen() {
   const { isWeb, isDesktop, isTablet } = useResponsive();
   const isLargeWeb = isWeb && (isDesktop || isTablet);
 
-  const MODERATOR_EMAILS = ['janinatroper@gmail.com', 'lvalsote@stanford.edu', 'ngounder@stanford.edu'];
-  const isModeratorMode = Boolean(user?.email && MODERATOR_EMAILS.includes(user.email));
+  const isModeratorMode = isModerator;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -675,8 +674,10 @@ export default function StoryDetailScreen() {
     if (translatedTitle && translatedBody) { setIsTranslated(true); return; }
     setIsTranslating(true);
     try {
-      // Use the anon key for authorization to ensure consistency and avoid session token issues
-      const token = supabaseAnonKey;
+      // The edge function requires a signed-in user; fall back to the anon key
+      // only if no session exists (the function will reject it with a 401).
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? supabaseAnonKey;
       
       const response = await fetch(`${supabaseUrl}/functions/v1/translate-story`, {
         method: 'POST',

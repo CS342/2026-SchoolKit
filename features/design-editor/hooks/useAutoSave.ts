@@ -21,7 +21,7 @@ export function useAutoSave(stageRef: React.RefObject<Konva.Stage | null>) {
         .from('designs')
         .update({
           title,
-          doc: doc as unknown as Record<string, unknown>,
+          doc,
           updated_at: new Date().toISOString(),
         })
         .eq('id', designId);

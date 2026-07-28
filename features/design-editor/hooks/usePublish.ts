@@ -37,7 +37,7 @@ export function usePublish() {
             description: opts.description,
             category: opts.category,
             icon: opts.icon,
-            target_roles: opts.targetRoles,
+            target_roles: opts.targetRoles as import('../../../lib/database.types').UserRole[],
             design_id: designId,
           })
           .eq('id', design.published_resource_id);
@@ -48,7 +48,13 @@ export function usePublish() {
         }
         resourceId = design.published_resource_id;
       } else {
-        // Insert new resource with a direct link back to the design
+        // Insert new resource with a direct link back to the design.
+        // owner_id is required by the resources write policy.
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('Publish requires a signed-in user');
+          return null;
+        }
         const { data: newResource, error } = await supabase
           .from('resources')
           .insert({
@@ -56,8 +62,9 @@ export function usePublish() {
             description: opts.description,
             category: opts.category,
             icon: opts.icon,
-            target_roles: opts.targetRoles,
+            target_roles: opts.targetRoles as import('../../../lib/database.types').UserRole[],
             design_id: designId,
+            owner_id: user.id,
           })
           .select('id')
           .single();

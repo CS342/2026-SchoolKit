@@ -1,8 +1,27 @@
+# Auth: the app's guest flow depends on anonymous sign-ins.
+# Apply with `supabase config push` (or toggle in Dashboard → Auth → Providers).
+[auth]
+enable_anonymous_sign_ins = true
+
+# Edge function deploy config.
+# The three AI-proxy functions additionally verify a real user session
+# in-function (auth.getUser), so the anon key alone is not enough.
+
 [functions.translate-story]
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/translate-story/deno.json"
 entrypoint = "./functions/translate-story/index.ts"
 
 [functions.generate-tts]
-verify_jwt = false
+verify_jwt = true
 entrypoint = "./functions/generate-tts/index.ts"
+
+[functions.generate-design]
+verify_jwt = true
+entrypoint = "./functions/generate-design/index.ts"
+
+# Public by design: share-link viewers are unauthenticated; access is gated
+# by the unguessable share token, and lookups use the service role key.
+[functions.get-shared-design]
+verify_jwt = false
+entrypoint = "./functions/get-shared-design/index.ts"

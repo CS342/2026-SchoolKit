@@ -1,9 +1,52 @@
 import type { StaticDesignObject } from '../types/document';
 import { getThemeAwareColor } from '../utils/theme-mapper';
 
+// ─── Entrance animation keyframes (injected once) ────────────────
+const ANIM_STYLE_ID = 'design-editor-entrance-animations';
+if (typeof document !== 'undefined' && !document.getElementById(ANIM_STYLE_ID)) {
+  const style = document.createElement('style');
+  style.id = ANIM_STYLE_ID;
+  style.textContent = `
+    @keyframes de-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes de-slide-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes de-slide-down {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes de-scale-up {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function getAnimationCSS(obj: StaticDesignObject): React.CSSProperties {
+  const anim = obj.animation;
+  if (!anim || anim.type === 'none') return {};
+  const name =
+    anim.type === 'fade-in'
+      ? 'de-fade-in'
+      : anim.type === 'slide-up'
+        ? 'de-slide-up'
+        : anim.type === 'slide-down'
+          ? 'de-slide-down'
+          : 'de-scale-up';
+  return {
+    animation: `${name} ${anim.duration}ms ease-out ${anim.delay}ms both`,
+  };
+}
+
 /** Convert a static design object's properties into React inline CSS styles. */
 export function objectToStyle(obj: StaticDesignObject, isDark = false): React.CSSProperties {
   const blendMode = (obj as any).blendMode;
+  const animStyle = getAnimationCSS(obj);
   const base: React.CSSProperties = {
     position: 'absolute',
     left: obj.x,
@@ -14,6 +57,7 @@ export function objectToStyle(obj: StaticDesignObject, isDark = false): React.CS
     transform: obj.rotation ? `rotate(${obj.rotation}deg)` : undefined,
     boxSizing: 'border-box',
     ...(blendMode && blendMode !== 'normal' ? { mixBlendMode: blendMode as any } : {}),
+    ...animStyle,
   };
 
   // Add gradient CSS if applicable

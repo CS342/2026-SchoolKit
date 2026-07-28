@@ -6,6 +6,12 @@ import { useEditorStore } from '../store/editor-store';
 import { getDashArray } from '../utils/defaults';
 import { snapToGrid, magneticSnap } from '../utils/snap';
 import type { GuideLine, ObjectBounds } from '../utils/snap';
+import ionGlyphMap from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json';
+
+function getIonGlyph(name: string): string {
+  const code = (ionGlyphMap as Record<string, number>)[name];
+  return code ? String.fromCharCode(code) : '';
+}
 
 interface CanvasObjectProps {
   object: DesignObject;
@@ -493,6 +499,24 @@ export function CanvasObject({ object, isSelected, onSnapGuidesChange, onSnapGui
       );
     }
 
+    case 'icon': {
+      const shadowProps = getShadowProps(object.shadow);
+      return (
+        <Text
+          {...commonProps}
+          width={object.width}
+          height={object.height}
+          text={getIonGlyph(object.iconName)}
+          fontSize={object.fontSize}
+          fontFamily="Ionicons"
+          fill={object.color}
+          align="center"
+          verticalAlign="middle"
+          {...shadowProps}
+        />
+      );
+    }
+
     case 'interactive':
       return (
         <InteractiveCanvasObject
@@ -787,6 +811,23 @@ function StaticChildObject({ object }: { object: StaticDesignObject }) {
             textDecoration={object.textDecoration || ''}
           />
         </Group>
+      );
+    }
+    case 'icon': {
+      const shadowProps = getShadowProps(object.shadow);
+      return (
+        <Text
+          {...commonProps}
+          width={object.width}
+          height={object.height}
+          text={getIonGlyph(object.iconName)}
+          fontSize={object.fontSize}
+          fontFamily="Ionicons"
+          fill={object.color}
+          align="center"
+          verticalAlign="middle"
+          {...shadowProps}
+        />
       );
     }
     default:

@@ -1,9 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// Bound per-request OpenAI spend
+const MAX_TITLE_CHARS = 300;
+const MAX_BODY_CHARS = 20000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,12 +16,35 @@ serve(async (req) => {
   }
 
   try {
+    // Require a real user session (anonymous auth users included)
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      })
+    }
+
     const { title, body } = await req.json()
-    
+
     if (!title && !body) {
       return new Response(JSON.stringify({ error: 'Missing title or body' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
+      })
+    }
+
+    if ((title && (typeof title !== 'string' || title.length > MAX_TITLE_CHARS)) ||
+        (body && (typeof body !== 'string' || body.length > MAX_BODY_CHARS))) {
+      return new Response(JSON.stringify({ error: 'Input too long' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 413,
       })
     }
 

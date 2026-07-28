@@ -33,7 +33,7 @@ export function useDesignCRUD() {
       if (!user) return null;
       const { data, error } = await supabase
         .from('designs')
-        .insert({ owner_id: user.id, title, doc: doc as unknown as Record<string, unknown> })
+        .insert({ owner_id: user.id, title, doc })
         .select('id')
         .single();
 
@@ -67,7 +67,7 @@ export function useDesignCRUD() {
       await supabase.from('designs').insert({
         owner_id: user.id,
         title: `${original.title} (Copy)`,
-        doc: original.doc as unknown as Record<string, unknown>,
+        doc: original.doc,
       });
       fetchDesigns();
     },
@@ -97,7 +97,7 @@ export function useDesignCRUD() {
         .from('designs')
         .update({
           ...updates,
-          doc: updates.doc as unknown as Record<string, unknown>,
+
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);

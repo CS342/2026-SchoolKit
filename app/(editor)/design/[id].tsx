@@ -40,7 +40,9 @@ export default function DesignEditorPage() {
         .single();
 
       if (fetchError || !data) {
-        setError('Design not found');
+        // Fail loudly: opening a blank document here would let autosave
+        // overwrite the real design row.
+        setError(fetchError?.message ?? 'Design not found');
         setLoading(false);
         return;
       }

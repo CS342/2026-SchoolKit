@@ -33,6 +33,8 @@ export function SelectionTransformer({ stageRef }: SelectionTransformerProps) {
       anchorSize={8}
       anchorCornerRadius={2}
       rotateAnchorOffset={20}
+      keepRatio
+      shiftBehavior="inverted"
       enabledAnchors={[
         'top-left',
         'top-right',

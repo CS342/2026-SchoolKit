@@ -512,7 +512,7 @@ export function SettingsSheet() {
   const router = useRouter();
   const theme = useTheme();
   const { colors, shadows } = theme;
-  const { signOut } = useAuth();
+  const { signOut, isAdmin } = useAuth();
   const { downloadAllResources, downloads, selectedVoice, updateVoice, resetOnboarding, preferredLanguage } = useOnboarding();
   const [currentView, setCurrentView] = React.useState<SheetView>('main');
 
@@ -607,7 +607,7 @@ export function SettingsSheet() {
                   <SheetRow icon="moon-outline" label="Appearance" value={appearanceLabel} onPress={() => setCurrentView('appearance')} theme={theme} />
                   <SheetRow icon="language-outline" label="Language" value={languageLabel} onPress={() => setCurrentView('language')} theme={theme} />
                   <SheetRow icon="mic-outline" label="Voice" value={voiceName} onPress={() => setCurrentView('voice')} theme={theme} />
-                  {Platform.OS === 'web' && (
+                  {Platform.OS === 'web' && isAdmin && (
                     <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
                   )}
                   <SheetRow icon="cloud-download-outline" label="Download All" value={downloads.length >= ALL_RESOURCES.length ? 'All saved' : `${downloads.length}/${ALL_RESOURCES.length}`} onPress={handleDownloadAll} theme={theme} />

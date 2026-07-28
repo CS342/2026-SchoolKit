@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -8,6 +8,11 @@ const TYPE_ICONS: Record<string, string> = {
   text: 'T',
   image: '🖼',
   line: '╱',
+  star: '★',
+  triangle: '△',
+  arrow: '→',
+  badge: '⬭',
+  icon: '✦',
   interactive: '⚡',
 };
 
@@ -17,11 +22,68 @@ export function LayersPanel() {
   const setSelection = useEditorStore((s) => s.setSelection);
   const updateObject = useEditorStore((s) => s.updateObject);
   const reorderObject = useEditorStore((s) => s.reorderObject);
-  const deleteObjects = useEditorStore((s) => s.deleteObjects);
   const { colors } = useTheme();
+
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   // Display in reverse order (top layer first)
   const reversedObjects = [...objects].reverse();
+
+  const handleLayerClick = (e: React.MouseEvent, id: string) => {
+    const isAdditive = e.shiftKey || e.metaKey || e.ctrlKey;
+    if (isAdditive) {
+      setSelection(
+        selectedIds.includes(id)
+          ? selectedIds.filter((x) => x !== id)
+          : [...selectedIds, id],
+      );
+    } else {
+      setSelection([id]);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    // Required for Firefox
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragId && dragId !== id) setDropTargetId(id);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    setDropTargetId(null);
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      return;
+    }
+    // Reverse-display order: the dropped-on row corresponds to objects[N - displayIndex - 1].
+    // reorderObject expects the new absolute index in the objects array.
+    const targetIdx = objects.findIndex((o) => o.id === targetId);
+    if (targetIdx >= 0) reorderObject(dragId, targetIdx);
+    setDragId(null);
+  };
+
+  const startRename = (id: string, currentName: string) => {
+    setRenameId(id);
+    setRenameValue(currentName);
+  };
+
+  const commitRename = () => {
+    if (renameId && renameValue.trim()) {
+      updateObject(renameId, { name: renameValue.trim() });
+    }
+    setRenameId(null);
+    setRenameValue('');
+  };
 
   return (
     <div
@@ -48,14 +110,16 @@ export function LayersPanel() {
         }}
       >
         <span>Layers</span>
-        <span style={{
-          fontSize: 10,
-          color: colors.textLight,
-          backgroundColor: colors.appBackground,
-          padding: '1px 6px',
-          borderRadius: 8,
-          fontWeight: 500,
-        }}>
+        <span
+          style={{
+            fontSize: 10,
+            color: colors.textLight,
+            backgroundColor: colors.appBackground,
+            padding: '1px 6px',
+            borderRadius: 8,
+            fontWeight: 500,
+          }}
+        >
           {objects.length}
         </span>
       </div>
@@ -64,11 +128,21 @@ export function LayersPanel() {
         {reversedObjects.map((obj) => {
           const isSelected = selectedIds.includes(obj.id);
           const realIndex = objects.findIndex((o) => o.id === obj.id);
+          const isDropTarget = dropTargetId === obj.id;
+          const isBeingDragged = dragId === obj.id;
 
           return (
             <div
               key={obj.id}
-              onClick={() => setSelection([obj.id])}
+              draggable={renameId !== obj.id}
+              onDragStart={(e) => handleDragStart(e, obj.id)}
+              onDragOver={(e) => handleDragOver(e, obj.id)}
+              onDrop={(e) => handleDrop(e, obj.id)}
+              onDragEnd={() => {
+                setDragId(null);
+                setDropTargetId(null);
+              }}
+              onClick={(e) => handleLayerClick(e, obj.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -76,13 +150,17 @@ export function LayersPanel() {
                 cursor: 'pointer',
                 backgroundColor: isSelected
                   ? colors.backgroundLight
-                  : 'transparent',
+                  : isDropTarget
+                    ? `${colors.primary}11`
+                    : 'transparent',
                 borderLeft: isSelected
                   ? `3px solid ${colors.primary}`
                   : '3px solid transparent',
+                borderTop: isDropTarget ? `2px solid ${colors.primary}` : '2px solid transparent',
                 gap: 8,
                 fontSize: 13,
                 transition: 'background-color 0.1s',
+                opacity: isBeingDragged ? 0.4 : 1,
               }}
             >
               {/* Type icon */}
@@ -97,19 +175,51 @@ export function LayersPanel() {
                 {TYPE_ICONS[obj.type] || '?'}
               </span>
 
-              {/* Name */}
-              <span
-                style={{
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  color: obj.visible ? colors.textDark : colors.textLight,
-                  opacity: obj.visible ? 1 : 0.5,
-                }}
-              >
-                {obj.name}
-              </span>
+              {/* Name (rename via double-click) */}
+              {renameId === obj.id ? (
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRename();
+                    if (e.key === 'Escape') {
+                      setRenameId(null);
+                      setRenameValue('');
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    border: `1px solid ${colors.primary}`,
+                    fontSize: 13,
+                    color: colors.textDark,
+                    backgroundColor: colors.white,
+                    outline: 'none',
+                  }}
+                />
+              ) : (
+                <span
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    startRename(obj.id, obj.name);
+                  }}
+                  style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    color: obj.visible ? colors.textDark : colors.textLight,
+                    opacity: obj.visible ? 1 : 0.5,
+                  }}
+                >
+                  {obj.name}
+                </span>
+              )}
 
               {/* Controls */}
               <div
@@ -127,6 +237,7 @@ export function LayersPanel() {
                     updateObject(obj.id, { locked: !obj.locked });
                   }}
                   title={obj.locked ? 'Unlock' : 'Lock'}
+                  aria-label={obj.locked ? 'Unlock layer' : 'Lock layer'}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -147,6 +258,7 @@ export function LayersPanel() {
                     updateObject(obj.id, { visible: !obj.visible });
                   }}
                   title={obj.visible ? 'Hide' : 'Show'}
+                  aria-label={obj.visible ? 'Hide layer' : 'Show layer'}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -170,6 +282,7 @@ export function LayersPanel() {
                   }}
                   disabled={realIndex >= objects.length - 1}
                   title="Move up"
+                  aria-label="Move layer up"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -193,6 +306,7 @@ export function LayersPanel() {
                   }}
                   disabled={realIndex <= 0}
                   title="Move down"
+                  aria-label="Move layer down"
                   style={{
                     background: 'none',
                     border: 'none',

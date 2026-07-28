@@ -4,6 +4,8 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import type { DesignObject, InteractiveComponentObject, GradientConfig, ShadowConfig, StrokeDashPreset } from '../types/document';
 import { InteractiveProperties } from './InteractiveProperties';
 import { AlignmentToolbar } from './AlignmentToolbar';
+import { GRADIENTS, SHADOWS } from '../../../constants/onboarding-theme';
+import ionGlyphMap from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json';
 
 function NumberInput({
   label,
@@ -478,15 +480,31 @@ function Section({
   );
 }
 
-// ─── Color presets ────────────────────────────────────────────
+// ─── Color presets — SchoolKit brand palette + neutrals + pastels ─────────
 const COLOR_PRESETS = [
-  '#7B68EE', '#5B4BC7', '#0EA5E9', '#22C55E', '#F59E0B', '#EC4899',
-  '#EF4444', '#6366F1', '#2D2D44', '#6B6B85', '#8E8EA8', '#FFFFFF',
-  '#F0EBFF', '#FBF9FF', '#B5EAD7', '#FFDAC1', '#C7CEEA', '#FFB7B2',
+  // Brand purples
+  '#7B68EE', '#5B4BC7', '#9B6EE8', '#C45CD6',
+  // Role accents
+  '#0EA5E9', '#EC4899', '#66D9A6',
+  // Accent gradients (start colors)
+  '#F59E0B', '#06B6D4', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#3B82F6',
+  // Text shades
+  '#2D2D44', '#6B6B85', '#8E8EA8', '#FFFFFF',
+  // App backgrounds
+  '#FBF9FF', '#F0EBFF', '#F8F5FF',
+  // Soft pastels (for AI-generated card backgrounds)
+  '#B5EAD7', '#FFDAC1', '#C7CEEA', '#FFB7B2', '#E2F0CB', '#CDB4DB',
 ];
 
-// ─── Shared font options ──────────────────────────────────────
+// ─── Shared font options — Raleway (brand) first, then system fallbacks ───
 const FONT_OPTIONS = [
+  // Brand: Raleway weights loaded via app/_layout.tsx
+  { value: 'Raleway_400Regular', label: 'Raleway Regular' },
+  { value: 'Raleway_500Medium', label: 'Raleway Medium' },
+  { value: 'Raleway_600SemiBold', label: 'Raleway Semibold' },
+  { value: 'Raleway_700Bold', label: 'Raleway Bold' },
+  { value: 'Raleway_800ExtraBold', label: 'Raleway ExtraBold' },
+  { value: 'Raleway_400Regular_Italic', label: 'Raleway Italic' },
   // Sans-serif
   { value: 'Arial', label: 'Arial' },
   { value: 'Helvetica', label: 'Helvetica' },
@@ -510,6 +528,76 @@ const FONT_OPTIONS = [
   { value: 'Copperplate', label: 'Copperplate' },
   { value: 'Papyrus', label: 'Papyrus' },
   { value: 'Brush Script MT', label: 'Brush Script MT' },
+];
+
+// ─── Gradient presets — wired to GRADIENTS in constants/onboarding-theme ──
+const GRADIENT_PRESETS: { value: string; label: string; colors: string[]; angle: number }[] = [
+  { value: 'primaryButton', label: 'Primary Button', colors: [...GRADIENTS.primaryButton], angle: 135 },
+  { value: 'welcomeHero', label: 'Welcome Hero', colors: [...GRADIENTS.welcomeHero], angle: 135 },
+  { value: 'authHeader', label: 'Auth Header', colors: [...GRADIENTS.authHeader], angle: 135 },
+  { value: 'loadingScreen', label: 'Loading Screen', colors: [...GRADIENTS.loadingScreen], angle: 135 },
+  { value: 'progressFill', label: 'Progress Fill', colors: [...GRADIENTS.progressFill], angle: 90 },
+  { value: 'screenBackground', label: 'Screen Background', colors: [...GRADIENTS.screenBackground], angle: 180 },
+  { value: 'roleStudentK8', label: 'Role: Student K-8', colors: [...GRADIENTS.roleStudentK8], angle: 135 },
+  { value: 'roleStudentHS', label: 'Role: Student HS', colors: [...GRADIENTS.roleStudentHS], angle: 135 },
+  { value: 'roleParent', label: 'Role: Parent', colors: [...GRADIENTS.roleParent], angle: 135 },
+  { value: 'roleStaff', label: 'Role: Staff', colors: [...GRADIENTS.roleStaff], angle: 135 },
+  { value: 'accentAmber', label: 'Accent: Amber', colors: [...GRADIENTS.accentAmber], angle: 135 },
+  { value: 'accentCyan', label: 'Accent: Cyan', colors: [...GRADIENTS.accentCyan], angle: 135 },
+  { value: 'accentViolet', label: 'Accent: Violet', colors: [...GRADIENTS.accentViolet], angle: 135 },
+  { value: 'accentOrange', label: 'Accent: Orange', colors: [...GRADIENTS.accentOrange], angle: 135 },
+  { value: 'accentEmerald', label: 'Accent: Emerald', colors: [...GRADIENTS.accentEmerald], angle: 135 },
+  { value: 'errorRed', label: 'Error Red', colors: [...GRADIENTS.errorRed], angle: 135 },
+  { value: 'infoBlue', label: 'Info Blue', colors: [...GRADIENTS.infoBlue], angle: 135 },
+];
+
+// ─── Shadow presets — wired to SHADOWS in constants/onboarding-theme ──────
+// Konva uses {color, offsetX, offsetY, blur}. SHADOWS uses RN format; we
+// convert: shadowColor + shadowOpacity → rgba, shadowRadius → blur.
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const SHADOW_PRESETS: { value: string; label: string; shadow: ShadowConfig }[] = [
+  {
+    value: 'card',
+    label: 'Card (soft)',
+    shadow: { color: hexToRgba(SHADOWS.card.shadowColor, SHADOWS.card.shadowOpacity), offsetX: 0, offsetY: SHADOWS.card.shadowOffset.height, blur: SHADOWS.card.shadowRadius },
+  },
+  {
+    value: 'cardLarge',
+    label: 'Card Large',
+    shadow: { color: hexToRgba(SHADOWS.cardLarge.shadowColor, SHADOWS.cardLarge.shadowOpacity), offsetX: 0, offsetY: SHADOWS.cardLarge.shadowOffset.height, blur: SHADOWS.cardLarge.shadowRadius },
+  },
+  {
+    value: 'cardSelected',
+    label: 'Card Selected (purple glow)',
+    shadow: { color: hexToRgba(SHADOWS.cardSelected.shadowColor, SHADOWS.cardSelected.shadowOpacity), offsetX: 0, offsetY: SHADOWS.cardSelected.shadowOffset.height, blur: SHADOWS.cardSelected.shadowRadius },
+  },
+  {
+    value: 'button',
+    label: 'Button (strong purple)',
+    shadow: { color: hexToRgba(SHADOWS.button.shadowColor, SHADOWS.button.shadowOpacity), offsetX: 0, offsetY: SHADOWS.button.shadowOffset.height, blur: SHADOWS.button.shadowRadius },
+  },
+  {
+    value: 'small',
+    label: 'Small (purple)',
+    shadow: { color: hexToRgba(SHADOWS.small.shadowColor, SHADOWS.small.shadowOpacity), offsetX: 0, offsetY: SHADOWS.small.shadowOffset.height, blur: SHADOWS.small.shadowRadius },
+  },
+  {
+    value: 'header',
+    label: 'Header',
+    shadow: { color: hexToRgba(SHADOWS.header.shadowColor, SHADOWS.header.shadowOpacity), offsetX: 0, offsetY: SHADOWS.header.shadowOffset.height, blur: SHADOWS.header.shadowRadius },
+  },
+  {
+    value: 'iconCircle',
+    label: 'Icon Circle',
+    shadow: { color: hexToRgba(SHADOWS.iconCircle.shadowColor, SHADOWS.iconCircle.shadowOpacity), offsetX: 0, offsetY: SHADOWS.iconCircle.shadowOffset.height, blur: SHADOWS.iconCircle.shadowRadius },
+  },
 ];
 
 // ─── Text Decoration Input ────────────────────────────────────
@@ -910,6 +998,11 @@ function ObjectProperties({
         </Section>
       )}
 
+      <EntranceAnimationSection
+        animation={(object as any).animation}
+        onUpdate={onUpdate}
+      />
+
       {/* Type-specific properties */}
       {(object.type === 'rect' || object.type === 'ellipse') && (
         <ShapeProperties object={object} onUpdate={onUpdate} />
@@ -942,6 +1035,10 @@ function ObjectProperties({
       {object.type === 'badge' && (
         <BadgeProperties object={object} onUpdate={onUpdate} />
       )}
+
+      {object.type === 'icon' && (
+        <IconProperties object={object} onUpdate={onUpdate} />
+      )}
     </>
   );
 }
@@ -973,6 +1070,20 @@ function GradientSection({
       </div>
       {enabled && gradient && (
         <>
+          {/* Brand gradient presets */}
+          <div style={{ marginBottom: 8 }}>
+            <SelectInput
+              label="Preset"
+              value=""
+              options={[{ value: '', label: 'Custom…' }, ...GRADIENT_PRESETS.map((p) => ({ value: p.value, label: p.label }))]}
+              onChange={(v) => {
+                const preset = GRADIENT_PRESETS.find((p) => p.value === v);
+                if (preset) {
+                  onUpdate({ gradient: { type: gradient.type, colors: preset.colors, angle: preset.angle } } as any);
+                }
+              }}
+            />
+          </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <SelectInput
               label="Type"
@@ -1080,7 +1191,8 @@ function ShadowSection({
           value={enabled}
           onChange={(on) => {
             if (on) {
-              onUpdate({ shadow: { color: 'rgba(0,0,0,0.25)', offsetX: 0, offsetY: 4, blur: 12 } } as any);
+              // Default to the brand "card" shadow preset (purple-tinted) rather than black.
+              onUpdate({ shadow: SHADOW_PRESETS[0].shadow } as any);
             } else {
               onUpdate({ shadow: null } as any);
             }
@@ -1089,6 +1201,18 @@ function ShadowSection({
       </div>
       {enabled && shadow && (
         <>
+          {/* Brand shadow presets */}
+          <div style={{ marginBottom: 8 }}>
+            <SelectInput
+              label="Preset"
+              value=""
+              options={[{ value: '', label: 'Custom…' }, ...SHADOW_PRESETS.map((p) => ({ value: p.value, label: p.label }))]}
+              onChange={(v) => {
+                const preset = SHADOW_PRESETS.find((p) => p.value === v);
+                if (preset) onUpdate({ shadow: preset.shadow } as any);
+              }}
+            />
+          </div>
           <div style={{ marginBottom: 8 }}>
             <ColorInput
               label="Color"
@@ -1101,15 +1225,15 @@ function ShadowSection({
               label="Offset X"
               value={shadow.offsetX}
               onChange={(v) => onUpdate({ shadow: { ...shadow, offsetX: v } } as any)}
-              min={-50}
-              max={50}
+              min={-100}
+              max={100}
             />
             <NumberInput
               label="Offset Y"
               value={shadow.offsetY}
               onChange={(v) => onUpdate({ shadow: { ...shadow, offsetY: v } } as any)}
-              min={-50}
-              max={50}
+              min={-100}
+              max={100}
             />
           </div>
           <NumberInput
@@ -1117,8 +1241,77 @@ function ShadowSection({
             value={shadow.blur}
             onChange={(v) => onUpdate({ shadow: { ...shadow, blur: v } } as any)}
             min={0}
-            max={50}
+            max={100}
           />
+        </>
+      )}
+    </Section>
+  );
+}
+
+function EntranceAnimationSection({
+  animation,
+  onUpdate,
+}: {
+  animation: { type: string; delay: number; duration: number } | undefined;
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const enabled = !!animation && animation.type !== 'none';
+  const a = animation ?? { type: 'none', delay: 0, duration: 400 };
+  return (
+    <Section title="Entrance Animation">
+      <div style={{ marginBottom: 8 }}>
+        <CheckboxInput
+          label="Animate on preview"
+          value={enabled}
+          onChange={(on) => {
+            if (on) {
+              onUpdate({ animation: { type: 'fade-in', delay: 0, duration: 400 } } as any);
+            } else {
+              onUpdate({ animation: undefined } as any);
+            }
+          }}
+        />
+      </div>
+      {enabled && (
+        <>
+          <div style={{ marginBottom: 8 }}>
+            <SelectInput
+              label="Type"
+              value={a.type}
+              options={[
+                { value: 'fade-in', label: 'Fade In' },
+                { value: 'slide-up', label: 'Slide Up' },
+                { value: 'slide-down', label: 'Slide Down' },
+                { value: 'scale-up', label: 'Scale Up' },
+              ]}
+              onChange={(v) =>
+                onUpdate({ animation: { ...a, type: v as any } } as any)
+              }
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <NumberInput
+              label="Delay (ms)"
+              value={a.delay}
+              onChange={(v) =>
+                onUpdate({ animation: { ...a, delay: Math.max(0, v) } } as any)
+              }
+              min={0}
+              max={5000}
+              step={50}
+            />
+            <NumberInput
+              label="Duration (ms)"
+              value={a.duration}
+              onChange={(v) =>
+                onUpdate({ animation: { ...a, duration: Math.max(50, v) } } as any)
+              }
+              min={50}
+              max={5000}
+              step={50}
+            />
+          </div>
         </>
       )}
     </Section>
@@ -1871,6 +2064,138 @@ function BadgeProperties({
       </Section>
 
       <GradientSection gradient={object.gradient} onUpdate={onUpdate} />
+      <ShadowSection shadow={object.shadow} onUpdate={onUpdate} />
+    </>
+  );
+}
+
+// ─── Icon (Ionicons) properties ──────────────────────────────────
+const COMMON_ICONS = [
+  'star', 'heart', 'school', 'book', 'home', 'person', 'people', 'settings',
+  'help-circle', 'information-circle', 'checkmark-circle', 'close-circle',
+  'add', 'remove', 'arrow-forward', 'arrow-back', 'chevron-forward', 'chevron-down',
+  'mail', 'call', 'chatbubble', 'camera', 'image', 'document-text',
+  'sunny', 'moon', 'flower', 'leaf', 'medkit', 'pulse', 'fitness',
+  'trophy', 'ribbon', 'flame', 'sparkles', 'lock-closed', 'shield-checkmark',
+  'time', 'calendar', 'location', 'map', 'compass', 'globe',
+  'bookmark', 'cloud', 'download', 'share', 'search', 'pencil',
+];
+
+function IconProperties({
+  object,
+  onUpdate,
+}: {
+  object: DesignObject & { type: 'icon' };
+  onUpdate: (changes: Partial<DesignObject>) => void;
+}) {
+  const { colors } = useTheme();
+  const [query, setQuery] = useState('');
+  return (
+    <>
+      <Section title="Icon">
+        <label style={{ fontSize: 10, color: colors.textLight, fontWeight: 600, display: 'block', marginBottom: 4, letterSpacing: 0.3 }}>
+          Ionicon Name
+        </label>
+        <input
+          type="text"
+          value={object.iconName}
+          onChange={(e) => onUpdate({ iconName: e.target.value } as any)}
+          placeholder="e.g. school-outline"
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+            fontSize: 12,
+            color: colors.textDark,
+            backgroundColor: colors.appBackground,
+            boxSizing: 'border-box',
+            marginBottom: 8,
+            outline: 'none',
+            fontFamily: 'monospace',
+          }}
+        />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Filter common icons…"
+          style={{
+            width: '100%',
+            padding: '5px 8px',
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+            fontSize: 11,
+            color: colors.textDark,
+            backgroundColor: colors.appBackground,
+            boxSizing: 'border-box',
+            marginBottom: 6,
+            outline: 'none',
+          }}
+        />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            gap: 4,
+            maxHeight: 160,
+            overflowY: 'auto',
+            padding: 4,
+            backgroundColor: colors.appBackground,
+            borderRadius: 6,
+            border: `1px solid ${colors.borderCard}`,
+          }}
+        >
+          {COMMON_ICONS.filter((n) => n.includes(query.toLowerCase())).map((n) => (
+            <button
+              key={n}
+              title={n}
+              onClick={() => onUpdate({ iconName: n } as any)}
+              style={{
+                aspectRatio: '1',
+                borderRadius: 4,
+                border: object.iconName === n ? `2px solid ${colors.primary}` : `1px solid ${colors.borderCard}`,
+                backgroundColor: object.iconName === n ? `${colors.primary}15` : colors.white,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                color: colors.textDark,
+                padding: 0,
+                fontFamily: 'Ionicons',
+              }}
+            >
+              {(() => {
+                const code = (ionGlyphMap as Record<string, number>)[n];
+                return code ? String.fromCharCode(code) : '?';
+              })()}
+            </button>
+          ))}
+        </div>
+      </Section>
+      <Section title="Style">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <NumberInput
+            label="Size"
+            value={object.fontSize}
+            onChange={(v) =>
+              onUpdate({
+                fontSize: v,
+                width: v,
+                height: v,
+              } as any)
+            }
+            min={8}
+            max={400}
+          />
+        </div>
+        <ColorInput
+          label="Color"
+          value={object.color}
+          onChange={(c) => onUpdate({ color: c } as any)}
+        />
+      </Section>
       <ShadowSection shadow={object.shadow} onUpdate={onUpdate} />
     </>
   );

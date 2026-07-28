@@ -332,7 +332,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
             .in('story_id', storiesToFetchReports.map(s => s.id)) as any;
             
           if (reportsData) {
-            const reportsByStoryId = reportsData.reduce((acc: Record<string, any[]>, r) => {
+            const reportsByStoryId = reportsData.reduce((acc: Record<string, any[]>, r: any) => {
               if (!acc[r.story_id]) acc[r.story_id] = [];
               acc[r.story_id].push({ reason: r.reason, details: r.details, created_at: r.created_at });
               return acc;
@@ -640,15 +640,17 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
 
       const updatedStory: Story = {
         ...data,
+        looking_for: data.looking_for ?? undefined,
         author_role: data.author_role as UserRole | null,
         comment_count: originalStory?.comment_count || 0,
         like_count: originalStory?.like_count || 0,
+        comment_report_count: originalStory?.comment_report_count || 0,
         report_count: data.report_count || originalStory?.report_count || 0,
         status: data.status,
         attempt_count: data.attempt_count,
         rejected_norms: data.rejected_norms || [],
-        previous_title: data.previous_title,
-        previous_body: data.previous_body,
+        previous_title: data.previous_title ?? undefined,
+        previous_body: data.previous_body ?? undefined,
       };
 
       setStories(prev => {

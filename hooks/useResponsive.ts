@@ -59,3 +59,27 @@ export function useResponsive(): ResponsiveInfo {
     height: dimensions.height,
   };
 }
+
+// ─── Content-width system (Design System v1) ─────────────────────
+// Two centered column widths: a reading column for prose, and a wider app
+// column for grids/dashboards. Use ContentColumn to apply them.
+export const CONTENT_WIDTH = {
+  reading: 760,
+  app: 1200,
+  appWide: 1400,
+};
+
+/** Responsive column count from measured width, targeting a min tile size. */
+export function gridColumns(width: number, minTile = 280): number {
+  return Math.max(1, Math.floor(width / minTile));
+}
+
+/**
+ * The single "should this screen use its wide web layout?" predicate.
+ * True on web at tablet width and up — replaces the four divergent checks the
+ * tab screens used to each define.
+ */
+export function useWebLayout(): boolean {
+  const { isWeb, width } = useResponsive();
+  return isWeb && width >= 768;
+}

@@ -8,6 +8,7 @@ import type {
   TriangleObject,
   ArrowObject,
   BadgeObject,
+  IconObject,
   StrokeDashPreset,
 } from '../types/document';
 
@@ -95,9 +96,9 @@ export function createText(overrides?: Partial<TextObject>): TextObject {
     locked: false,
     text: 'Type here...',
     fontSize: 32,
-    fontFamily: 'Arial',
+    fontFamily: 'Raleway_700Bold',
     fontStyle: 'normal',
-    fill: '#111111',
+    fill: '#2D2D44',
     align: 'left',
     lineHeight: 1.2,
     shadow: null,
@@ -258,8 +259,8 @@ export function createBadge(overrides?: Partial<BadgeObject>): BadgeObject {
     locked: false,
     text: 'Badge',
     fontSize: 14,
-    fontFamily: 'Arial',
-    fontStyle: 'bold',
+    fontFamily: 'Raleway_700Bold',
+    fontStyle: 'normal',
     textColor: '#FFFFFF',
     fill: '#7B68EE',
     cornerRadius: 18,
@@ -272,6 +273,28 @@ export function createBadge(overrides?: Partial<BadgeObject>): BadgeObject {
     textTransform: 'none',
     align: 'center',
     verticalAlign: 'middle',
+    ...overrides,
+  };
+}
+
+export function createIcon(overrides?: Partial<IconObject>): IconObject {
+  const size = overrides?.fontSize ?? 48;
+  return {
+    id: generateId(),
+    type: 'icon',
+    name: 'Icon',
+    x: 100,
+    y: 100,
+    width: size,
+    height: size,
+    rotation: 0,
+    opacity: 1,
+    visible: true,
+    locked: false,
+    iconName: 'star',
+    fontSize: size,
+    color: '#7B68EE',
+    shadow: null,
     ...overrides,
   };
 }

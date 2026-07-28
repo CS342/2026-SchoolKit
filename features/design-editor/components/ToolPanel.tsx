@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useEditorStore } from '../store/editor-store';
-import { createImage, createStar, createTriangle, createArrow, createBadge } from '../utils/defaults';
+import { createImage, createStar, createTriangle, createArrow, createBadge, createIcon } from '../utils/defaults';
 import {
   createFlipCard,
   createBottomSheet,
@@ -157,6 +157,12 @@ function ShapesFlyout({
       label: 'Arrow',
       hint: '',
       action: () => { addObject(createArrow({ points: [cx - 100, cy, cx + 100, cy] })); setActiveTool('select'); },
+    },
+    {
+      icon: '✦',
+      label: 'Icon',
+      hint: '',
+      action: () => { addObject(createIcon({ x: cx - 24, y: cy - 24 })); setActiveTool('select'); },
     },
   ];
 

@@ -54,7 +54,7 @@ import Constants from "expo-constants";
 export default function StoriesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, isAnonymous } = useAuth();
+  const { user, isAnonymous, isModerator } = useAuth();
   const { stories, storiesLoading, refreshStories, downloadedStories } =
     useStories();
   const { isOnline } = useOffline();
@@ -69,14 +69,6 @@ export default function StoriesScreen() {
   const [dismissedPendingNotif, setDismissedPendingNotif] = useState(false);
   const [dismissedRejectedNotif, setDismissedRejectedNotif] = useState(false);
 
-  const MODERATOR_EMAILS = [
-    "janinatroper@gmail.com",
-    "lvalsote@stanford.edu",
-    "ngounder@stanford.edu",
-  ];
-  const isModerator = Boolean(
-    user?.email && MODERATOR_EMAILS.includes(user.email)
-  );
   const [isModeratorMode, setIsModeratorMode] = useState(false);
   const { data: onboardingData } = useOnboarding();
 

@@ -139,6 +139,27 @@ export function AIGenerateModal({
     setStep('content');
   };
 
+  // Generate directly from the hero prompt on the mode step (skip content step).
+  const handleFreestyleGenerate = async () => {
+    if (!prompt.trim()) return;
+    clearError();
+    setGenerationType('freestyle');
+    setSelectedTemplate(null);
+    setInputTab('prompt');
+    setStep('content');
+
+    const request: GenerateRequest = {
+      mode: 'prompt',
+      canvas: resolvedCanvas,
+      prompt,
+    };
+
+    const doc = await generate(request);
+    if (doc) {
+      pendingResult.current = { doc, title: 'AI Generated Design' };
+    }
+  };
+
   const handleGenerate = async () => {
     clearError();
 
@@ -259,136 +280,174 @@ export function AIGenerateModal({
                   : 'AI Freestyle — describe anything'}
         </p>
 
-        {/* Step 1: Mode Selection */}
+        {/* Step 1: Mode Selection — chat input is the hero, templates are secondary */}
         {step === 'mode' && (
           <div>
-            {/* Template grid */}
-            <div style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: colors.textDark,
-                  marginBottom: 10,
-                }}
-              >
-                Use a Template
-              </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: 10,
-                }}
-              >
-                {AI_TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleTemplateSelect(t.id)}
+            {/* Hero: AI Freestyle prompt input */}
+            <div
+              style={{
+                padding: 20,
+                borderRadius: 16,
+                backgroundColor: `${colors.primary}0A`,
+                border: `1px solid ${colors.primary}22`,
+                marginBottom: 22,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9,
+                    backgroundColor: `${colors.primary}1F`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    flexShrink: 0,
+                  }}
+                >
+                  &#10024;
+                </div>
+                <div>
+                  <div
                     style={{
-                      padding: '14px 12px',
-                      borderRadius: 12,
-                      border: `1px solid ${colors.borderCard}`,
-                      backgroundColor: colors.appBackground,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = colors.primary;
-                      e.currentTarget.style.backgroundColor = colors.backgroundLight;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = colors.borderCard;
-                      e.currentTarget.style.backgroundColor = colors.appBackground;
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: colors.textDark,
+                      lineHeight: 1.2,
                     }}
                   >
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: colors.textDark,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {t.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: colors.textLight, lineHeight: 1.3 }}>
-                      {t.description}
-                    </div>
+                    AI Freestyle
+                  </div>
+                  <div style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
+                    Describe anything and AI builds it from scratch
+                  </div>
+                </div>
+              </div>
+
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && prompt.trim()) {
+                    e.preventDefault();
+                    handleFreestyleGenerate();
+                  }
+                }}
+                placeholder="e.g. A step-by-step guide for returning to school after a cancer diagnosis"
+                rows={4}
+                autoFocus
+                style={{
+                  ...inputStyle(colors),
+                  backgroundColor: isDark ? colors.backgroundLight : colors.white,
+                  resize: 'vertical',
+                  minHeight: 96,
+                  fontSize: 14,
+                }}
+              />
+
+              {/* Example chips */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  marginTop: 10,
+                }}
+              >
+                {EXAMPLE_PROMPTS.map((ex) => (
+                  <button
+                    key={ex}
+                    onClick={() => setPrompt(ex)}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: 8,
+                      border: `1px solid ${colors.borderCard}`,
+                      backgroundColor: isDark ? colors.backgroundLight : colors.white,
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      color: colors.textLight,
+                    }}
+                  >
+                    {ex}
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Divider */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                margin: '16px 0',
-              }}
-            >
-              <div style={{ flex: 1, height: 1, backgroundColor: colors.borderCard }} />
-              <span style={{ fontSize: 12, color: colors.textLight }}>or</span>
-              <div style={{ flex: 1, height: 1, backgroundColor: colors.borderCard }} />
-            </div>
-
-            {/* Freestyle card */}
-            <button
-              onClick={() => handleModeSelect('freestyle')}
-              style={{
-                width: '100%',
-                padding: '18px 20px',
-                borderRadius: 14,
-                border: `1px solid ${colors.borderCard}`,
-                backgroundColor: colors.appBackground,
-                cursor: 'pointer',
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.primary;
-                e.currentTarget.style.backgroundColor = colors.backgroundLight;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = colors.borderCard;
-                e.currentTarget.style.backgroundColor = colors.appBackground;
-              }}
-            >
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  backgroundColor: `${colors.primary}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 20,
-                  flexShrink: 0,
-                }}
-              >
-                &#9733;
-              </div>
-              <div>
-                <div
+              {/* Generate button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+                <button
+                  onClick={handleFreestyleGenerate}
+                  disabled={!prompt.trim()}
                   style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: colors.textDark,
-                    marginBottom: 2,
+                    ...btnBase,
+                    padding: '10px 22px',
+                    backgroundColor: prompt.trim() ? colors.primary : colors.borderCard,
+                    color: prompt.trim() ? '#fff' : colors.textLight,
+                    fontSize: 14,
                   }}
                 >
-                  AI Freestyle
-                </div>
-                <div style={{ fontSize: 12, color: colors.textLight }}>
-                  Describe anything and AI will create the layout from scratch
-                </div>
+                  Generate Design
+                </button>
               </div>
-            </button>
+            </div>
+
+            {/* Secondary: templates */}
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: colors.textLight,
+                textTransform: 'uppercase',
+                letterSpacing: 0.4,
+                marginBottom: 10,
+              }}
+            >
+              Or start from a template
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: 8,
+              }}
+            >
+              {AI_TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => handleTemplateSelect(t.id)}
+                  style={{
+                    padding: '10px 10px',
+                    borderRadius: 10,
+                    border: `1px solid ${colors.borderCard}`,
+                    backgroundColor: colors.appBackground,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = colors.primary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = colors.borderCard;
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: colors.textDark,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {t.name}
+                  </div>
+                  <div style={{ fontSize: 10, color: colors.textLight, lineHeight: 1.3 }}>
+                    {t.description}
+                  </div>
+                </button>
+              ))}
+            </div>
 
             {/* Footer */}
             <div

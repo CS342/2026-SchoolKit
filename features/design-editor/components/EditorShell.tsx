@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Konva from 'konva';
+import { Ionicons } from '@expo/vector-icons';
 import { useEditorStore } from '../store/editor-store';
 import { EditorToolbar } from './EditorToolbar';
 import { ToolPanel } from './ToolPanel';
@@ -63,6 +64,8 @@ export function EditorShell({
   const pasteObjects = useEditorStore((s) => s.pasteObjects);
   const moveToFront = useEditorStore((s) => s.moveToFront);
   const moveToBack = useEditorStore((s) => s.moveToBack);
+  const updateObject = useEditorStore((s) => s.updateObject);
+  const updateChildObject = useEditorStore((s) => s.updateChildObject);
   const isPreviewMode = useEditorStore((s) => s.isPreviewMode);
   const setPreviewMode = useEditorStore((s) => s.setPreviewMode);
   const canvas = useEditorStore((s) => s.canvas);
@@ -273,6 +276,28 @@ export function EditorShell({
         return;
       }
 
+      // Arrow-key nudge: 1px default, 10px with Shift
+      if (
+        !isMeta &&
+        selectedIds.length > 0 &&
+        (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown')
+      ) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+        const pool = editingComponentId
+          ? (objects.find((o) => o.id === editingComponentId) as any)?.children ?? []
+          : objects;
+        const apply = editingComponentId ? updateChildObject : updateObject;
+        for (const id of selectedIds) {
+          const obj = pool.find((o: any) => o.id === id);
+          if (!obj || obj.locked) continue;
+          apply(id, { x: obj.x + dx, y: obj.y + dy } as any);
+        }
+        return;
+      }
+
       // Bring to front (Cmd+])
       if (isMeta && e.key === ']' && selectedIds.length > 0) {
         e.preventDefault();
@@ -345,6 +370,8 @@ export function EditorShell({
     isPreviewMode,
     setPreviewMode,
     showToast,
+    updateObject,
+    updateChildObject,
   ]);
 
   const handleImageUpload = useCallback(
@@ -365,6 +392,10 @@ export function EditorShell({
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
+      {/* Force-load the Ionicons font face so Konva.Text can render glyphs. */}
+      <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden>
+        <Ionicons name="star" size={1} color="transparent" />
+      </div>
       <EditorToolbar
         onSave={saveNow}
         onShare={() => setShowShare(true)}

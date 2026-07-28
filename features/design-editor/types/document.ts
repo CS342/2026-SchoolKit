@@ -21,6 +21,15 @@ export interface BaseObject {
   locked: boolean;
   accessibilityLabel?: string;
   blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
+  animation?: EntranceAnimation;
+}
+
+// ─── Entrance Animation ───────────────────────────────────────
+export type EntranceAnimationType = 'none' | 'fade-in' | 'slide-up' | 'slide-down' | 'scale-up';
+export interface EntranceAnimation {
+  type: EntranceAnimationType;
+  delay: number;     // ms
+  duration: number;  // ms
 }
 
 // ─── Shared Stroke Type ──────────────────────────────────────
@@ -170,6 +179,14 @@ export interface BadgeObject extends BaseObject {
   verticalAlign?: 'top' | 'middle' | 'bottom';
 }
 
+export interface IconObject extends BaseObject {
+  type: 'icon';
+  iconName: string;          // Ionicons name (e.g. 'school-outline')
+  fontSize: number;          // glyph size in px
+  color: string;             // fill color
+  shadow?: ShadowConfig | null;
+}
+
 // ─── Interactive Component Types ──────────────────────────────
 export type InteractionType = 'flip-card' | 'bottom-sheet' | 'expandable' | 'entrance' | 'carousel' | 'tabs' | 'quiz';
 
@@ -259,7 +276,8 @@ export type StaticDesignObject =
   | StarObject
   | TriangleObject
   | ArrowObject
-  | BadgeObject;
+  | BadgeObject
+  | IconObject;
 
 export interface InteractiveComponentObject extends BaseObject {
   type: 'interactive';
@@ -281,6 +299,7 @@ export type DesignObject =
   | TriangleObject
   | ArrowObject
   | BadgeObject
+  | IconObject
   | InteractiveComponentObject;
 
 export type DesignObjectType = DesignObject['type'];

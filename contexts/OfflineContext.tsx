@@ -100,8 +100,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
               const { error } = await supabase
                 .from("user_bookmarks")
                 .insert({
-                  user_id: change.payload.user_id,
-                  resource_id: change.payload.resource_id,
+                  user_id: change.payload.user_id as string,
+                  resource_id: change.payload.resource_id as string,
                 });
               if (error) throw error;
               break;
@@ -132,8 +132,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
               const { error } = await supabase
                 .from("story_bookmarks")
                 .insert({
-                  user_id: change.payload.user_id,
-                  story_id: change.payload.story_id,
+                  user_id: change.payload.user_id as string,
+                  story_id: change.payload.story_id as string,
                 });
               if (error) throw error;
               break;

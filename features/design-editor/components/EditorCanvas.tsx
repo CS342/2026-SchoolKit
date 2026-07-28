@@ -14,6 +14,12 @@ import {
 import { snapToGrid, magneticSnap } from '../utils/snap';
 import type { GuideLine, ObjectBounds } from '../utils/snap';
 import type { StaticDesignObject } from '../types/document';
+import ionGlyphMap from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json';
+
+function getIonGlyph(name: string): string {
+  const code = (ionGlyphMap as Record<string, number>)[name];
+  return code ? String.fromCharCode(code) : '';
+}
 
 interface EditorCanvasProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -45,6 +51,16 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
   const dragStartHeight = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Drag-to-draw state (rect/ellipse only — click-place still works for small drags)
+  const [drawing, setDrawing] = useState<{
+    tool: 'rect' | 'ellipse';
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
+  const drawCommitted = useRef(false);
+
   // Get the editing component and active group's children
   const editingComponent = editingComponentId
     ? objects.find((o) => o.id === editingComponentId && o.type === 'interactive')
@@ -56,12 +72,85 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
     ? editingComponent.children.filter((c) => activeGroup.objectIds.includes(c.id))
     : [];
 
+  // ── Drag-to-draw: mouse-down starts a draft, mouse-up commits it if dragged > 5px ──
+  const handleStageMouseDown = useCallback(
+    (e: Konva.KonvaEventObject<any>) => {
+      if (activeTool !== 'rect' && activeTool !== 'ellipse') return;
+      const clickedOnEmpty =
+        e.target === e.target.getStage() ||
+        e.target.attrs.id === 'canvas-background' ||
+        e.target.attrs.id === 'dimming-overlay';
+      if (!clickedOnEmpty) return;
+
+      const stage = e.target.getStage();
+      if (!stage) return;
+      const pos = stage.getPointerPosition();
+      if (!pos) return;
+      const x = pos.x / zoom;
+      const y = pos.y / zoom;
+      drawCommitted.current = false;
+      setDrawing({ tool: activeTool, startX: x, startY: y, currentX: x, currentY: y });
+    },
+    [activeTool, zoom],
+  );
+
+  const handleStageMouseMove = useCallback(
+    (e: Konva.KonvaEventObject<any>) => {
+      if (!drawing) return;
+      const stage = e.target.getStage();
+      if (!stage) return;
+      const pos = stage.getPointerPosition();
+      if (!pos) return;
+      setDrawing({ ...drawing, currentX: pos.x / zoom, currentY: pos.y / zoom });
+    },
+    [drawing, zoom],
+  );
+
+  const handleStageMouseUp = useCallback(() => {
+    if (!drawing) return;
+    const { tool, startX, startY, currentX, currentY } = drawing;
+    setDrawing(null);
+
+    const dx = Math.abs(currentX - startX);
+    const dy = Math.abs(currentY - startY);
+    // Treat small drags as a click — defer to handleStageClick's default-size placement.
+    if (dx < 5 && dy < 5) return;
+
+    const x = Math.min(startX, currentX);
+    const y = Math.min(startY, currentY);
+    const width = Math.max(5, dx);
+    const height = Math.max(5, dy);
+
+    const inComponent = !!editingComponentId && !!activeGroupRole;
+    const compObj = inComponent ? objects.find((o) => o.id === editingComponentId) : null;
+    const localX = compObj ? x - compObj.x : x;
+    const localY = compObj ? y - compObj.y : y;
+
+    const newObj =
+      tool === 'rect'
+        ? createRect({ x: localX, y: localY, width, height })
+        : createEllipse({ x: localX, y: localY, width, height });
+
+    if (inComponent) addChildObject(newObj);
+    else addObject(newObj);
+
+    drawCommitted.current = true;
+    setActiveTool('select');
+  }, [drawing, editingComponentId, activeGroupRole, objects, addChildObject, addObject, setActiveTool]);
+
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<any>) => {
       const clickedOnEmpty =
         e.target === e.target.getStage() ||
         e.target.attrs.id === 'canvas-background' ||
         e.target.attrs.id === 'dimming-overlay';
+
+      // If a drag-to-draw already committed an object on mouse-up, suppress the
+      // subsequent click event so we don't also place a default-size object.
+      if (drawCommitted.current) {
+        drawCommitted.current = false;
+        return;
+      }
 
       if (clickedOnEmpty) {
         if (activeTool === 'select') {
@@ -338,9 +427,14 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
           scaleY={zoom}
           onClick={handleStageClick}
           onTap={handleStageClick}
+          onMouseDown={handleStageMouseDown}
+          onMouseMove={handleStageMouseMove}
+          onMouseUp={handleStageMouseUp}
           style={{
             boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
             borderRadius: 2,
+            cursor:
+              activeTool === 'rect' || activeTool === 'ellipse' ? 'crosshair' : 'default',
           }}
         >
           <Layer>
@@ -425,6 +519,19 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
                 <SnapGuides guides={snapGuides} canvasWidth={canvas.width} canvasHeight={canvas.height} />
               </>
             )}
+
+            {/* Drag-to-draw preview */}
+            {drawing && (() => {
+              const px = Math.min(drawing.startX, drawing.currentX);
+              const py = Math.min(drawing.startY, drawing.currentY);
+              const pw = Math.max(1, Math.abs(drawing.currentX - drawing.startX));
+              const ph = Math.max(1, Math.abs(drawing.currentY - drawing.startY));
+              return drawing.tool === 'rect' ? (
+                <Rect x={px} y={py} width={pw} height={ph} fill="rgba(123,104,238,0.10)" stroke="#7B68EE" strokeWidth={1} dash={[4, 4]} listening={false} />
+              ) : (
+                <Ellipse x={px + pw / 2} y={py + ph / 2} radiusX={pw / 2} radiusY={ph / 2} fill="rgba(123,104,238,0.10)" stroke="#7B68EE" strokeWidth={1} dash={[4, 4]} listening={false} />
+              );
+            })()}
           </Layer>
         </Stage>
 
@@ -646,6 +753,20 @@ function EditableChildObject({
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
           dash={getDashArray(object.dash, object.strokeWidth)}
+        />
+      );
+    case 'icon':
+      return (
+        <Text
+          {...commonProps}
+          width={object.width}
+          height={object.height}
+          text={getIonGlyph(object.iconName)}
+          fontSize={object.fontSize}
+          fontFamily="Ionicons"
+          fill={object.color}
+          align="center"
+          verticalAlign="middle"
         />
       );
     default:

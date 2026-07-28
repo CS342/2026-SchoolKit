@@ -1,141 +1,71 @@
 import { StyleSheet } from 'react-native';
+import { COLORS_LIGHT, SHADOWS_LIGHT } from './theme';
 
+// Brand gradients refreshed to the new violet + healing accents; the per-item
+// role/accent gradients (data colors) are kept for identity.
 export const GRADIENTS = {
-  primaryButton: ['#7B68EE', '#9B6EE8', '#B06AE4'] as const,
-  disabledButton: ['#D8D0E8', '#D0C8E0'] as const,
-  welcomeHero: ['#7B68EE', '#9B59E8', '#C45CD6'] as const,
-  screenBackground: ['#F8F5FF', '#FFFFFF', '#FFF5FA'] as const,
-  loadingScreen: ['#7B68EE', '#5B8DEE', '#0EA5E9'] as const,
-  authHeader: ['#7B68EE', '#8B60E8', '#B06AE4'] as const,
-  progressFill: ['#7B68EE', '#9B6EE8'] as const,
+  primaryButton: ['#7E6BEE', '#6E5CD8', '#6152C4'] as const,
+  disabledButton: ['#DAD3E6', '#D2CBE0'] as const,
+  welcomeHero: ['#7E6BEE', '#6B5AD6', '#8A5FD0'] as const,
+  screenBackground: ['#FAF8FC', '#FFFFFF', '#FBF7FC'] as const,
+  loadingScreen: ['#6B5AD6', '#5E86D8', '#3C9A8D'] as const,
+  authHeader: ['#7E6BEE', '#6B5AD6', '#5D4BC0'] as const,
+  progressFill: ['#6B5AD6', '#8271EC'] as const,
   roleStudentK8: ['#0EA5E9', '#38BDF8'] as const,
-  roleStudentHS: ['#7B68EE', '#9B6EE8'] as const,
+  roleStudentHS: ['#6B5AD6', '#8271EC'] as const,
   roleParent: ['#EC4899', '#F472B6'] as const,
-  roleStaff: ['#66D9A6', '#86EFAC'] as const,
-  infoBlue: ['#3B82F6', '#60A5FA'] as const,
-  accentAmber: ['#F59E0B', '#FBBF24'] as const,
-  errorRed: ['#EF4444', '#F87171'] as const,
+  roleStaff: ['#3C9A8D', '#5FBEB0'] as const,
+  infoBlue: ['#4F9FCB', '#6FB4DC'] as const,
+  accentAmber: ['#DE9A2E', '#F0BC63'] as const,
+  errorRed: ['#E06666', '#EC8B8B'] as const,
   accentCyan: ['#06B6D4', '#22D3EE'] as const,
   accentViolet: ['#8B5CF6', '#A78BFA'] as const,
-  accentOrange: ['#F97316', '#FB923C'] as const,
-  accentEmerald: ['#10B981', '#34D399'] as const,
+  accentOrange: ['#DC6A50', '#F0856B'] as const,
+  accentEmerald: ['#3C9A8D', '#5FBEB0'] as const,
 };
 
-export const SHADOWS = {
-  card: {
-    shadowColor: '#2D2D44',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  cardSelected: {
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  button: {
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  small: {
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  header: {
-    shadowColor: '#7B68EE',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  cardLarge: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  iconCircle: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-};
+// Static shadows now point at the single softened light source.
+export const SHADOWS = SHADOWS_LIGHT;
 
-export const COLORS = {
-  primary: '#7B68EE',
-  textDark: '#2D2D44',
-  textMuted: '#6B6B85',
-  textLight: '#8E8EA8',
-  border: '#E8E0F0',
-  borderCard: '#E8E8F0',
-  backgroundLight: '#F0EBFF',
-  disabledText: '#B0A8C8',
-  white: '#FFFFFF',
-  studentK8: '#0EA5E9',
-  studentHS: '#7B68EE',
-  parent: '#EC4899',
-  staff: '#66D9A6',
-  inputPlaceholder: '#A8A8B8',
-  inputBackground: '#F8F5FF',
-  indicatorInactive: '#C8C8D8',
-  accent: '#F59E0B',
-  info: '#3B82F6',
-  shadow: '#000000',
-  whiteOverlay75: 'rgba(255,255,255,0.75)',
-  whiteOverlay80: 'rgba(255,255,255,0.8)',
-  // App backgrounds
-  appBackground: '#FBF9FF',
-  appBackgroundAlt: '#F8F7FF',
-  // Purple tints
-  backgroundLighter: '#F5F3FF',
-  borderPurple: '#E8E0FF',
-  tabActiveBg: '#EDE9FE',
-  // Disabled state
-  disabledButton: '#D8D8E8',
-  // Semantic colors
-  error: '#EF4444',
-  // Warning/offline colors
-  warningBg: '#FEF3C7',
-  warningText: '#D97706',
-  offlineText: '#92400E',
-  successBg: '#D1FAE5',
-  successText: '#065F46',
-};
+// Unified: the static COLORS is now the single light palette from theme.ts, so
+// the (still light-only) onboarding/auth screens that import COLORS directly get
+// the new design system without duplicating values. Migrating those screens to
+// useTheme() later adds dark mode on top.
+export const COLORS = COLORS_LIGHT;
 
 export const PASSWORD_STRENGTH_COLORS = ['#EF4444', '#F59E0B', '#EAB308', '#22C55E', '#16A34A'];
 
+// Design System v1 — a tidy set of 5 rungs (sm 10 · md 14 · lg 18 · xl 24 · pill).
+// Legacy names keep compiling, mapped onto the new rungs (softened: the 28s → 24,
+// 32 header → 24).
 export const RADII = {
-  card: 20,
-  button: 16,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 24,
+  pill: 999,
+  card: 18,
+  button: 14,
   input: 14,
-  badge: 20,
-  grid: 16,
+  badge: 999,
+  grid: 14,
   formCard: 24,
-  headerBottom: 32,
+  headerBottom: 24,
   cardLarge: 24,
-  userCard: 28,
+  userCard: 24,
   badgeSmall: 10,
 };
 
+// Hairline default, 1.5 for emphasis — the 2/2.5/3px borders are retired.
 export const BORDERS = {
-  card: 2,
-  cardSelected: 2.5,
+  hairline: 1,
+  regular: 1.5,
+  card: 1,
+  cardSelected: 1.5,
   input: 1.5,
   innerGlow: 1,
   backButton: 1.5,
-  cardLarge: 3,
+  cardLarge: 1.5,
 };
 
 export const ANIMATION = {
@@ -146,24 +76,33 @@ export const ANIMATION = {
   fastStaggerDelay: 50,
 };
 
+// Design System v1 type scale. The Raleway family carries the weight — we never
+// also set fontWeight (which is ignored on native and diverges on web). Body text
+// is regular weight so hierarchy can breathe. lineHeight is baked in.
+// Legacy token names are kept (screenTitle/sectionTitle/emptyTitle/editTitle/
+// bodyLarge/buttonSmall/input/bodyDescription/labelSmall) so existing consumers
+// keep compiling; they now map onto the unified scale.
 export const TYPOGRAPHY = {
-  display: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -1, fontFamily: 'Raleway_600SemiBold' },
-  h1: { fontSize: 30, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  h2: { fontSize: 24, fontWeight: '700' as const, fontFamily: 'Raleway_600SemiBold' },
-  h3: { fontSize: 22, fontWeight: '700' as const, fontFamily: 'Raleway_600SemiBold' },
-  bodyLarge: { fontSize: 18, fontWeight: '600' as const },
-  body: { fontSize: 18, fontWeight: '600' as const },
-  bodySmall: { fontSize: 16, fontWeight: '600' as const },
-  caption: { fontSize: 14, fontWeight: '600' as const },
-  button: { fontSize: 19, fontWeight: '800' as const },
-  buttonSmall: { fontSize: 18, fontWeight: '700' as const },
-  input: { fontSize: 22, fontWeight: '700' as const },
-  screenTitle: { fontSize: 38, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  sectionTitle: { fontSize: 28, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  emptyTitle: { fontSize: 26, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  editTitle: { fontSize: 24, fontWeight: '800' as const, fontFamily: 'Raleway_600SemiBold' },
-  bodyDescription: { fontSize: 17, fontWeight: '500' as const },
-  labelSmall: { fontSize: 15, fontWeight: '600' as const },
+  display: { fontSize: 40, fontFamily: 'Raleway_800ExtraBold', lineHeight: 44, letterSpacing: -0.5 },
+  h1: { fontSize: 30, fontFamily: 'Raleway_700Bold', lineHeight: 36, letterSpacing: -0.3 },
+  h2: { fontSize: 24, fontFamily: 'Raleway_700Bold', lineHeight: 30, letterSpacing: -0.2 },
+  h3: { fontSize: 20, fontFamily: 'Raleway_600SemiBold', lineHeight: 26 },
+  body: { fontSize: 16, fontFamily: 'Raleway_400Regular', lineHeight: 24 },
+  bodyStrong: { fontSize: 16, fontFamily: 'Raleway_600SemiBold', lineHeight: 24 },
+  bodySmall: { fontSize: 14, fontFamily: 'Raleway_400Regular', lineHeight: 20 },
+  caption: { fontSize: 13, fontFamily: 'Raleway_500Medium', lineHeight: 18 },
+  overline: { fontSize: 11, fontFamily: 'Raleway_700Bold', lineHeight: 14, letterSpacing: 1, textTransform: 'uppercase' as const },
+  button: { fontSize: 16, fontFamily: 'Raleway_700Bold', letterSpacing: 0.2 },
+  // ── legacy aliases mapped onto the new scale ──
+  bodyLarge: { fontSize: 17, fontFamily: 'Raleway_400Regular', lineHeight: 26 },
+  buttonSmall: { fontSize: 14, fontFamily: 'Raleway_700Bold', letterSpacing: 0.2 },
+  input: { fontSize: 17, fontFamily: 'Raleway_500Medium' },
+  screenTitle: { fontSize: 32, fontFamily: 'Raleway_800ExtraBold', lineHeight: 38, letterSpacing: -0.5 },
+  sectionTitle: { fontSize: 24, fontFamily: 'Raleway_700Bold', lineHeight: 30, letterSpacing: -0.2 },
+  emptyTitle: { fontSize: 22, fontFamily: 'Raleway_700Bold', lineHeight: 28 },
+  editTitle: { fontSize: 22, fontFamily: 'Raleway_700Bold', lineHeight: 28 },
+  bodyDescription: { fontSize: 16, fontFamily: 'Raleway_400Regular', lineHeight: 24 },
+  labelSmall: { fontSize: 13, fontFamily: 'Raleway_500Medium', lineHeight: 18 },
 };
 
 export const SIZING = {
@@ -182,13 +121,23 @@ export const SIZING = {
   circleAvatar: 120,
 };
 
+// Design System v1 — 8-point grid (4 half-step). Named rungs + legacy aliases.
 export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  huge: 40,
+  giant: 48,
+  // legacy aliases
   screenPadding: 24,
   contentPadding: 20,
   sectionGap: 24,
-  itemGap: 14,
+  itemGap: 12,
   smallGap: 8,
-  xs: 4,
 };
 
 export const SHARED_STYLES = StyleSheet.create({
@@ -203,18 +152,19 @@ export const SHARED_STYLES = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 30,
-    fontWeight: '800',
-    color: '#2D2D44',
+    color: '#2C2A3A',
     marginBottom: 8,
     textAlign: 'center',
-    fontFamily: 'Raleway_600SemiBold',
+    fontFamily: 'Raleway_700Bold',
+    letterSpacing: -0.3,
   },
   pageSubtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#8E8EA8',
+    fontSize: 16,
+    color: '#837D95',
     textAlign: 'center',
     marginBottom: 20,
+    lineHeight: 24,
+    fontFamily: 'Raleway_400Regular',
   },
   buttonContainer: {
     paddingHorizontal: 24,
@@ -261,18 +211,19 @@ export function makeSharedStyles(c: typeof COLORS, fontScale = 1) {
     },
     pageTitle: {
       fontSize: fs(30),
-      fontWeight: '800',
       color: c.textDark,
       marginBottom: 8,
       textAlign: 'center',
-      fontFamily: 'Raleway_600SemiBold',
+      fontFamily: 'Raleway_700Bold',
+      letterSpacing: -0.3,
     },
     pageSubtitle: {
-      fontSize: fs(18),
-      fontWeight: '600',
+      fontSize: fs(16),
       color: c.textLight,
       textAlign: 'center',
       marginBottom: 20,
+      lineHeight: fs(24),
+      fontFamily: 'Raleway_400Regular',
     },
     buttonContainer: {
       paddingHorizontal: 24,

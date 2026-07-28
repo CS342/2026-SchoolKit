@@ -1,14 +1,19 @@
 // Supabase Edge Function: generate-design
 // Proxies OpenAI calls server-side so the API key never reaches the client.
-// The client sends pre-built messages and model params; this function forwards them to OpenAI.
+// Requires a signed-in user (anonymous sessions count); the anon API key alone is rejected.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
 };
+
+// Caps to bound spend per request
+const MAX_TOKENS_CAP = 16384;
+const MAX_PROMPT_CHARS = 40000;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -26,7 +31,19 @@ serve(async (req) => {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
 
-  // Parse request — client sends { messages, temperature, max_tokens, apiKey }
+  // Require a real user session (anonymous auth users included)
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  // Parse request — client sends { messages, temperature, max_tokens }
   let body: { messages: unknown[]; temperature?: number; max_tokens?: number };
   try {
     body = await req.json();
@@ -38,10 +55,14 @@ serve(async (req) => {
     return jsonResponse({ error: 'messages array is required' }, 400);
   }
 
-  // Call OpenAI — prefer server secret, fall back to client-provided key
-  const openaiKey = Deno.env.get('EXPO_PUBLIC_OPEN_AI_MODERATION_KEY') || (body as Record<string, unknown>).apiKey as string;
+  const promptChars = JSON.stringify(body.messages).length;
+  if (promptChars > MAX_PROMPT_CHARS) {
+    return jsonResponse({ error: `Prompt too large (${promptChars} chars, max ${MAX_PROMPT_CHARS})` }, 413);
+  }
+
+  const openaiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('EXPO_PUBLIC_OPEN_AI_MODERATION_KEY');
   if (!openaiKey) {
-    return jsonResponse({ error: 'OpenAI API key not configured. Set EXPO_PUBLIC_OPEN_AI_MODERATION_KEY secret in Supabase.' }, 502);
+    return jsonResponse({ error: 'OpenAI API key not configured. Set the OPENAI_API_KEY secret in Supabase.' }, 502);
   }
 
   try {
@@ -55,7 +76,7 @@ serve(async (req) => {
         model: 'gpt-4o',
         response_format: { type: 'json_object' },
         temperature: body.temperature ?? 0.7,
-        max_tokens: body.max_tokens ?? 16384,
+        max_tokens: Math.min(body.max_tokens ?? MAX_TOKENS_CAP, MAX_TOKENS_CAP),
         messages: body.messages,
       }),
     });
