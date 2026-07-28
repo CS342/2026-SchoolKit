@@ -24,12 +24,13 @@ import { StepModal } from './StepModal';
 
 const GRID_TYPES = ['cardGrid', 'stepper', 'linkList', 'resourceRefList'];
 
-export function ContentPage({ doc }: { doc: ContentDoc }) {
+export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean }) {
   const { selectedVoice } = useOnboarding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, isDark } = useTheme();
-  const web = useWebLayout();
+  const webAuto = useWebLayout();
+  const web = forceLayout ? forceLayout === 'web' : webAuto;
 
   const styles = useMemo(() => makeBlockStyles(colors, shadows, isDark), [colors, shadows, isDark]);
   const color = useMemo(() => makeColorResolver(colors.primary), [colors.primary]);
@@ -83,8 +84,8 @@ export function ContentPage({ doc }: { doc: ContentDoc }) {
 
   // ── ctx ──
   const ctx: BlockCtx = useMemo(
-    () => ({ colors, shadows, isDark, web, styles, accent: doc.accent, resourceId: doc.resourceId, tags: doc.tags, color, onOpenStep: setExpandedStep }),
-    [colors, shadows, isDark, web, styles, doc.accent, doc.resourceId, doc.tags, color],
+    () => ({ colors, shadows, isDark, web, styles, accent: doc.accent, resourceId: doc.resourceId, tags: doc.tags, color, onOpenStep: setExpandedStep, preview }),
+    [colors, shadows, isDark, web, styles, doc.accent, doc.resourceId, doc.tags, color, preview],
   );
 
   // ── derive hero, body, TOC ──
@@ -110,13 +111,13 @@ export function ContentPage({ doc }: { doc: ContentDoc }) {
   );
 
   const titleNode = heroBlock ? (
-    <BlockEntrance delay={0}><HeroTitle block={heroBlock} /></BlockEntrance>
+    <BlockEntrance delay={0} animate={!preview}><HeroTitle block={heroBlock} /></BlockEntrance>
   ) : (
     <Text style={[styles.pageTitle, { color: colors.textDark }, web && styles.pageTitleWeb]}>{doc.title}</Text>
   );
 
   const body = bodyBlocks.map((b, i) => (
-    <BlockEntrance key={b.id} nativeID={b.id} delay={(i + 1) * 120} style={i > 0 ? { marginTop: 32 } : undefined}>
+    <BlockEntrance key={b.id} nativeID={b.id} delay={(i + 1) * 120} animate={!preview} style={i > 0 ? { marginTop: 32 } : undefined}>
       <BlockRenderer block={b} />
     </BlockEntrance>
   ));
@@ -143,7 +144,7 @@ export function ContentPage({ doc }: { doc: ContentDoc }) {
         <ArticleLayout
           wide={wide}
           breadcrumb={[
-            { label: 'Library', onPress: () => router.push('/(tabs)/bookmarks') },
+            { label: 'Library', onPress: preview ? undefined : () => router.push('/(tabs)/bookmarks') },
             { label: doc.category ?? 'Resources' },
             { label: doc.title },
           ]}

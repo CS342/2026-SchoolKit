@@ -29,6 +29,8 @@ export interface BlockCtx {
   color: (token: ColorToken) => string;
   /** Open the shared TTS step-detail modal (hosted by ContentPage). */
   onOpenStep: (step: ResolvedStep) => void;
+  /** True when rendered inside the editor preview — navigations that leave the page are disabled. */
+  preview?: boolean;
 }
 
 const Ctx = createContext<BlockCtx | null>(null);

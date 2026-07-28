@@ -17,16 +17,20 @@ export function BlockEntrance({
   delay = 0,
   style,
   nativeID,
+  animate = true,
   children,
 }: {
   delay?: number;
   style?: ViewStyle;
   nativeID?: string;
+  /** Set false to render immediately (e.g. the editor's live preview). */
+  animate?: boolean;
   children: React.ReactNode;
 }) {
-  const fade = useRef(new Animated.Value(0)).current;
-  const slide = useRef(new Animated.Value(20)).current;
+  const fade = useRef(new Animated.Value(animate ? 0 : 1)).current;
+  const slide = useRef(new Animated.Value(animate ? 20 : 0)).current;
   useEffect(() => {
+    if (!animate) return;
     Animated.sequence([
       Animated.delay(delay),
       Animated.parallel([

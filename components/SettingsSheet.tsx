@@ -617,6 +617,9 @@ export function SettingsSheet() {
                   {Platform.OS === 'web' && isAdmin && (
                     <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
                   )}
+                  {Platform.OS === 'web' && isAdmin && (
+                    <SheetRow icon="create-outline" label="Content Pages" value="Write guides" onPress={() => { close(); router.push('/(editor)/content-pages'); }} theme={theme} />
+                  )}
                   <SheetRow icon="cloud-download-outline" label="Download All" value={downloads.length >= ALL_RESOURCES.length ? 'All saved' : `${downloads.length}/${ALL_RESOURCES.length}`} onPress={handleDownloadAll} theme={theme} />
                   <SheetRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
                   <SheetRow icon="information-circle-outline" label="About SchoolKit" onPress={() => setCurrentView('about')} theme={theme} />

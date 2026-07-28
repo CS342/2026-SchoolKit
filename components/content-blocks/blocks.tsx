@@ -342,7 +342,7 @@ export function ImageBlock({ block }: { block: ImageT }) {
 
 // ─── Resource ref list ─────────────────────────────────────────────────────────
 export function ResourceRefListBlock({ block }: { block: RefListT }) {
-  const { colors, shadows, styles, web } = useBlockCtx();
+  const { colors, shadows, styles, web, preview } = useBlockCtx();
   const router = useRouter();
   const items = block.resourceIds
     .map((id) => ALL_RESOURCES.find((r) => r.id === id))
@@ -353,7 +353,7 @@ export function ResourceRefListBlock({ block }: { block: RefListT }) {
       <View style={web ? styles.gridRow : { gap: 12 }}>
         {items.map((r, i) => (
           <View key={r.id} style={web ? styles.gridCol : undefined}>
-            <TouchableOpacity activeOpacity={0.85} onPress={() => r.route && router.push(r.route as any)} style={IS_WEB ? styles.pointer : undefined}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => { if (!preview && r.route) router.push(r.route as any); }} style={IS_WEB ? styles.pointer : undefined}>
               <View style={[styles.refRow, web && { height: '100%' }, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.small]}>
                 {block.ranked ? (
                   <View style={[styles.refRank, { backgroundColor: r.color }]}>
@@ -379,8 +379,13 @@ export function ResourceRefListBlock({ block }: { block: RefListT }) {
 
 // ─── Recommendations ───────────────────────────────────────────────────────────
 export function RecommendationsBlock() {
-  const { resourceId, tags } = useBlockCtx();
-  return <RecommendationList currentId={resourceId ?? ''} currentTags={tags} />;
+  const { resourceId, tags, preview } = useBlockCtx();
+  // In the editor preview, keep it visible but inert so a card tap can't leave the editor.
+  return (
+    <View pointerEvents={preview ? 'none' : 'auto'}>
+      <RecommendationList currentId={resourceId ?? ''} currentTags={tags} />
+    </View>
+  );
 }
 
 // ─── Registry ──────────────────────────────────────────────────────────────────
