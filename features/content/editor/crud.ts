@@ -62,6 +62,11 @@ export async function saveContentPage(
   return { id: (data as any).id, slug };
 }
 
+export async function deleteContentPage(id: string): Promise<{ ok: true } | { error: string }> {
+  const { error } = await supabase.from('content_pages').delete().eq('id', id);
+  return error ? { error: friendly(error.message) } : { ok: true };
+}
+
 function friendly(msg: string): string {
   if (/duplicate key|unique/i.test(msg)) return 'That URL slug is already taken — change it in Page settings.';
   if (/row-level security|permission/i.test(msg)) return 'You need moderator access to save pages.';
