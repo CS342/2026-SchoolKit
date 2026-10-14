@@ -7,6 +7,7 @@ import { ALL_RESOURCES } from '../../../constants/resources';
 import type { ContentDoc, Op } from '../types';
 import { buildGenerateMessages, buildEditMessages, ResourceRef, VerifiedLink, ChatMessage } from './prompt';
 import { parseGenerateResult, parseEditResult } from './parse';
+import type { Attachment } from '../uploads';
 
 const resourceIndex = (): ResourceRef[] => ALL_RESOURCES.map((r) => ({ id: r.id, title: r.title, tags: r.tags }));
 
@@ -28,16 +29,16 @@ async function invoke(messages: ChatMessage[], temperature: number): Promise<{ r
   return { result: data?.result };
 }
 
-export async function generatePage(prompt: string, links: VerifiedLink[] = []): Promise<{ doc: ContentDoc; warnings: string[] } | { error: string }> {
-  const res = await invoke(buildGenerateMessages(prompt, resourceIndex(), links), 0.6);
+export async function generatePage(prompt: string, attachments: Attachment[] = [], links: VerifiedLink[] = []): Promise<{ doc: ContentDoc; warnings: string[] } | { error: string }> {
+  const res = await invoke(buildGenerateMessages(prompt, resourceIndex(), links, attachments), 0.6);
   if ('error' in res) return { error: res.error };
   const parsed = parseGenerateResult(res.result);
   if (!parsed.doc) return { error: parsed.errors.join('; ') || 'The AI returned a page we could not read.' };
   return { doc: parsed.doc, warnings: parsed.warnings };
 }
 
-export async function editPage(doc: ContentDoc, instruction: string, links: VerifiedLink[] = []): Promise<{ summary: string; ops: Op[] } | { error: string }> {
-  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), links), 0.4);
+export async function editPage(doc: ContentDoc, instruction: string, attachments: Attachment[] = [], links: VerifiedLink[] = []): Promise<{ summary: string; ops: Op[] } | { error: string }> {
+  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), links, attachments), 0.4);
   if ('error' in res) return { error: res.error };
   const parsed = parseEditResult(res.result, doc);
   if (parsed.errors.length) return { error: `The AI suggested a change we couldn't apply: ${parsed.errors[0]}` };
