@@ -11,6 +11,7 @@
 import { nanoid } from 'nanoid/non-secure';
 import { supabase } from '../../lib/supabase';
 import { extractPdfText, extractDocxText, extractXlsxText, extractOpenDocumentText } from './extract';
+import { extractUrls, dedupeLinks, LinkRef } from './links';
 
 /** The `accept` list for the file picker — single source of truth for both call sites. */
 export const UPLOAD_ACCEPT =
@@ -29,12 +30,14 @@ export interface ImageAttachment {
   file: File;
 }
 
-/** Text extracted from a PDF or text file, sent to the AI as reference context. */
+/** Text extracted from a PDF/doc/text file, sent to the AI as reference context, plus
+ *  any links found in it (passed to the AI as usable verifiedLinks). */
 export interface TextAttachment {
   kind: 'text';
   id: string;
   name: string;
   text: string;
+  links: LinkRef[];
 }
 
 export type Attachment = ImageAttachment | TextAttachment;
@@ -144,34 +147,43 @@ export async function processFile(file: File): Promise<Attachment | { error: str
       return { kind: 'image', id, token: `upload://${id}`, name: file.name, dataUrl, file };
     }
     if (isPdf(file)) {
-      const text = await extractPdfText(file, MAX_TEXT_CHARS);
+      const { text, links } = await extractPdfText(file, MAX_TEXT_CHARS);
       if (!text) return { error: `Couldn't read text from ${file.name} (it may be a scanned PDF).` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links };
     }
     if (isDocx(file)) {
-      const text = await extractDocxText(file, MAX_TEXT_CHARS);
+      const { text, links } = await extractDocxText(file, MAX_TEXT_CHARS);
       if (!text) return { error: `Couldn't read any text from ${file.name}.` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links };
     }
     if (isXlsx(file)) {
-      const text = await extractXlsxText(file, MAX_TEXT_CHARS);
+      const { text, links } = await extractXlsxText(file, MAX_TEXT_CHARS);
       if (!text) return { error: `${file.name} has no readable cells.` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links };
     }
     if (isOpenDocument(file)) {
-      const text = await extractOpenDocumentText(file, MAX_TEXT_CHARS);
+      const { text, links } = await extractOpenDocumentText(file, MAX_TEXT_CHARS);
       if (!text) return { error: `Couldn't read text from ${file.name}.` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links };
     }
     if (isText(file)) {
       const text = (await readAsText(file)).slice(0, MAX_TEXT_CHARS).trim();
       if (!text) return { error: `${file.name} is empty.` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links: extractUrls(text) };
     }
     return { error: `${file.name}: unsupported file type.` };
   } catch (e: any) {
     return { error: `Couldn't read ${file.name}: ${e?.message ?? 'unknown error'}` };
   }
+}
+
+/** Gather usable links to pass to the AI as verifiedLinks: those found in text/doc
+ *  attachments, plus any URLs typed in the instruction/prompt, plus caller-supplied
+ *  ones — de-duped by URL. */
+export function collectVerifiedLinks(attachments: Attachment[], instruction?: string, extra: LinkRef[] = []): LinkRef[] {
+  const fromDocs = attachments.flatMap((a) => (a.kind === 'text' ? a.links : []));
+  const fromInstruction = instruction ? extractUrls(instruction) : [];
+  return dedupeLinks([...extra, ...fromDocs, ...fromInstruction]);
 }
 
 /** Upload one image to the content-images bucket and return its public URL. */

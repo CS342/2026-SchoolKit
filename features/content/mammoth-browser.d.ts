@@ -2,7 +2,10 @@
 // which is the one that's safe to bundle for the web (no Node builtins). Declare the
 // slice of the API we use.
 declare module 'mammoth/mammoth.browser' {
-  export function extractRawText(input: { arrayBuffer: ArrayBuffer }): Promise<{ value: string; messages: unknown[] }>;
-  const mammoth: { extractRawText: typeof extractRawText };
+  type Result = { value: string; messages: unknown[] };
+  export function extractRawText(input: { arrayBuffer: ArrayBuffer }): Promise<Result>;
+  export function convertToMarkdown(input: { arrayBuffer: ArrayBuffer }): Promise<Result>;
+  export function convertToHtml(input: { arrayBuffer: ArrayBuffer }): Promise<Result>;
+  const mammoth: { extractRawText: typeof extractRawText; convertToMarkdown: typeof convertToMarkdown; convertToHtml: typeof convertToHtml };
   export default mammoth;
 }

@@ -15,9 +15,10 @@ You output ONLY a single JSON object. No prose, no markdown fences.
 ## Hard rules
 - Colors are tokens only: "primary" | "teal" | "coral" | "amber" | "indigo" | "sky". Never hex.
 - Icons are Ionicons outline names (e.g. "medkit-outline", "school-outline", "heart-outline").
-- Ground, don't invent. Use only facts implied by the request. External links (linkList) may use ONLY the provided verifiedLinks. Reference existing guides (resourceRefList) using ONLY ids from the provided resources. A quote gets an "author" only if the request supplies one — otherwise omit it.
+- Ground, don't invent. Use only facts implied by the request or the user's attached source material. External links may use ONLY the provided verifiedLinks (which include links found in the user's message/files) — place them in a linkList or as [text](url) markdown links in richText, but NEVER invent a URL that isn't listed. Reference existing guides (resourceRefList) using ONLY ids from the provided resources. A quote gets an "author" only if the request supplies one — otherwise omit it.
 - Every block and every item needs a short unique "id" (e.g. "b1", "i1"). Ids unique within the page.
-- Keep it tight: 4–6 body sections. callout <= 60 words; accordion summary <= 20, body <= 60; card body <= 45; step detail 1–3 short paragraphs separated by \\n\\n.
+- When the user provides source text (typed or attached) and asks to use it exactly / verbatim, PRESERVE their wording (put it in richText) rather than paraphrasing, and include every link they reference.
+- Keep it tight: 4–6 body sections. callout <= 60 words; accordion summary <= 20, body <= 60; card body <= 45; step detail 1–3 short paragraphs separated by \\n\\n. (Relax these limits when the user asks to preserve or reproduce their source text exactly.)
 
 ## Block types (fields)
 ${BLOCK_PROMPT_LINES}
@@ -51,8 +52,8 @@ function resourceBlock(resources: ResourceRef[]): string {
 }
 
 function linkBlock(links: VerifiedLink[]): string {
-  if (!links.length) return 'Verified external links for linkList: (none — do not invent any).';
-  return 'Verified external links for linkList (use these urls only):\n' +
+  if (!links.length) return 'Verified external links: (none — do not invent any).';
+  return "Verified external links (found in the user's message/files — you MAY use these in a linkList or as markdown links; use ONLY these urls, never invent others):\n" +
     links.map((l) => `- ${l.name}: ${l.url}`).join('\n');
 }
 
@@ -74,7 +75,7 @@ function userContent(baseText: string, attachments: Attachment[]): string | Cont
   let text = baseText;
   if (texts.length) {
     text +=
-      '\n\nAttached documents (reference material — use to inform the page, do not quote verbatim):\n' +
+      "\n\nAttached source material the user provided. Use it faithfully; if the user asks to use the text exactly or verbatim, reproduce the wording closely (prefer richText) — you may exceed the usual length limits to preserve requested text. Links inside it are listed under Verified external links and may be used:\n" +
       texts.map((t) => `--- ${t.name} ---\n${t.text}`).join('\n\n');
   }
   if (images.length) {

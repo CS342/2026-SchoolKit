@@ -7,6 +7,7 @@ import { ALL_RESOURCES } from '../../../constants/resources';
 import type { ContentDoc, Op } from '../types';
 import { buildGenerateMessages, buildEditMessages, ResourceRef, VerifiedLink, ChatMessage } from './prompt';
 import { parseGenerateResult, parseEditResult } from './parse';
+import { collectVerifiedLinks } from '../uploads';
 import type { Attachment } from '../uploads';
 
 const resourceIndex = (): ResourceRef[] => ALL_RESOURCES.map((r) => ({ id: r.id, title: r.title, tags: r.tags }));
@@ -30,7 +31,8 @@ async function invoke(messages: ChatMessage[], temperature: number): Promise<{ r
 }
 
 export async function generatePage(prompt: string, attachments: Attachment[] = [], links: VerifiedLink[] = []): Promise<{ doc: ContentDoc; warnings: string[] } | { error: string }> {
-  const res = await invoke(buildGenerateMessages(prompt, resourceIndex(), links, attachments), 0.6);
+  const allLinks = collectVerifiedLinks(attachments, prompt, links);
+  const res = await invoke(buildGenerateMessages(prompt, resourceIndex(), allLinks, attachments), 0.6);
   if ('error' in res) return { error: res.error };
   const parsed = parseGenerateResult(res.result);
   if (!parsed.doc) return { error: parsed.errors.join('; ') || 'The AI returned a page we could not read.' };
@@ -38,7 +40,8 @@ export async function generatePage(prompt: string, attachments: Attachment[] = [
 }
 
 export async function editPage(doc: ContentDoc, instruction: string, attachments: Attachment[] = [], links: VerifiedLink[] = [], focusBlockId?: string): Promise<{ summary: string; ops: Op[] } | { error: string }> {
-  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), links, attachments, focusBlockId), 0.4);
+  const allLinks = collectVerifiedLinks(attachments, instruction, links);
+  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), allLinks, attachments, focusBlockId), 0.4);
   if ('error' in res) return { error: res.error };
   const parsed = parseEditResult(res.result, doc);
   if (parsed.errors.length) return { error: `The AI suggested a change we couldn't apply: ${parsed.errors[0]}` };

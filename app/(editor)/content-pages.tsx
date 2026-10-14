@@ -87,7 +87,9 @@ export default function ContentPagesDashboard() {
     const saved = await saveContentPage(null, doc, 'draft');
     if ('error' in saved) return saved.error;
     setShowNew(false);
-    router.push(`/(editor)/content/${saved.id}`);
+    // Surface generate-time dropped blocks in the editor's lint panel (consumed by [id].tsx).
+    const warn = res.warnings.length > 0 ? `?genWarn=${res.warnings.length}` : '';
+    router.push(`/(editor)/content/${saved.id}${warn}`);
     return undefined;
   };
 
