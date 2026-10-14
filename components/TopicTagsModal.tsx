@@ -172,7 +172,7 @@ export function TopicTagsModal({
   );
 
   const finalContent = Platform.OS === 'ios' ? (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, ...(useModal ? {} : StyleSheet.absoluteFillObject), zIndex: 100 }} pointerEvents={visible ? "box-none" : "none"}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, ...(useModal ? {} : StyleSheet.absoluteFill), zIndex: 100 }} pointerEvents={visible ? "box-none" : "none"}>
       {content}
     </KeyboardAvoidingView>
   ) : content;

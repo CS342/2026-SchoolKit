@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '../hooks/useResponsive';
 import { useTheme } from '../contexts/ThemeContext';
 import type { ThemeColors } from '../constants/theme';
+import type { OnboardingData } from '../contexts/OnboardingContext';
 
 interface StepInfo {
   current: number;
@@ -74,6 +75,23 @@ export function getOnboardingStep(
     total: flow.length,
     label: ONBOARDING_LABELS[screen],
   };
+}
+
+/**
+ * Where to send a user who has an incomplete onboarding profile.
+ * Only the required answers (name, then role) gate resume. The optional /
+ * skippable steps (grade, journey, topics, voice) write empty values when
+ * skipped, so an empty field can't be told apart from "never visited" — we
+ * resume into the optional tail (step3) rather than guessing which one.
+ * Every step screen seeds its inputs from saved data, so landing a step early
+ * only costs a few taps through pre-filled screens, never lost answers.
+ */
+export function getResumeRoute(data: OnboardingData) {
+  if (!data.name) return '/onboarding/step1';
+  if (!data.role) return '/onboarding/step2';
+  const isGuardian = data.role === 'parent' || data.role === 'staff';
+  if (isGuardian && !data.gradeLevel) return '/onboarding/step2b';
+  return '/onboarding/step3';
 }
 
 /**
@@ -386,7 +404,7 @@ const makeOnboardingStyles = (c: ThemeColors) => StyleSheet.create({
     backgroundColor: c.appBackground,
   },
   bgLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   bgOrb: {

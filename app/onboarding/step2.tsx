@@ -82,7 +82,12 @@ function RoleCard({
   };
 
   return (
-    <Pressable onPress={handlePress}>
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="radio"
+      accessibilityLabel={option.title}
+      accessibilityState={{ selected: isSelected }}
+    >
       <Animated.View
         style={[
           styles.roleCard,
@@ -118,14 +123,14 @@ function RoleCard({
 
 export default function Step2Screen() {
   const router = useRouter();
-  const { updateRole } = useOnboarding();
+  const { data, updateRole } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
   const stepInfo = getOnboardingStep('role');
 
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(data.role);
 
   const handleContinue = () => {
     if (selectedRole) {

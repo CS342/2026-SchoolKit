@@ -8,23 +8,12 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore } from '../../features/content/editor/store';
 import { BLOCK_LABEL, BLOCK_ICON } from '../../features/content/editor/templates';
+import { REGISTRY } from '../../features/content/registry';
 import type { ContentBlock } from '../../features/content/types';
 import { BlockFields } from './BlockFields';
 import { IconBtn } from './primitives';
 
-function summaryOf(b: any): string {
-  switch (b.type) {
-    case 'hero': return (b.titleParts ?? []).map((p: any) => p.text).join('') || 'Untitled';
-    case 'callout': case 'quote': case 'footnote': return (b.text ?? '').slice(0, 80);
-    case 'richText': return (b.heading ? b.heading + ' — ' : '') + (b.markdown ?? '').replace(/[#*_>-]/g, '').slice(0, 70);
-    case 'image': return b.alt || b.url || 'Image';
-    case 'accordion': case 'cardGrid': case 'linkList': return `${b.heading} · ${(b.items ?? []).length} items`;
-    case 'stepper': return `${b.heading} · ${(b.steps ?? []).length} steps`;
-    case 'resourceRefList': return `${b.heading} · ${(b.resourceIds ?? []).length} guides`;
-    case 'recommendations': return 'Related pages (automatic)';
-    default: return '';
-  }
-}
+const summaryOf = (b: ContentBlock): string => REGISTRY[b.type]?.summary(b) ?? '';
 
 export function BlockCard({ block, index, count }: { block: ContentBlock; index: number; count: number }) {
   const { colors, shadows } = useTheme();

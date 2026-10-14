@@ -47,7 +47,7 @@ export default function EditNameScreen() {
   return (
     <View style={styles.container}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={appStyles.editHeaderTitle}>Edit Name</Text>
@@ -55,6 +55,9 @@ export default function EditNameScreen() {
           onPress={handleSave}
           style={[appStyles.editSaveButton, !name.trim() && appStyles.editSaveButtonDisabled]}
           disabled={!name.trim()}
+          accessibilityRole="button"
+          accessibilityLabel="Save"
+          accessibilityState={{ disabled: !name.trim() }}
         >
           <Text style={[appStyles.editSaveText, !name.trim() && appStyles.editSaveTextDisabled]}>Save</Text>
         </TouchableOpacity>

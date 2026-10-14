@@ -32,7 +32,7 @@ export default function Step3Screen() {
   const { colors, gradients, sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
 
-  const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>(data.schoolStatuses ?? []);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
   const isSchoolStaff = data.role === 'staff';

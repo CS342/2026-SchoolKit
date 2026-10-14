@@ -33,7 +33,13 @@ module.exports = {
     },
     plugins: [
       "expo-router",
-      "expo-audio"
+      "expo-audio",
+      "expo-asset",
+      "expo-font",
+      "expo-image",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     experiments: {
       typedRoutes: true

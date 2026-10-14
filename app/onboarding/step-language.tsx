@@ -56,6 +56,9 @@ export default function StepLanguageScreen() {
                     key={lang.id}
                     style={[styles.optionCard, isSelected && styles.optionCardSelected, isSelected && shadows.cardSelected, !isSelected && shadows.card]}
                     onPress={() => setSelected(lang.id)}
+                    accessibilityRole="radio"
+                    accessibilityLabel={lang.label}
+                    accessibilityState={{ selected: isSelected }}
                   >
                     <Text style={styles.flag}>{lang.flag}</Text>
                     <View style={styles.optionText}>

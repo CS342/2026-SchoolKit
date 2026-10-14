@@ -4,7 +4,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import type { DesignObject, InteractiveComponentObject, GradientConfig, ShadowConfig, StrokeDashPreset } from '../types/document';
 import { InteractiveProperties } from './InteractiveProperties';
 import { AlignmentToolbar } from './AlignmentToolbar';
-import { GRADIENTS, SHADOWS } from '../../../constants/onboarding-theme';
+import { GRADIENTS, SHADOW_SPECS } from '../../../constants/onboarding-theme';
 import ionGlyphMap from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json';
 
 function NumberInput({
@@ -566,37 +566,37 @@ const SHADOW_PRESETS: { value: string; label: string; shadow: ShadowConfig }[] =
   {
     value: 'card',
     label: 'Card (soft)',
-    shadow: { color: hexToRgba(SHADOWS.card.shadowColor, SHADOWS.card.shadowOpacity), offsetX: 0, offsetY: SHADOWS.card.shadowOffset.height, blur: SHADOWS.card.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.card.shadowColor, SHADOW_SPECS.card.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.card.shadowOffset.height, blur: SHADOW_SPECS.card.shadowRadius },
   },
   {
     value: 'cardLarge',
     label: 'Card Large',
-    shadow: { color: hexToRgba(SHADOWS.cardLarge.shadowColor, SHADOWS.cardLarge.shadowOpacity), offsetX: 0, offsetY: SHADOWS.cardLarge.shadowOffset.height, blur: SHADOWS.cardLarge.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.cardLarge.shadowColor, SHADOW_SPECS.cardLarge.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.cardLarge.shadowOffset.height, blur: SHADOW_SPECS.cardLarge.shadowRadius },
   },
   {
     value: 'cardSelected',
     label: 'Card Selected (purple glow)',
-    shadow: { color: hexToRgba(SHADOWS.cardSelected.shadowColor, SHADOWS.cardSelected.shadowOpacity), offsetX: 0, offsetY: SHADOWS.cardSelected.shadowOffset.height, blur: SHADOWS.cardSelected.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.cardSelected.shadowColor, SHADOW_SPECS.cardSelected.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.cardSelected.shadowOffset.height, blur: SHADOW_SPECS.cardSelected.shadowRadius },
   },
   {
     value: 'button',
     label: 'Button (strong purple)',
-    shadow: { color: hexToRgba(SHADOWS.button.shadowColor, SHADOWS.button.shadowOpacity), offsetX: 0, offsetY: SHADOWS.button.shadowOffset.height, blur: SHADOWS.button.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.button.shadowColor, SHADOW_SPECS.button.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.button.shadowOffset.height, blur: SHADOW_SPECS.button.shadowRadius },
   },
   {
     value: 'small',
     label: 'Small (purple)',
-    shadow: { color: hexToRgba(SHADOWS.small.shadowColor, SHADOWS.small.shadowOpacity), offsetX: 0, offsetY: SHADOWS.small.shadowOffset.height, blur: SHADOWS.small.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.small.shadowColor, SHADOW_SPECS.small.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.small.shadowOffset.height, blur: SHADOW_SPECS.small.shadowRadius },
   },
   {
     value: 'header',
     label: 'Header',
-    shadow: { color: hexToRgba(SHADOWS.header.shadowColor, SHADOWS.header.shadowOpacity), offsetX: 0, offsetY: SHADOWS.header.shadowOffset.height, blur: SHADOWS.header.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.header.shadowColor, SHADOW_SPECS.header.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.header.shadowOffset.height, blur: SHADOW_SPECS.header.shadowRadius },
   },
   {
     value: 'iconCircle',
     label: 'Icon Circle',
-    shadow: { color: hexToRgba(SHADOWS.iconCircle.shadowColor, SHADOWS.iconCircle.shadowOpacity), offsetX: 0, offsetY: SHADOWS.iconCircle.shadowOffset.height, blur: SHADOWS.iconCircle.shadowRadius },
+    shadow: { color: hexToRgba(SHADOW_SPECS.iconCircle.shadowColor, SHADOW_SPECS.iconCircle.shadowOpacity), offsetX: 0, offsetY: SHADOW_SPECS.iconCircle.shadowOffset.height, blur: SHADOW_SPECS.iconCircle.shadowRadius },
   },
 ];
 

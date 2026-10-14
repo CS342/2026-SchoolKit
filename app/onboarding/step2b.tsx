@@ -86,7 +86,13 @@ function GradeCell({
   };
 
   return (
-    <Pressable onPress={handlePress} style={styles.gridCellWrapper}>
+    <Pressable
+      onPress={handlePress}
+      style={styles.gridCellWrapper}
+      accessibilityRole="radio"
+      accessibilityLabel={grade.label.replace(/\n/g, ' ')}
+      accessibilityState={{ selected: isSelected }}
+    >
       <Animated.View
         style={[
           styles.gridCell,

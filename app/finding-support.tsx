@@ -662,7 +662,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     connectorRight: { alignItems: "flex-start", marginLeft: 30 + BUBBLE_SIZE / 2 },
     dashedLine: { width: 0, height: "100%", borderWidth: 1.5, borderStyle: "dashed" },
     modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
-    modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.6)" },
+    modalBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.6)" },
     modalContainer: { width: '88%', maxWidth: 560, maxHeight: SCREEN_HEIGHT * 0.72 },
     modalCardShadow: { width: "100%", ...s.card },
     modalCard: { width: "100%", borderRadius: 32, borderWidth: 4, overflow: "hidden", backfaceVisibility: "hidden" },

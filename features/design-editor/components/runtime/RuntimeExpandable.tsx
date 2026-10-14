@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, LayoutAnimation, UIManager, Platform, Animated, StyleSheet } from 'react-native';
 import type { InteractiveComponentObject, ExpandableConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
-import { COLORS, SHADOWS, RADII, BORDERS } from '../../../../constants/onboarding-theme';
+import { COLORS, SHADOW_SPECS, RADII, BORDERS } from '../../../../constants/onboarding-theme';
+import { shadow } from '../../../../constants/theme';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -74,8 +75,7 @@ export function RuntimeExpandable({ object, isDark = false }: { object: Interact
         overflow: 'hidden',
         backgroundColor: isDark ? '#1C1C2E' : COLORS.white,
         borderColor: isExpanded ? COLORS.primary + '50' : (isDark ? '#2A2A42' : COLORS.borderCard),
-        ...SHADOWS.card,
-        shadowColor: isDark ? '#000' : SHADOWS.card.shadowColor,
+        ...shadow({ ...SHADOW_SPECS.card, shadowColor: isDark ? '#000' : SHADOW_SPECS.card.shadowColor }),
       }}
     >
       {/* Header */}

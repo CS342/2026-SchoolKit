@@ -1,4 +1,39 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+
+type ShadowSpec = {
+  shadowColor: string;
+  shadowOffset: { width: number; height: number };
+  shadowOpacity: number;
+  shadowRadius: number;
+  elevation: number;
+};
+
+function hexToRgba(hex: string, opacity: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((ch) => ch + ch).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+/**
+ * Cross-platform elevation. On web, react-native-web deprecates the RN
+ * `shadow*` props in favor of CSS `boxShadow`, so we emit that there; native
+ * keeps `shadow*` + `elevation`. Spread the result into a style, or use it
+ * directly as a shadow token. The return type is intentionally narrow (only
+ * the shadow props) so spreading it into a style doesn't widen that style to
+ * the full ViewStyle surface (which would clash with TextInput's TextStyle).
+ */
+export function shadow(spec: ShadowSpec): { boxShadow: string } | ShadowSpec {
+  if (Platform.OS === 'web') {
+    const { shadowColor, shadowOffset, shadowOpacity, shadowRadius } = spec;
+    return {
+      boxShadow: `${shadowOffset.width}px ${shadowOffset.height}px ${shadowRadius}px ${hexToRgba(shadowColor, shadowOpacity)}`,
+    };
+  }
+  return spec;
+}
 
 // ─── Color Palettes ──────────────────────────────────────────────
 
@@ -125,111 +160,41 @@ export type ThemeGradients = typeof GRADIENTS_LIGHT | typeof GRADIENTS_DARK;
 
 // ─── Shadow Palettes ─────────────────────────────────────────────
 
-// Softened & warm-tinted for the "lighten & refine" direction — shadows recede
-// rather than announce themselves (the button glow drops from 0.4 to 0.18).
-export const SHADOWS_LIGHT = {
-  card: {
-    shadowColor: '#2C2A3A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
-    shadowRadius: 14,
-    elevation: 3,
-  },
-  cardSelected: {
-    shadowColor: '#6B5AD6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 6,
-  },
-  button: {
-    shadowColor: '#6B5AD6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 5,
-  },
-  small: {
-    shadowColor: '#2C2A3A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  header: {
-    shadowColor: '#2C2A3A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  cardLarge: {
-    shadowColor: '#2C2A3A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.09,
-    shadowRadius: 22,
-    elevation: 6,
-  },
-  iconCircle: {
-    shadowColor: '#2C2A3A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-};
+// Raw shadow specs (RN `shadow*` + elevation). Softened & warm-tinted for the
+// "lighten & refine" direction — shadows recede rather than announce themselves
+// (the button glow drops from 0.4 to 0.18). These keep their numeric values on
+// every platform; consumers that need raw numbers (e.g. the Konva design editor)
+// read from SHADOW_SPECS_*. For applying to RN Views, use SHADOWS_* below, which
+// emit CSS boxShadow on web.
+export const SHADOW_SPECS_LIGHT = {
+  card:         { shadowColor: '#2C2A3A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 14, elevation: 3 },
+  cardSelected: { shadowColor: '#6B5AD6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.16, shadowRadius: 18, elevation: 6 },
+  button:       { shadowColor: '#6B5AD6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 5 },
+  small:        { shadowColor: '#2C2A3A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8,  elevation: 3 },
+  header:       { shadowColor: '#2C2A3A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 4 },
+  cardLarge:    { shadowColor: '#2C2A3A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.09, shadowRadius: 22, elevation: 6 },
+  iconCircle:   { shadowColor: '#2C2A3A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6,  elevation: 2 },
+} satisfies Record<string, ShadowSpec>;
 
-export const SHADOWS_DARK = {
-  card: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  cardSelected: {
-    shadowColor: '#9A8CF2',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 18,
-    elevation: 6,
-  },
-  button: {
-    shadowColor: '#9A8CF2',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.32,
-    shadowRadius: 16,
-    elevation: 5,
-  },
-  small: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  header: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  cardLarge: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  iconCircle: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-};
+export const SHADOW_SPECS_DARK = {
+  card:         { shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3,  shadowRadius: 12, elevation: 4 },
+  cardSelected: { shadowColor: '#9A8CF2', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3,  shadowRadius: 18, elevation: 6 },
+  button:       { shadowColor: '#9A8CF2', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 16, elevation: 5 },
+  small:        { shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2,  shadowRadius: 8,  elevation: 4 },
+  header:       { shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 5 },
+  cardLarge:    { shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3,  shadowRadius: 16, elevation: 6 },
+  iconCircle:   { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2,  shadowRadius: 4,  elevation: 3 },
+} satisfies Record<string, ShadowSpec>;
+
+function toViewShadows<T extends Record<string, ShadowSpec>>(specs: T): { [K in keyof T]: ReturnType<typeof shadow> } {
+  const out = {} as { [K in keyof T]: ReturnType<typeof shadow> };
+  (Object.keys(specs) as (keyof T)[]).forEach((k) => { out[k] = shadow(specs[k]); });
+  return out;
+}
+
+// View-ready shadow tokens: boxShadow on web, shadow*/elevation on native.
+export const SHADOWS_LIGHT = toViewShadows(SHADOW_SPECS_LIGHT);
+export const SHADOWS_DARK = toViewShadows(SHADOW_SPECS_DARK);
 
 export type ThemeShadows = typeof SHADOWS_LIGHT;
 

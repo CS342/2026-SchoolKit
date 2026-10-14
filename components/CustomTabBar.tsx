@@ -6,8 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { type BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { CommonActions } from '@react-navigation/native';
+import { type BottomTabBarProps } from 'expo-router/tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { ANIMATION } from '../constants/onboarding-theme';
@@ -40,8 +39,11 @@ function useTabNavigation(state: BottomTabBarProps['state'], navigation: BottomT
     });
 
     if (!isFocused && !event.defaultPrevented) {
+      // Equivalent to CommonActions.navigate(route.name, route.params); inlined so we
+      // don't import from @react-navigation/* (blocked by expo-router since SDK 56).
       navigation.dispatch({
-        ...CommonActions.navigate(route.name, route.params),
+        type: 'NAVIGATE',
+        payload: { name: route.name, params: route.params },
         target: state.key,
       });
     }

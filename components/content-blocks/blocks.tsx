@@ -9,10 +9,11 @@ import { ExternalLink } from '../external-link';
 import { RecommendationList } from '../RecommendationList';
 import { ALL_RESOURCES } from '../../constants/resources';
 import {
-  ContentBlock, HeroBlock, CalloutBlock as CalloutT, AccordionBlock as AccordionT, AccordionItem,
+  ContentBlock, BlockType, HeroBlock, CalloutBlock as CalloutT, AccordionBlock as AccordionT, AccordionItem,
   CardGridBlock as CardGridT, StepperBlock as StepperT, LinkListBlock as LinkListT,
   RichTextBlock as RichTextT, QuoteBlock as QuoteT, FootnoteBlock as FootnoteT, ImageBlock as ImageT, ResourceRefListBlock as RefListT,
 } from '../../features/content/types';
+import { REGISTRY } from '../../features/content/registry';
 import { useBlockCtx, BlockCtx } from './context';
 import { safeIcon, Markdown } from './util';
 import { BUBBLE_SIZE } from './styles';
@@ -388,39 +389,34 @@ export function RecommendationsBlock() {
   );
 }
 
-// ─── Registry ──────────────────────────────────────────────────────────────────
+// ─── Registry (render layer) ─────────────────────────────────────────────────────
+// Second half of the manifest: binds each block type to its JSX component. Typed
+// Record<BlockType, …> so a new union member fails to compile until it has an entry
+// here — the compile-time mirror of the pure REGISTRY in features/content/registry.
+export const BLOCK_RENDERERS: Record<BlockType, React.ComponentType<{ block: any }>> = {
+  hero: HeroTitle,
+  callout: CalloutBlock,
+  richText: RichTextBlock,
+  quote: QuoteBlock,
+  footnote: FootnoteBlock,
+  image: ImageBlock,
+  accordion: AccordionBlock,
+  cardGrid: CardGridBlock,
+  stepper: StepperBlock,
+  linkList: LinkListBlock,
+  resourceRefList: ResourceRefListBlock,
+  recommendations: RecommendationsBlock,
+};
+
 export function BlockRenderer({ block }: { block: ContentBlock }) {
-  switch (block.type) {
-    case 'hero': return <HeroTitle block={block} />;
-    case 'callout': return <CalloutBlock block={block} />;
-    case 'richText': return <RichTextBlock block={block} />;
-    case 'quote': return <QuoteBlock block={block} />;
-    case 'footnote': return <FootnoteBlock block={block} />;
-    case 'image': return <ImageBlock block={block} />;
-    case 'accordion': return <AccordionBlock block={block} />;
-    case 'cardGrid': return <CardGridBlock block={block} />;
-    case 'stepper': return <StepperBlock block={block} />;
-    case 'linkList': return <LinkListBlock block={block} />;
-    case 'resourceRefList': return <ResourceRefListBlock block={block} />;
-    case 'recommendations': return <RecommendationsBlock />;
-    default: return null; // unknown/forward-compatible → render nothing
-  }
+  const Comp = BLOCK_RENDERERS[block.type];
+  return Comp ? <Comp block={block} /> : null; // unknown/forward-compatible → render nothing
 }
 
-/** Which block types carry a heading (→ TOC entry). */
+/** The heading text for a block, if it carries one (→ TOC entry). */
 export function blockHeading(block: ContentBlock): string | undefined {
-  switch (block.type) {
-    case 'accordion':
-    case 'cardGrid':
-    case 'stepper':
-    case 'linkList':
-    case 'resourceRefList':
-      return block.heading;
-    case 'richText':
-      return block.heading;
-    default:
-      return undefined;
-  }
+  const field = REGISTRY[block.type]?.headingField;
+  return field ? (block as any)[field] : undefined;
 }
 
 export type { BlockCtx };

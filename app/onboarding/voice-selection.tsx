@@ -193,6 +193,9 @@ export default function VoiceSelectionScreen() {
                               !isSelected && shadows.card,
                             ]}
                             onPress={() => setSelectedVoice(voice.id)}
+                            accessibilityRole="radio"
+                            accessibilityLabel={voice.name}
+                            accessibilityState={{ selected: isSelected }}
                           >
                             {voice.image ? (
                               <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
@@ -216,6 +219,9 @@ export default function VoiceSelectionScreen() {
                                 e.stopPropagation();
                                 handlePlaySample(voice.id, voice.name);
                               }}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              accessibilityLabel={isPlaying ? 'Stop sample' : `Play sample for ${voice.name}`}
                             >
                               {isSampleLoading && isPlaying ? (
                                 <ActivityIndicator size="small" color="#FFFFFF" />

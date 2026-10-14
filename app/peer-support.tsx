@@ -904,7 +904,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     lineHeight: 14,
   },
   sheetOverlay: { flex: 1, justifyContent: "flex-end" },
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheetContainer: {
     height: SHEET_HEIGHT,
     backgroundColor: c.white,

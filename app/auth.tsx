@@ -44,6 +44,19 @@ function getPasswordStrength(password: string) {
   return { score: normalized, label: labels[normalized] };
 }
 
+// The individual sign-up password rules, surfaced as a live checklist so the
+// user sees every requirement at once instead of one alert at a time.
+const PASSWORD_RULES: { key: string; label: string; test: (p: string) => boolean }[] = [
+  { key: 'length', label: 'At least 8 characters', test: p => p.length >= 8 },
+  { key: 'upper', label: 'One uppercase letter', test: p => /[A-Z]/.test(p) },
+  { key: 'lower', label: 'One lowercase letter', test: p => /[a-z]/.test(p) },
+  { key: 'number', label: 'One number', test: p => /[0-9]/.test(p) },
+];
+
+function passwordMeetsAllRules(password: string) {
+  return PASSWORD_RULES.every(rule => rule.test(password));
+}
+
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -64,6 +77,9 @@ export default function AuthScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
@@ -80,6 +96,7 @@ export default function AuthScreen() {
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
+    setPasswordError(null);
     if (isSignUp) {
       setPasswordStrength(getPasswordStrength(text));
     }
@@ -94,42 +111,47 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!email.trim() || !password.trim()) {
-      showAlert('Missing fields', 'Please fill in all fields.');
-      return;
+    const trimmedEmail = email.trim();
+
+    // Validate every field up front and surface all problems inline at once,
+    // rather than popping one modal alert per failing rule.
+    let hasError = false;
+
+    if (!trimmedEmail) {
+      setEmailError('Please enter your email.');
+      hasError = true;
+    } else if (!isValidEmail(trimmedEmail)) {
+      setEmailError('Please enter a valid email address.');
+      hasError = true;
+    } else {
+      setEmailError(null);
     }
 
-    if (!isValidEmail(email.trim())) {
-      showAlert('Invalid email', 'Please enter a valid email address.');
-      return;
+    if (!password) {
+      setPasswordError('Please enter your password.');
+      hasError = true;
+    } else if (isSignUp && !passwordMeetsAllRules(password)) {
+      setPasswordError('Your password doesn’t meet all the requirements below.');
+      hasError = true;
+    } else {
+      setPasswordError(null);
     }
 
     if (isSignUp) {
-      if (password.length < 8) {
-        showAlert('Weak password', 'Password must be at least 8 characters.');
-        return;
-      }
-      if (!/[A-Z]/.test(password)) {
-        showAlert('Weak password', 'Password must contain at least one uppercase letter.');
-        return;
-      }
-      if (!/[a-z]/.test(password)) {
-        showAlert('Weak password', 'Password must contain at least one lowercase letter.');
-        return;
-      }
-      if (!/[0-9]/.test(password)) {
-        showAlert('Weak password', 'Password must contain at least one number.');
-        return;
-      }
       if (!confirmPassword.trim()) {
-        showAlert('Confirm password', 'Please confirm your password.');
-        return;
+        setConfirmError('Please confirm your password.');
+        hasError = true;
+      } else if (password !== confirmPassword) {
+        setConfirmError('Passwords don’t match.');
+        hasError = true;
+      } else {
+        setConfirmError(null);
       }
-      if (password !== confirmPassword) {
-        showAlert("Passwords don't match", 'Please make sure both passwords are the same.');
-        return;
-      }
+    } else {
+      setConfirmError(null);
     }
+
+    if (hasError) return;
 
     setLoading(true);
     try {
@@ -138,7 +160,10 @@ export default function AuthScreen() {
         if (error) {
           showAlert('Sign up failed', error.message);
         } else {
-          router.replace('/confirm-email');
+          // Email verification is disabled for now. With Supabase "Confirm email"
+          // off, signUp returns an active session, so route the signed-in user
+          // straight into onboarding (via index) instead of /confirm-email.
+          router.replace('/');
         }
       } else {
         const { error } = await signInWithPassword(email.trim(), password);
@@ -259,14 +284,14 @@ export default function AuthScreen() {
             {/* Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
-              <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
+              <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused, !!emailError && styles.inputWrapperError]}>
                 <Ionicons name="mail-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
                   placeholderTextColor={colors.inputPlaceholder}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => { setEmail(text); if (emailError) setEmailError(null); }}
                   onFocus={() => setEmailFocused(true)}
                   onBlur={() => setEmailFocused(false)}
                   keyboardType="email-address"
@@ -275,14 +300,16 @@ export default function AuthScreen() {
                   textContentType="emailAddress"
                   returnKeyType="next"
                   onSubmitEditing={() => passwordRef.current?.focus()}
+                  accessibilityLabel="Email"
                 />
               </View>
+              {!!emailError && <Text style={styles.errorText} accessibilityRole="alert">{emailError}</Text>}
             </View>
 
             {/* Password */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
-              <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
+              <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused, !!passwordError && styles.inputWrapperError]}>
                 <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   ref={passwordRef}
@@ -302,11 +329,13 @@ export default function AuthScreen() {
                     if (isSignUp) confirmPasswordRef.current?.focus();
                     else handleSubmit();
                   }}
+                  accessibilityLabel="Password"
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                   <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                 </TouchableOpacity>
               </View>
+              {!!passwordError && <Text style={styles.errorText} accessibilityRole="alert">{passwordError}</Text>}
             </View>
 
             {/* Password Strength */}
@@ -329,9 +358,33 @@ export default function AuthScreen() {
               </View>
             )}
 
+            {/* Live password requirements — all shown at once, ticked as met */}
+            {isSignUp && password.length > 0 && (
+              <View
+                style={styles.requirementsContainer}
+                accessibilityLabel={`Password requirements. ${PASSWORD_RULES.filter(r => !r.test(password)).map(r => r.label).join(', ') || 'All met'}`}
+              >
+                {PASSWORD_RULES.map(rule => {
+                  const met = rule.test(password);
+                  return (
+                    <View key={rule.key} style={styles.requirementRow}>
+                      <Ionicons
+                        name={met ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={16}
+                        color={met ? colors.success : colors.inputPlaceholder}
+                      />
+                      <Text style={[styles.requirementText, { color: met ? colors.success : colors.textMuted }]}>
+                        {rule.label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
             {/* Forgot Password */}
             {!isSignUp && (
-              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
+              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton} disabled={loading} accessibilityRole="button" accessibilityLabel="Forgot password">
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
             )}
@@ -347,7 +400,7 @@ export default function AuthScreen() {
             >
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Confirm Password</Text>
-                <View style={[styles.inputWrapper, confirmFocused && styles.inputWrapperFocused]}>
+                <View style={[styles.inputWrapper, confirmFocused && styles.inputWrapperFocused, !!confirmError && styles.inputWrapperError]}>
                   <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                   <TextInput
                     ref={confirmPasswordRef}
@@ -355,7 +408,7 @@ export default function AuthScreen() {
                     placeholder="Re-enter your password"
                     placeholderTextColor={colors.inputPlaceholder}
                     value={confirmPassword}
-                    onChangeText={setConfirmPassword}
+                    onChangeText={(text) => { setConfirmPassword(text); if (confirmError) setConfirmError(null); }}
                     onFocus={() => setConfirmFocused(true)}
                     onBlur={() => setConfirmFocused(false)}
                     secureTextEntry={!showConfirmPassword}
@@ -364,11 +417,13 @@ export default function AuthScreen() {
                     textContentType="none"
                     returnKeyType="go"
                     onSubmitEditing={handleSubmit}
+                    accessibilityLabel="Confirm password"
                   />
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
                     <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                   </TouchableOpacity>
                 </View>
+                {!!confirmError && <Text style={styles.errorText} accessibilityRole="alert">{confirmError}</Text>}
               </View>
             </Animated.View>
 
@@ -392,8 +447,14 @@ export default function AuthScreen() {
                 setIsSignUp(!isSignUp);
                 setConfirmPassword('');
                 setPasswordStrength({ score: 0, label: 'None' });
+                setEmailError(null);
+                setPasswordError(null);
+                setConfirmError(null);
               }}
               style={styles.toggleButton}
+              disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel={isSignUp ? 'Switch to sign in' : 'Switch to sign up'}
             >
               <Text style={styles.toggleText}>
                 {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
@@ -411,9 +472,13 @@ export default function AuthScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.guestButton, isWebDesktop && { marginHorizontal: 0 }]}
+            style={[styles.guestButton, isWebDesktop && { marginHorizontal: 0 }, loading && { opacity: 0.6 }]}
             onPress={handleContinueAsGuest}
             activeOpacity={0.8}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Continue as guest"
+            accessibilityState={{ disabled: loading }}
           >
             <Ionicons name="person-outline" size={20} color={colors.textMuted} style={{ marginRight: 8 }} />
             <Text style={styles.guestButtonText}>Continue as Guest</Text>
@@ -495,6 +560,29 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   inputWrapperFocused: {
     borderColor: c.primary,
   },
+  inputWrapperError: {
+    borderColor: c.error,
+  },
+  errorText: {
+    fontSize: 13,
+    color: c.error,
+    marginTop: 6,
+    marginLeft: 4,
+  },
+  requirementsContainer: {
+    marginTop: -8,
+    marginBottom: 16,
+    gap: 6,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  requirementText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -545,7 +633,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     position: 'relative',
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

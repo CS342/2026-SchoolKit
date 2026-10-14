@@ -5,14 +5,17 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, Modal, StyleSheet
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { listContentPages, saveContentPage, deleteContentPage, PageListItem } from '../../features/content/editor/crud';
 import { generatePage } from '../../features/content/ai/client';
+import { resolveUploadedImages, Attachment } from '../../features/content/uploads';
 import { NewPageModal } from '../../components/content-editor/NewPageModal';
 
 export default function ContentPagesDashboard() {
   const router = useRouter();
   const { colors, shadows } = useTheme();
+  const { user } = useAuth();
   const [items, setItems] = useState<PageListItem[] | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [confirmDel, setConfirmDel] = useState<PageListItem | null>(null);
@@ -25,10 +28,15 @@ export default function ContentPagesDashboard() {
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
   useEffect(() => { refresh(); }, [refresh]);
 
-  const handleGenerate = async (prompt: string): Promise<string | undefined> => {
-    const res = await generatePage(prompt);
+  const handleGenerate = async (prompt: string, attachments: Attachment[]): Promise<string | undefined> => {
+    const res = await generatePage(prompt, attachments);
     if ('error' in res) return res.error;
-    const saved = await saveContentPage(null, res.doc, 'draft');
+    let doc = res.doc;
+    if (user && attachments.length) {
+      const resolved = await resolveUploadedImages(doc, attachments, user.id);
+      doc = resolved.output;
+    }
+    const saved = await saveContentPage(null, doc, 'draft');
     if ('error' in saved) return saved.error;
     setShowNew(false);
     router.push(`/(editor)/content/${saved.id}`);
@@ -52,11 +60,7 @@ export default function ContentPagesDashboard() {
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 6 }}>
             <View>
-              <Pressable onPress={() => router.push('/(editor)/designs')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10, cursor: 'pointer' as any }}>
-                <Ionicons name="chevron-back" size={15} color={colors.textLight} />
-                <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>Editor</Text>
-              </Pressable>
-              <Text style={{ ...TYPOGRAPHY.display, fontSize: 34, color: colors.textDark, letterSpacing: -0.8 }}>Content pages</Text>
+              <Text style={{ ...TYPOGRAPHY.display, fontSize: 34, color: colors.textDark, letterSpacing: -0.8 }}>Content</Text>
               <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, marginTop: 4 }}>Write and edit the guides that appear in the app.</Text>
             </View>
             <Pressable

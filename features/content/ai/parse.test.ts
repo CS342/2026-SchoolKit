@@ -1,4 +1,5 @@
 // Tests for AI-output validation (pure). Run with `npm test`.
+import { describe, it, test, expect } from '@jest/globals';
 import type { ContentDoc } from '../types';
 import { parseGenerateResult, parseEditResult } from './parse';
 

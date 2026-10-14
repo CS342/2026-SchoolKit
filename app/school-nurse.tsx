@@ -442,7 +442,7 @@ const sheetStyles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#000",
   },
   sheet: {
@@ -697,7 +697,7 @@ const videoStyles = StyleSheet.create({
     ...SHADOWS.card,
   },
   background: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: VIDEO_ACCENT + "15",
   },
   inner: {

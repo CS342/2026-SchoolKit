@@ -78,7 +78,7 @@ export default function WelcomeScreen() {
   }));
 
   const handleGetStarted = () => {
-    router.push('/auth');
+    router.push('/choose-path');
   };
 
   return (

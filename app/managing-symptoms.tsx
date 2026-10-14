@@ -1149,7 +1149,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
             alignItems: "center",
         },
         modalBackdrop: {
-            ...StyleSheet.absoluteFillObject,
+            ...StyleSheet.absoluteFill,
             backgroundColor: "rgba(0,0,0,0.52)",
         },
         expandedContainer: {

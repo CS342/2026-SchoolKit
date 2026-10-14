@@ -12,7 +12,12 @@ module.exports = {
         isolatedModules: true,
         tsconfig: {
           module: 'commonjs',
-          moduleResolution: 'node',
+          // TS 6.0 requires an explicit rootDir when sources span directories.
+          rootDir: '.',
+          moduleResolution: 'node10',
+          // TS 6.0 turned the deprecated node10 resolver into a hard error; keep it
+          // (these pure-logic tests emit CommonJS for Node) and silence until TS 7.0.
+          ignoreDeprecations: '6.0',
           esModuleInterop: true,
           skipLibCheck: true,
           target: 'es2019',

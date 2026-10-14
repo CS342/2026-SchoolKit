@@ -23,7 +23,7 @@ import type { ThemeColors } from '../../constants/theme';
 
 export default function Step1Screen() {
   const router = useRouter();
-  const { updateName } = useOnboarding();
+  const { data, updateName } = useOnboarding();
   const { isAnonymous, signOut } = useAuth();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -31,7 +31,7 @@ export default function Step1Screen() {
   const isWebDesktop = isWeb && !isMobile;
   const stepInfo = getOnboardingStep('name');
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState(data.name ?? '');
   const [inputFocused, setInputFocused] = useState(false);
 
   const iconOpacity = useSharedValue(0);

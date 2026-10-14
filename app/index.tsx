@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { getResumeRoute } from '../components/AuthWebWrapper';
 
 export default function Index() {
   const router = useRouter();
@@ -20,12 +21,12 @@ export default function Index() {
     }
 
     if (!data.isCompleted) {
-      router.replace('/onboarding/step1');
+      router.replace(getResumeRoute(data));
       return;
     }
 
     router.replace('/(tabs)');
-  }, [authLoading, onboardingLoading, user, data.isCompleted]);
+  }, [authLoading, onboardingLoading, user, data]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackgroundAlt }]}>

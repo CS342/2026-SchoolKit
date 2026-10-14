@@ -59,7 +59,7 @@ export default function Step4Screen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
 
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(data.topics ?? []);
 
   const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
   const stepInfo = getOnboardingStep('topics', isStudent);

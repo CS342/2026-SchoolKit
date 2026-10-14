@@ -758,7 +758,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
   cardLinesBottom: { position: "absolute", bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: 10, gap: 4 },
   cardLine: { height: 2, borderRadius: 1, marginTop: 4 },
   modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0, 0, 0, 0.7)" },
+  modalBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0, 0, 0, 0.7)" },
   expandedCardContainer: { width: '88%', maxWidth: 560, maxHeight: SCREEN_HEIGHT * 0.7 },
   expandedCardShadow: { width: "100%", ...s.card },
   expandedCard: { width: "100%", borderRadius: 40, borderWidth: 4, overflow: "hidden", backfaceVisibility: "hidden" },

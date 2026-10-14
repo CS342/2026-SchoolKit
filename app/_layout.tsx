@@ -1,8 +1,7 @@
 import { View } from 'react-native';
 import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_700Bold, Raleway_800ExtraBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
-import { Stack, usePathname } from 'expo-router';
-import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
+import { Stack, usePathname, DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '../contexts/AuthContext';
 import { OnboardingProvider } from '../contexts/OnboardingContext';
@@ -23,10 +22,11 @@ function InnerLayout() {
   const isWebDesktop = isWeb && (isDesktop || isTablet);
   const pathname = usePathname();
   const isWelcomePage = pathname === '/welcome' || pathname === '/welcome/';
+  const isChoosePage = pathname === '/choose-path' || pathname === '/choose-path/';
   const isOnboardingPage = pathname.startsWith('/onboarding');
   const isAuthPage = pathname === '/auth' || pathname.startsWith('/auth');
   const isEditorPage = pathname.startsWith('/design/');
-  const hideSidebar = isWelcomePage || isOnboardingPage || isAuthPage || isEditorPage;
+  const hideSidebar = isWelcomePage || isChoosePage || isOnboardingPage || isAuthPage || isEditorPage;
 
   const navigationTheme = isDark
     ? {

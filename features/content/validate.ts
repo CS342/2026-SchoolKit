@@ -7,6 +7,10 @@
 
 import { z } from 'zod';
 import type { ContentBlock, ContentDoc, Op, BlockType } from './types';
+import { BLOCK_SCHEMAS, ARRAY_KEY, ColorTokenSchema } from './registry';
+
+// Re-export so existing importers (ops.ts) keep `import { ARRAY_KEY } from './validate'`.
+export { ARRAY_KEY };
 
 // ─── primitives ───────────────────────────────────────────────────────────────
 const isStr = (v: unknown): v is string => typeof v === 'string';
@@ -21,39 +25,8 @@ export interface ParseResult {
   warnings: string[]; // non-fatal (e.g. dropped blocks)
 }
 
-// ─── zod schemas ────────────────────────────────────────────────────────────────
-const ColorToken = z.enum(['primary', 'teal', 'coral', 'amber', 'indigo', 'sky']);
-const Icon = z.string().min(1);
-const Id = z.string().min(1);
 const Str = z.string().min(1);
-
-const TitlePart = z.object({ text: z.string(), accent: z.boolean().optional() });
-const AccordionItem = z.object({ id: Id, title: Str, icon: Icon, color: ColorToken, summary: Str, body: Str });
-const CardItem = z.object({ id: Id, title: Str, icon: Icon, color: ColorToken, body: Str, href: z.string().optional() });
-const StepItem = z.object({ id: Id, title: Str, icon: Icon, color: ColorToken, detail: Str });
-const LinkItem = z.object({ id: Id, name: Str, icon: Icon, color: ColorToken, blurb: Str, url: Str, display: Str });
-
-// Block `id` is optional in the schema so an insert op (id minted on apply) validates;
-// parseContentDoc enforces id presence for stored docs via `requireId`.
-const idOpt = { id: z.string().optional() };
-
-const BLOCK_SCHEMAS: Record<BlockType, z.ZodTypeAny> = {
-  hero: z.object({ ...idOpt, type: z.literal('hero'), eyebrow: z.string().optional(), eyebrowIcon: z.string().optional(), eyebrowColor: ColorToken.optional(), titleParts: z.array(TitlePart).min(1), subtitle: z.string().optional() }),
-  callout: z.object({ ...idOpt, type: z.literal('callout'), icon: Icon, text: Str, tone: ColorToken.optional() }),
-  richText: z.object({ ...idOpt, type: z.literal('richText'), heading: z.string().optional(), markdown: Str }),
-  quote: z.object({ ...idOpt, type: z.literal('quote'), text: Str, author: z.string().optional() }),
-  footnote: z.object({ ...idOpt, type: z.literal('footnote'), text: Str }),
-  image: z.object({ ...idOpt, type: z.literal('image'), url: Str, alt: Str, caption: z.string().optional(), aspect: z.number().optional() }),
-  accordion: z.object({ ...idOpt, type: z.literal('accordion'), heading: Str, subheading: z.string().optional(), items: z.array(AccordionItem) }),
-  cardGrid: z.object({ ...idOpt, type: z.literal('cardGrid'), heading: Str, subheading: z.string().optional(), items: z.array(CardItem) }),
-  stepper: z.object({ ...idOpt, type: z.literal('stepper'), heading: Str, subheading: z.string().optional(), steps: z.array(StepItem) }),
-  linkList: z.object({ ...idOpt, type: z.literal('linkList'), heading: Str, subheading: z.string().optional(), items: z.array(LinkItem) }),
-  // resourceIds coerced to strings — models often emit them as numbers (13 not "13").
-  resourceRefList: z.object({ ...idOpt, type: z.literal('resourceRefList'), heading: Str, subheading: z.string().optional(), ranked: z.boolean().optional(), resourceIds: z.array(z.coerce.string()) }),
-  recommendations: z.object({ ...idOpt, type: z.literal('recommendations') }),
-};
-
-const DocMeta = z.object({ title: Str, slug: Str, accent: ColorToken });
+const DocMeta = z.object({ title: Str, slug: Str, accent: ColorTokenSchema });
 
 /** Validate one block. `requireId` false for insert ops (id is minted on apply). */
 export function validateBlock(block: unknown, requireId = true): string | null {
@@ -110,13 +83,6 @@ export function parseContentDoc(input: unknown): ParseResult {
 }
 
 // ─── op validation (against a doc, before apply) ───────────────────────────────
-export const ARRAY_KEY: Partial<Record<BlockType, 'items' | 'steps'>> = {
-  accordion: 'items',
-  cardGrid: 'items',
-  linkList: 'items',
-  stepper: 'steps',
-};
-
 export function validateOps(doc: ContentDoc, ops: Op[]): string[] {
   const errors: string[] = [];
   const blockIds = new Set(doc.blocks.map((b) => b.id));

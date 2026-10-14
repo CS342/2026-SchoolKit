@@ -1,4 +1,5 @@
 // Tests for applyOps + validation. Run with `npm test` (jest + ts-jest, node env).
+import { describe, it, test, expect, beforeEach, jest } from '@jest/globals';
 import type { ContentDoc } from './types';
 import { applyOps, ContentOpError } from './ops';
 import { parseContentDoc, validateOps } from './validate';

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS_LIGHT, SHADOWS_LIGHT } from './theme';
+import { COLORS_LIGHT, SHADOWS_LIGHT, SHADOW_SPECS_LIGHT, shadow } from './theme';
 
 // Brand gradients refreshed to the new violet + healing accents; the per-item
 // role/accent gradients (data colors) are kept for identity.
@@ -25,7 +25,10 @@ export const GRADIENTS = {
 };
 
 // Static shadows now point at the single softened light source.
+// SHADOWS = view-ready tokens (boxShadow on web). SHADOW_SPECS = raw numeric
+// specs for consumers that need the individual values (e.g. the Konva editor).
 export const SHADOWS = SHADOWS_LIGHT;
+export const SHADOW_SPECS = SHADOW_SPECS_LIGHT;
 
 // Unified: the static COLORS is now the single light palette from theme.ts, so
 // the (still light-only) onboarding/auth screens that import COLORS directly get
@@ -300,11 +303,7 @@ export const APP_STYLES = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 2,
     borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    ...shadow({ shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }),
   },
   tabHeaderTitle: {
     fontSize: 30,
@@ -329,11 +328,7 @@ export const APP_STYLES = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 2,
     borderBottomColor: COLORS.borderCard,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    ...shadow({ shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }),
   },
   editHeaderTitle: {
     fontSize: 24,
@@ -382,11 +377,7 @@ export const APP_STYLES = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 3,
     borderColor: COLORS.borderCard,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    ...shadow({ shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 6 }),
   },
   resourceIconCircle: {
     width: 72,
@@ -395,11 +386,7 @@ export const APP_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 18,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...shadow({ shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }),
   },
   // Selectable cards (edit-role, edit-school-status, edit-grade-level, edit-topics)
   selectableCard: {
@@ -410,11 +397,7 @@ export const APP_STYLES = StyleSheet.create({
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadow({ shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }),
   },
   // Empty states
   emptyState: {
@@ -423,11 +406,7 @@ export const APP_STYLES = StyleSheet.create({
     paddingHorizontal: 32,
     backgroundColor: COLORS.white,
     borderRadius: 24,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadow({ shadowColor: COLORS.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }),
   },
   emptyTitle: {
     fontSize: 26,
@@ -466,11 +445,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       backgroundColor: c.white,
       borderBottomWidth: 2,
       borderBottomColor: c.borderCard,
-      shadowColor: c.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 5,
+      ...shadow({ shadowColor: c.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }),
     },
     tabHeaderTitle: {
       fontSize: 30,
@@ -494,11 +469,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       backgroundColor: c.white,
       borderBottomWidth: 2,
       borderBottomColor: c.borderCard,
-      shadowColor: c.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 5,
+      ...shadow({ shadowColor: c.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }),
     },
     editHeaderTitle: {
       fontSize: 24,
@@ -546,11 +517,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       borderRadius: 24,
       borderWidth: 3,
       borderColor: c.borderCard,
-      shadowColor: c.shadow,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      elevation: 6,
+      ...shadow({ shadowColor: c.shadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 6 }),
     },
     resourceIconCircle: {
       width: 72,
@@ -559,11 +526,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 18,
-      shadowColor: c.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
+      ...shadow({ shadowColor: c.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }),
     },
     selectableCard: {
       backgroundColor: c.white,
@@ -573,11 +536,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
-      shadowColor: c.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 4,
+      ...shadow({ shadowColor: c.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }),
     },
     emptyState: {
       alignItems: 'center',
@@ -585,11 +544,7 @@ export function makeAppStyles(c: typeof COLORS, fontScale = 1) {
       paddingHorizontal: 32,
       backgroundColor: c.white,
       borderRadius: 24,
-      shadowColor: c.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 4,
+      ...shadow({ shadowColor: c.shadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }),
     },
     emptyTitle: {
       fontSize: fs(26),

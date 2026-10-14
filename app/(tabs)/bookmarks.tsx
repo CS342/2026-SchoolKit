@@ -282,6 +282,9 @@ export default function LibraryScreen() {
                 style={[styles.segmentButton, { width: SEGMENT_WIDTH }]}
                 onPress={() => handleSegmentChange(seg)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={seg === 'all' ? 'All' : seg === 'saved' ? 'Saved' : 'Downloaded'}
+                accessibilityState={{ selected: activeSegment === seg }}
               >
                 <Text style={[styles.segmentText, { color: activeSegment === seg ? colors.textDark : colors.textLight }, activeSegment === seg && styles.segmentTextActive]}>
                   {seg === 'all' ? 'All' : seg === 'saved' ? 'Saved' : 'Downloaded'}
@@ -372,7 +375,13 @@ export default function LibraryScreen() {
                   );
                   if (isActive) {
                     return (
-                      <Pressable key={category} onPress={() => setSelectedCategory(category)}>
+                      <Pressable
+                        key={category}
+                        onPress={() => setSelectedCategory(category)}
+                        accessibilityRole="button"
+                        accessibilityLabel={category}
+                        accessibilityState={{ selected: true }}
+                      >
                         <LinearGradient
                           colors={[...gradients.primaryButton]}
                           start={{ x: 0, y: 0 }}
@@ -389,6 +398,9 @@ export default function LibraryScreen() {
                       key={category}
                       style={[styles.filterChip, { backgroundColor: colors.white, borderColor: colors.borderCard }]}
                       onPress={() => setSelectedCategory(category)}
+                      accessibilityRole="button"
+                      accessibilityLabel={category}
+                      accessibilityState={{ selected: false }}
                     >
                       {chipContent}
                     </Pressable>

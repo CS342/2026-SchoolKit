@@ -3,12 +3,27 @@ import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
-const NAV_ITEMS = [
-  { label: 'For You',  path: '/',           activeIcon: 'home'        as const, inactiveIcon: 'home-outline'        as const },
-  { label: 'Library',  path: '/bookmarks',  activeIcon: 'layers'      as const, inactiveIcon: 'layers-outline'      as const },
-  { label: 'Stories',  path: '/stories',    activeIcon: 'chatbubbles' as const, inactiveIcon: 'chatbubbles-outline' as const },
-  { label: 'Profile',  path: '/profile',    activeIcon: 'person'      as const, inactiveIcon: 'person-outline'      as const },
+type NavItemDef = {
+  label: string;
+  path: string;
+  activeIcon: keyof typeof Ionicons.glyphMap;
+  inactiveIcon: keyof typeof Ionicons.glyphMap;
+};
+
+const NAV_ITEMS: NavItemDef[] = [
+  { label: 'For You',  path: '/',           activeIcon: 'home',        inactiveIcon: 'home-outline'        },
+  { label: 'Library',  path: '/bookmarks',  activeIcon: 'layers',      inactiveIcon: 'layers-outline'      },
+  { label: 'Stories',  path: '/stories',    activeIcon: 'chatbubbles', inactiveIcon: 'chatbubbles-outline' },
+  { label: 'Profile',  path: '/profile',    activeIcon: 'person',      inactiveIcon: 'person-outline'      },
+];
+
+// Admin-only destinations, appended to the sidebar when the signed-in user has
+// the `admin` role. Content Pages lives here (rather than in Settings) so admins
+// get a persistent, top-level entry point to the content editor.
+const ADMIN_NAV_ITEMS: NavItemDef[] = [
+  { label: 'Content', path: '/content-pages', activeIcon: 'create', inactiveIcon: 'create-outline' },
 ];
 
 function NavItem({ label, path, activeIcon, inactiveIcon, isFocused }: {
@@ -57,6 +72,9 @@ function NavItem({ label, path, activeIcon, inactiveIcon, isFocused }: {
 export function PersistentSidebar() {
   const { colors, isDark } = useTheme();
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
+
+  const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/' || pathname === '/index';
@@ -83,7 +101,7 @@ export function PersistentSidebar() {
 
       {/* Nav */}
       <View style={styles.navList}>
-        {NAV_ITEMS.map(item => (
+        {navItems.map(item => (
           <NavItem
             key={item.path}
             {...item}

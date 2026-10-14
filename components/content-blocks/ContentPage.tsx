@@ -16,13 +16,12 @@ import { ContentColumn, ArticleLayout, ArticleSection } from '../ui';
 import { BookmarkButton } from '../BookmarkButton';
 import { DownloadButton } from '../DownloadButton';
 import { ContentDoc, HeroBlock } from '../../features/content/types';
+import { WIDE_TYPES } from '../../features/content/registry';
 import { makeBlockStyles } from './styles';
 import { BlockCtx, BlockCtxProvider, makeColorResolver, ResolvedStep } from './context';
 import { BlockRenderer, HeroTitle, blockHeading } from './blocks';
 import { BlockEntrance } from './util';
 import { StepModal } from './StepModal';
-
-const GRID_TYPES = ['cardGrid', 'stepper', 'linkList', 'resourceRefList'];
 
 export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean }) {
   const { selectedVoice } = useOnboarding();
@@ -94,7 +93,7 @@ export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; fo
   const sections: ArticleSection[] = bodyBlocks
     .map((b) => ({ id: b.id, label: blockHeading(b) }))
     .filter((s): s is ArticleSection => !!s.label);
-  const wide = doc.blocks.some((b) => GRID_TYPES.includes(b.type));
+  const wide = doc.blocks.some((b) => WIDE_TYPES.has(b.type));
 
   const handleShare = async () => {
     try { await Share.share({ message: doc.shareMessage ?? doc.title }); } catch {}

@@ -588,7 +588,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
 
 const handoutStyles = StyleSheet.create({
     overlay: { flex: 1, justifyContent: "flex-end" },
-    backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "#000" },
+    backdrop: { ...StyleSheet.absoluteFill, backgroundColor: "#000" },
     sheet: {
         height: SCREEN_HEIGHT * 0.82,
         borderTopLeftRadius: 28,
@@ -982,7 +982,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
 
         // Expanded Card
         modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center" },
-        modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.6)" },
+        modalBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.6)" },
         expandedCardContainer: { width: SCREEN_WIDTH * 0.9, maxWidth: 400, alignItems: "center" },
         expandedCardShadow: { width: "100%", borderRadius: 32, shadowColor: "#000", shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 15 },
         expandedCardBackSide: { position: "absolute", top: 0, left: 0, right: 0 },

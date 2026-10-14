@@ -9,7 +9,7 @@ import { VOICES } from '../services/elevenLabs';
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
 
-interface OnboardingData {
+export interface OnboardingData {
   name: string;
   role: UserRole | null;
   schoolStatuses: SchoolStatus[];

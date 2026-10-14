@@ -65,11 +65,11 @@ export default function EditRoleScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={appStyles.editHeaderTitle}>Edit Role</Text>
-        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton}>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel="Save">
           <Text style={appStyles.editSaveText}>Save</Text>
         </TouchableOpacity>
       </View>
