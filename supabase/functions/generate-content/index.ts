@@ -14,7 +14,10 @@ const corsHeaders = {
 };
 
 const MAX_TOKENS_CAP = 16384;
-const MAX_PROMPT_CHARS = 60000;
+// Larger than text-only would need: the user message may carry downscaled base64
+// image attachments (vision) plus extracted document text. gpt-4o is multimodal and
+// the messages array (incl. image_url data URLs) is forwarded verbatim to OpenAI.
+const MAX_PROMPT_CHARS = 1_000_000;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

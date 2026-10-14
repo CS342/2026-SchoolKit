@@ -5,6 +5,8 @@ import { View, Text, TextInput, Pressable, Modal, ActivityIndicator, StyleSheet 
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII, SPACING } from '../../constants/onboarding-theme';
+import { pickFiles, processFile, UPLOAD_ACCEPT, Attachment } from '../../features/content/uploads';
+import { AttachmentBar } from './AttachmentBar';
 
 const EXAMPLES = [
   'A guide to coping with hair loss during treatment, for teens',
@@ -17,20 +19,40 @@ export function NewPageModal({ visible, onClose, onBlank, onGenerate }: {
   onClose: () => void;
   onBlank: () => void;
   /** Returns an error message to show, or undefined once it has navigated away. */
-  onGenerate: (prompt: string) => Promise<string | undefined>;
+  onGenerate: (prompt: string, attachments: Attachment[]) => Promise<string | undefined>;
 }) {
   const { colors, shadows } = useTheme();
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const attach = async () => {
+    const files = await pickFiles(UPLOAD_ACCEPT);
+    if (!files.length) return;
+    setProcessing(true); setError(null);
+    const added: Attachment[] = [];
+    const errs: string[] = [];
+    for (const f of files) {
+      const res = await processFile(f);
+      if ('error' in res) errs.push(res.error);
+      else added.push(res);
+    }
+    if (added.length) setAttachments((prev) => [...prev, ...added]);
+    if (errs.length) setError(errs.join(' '));
+    setProcessing(false);
+  };
 
   const generate = async () => {
     const p = prompt.trim();
-    if (!p || busy) return;
+    if ((!p && !attachments.length) || busy || processing) return;
     setBusy(true); setError(null);
-    const err = await onGenerate(p);
+    const err = await onGenerate(p, attachments);
     if (err) { setError(err); setBusy(false); } // success navigates; leave busy until unmount
   };
+
+  const canGenerate = (!!prompt.trim() || attachments.length > 0) && !busy && !processing;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? undefined : onClose}>
@@ -64,6 +86,19 @@ export function NewPageModal({ visible, onClose, onBlank, onGenerate }: {
             ))}
           </View>
 
+          <View style={{ marginTop: 14 }}>
+            <AttachmentBar
+              attachments={attachments}
+              onAttach={attach}
+              onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+              processing={processing}
+              disabled={busy}
+            />
+            <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 6 }}>
+              Attach images, PDFs, or text to inform the draft. Images are only saved if placed on the page.
+            </Text>
+          </View>
+
           {error ? (
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 12 }}>
               <Ionicons name="alert-circle" size={15} color={colors.error} style={{ marginTop: 1 }} />
@@ -77,8 +112,8 @@ export function NewPageModal({ visible, onClose, onBlank, onGenerate }: {
             </Pressable>
             <Pressable
               onPress={generate}
-              disabled={!prompt.trim() || busy}
-              style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: prompt.trim() && !busy ? colors.primary : colors.disabledButton, cursor: (prompt.trim() && !busy ? 'pointer' : 'default') as any }, prompt.trim() && !busy ? shadows.button : null]}
+              disabled={!canGenerate}
+              style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: canGenerate ? colors.primary : colors.disabledButton, cursor: (canGenerate ? 'pointer' : 'default') as any }, canGenerate ? shadows.button : null]}
             >
               {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="sparkles" size={16} color="#fff" />}
               <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{busy ? 'Drafting…' : 'Generate page'}</Text>
