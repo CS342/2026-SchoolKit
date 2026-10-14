@@ -337,7 +337,10 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
              is_opened: true,
              is_completed: true,
              updated_at: new Date().toISOString()
-         }, { onConflict: 'user_id, resource_id' }).catch((e: any) => console.warn('[Accomplishments] Progress sync failed:', e.message));
+         }, { onConflict: 'user_id, resource_id' }).then(
+             (r: any) => { if (r?.error) console.warn('[Accomplishments] Progress sync failed:', r.error.message); },
+             (e: any) => console.warn('[Accomplishments] Progress sync failed:', e?.message),
+         );
       }
     }
   }, [fireEvent, persistState, user?.id]);
@@ -358,7 +361,10 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
              is_opened: true,
              is_completed: scrolledToEndIdsRef.current.has(resourceId),
              updated_at: new Date().toISOString()
-         }, { onConflict: 'user_id, resource_id' }).catch((e: any) => console.warn('[Accomplishments] Progress sync failed:', e.message));
+         }, { onConflict: 'user_id, resource_id' }).then(
+             (r: any) => { if (r?.error) console.warn('[Accomplishments] Progress sync failed:', r.error.message); },
+             (e: any) => console.warn('[Accomplishments] Progress sync failed:', e?.message),
+         );
       }
     }
 

@@ -18,7 +18,7 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid/non-secure';
 import type {
-  BlockType, ContentBlock, ContentDoc,
+  BlockType, ContentBlock,
   AccordionItem, CardItem, StepItem, LinkItem,
 } from './types';
 
@@ -49,7 +49,7 @@ const FlipCardItemS = z.object({ id: Id, front: Str, back: Str, icon: Icon.optio
 const ComparisonRowS = z.object({ id: Id, cells: z.array(z.string()) });
 
 // ─── editor field-config types (moved here from editor/templates.ts) ─────────────
-export type FieldKind = 'text' | 'textarea' | 'color' | 'icon' | 'toggle' | 'select';
+export type FieldKind = 'text' | 'textarea' | 'color' | 'icon' | 'toggle' | 'select' | 'url';
 export interface FieldDef {
   key: string;
   label: string;
@@ -59,7 +59,7 @@ export interface FieldDef {
   options?: { value: string; label: string }[];
 }
 export interface ItemConfig { arrayKey: string; noun: string; fields: FieldDef[]; make: () => any }
-export interface BlockConfig { fields: FieldDef[]; item?: ItemConfig; special?: 'hero' | 'resourceRefList' | 'comparisonTable' }
+export interface BlockConfig { fields: FieldDef[]; item?: ItemConfig; special?: 'hero' | 'resourceRefList' | 'comparisonTable' | 'image' }
 export interface BlockMeta { type: BlockType; label: string; icon: string; blurb: string }
 
 const HEADER: FieldDef[] = [
@@ -170,10 +170,10 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     schema: z.object({ ...idOpt, type: z.literal('image'), url: z.string(), alt: z.string(), caption: z.string().optional(), aspect: z.number().optional() }),
     make: () => ({ id: nid(), type: 'image', url: '', alt: '' }),
     editor: { fields: [
-      { key: 'url', label: 'Image URL', kind: 'text', placeholder: 'https://…' },
+      { key: 'url', label: 'Image URL', kind: 'url', placeholder: 'https://…' },
       { key: 'alt', label: 'Alt text', kind: 'text', placeholder: 'Describe the image' },
       { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
-    ] },
+    ], special: 'image' },
     palette: { label: 'Image', icon: 'image-outline', blurb: 'A picture with a caption.', manuallyAddable: true, order: 9 },
     summary: (b) => b.alt || b.url || 'Image',
     aiPrompt: `- image: { id, type:"image", url, alt, caption? } — ONLY if the request supplies a real image URL OR an attached-image token (see "Attached images"); otherwise never emit an image. Never invent an image URL. When placing an attached image, copy its token EXACTLY into "url" and write a fitting alt from what you see.`,
@@ -236,7 +236,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'link', make: makeLink, fields: [
       { key: 'name', label: 'Name', kind: 'text' },
       { key: 'blurb', label: 'Description', kind: 'textarea' },
-      { key: 'url', label: 'URL', kind: 'text', placeholder: 'https://…' },
+      { key: 'url', label: 'URL', kind: 'url', placeholder: 'https://…' },
       { key: 'display', label: 'Shown as', kind: 'text', placeholder: 'example.org' },
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'color', label: 'Color', kind: 'color' },
@@ -282,7 +282,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     make: () => ({ id: nid(), type: 'references', heading: 'Sources', items: [makeReference()] }),
     editor: { fields: [{ key: 'heading', label: 'Section title', kind: 'text', placeholder: 'Optional' }], item: { arrayKey: 'items', noun: 'source', make: makeReference, fields: [
       { key: 'label', label: 'Label', kind: 'text' },
-      { key: 'url', label: 'URL', kind: 'text', placeholder: 'https://… (optional)' },
+      { key: 'url', label: 'URL', kind: 'url', placeholder: 'https://… (optional)' },
     ] } },
     palette: { label: 'References', icon: 'documents-outline', blurb: 'A numbered list of sources.', manuallyAddable: true, order: 13 },
     itemArrayKey: 'items',
@@ -422,7 +422,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
         { value: 'vimeo', label: 'Vimeo' },
         { value: 'mp4', label: 'Direct (MP4)' },
       ] },
-      { key: 'url', label: 'Video URL', kind: 'text', placeholder: 'https://…' },
+      { key: 'url', label: 'Video URL', kind: 'url', placeholder: 'https://…' },
       { key: 'title', label: 'Title', kind: 'text', placeholder: 'Optional' },
       { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
     ] },

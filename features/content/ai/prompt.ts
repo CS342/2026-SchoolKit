@@ -98,8 +98,11 @@ export function buildGenerateMessages(prompt: string, resources: ResourceRef[], 
   ];
 }
 
-export function buildEditMessages(doc: unknown, instruction: string, resources: ResourceRef[], links: VerifiedLink[] = [], attachments: Attachment[] = []): ChatMessage[] {
-  const base = `MODE: edit\n\nCurrent page (JSON):\n${JSON.stringify(doc)}\n\nInstruction:\n${instruction}\n\n${resourceBlock(resources)}\n\n${linkBlock(links)}\n\nReturn a single JSON object { "summary": "...", "ops": [...] }.`;
+export function buildEditMessages(doc: unknown, instruction: string, resources: ResourceRef[], links: VerifiedLink[] = [], attachments: Attachment[] = [], focusBlockId?: string): ChatMessage[] {
+  const focus = focusBlockId
+    ? `\n\nFOCUS: Edit ONLY the block with id "${focusBlockId}". Do not add, remove, reorder, or modify any other block.`
+    : '';
+  const base = `MODE: edit\n\nCurrent page (JSON):\n${JSON.stringify(doc)}\n\nInstruction:\n${instruction}${focus}\n\n${resourceBlock(resources)}\n\n${linkBlock(links)}\n\nReturn a single JSON object { "summary": "...", "ops": [...] }.`;
   return [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: userContent(base, attachments) },

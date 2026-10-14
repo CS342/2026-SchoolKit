@@ -34,7 +34,7 @@ export default function ContentEditorRoute() {
       const res = await loadContentPage(id);
       if (cancelled) return;
       if (!res) { setNotFound(true); setReady(true); return; }
-      loadDoc(res.doc);
+      loadDoc(res.doc, res.warnings);
       setPageId(id);
       setInitialStatus(res.status);
       setReady(true);

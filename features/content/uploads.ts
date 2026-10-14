@@ -229,3 +229,27 @@ export async function resolveUploadedImages<T>(
   if (!Object.keys(map).length) return { output, errors };
   return { output: deepReplaceStrings(output, map), errors };
 }
+
+// ─── storage cleanup ────────────────────────────────────────────────────────────
+
+/**
+ * Find every `content-images` storage path referenced anywhere in a value (a
+ * ContentDoc or any subtree). Scans the serialized JSON, so it catches image blocks,
+ * gallery items, and any future block that stores such a URL. Returns bucket-relative
+ * paths (the segment after `content-images/`), de-duplicated. External URLs (linkList,
+ * video, etc.) are naturally excluded.
+ */
+export function collectContentImagePaths(value: unknown): string[] {
+  const json = JSON.stringify(value ?? null);
+  const paths = new Set<string>();
+  for (const m of json.matchAll(/content-images\/([^"?]+)/g)) paths.add(m[1]);
+  return [...paths];
+}
+
+/** Delete objects from the content-images bucket. Best-effort — returns the error string
+ *  (if any) rather than throwing, so callers never block on cleanup. */
+export async function deleteContentImages(paths: string[]): Promise<{ error?: string }> {
+  if (!paths.length) return {};
+  const { error } = await supabase.storage.from('content-images').remove(paths);
+  return error ? { error: error.message } : {};
+}

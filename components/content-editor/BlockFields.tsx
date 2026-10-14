@@ -2,14 +2,17 @@
 // resourceRefList get bespoke controls; item-blocks (accordion/cardGrid/stepper/
 // linkList) get a nested item editor. Every change dispatches an op.
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { ALL_RESOURCES } from '../../constants/resources';
+import { useAuth } from '../../contexts/AuthContext';
 import { useEditorStore } from '../../features/content/editor/store';
 import { BLOCK_CONFIG, FieldDef, ItemConfig } from '../../features/content/editor/templates';
 import type { ContentBlock, ColorToken } from '../../features/content/types';
+import { pickFiles, uploadContentImage } from '../../features/content/uploads';
+import { suggestImageText } from '../../features/content/ai/client';
 import { TextField, ColorSwatches, IconField, ToggleRow, IconBtn, SectionLabel } from './primitives';
 
 function SelectRow({ label, options, value, onChange }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
@@ -35,10 +38,45 @@ function SelectRow({ label, options, value, onChange }: { label: string; options
   );
 }
 
+// A URL text field that normalizes on blur (prepends https:// when a scheme is
+// missing) and shows an inline hint when the value doesn't look like a URL.
+function UrlField({ label, value, onChange, placeholder }: { label?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const { colors } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const v = value ?? '';
+  const trimmed = v.trim();
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed);
+  const candidate = trimmed && !hasScheme ? `https://${trimmed}` : trimmed;
+  const invalid = trimmed.length > 0 && !/^https?:\/\/[^\s.]+(\.[^\s.]+)+(\/[^\s]*)?$/i.test(candidate);
+  const normalize = () => {
+    setFocused(false);
+    if (trimmed && !hasScheme) onChange(candidate);
+    else if (trimmed !== v) onChange(trimmed);
+  };
+  return (
+    <View style={{ marginBottom: SPACING.md }}>
+      {label ? <SectionLabel>{label}</SectionLabel> : null}
+      <TextInput
+        value={v}
+        onChangeText={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={normalize}
+        placeholder={placeholder}
+        placeholderTextColor={colors.inputPlaceholder}
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={{ ...TYPOGRAPHY.body, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: invalid ? colors.error : focused ? colors.primary : colors.border, borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 10, outlineStyle: 'none' as any }}
+      />
+      {invalid ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.error, marginTop: 4 }}>That doesn’t look like a valid URL.</Text> : null}
+    </View>
+  );
+}
+
 function FieldInput({ field, value, onChange }: { field: FieldDef; value: any; onChange: (v: any) => void }) {
   switch (field.kind) {
     case 'text': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} />;
     case 'textarea': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} multiline />;
+    case 'url': return <UrlField label={field.label} value={value ?? ''} onChange={onChange} placeholder={field.placeholder} />;
     case 'color': return <ColorSwatches value={(value ?? 'primary') as ColorToken} onChange={onChange} />;
     case 'icon': return <IconField value={value ?? 'ellipse-outline'} onChange={onChange} />;
     case 'toggle': return <ToggleRow label={field.label} value={!!value} onValueChange={onChange} />;
@@ -230,6 +268,59 @@ function ItemListEditor({ block, cfg }: { block: any; cfg: ItemConfig }) {
   );
 }
 
+// ─── image (upload + AI alt text, on top of the url/alt/caption fields) ─────────
+function ImageFields({ block }: { block: any }) {
+  const { colors } = useTheme();
+  const { user } = useAuth();
+  const dispatch = useEditorStore((s) => s.dispatch);
+  const [busy, setBusy] = useState<null | 'upload' | 'alt'>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const set = (patch: any) => dispatch([{ op: 'updateBlock', id: block.id, patch }]);
+
+  const upload = async () => {
+    if (!user) { setErr('Sign in to upload images.'); return; }
+    const files = await pickFiles('image/*', false);
+    if (!files.length) return;
+    setBusy('upload'); setErr(null);
+    const res = await uploadContentImage(files[0], user.id);
+    setBusy(null);
+    if ('error' in res) { setErr(res.error); return; }
+    set({ url: res.url });
+  };
+
+  const suggest = async () => {
+    if (!block.url) return;
+    setBusy('alt'); setErr(null);
+    const res = await suggestImageText(block.url);
+    setBusy(null);
+    if ('error' in res) { setErr(res.error); return; }
+    set({ alt: res.alt, ...(res.caption ? { caption: res.caption } : {}) });
+  };
+
+  return (
+    <View style={{ marginBottom: SPACING.md, gap: 8 }}>
+      {block.url ? (
+        <Image source={{ uri: block.url }} resizeMode="cover" style={{ width: '100%', height: 150, borderRadius: RADII.md, backgroundColor: colors.appBackgroundAlt }} />
+      ) : (
+        <View style={{ width: '100%', height: 90, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="image-outline" size={22} color={colors.textLight} />
+        </View>
+      )}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pressable onPress={busy ? undefined : upload} disabled={!!busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RADII.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.white, cursor: (busy ? 'default' : 'pointer') as any }}>
+          {busy === 'upload' ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="cloud-upload-outline" size={15} color={colors.primary} />}
+          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{block.url ? 'Replace image' : 'Upload image'}</Text>
+        </Pressable>
+        <Pressable onPress={busy || !block.url ? undefined : suggest} disabled={!!busy || !block.url} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RADII.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.white, opacity: block.url ? 1 : 0.5, cursor: (busy || !block.url ? 'default' : 'pointer') as any }}>
+          {busy === 'alt' ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="sparkles" size={15} color={colors.primary} />}
+          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Suggest alt text</Text>
+        </Pressable>
+      </View>
+      {err ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.error }}>{err}</Text> : null}
+    </View>
+  );
+}
+
 // ─── entry point ────────────────────────────────────────────────────────────────
 export function BlockFields({ block }: { block: ContentBlock }) {
   const { colors } = useTheme();
@@ -241,13 +332,14 @@ export function BlockFields({ block }: { block: ContentBlock }) {
 
   return (
     <View>
+      {cfg.special === 'image' ? <ImageFields block={block} /> : null}
       {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={(block as any)[f.key]} onChange={(v) => setField(f.key, v)} />)}
       {cfg.special === 'resourceRefList' ? <ResourceRefFields block={block} /> : null}
       {cfg.special === 'comparisonTable' ? <ComparisonFields block={block} /> : null}
       {cfg.item ? <ItemListEditor block={block} cfg={cfg.item} /> : null}
       {block.type === 'recommendations' ? (
         <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textLight }}>
-          Automatically suggests related pages from this page's tags. Nothing to set.
+          Automatically suggests related pages from this page’s tags. Nothing to set.
         </Text>
       ) : null}
     </View>

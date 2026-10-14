@@ -37,11 +37,38 @@ export async function generatePage(prompt: string, attachments: Attachment[] = [
   return { doc: parsed.doc, warnings: parsed.warnings };
 }
 
-export async function editPage(doc: ContentDoc, instruction: string, attachments: Attachment[] = [], links: VerifiedLink[] = []): Promise<{ summary: string; ops: Op[] } | { error: string }> {
-  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), links, attachments), 0.4);
+export async function editPage(doc: ContentDoc, instruction: string, attachments: Attachment[] = [], links: VerifiedLink[] = [], focusBlockId?: string): Promise<{ summary: string; ops: Op[] } | { error: string }> {
+  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), links, attachments, focusBlockId), 0.4);
   if ('error' in res) return { error: res.error };
   const parsed = parseEditResult(res.result, doc);
   if (parsed.errors.length) return { error: `The AI suggested a change we couldn't apply: ${parsed.errors[0]}` };
   if (!parsed.ops.length) return { error: 'The AI didn\'t suggest any changes to make.' };
   return { summary: parsed.summary, ops: parsed.ops };
+}
+
+/** Ask the vision model to write alt text (and an optional caption) for an image URL.
+ *  Used by the editor's image block. The image must be at a publicly reachable URL
+ *  (content-images is a public bucket). Returns a short, screen-reader-friendly alt. */
+export async function suggestImageText(imageUrl: string): Promise<{ alt: string; caption?: string } | { error: string }> {
+  const messages: ChatMessage[] = [
+    {
+      role: 'system',
+      content:
+        'You write image alt text for SchoolKit, a supportive app for students with cancer and their families. Return ONLY a JSON object {"alt": string, "caption": string}. "alt" is concise (<=125 chars), factual, screen-reader-friendly, and does not start with "image of"/"picture of". "caption" is an optional short display caption, or "" if none fits.',
+    },
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Write alt text and an optional caption for this image. Return the JSON object only.' },
+        { type: 'image_url', image_url: { url: imageUrl } },
+      ],
+    },
+  ];
+  const res = await invoke(messages, 0.3);
+  if ('error' in res) return { error: res.error };
+  const r = res.result as { alt?: unknown; caption?: unknown } | null;
+  const alt = typeof r?.alt === 'string' ? r.alt.trim() : '';
+  if (!alt) return { error: 'The AI didn\'t return alt text.' };
+  const caption = typeof r?.caption === 'string' && r.caption.trim() ? r.caption.trim() : undefined;
+  return { alt, caption };
 }

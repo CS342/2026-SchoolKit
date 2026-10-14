@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { nanoid } from 'nanoid/non-secure';
 import type { ContentDoc } from '../types';
 import { parseContentDoc } from '../validate';
+import { collectContentImagePaths, deleteContentImages } from '../uploads';
 
 export type PageStatus = 'draft' | 'published';
 
@@ -29,12 +30,14 @@ export async function listContentPages(): Promise<PageListItem[]> {
   return data as unknown as PageListItem[];
 }
 
-export async function loadContentPage(id: string): Promise<{ doc: ContentDoc; status: PageStatus } | null> {
+export async function loadContentPage(id: string): Promise<{ doc: ContentDoc; status: PageStatus; warnings: string[] } | null> {
   const { data, error } = await supabase.from('content_pages').select('doc,status').eq('id', id).maybeSingle();
   if (error || !data) return null;
   const parsed = parseContentDoc((data as any).doc);
   if (!parsed.doc) return null;
-  return { doc: parsed.doc, status: (data as any).status as PageStatus };
+  // Surface blocks that parseContentDoc dropped (malformed/unknown) so the editor's
+  // lint panel can show them — otherwise the drop is silent.
+  return { doc: parsed.doc, status: (data as any).status as PageStatus, warnings: parsed.warnings };
 }
 
 export async function saveContentPage(
@@ -63,8 +66,34 @@ export async function saveContentPage(
 }
 
 export async function deleteContentPage(id: string): Promise<{ ok: true } | { error: string }> {
+  // Collect this page's content-images (from the raw doc) before deleting the row.
+  const { data: row } = await supabase.from('content_pages').select('doc').eq('id', id).maybeSingle();
+  const imagePaths = row ? collectContentImagePaths((row as any).doc) : [];
+
   const { error } = await supabase.from('content_pages').delete().eq('id', id);
-  return error ? { error: friendly(error.message) } : { ok: true };
+  if (error) return { error: friendly(error.message) };
+
+  // Best-effort storage cleanup: remove only images no OTHER page still references
+  // (duplicated pages share image URLs). Never block the delete on a storage error.
+  if (imagePaths.length) {
+    try {
+      const orphaned = await unreferencedImagePaths(imagePaths);
+      if (orphaned.length) await deleteContentImages(orphaned);
+    } catch {
+      /* ignore — the page row is already gone; orphaned images are harmless */
+    }
+  }
+  return { ok: true };
+}
+
+/** Of the given content-images paths, return those not referenced by any remaining page. */
+async function unreferencedImagePaths(paths: string[]): Promise<string[]> {
+  const { data } = await supabase.from('content_pages').select('doc');
+  const referenced = new Set<string>();
+  for (const r of data ?? []) {
+    for (const p of collectContentImagePaths((r as any).doc)) referenced.add(p);
+  }
+  return paths.filter((p) => !referenced.has(p));
 }
 
 /** Flip a page's publish state without loading/round-tripping its whole doc. */

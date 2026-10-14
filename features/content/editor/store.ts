@@ -21,14 +21,19 @@ interface EditorState {
   selectedId: string | null;
   dirty: boolean;
   lastError: string | null;
+  /** Non-fatal warnings from the last load/generate — e.g. malformed blocks that
+   *  parseContentDoc dropped, or generatePage warnings. Shown by the lint panel. */
+  warnings: string[];
   /** Apply an op batch. Rejected batches (validation) surface via lastError, no-op the doc. */
   dispatch: (ops: Op[]) => void;
   /** Update doc-level metadata (title/accent/tags/category/slug) — not block content. */
   setMeta: (patch: Partial<ContentDoc>) => void;
-  /** Replace the whole doc (e.g. loading from DB). Clears dirty + selection. */
+  /** Replace the whole doc (e.g. loading from DB). Clears dirty + selection + warnings. */
   load: (doc: ContentDoc) => void;
   select: (id: string | null) => void;
   markSaved: () => void;
+  /** Set the current load/generate warnings (e.g. dropped blocks). */
+  setWarnings: (warnings: string[]) => void;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -38,6 +43,7 @@ export const useEditorStore = create<EditorState>()(
       selectedId: null,
       dirty: false,
       lastError: null,
+      warnings: [],
       dispatch: (ops) => {
         try {
           const next = applyOps(get().doc, ops);
@@ -47,9 +53,10 @@ export const useEditorStore = create<EditorState>()(
         }
       },
       setMeta: (patch) => set((st) => ({ doc: { ...st.doc, ...patch }, dirty: true, lastError: null })),
-      load: (doc) => set({ doc, dirty: false, selectedId: null, lastError: null }),
+      load: (doc) => set({ doc, dirty: false, selectedId: null, lastError: null, warnings: [] }),
       select: (id) => set({ selectedId: id }),
       markSaved: () => set({ dirty: false }),
+      setWarnings: (warnings) => set({ warnings }),
     }),
     {
       // Only `doc` is time-travelled; UI state (selection, dirty) is not.
@@ -67,9 +74,12 @@ export const useEditorStore = create<EditorState>()(
   ),
 );
 
-/** Load a doc and reset undo history so you can't undo past the loaded state. */
-export function loadDoc(doc: ContentDoc) {
-  useEditorStore.getState().load(doc);
+/** Load a doc and reset undo history so you can't undo past the loaded state.
+ *  Pass `warnings` (e.g. blocks parseContentDoc dropped) to surface them in the lint panel. */
+export function loadDoc(doc: ContentDoc, warnings: string[] = []) {
+  const st = useEditorStore.getState();
+  st.load(doc);
+  st.setWarnings(warnings);
   useEditorStore.temporal.getState().clear();
 }
 
