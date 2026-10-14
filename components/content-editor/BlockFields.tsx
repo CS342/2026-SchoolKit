@@ -12,6 +12,29 @@ import { BLOCK_CONFIG, FieldDef, ItemConfig } from '../../features/content/edito
 import type { ContentBlock, ColorToken } from '../../features/content/types';
 import { TextField, ColorSwatches, IconField, ToggleRow, IconBtn, SectionLabel } from './primitives';
 
+function SelectRow({ label, options, value, onChange }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ marginBottom: SPACING.md }}>
+      <SectionLabel>{label}</SectionLabel>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {options.map((opt) => {
+          const on = value === opt.value;
+          return (
+            <Pressable
+              key={opt.value}
+              onPress={() => onChange(opt.value)}
+              style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: RADII.pill, borderWidth: 1.5, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primarySoft : colors.white, cursor: 'pointer' as any }}
+            >
+              <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: on ? colors.primary : colors.textMuted }}>{opt.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function FieldInput({ field, value, onChange }: { field: FieldDef; value: any; onChange: (v: any) => void }) {
   switch (field.kind) {
     case 'text': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} />;
@@ -19,6 +42,7 @@ function FieldInput({ field, value, onChange }: { field: FieldDef; value: any; o
     case 'color': return <ColorSwatches value={(value ?? 'primary') as ColorToken} onChange={onChange} />;
     case 'icon': return <IconField value={value ?? 'ellipse-outline'} onChange={onChange} />;
     case 'toggle': return <ToggleRow label={field.label} value={!!value} onValueChange={onChange} />;
+    case 'select': return <SelectRow label={field.label} options={field.options ?? []} value={value ?? field.options?.[0]?.value ?? ''} onChange={onChange} />;
   }
 }
 
@@ -94,6 +118,68 @@ function ResourceRefFields({ block }: { block: any }) {
   );
 }
 
+// ─── comparison table (columns + rows) ─────────────────────────────────────────
+function ComparisonFields({ block }: { block: any }) {
+  const { colors } = useTheme();
+  const dispatch = useEditorStore((s) => s.dispatch);
+  const columns: string[] = block.columns ?? [];
+  const rows: { id: string; cells: string[] }[] = block.rows ?? [];
+  const setBlock = (patch: any) => dispatch([{ op: 'updateBlock', id: block.id, patch }]);
+
+  const setColumn = (ci: number, v: string) => { const next = columns.slice(); next[ci] = v; setBlock({ columns: next }); };
+  const addColumn = () => setBlock({ columns: [...columns, `Column ${columns.length + 1}`], rows: rows.map((r) => ({ ...r, cells: [...r.cells, ''] })) });
+  const removeColumn = (ci: number) => {
+    if (columns.length <= 1) return;
+    setBlock({ columns: columns.filter((_, i) => i !== ci), rows: rows.map((r) => ({ ...r, cells: r.cells.filter((_, i) => i !== ci) })) });
+  };
+  const setCell = (rowId: string, ci: number, v: string) => {
+    const row = rows.find((r) => r.id === rowId);
+    if (!row) return;
+    const cells = columns.map((_, i) => (i === ci ? v : row.cells[i] ?? ''));
+    dispatch([{ op: 'updateItem', block: block.id, item: rowId, patch: { cells } }]);
+  };
+  const addRow = () => dispatch([{ op: 'insertItem', block: block.id, at: rows.length, item: { cells: columns.map(() => '') } }]);
+  const removeRow = (rowId: string) => dispatch([{ op: 'removeItem', block: block.id, item: rowId }]);
+
+  return (
+    <View style={{ marginTop: SPACING.xs }}>
+      <SectionLabel>Columns · {columns.length}</SectionLabel>
+      <View style={{ gap: 8 }}>
+        {columns.map((c, ci) => (
+          <View key={ci} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flex: 1 }}><TextField label="" value={c} onChangeText={(v) => setColumn(ci, v)} placeholder={`Column ${ci + 1}`} /></View>
+            <IconBtn icon="trash-outline" label="Remove column" danger disabled={columns.length <= 1} onPress={() => removeColumn(ci)} />
+          </View>
+        ))}
+      </View>
+      <Pressable onPress={addColumn} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8, paddingVertical: 8, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, cursor: 'pointer' as any }}>
+        <Ionicons name="add" size={16} color={colors.primary} />
+        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add column</Text>
+      </Pressable>
+
+      <View style={{ height: SPACING.md }} />
+      <SectionLabel>Rows · {rows.length}</SectionLabel>
+      <View style={{ gap: 12 }}>
+        {rows.map((row, ri) => (
+          <View key={row.id} style={{ borderWidth: 1, borderColor: colors.borderCard, borderRadius: RADII.md, padding: 10, gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>Row {ri + 1}</Text>
+              <IconBtn icon="trash-outline" label="Remove row" danger disabled={rows.length <= 1} onPress={() => removeRow(row.id)} />
+            </View>
+            {columns.map((col, ci) => (
+              <TextField key={ci} label={col || `Column ${ci + 1}`} value={row.cells[ci] ?? ''} onChangeText={(v) => setCell(row.id, ci, v)} />
+            ))}
+          </View>
+        ))}
+      </View>
+      <Pressable onPress={addRow} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, paddingVertical: 9, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, cursor: 'pointer' as any }}>
+        <Ionicons name="add" size={16} color={colors.primary} />
+        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add row</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 // ─── item list (accordion/cardGrid/stepper/linkList) ───────────────────────────
 function ItemRow({ block, cfg, item, index, count }: { block: ContentBlock; cfg: ItemConfig; item: any; index: number; count: number }) {
   const { colors } = useTheme();
@@ -157,6 +243,7 @@ export function BlockFields({ block }: { block: ContentBlock }) {
     <View>
       {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={(block as any)[f.key]} onChange={(v) => setField(f.key, v)} />)}
       {cfg.special === 'resourceRefList' ? <ResourceRefFields block={block} /> : null}
+      {cfg.special === 'comparisonTable' ? <ComparisonFields block={block} /> : null}
       {cfg.item ? <ItemListEditor block={block} cfg={cfg.item} /> : null}
       {block.type === 'recommendations' ? (
         <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textLight }}>

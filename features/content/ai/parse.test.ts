@@ -51,3 +51,38 @@ describe('parseEditResult', () => {
     expect(parseEditResult('nope', doc()).errors.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('parseGenerateResult — new block types', () => {
+  it('keeps valid new blocks and drops a malformed one', () => {
+    const res = parseGenerateResult({
+      schemaVersion: 1, slug: 's', title: 'T', accent: 'primary', tags: [],
+      blocks: [
+        { id: 'd', type: 'divider', variant: 'dots' },
+        { id: 'ref', type: 'references', items: [{ id: 'r1', label: 'Source' }] },
+        { id: 'chk', type: 'checklist', items: [{ id: 'c1', text: 'Pack bag' }] },
+        { id: 'stat', type: 'statGrid', items: [{ id: 's1', value: '1 in 5', label: 'kids', color: 'teal' }] },
+        { id: 'gal', type: 'gallery', items: [{ id: 'g1', url: 'https://x/y.png', alt: 'pic' }] },
+        { id: 'tst', type: 'testimonials', items: [{ id: 't1', text: 'It helped.' }] },
+        { id: 'badstat', type: 'statGrid', items: [{ id: 'b1', label: 'no value', color: 'teal' }] }, // item missing value → dropped
+      ],
+    });
+    expect(res.doc).toBeTruthy();
+    expect(res.doc!.blocks.map((b) => b.id)).toEqual(['d', 'ref', 'chk', 'stat', 'gal', 'tst']);
+    expect(res.warnings).toHaveLength(1);
+  });
+  it('round-trips columns, tabs, flipCard, comparisonTable, video; drops a url-less video', () => {
+    const res = parseGenerateResult({
+      schemaVersion: 1, slug: 's', title: 'T', accent: 'primary', tags: [],
+      blocks: [
+        { id: 'col', type: 'columns', left: 'L', right: 'R' },
+        { id: 'tab', type: 'tabs', items: [{ id: 't1', label: 'One', markdown: 'hi' }] },
+        { id: 'flip', type: 'flipCard', items: [{ id: 'f1', front: 'Q', back: 'A', color: 'teal' }] },
+        { id: 'cmp', type: 'comparisonTable', columns: ['A', 'B'], rows: [{ id: 'r1', cells: ['x', 'y'] }] },
+        { id: 'vid', type: 'video', provider: 'youtube', url: 'https://youtu.be/abcdef' },
+        { id: 'badvid', type: 'video', provider: 'mp4' }, // missing url → dropped
+      ],
+    });
+    expect(res.doc!.blocks.map((b) => b.id)).toEqual(['col', 'tab', 'flip', 'cmp', 'vid']);
+    expect(res.warnings).toHaveLength(1);
+  });
+});

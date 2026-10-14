@@ -7,6 +7,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withDelay,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../../contexts/OnboardingContext';
@@ -14,7 +16,8 @@ import { getRoleDisplayName, getSchoolStatusText } from '../../utils/profile';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { useResources } from '../../hooks/useResources';
-import { useResponsive, gridColumns, CONTENT_WIDTH } from '../../hooks/useResponsive';
+import { type Resource } from '../../constants/resources';
+import { useResponsive, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { TOTAL_PIECES } from '../../constants/accomplishments';
 import {
@@ -28,6 +31,36 @@ import { ThemeColors } from '../../constants/theme';
 
 // Gap between topic cards in the web dashboard grid.
 const WEB_TOPIC_GAP = SPACING.lg;
+
+/**
+ * Fade + slide-up entrance used to stagger the dashboard in on load. Uses the
+ * animated-style approach (not layout `entering`) so it runs on web too, and
+ * respects the OS "reduce motion" setting.
+ */
+function FadeSlideIn({
+  delay = 0,
+  offset = 14,
+  style,
+  children,
+}: {
+  delay?: number;
+  offset?: number;
+  style?: any;
+  children: React.ReactNode;
+}) {
+  const reduceMotion = useReducedMotion();
+  const p = useSharedValue(reduceMotion ? 1 : 0);
+  useEffect(() => {
+    if (!reduceMotion) {
+      p.value = withDelay(delay, withTiming(1, { duration: 420 }));
+    }
+  }, []);
+  const aStyle = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ translateY: (1 - p.value) * offset }],
+  }));
+  return <Animated.View style={[style, aStyle]}>{children}</Animated.View>;
+}
 
 /**
  * A single labelled mini progress bar for the web "Your progress" row.
@@ -53,8 +86,18 @@ function ProgressStat({
   style?: any;
 }) {
   const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  const remaining = Math.max(0, total - value);
+  const reduceMotion = useReducedMotion();
+
+  // Grow the bar from empty to its value on load (skipped under reduce-motion).
+  const grow = useSharedValue(reduceMotion ? pct : 0);
+  useEffect(() => {
+    grow.value = reduceMotion ? pct : withDelay(260, withTiming(pct, { duration: 700 }));
+  }, [pct, reduceMotion]);
+  const fillStyle = useAnimatedStyle(() => ({ width: `${grow.value}%` }));
+
   return (
-    <Card onPress={onPress} accessibilityLabel={`${label}, ${value} of ${total}`} style={style}>
+    <Card onPress={onPress} accessibilityLabel={`${label}, ${value} of ${total}, ${pct} percent`} style={style}>
       <View style={progressStyles.headerRow}>
         <View style={[progressStyles.chip, { backgroundColor: color }]}>
           <Ionicons name={icon} size={18} color="#FFFFFF" />
@@ -67,7 +110,78 @@ function ProgressStat({
         </Text>
       </View>
       <View style={[progressStyles.track, { backgroundColor: colors.backgroundLighter }]}>
-        <View style={[progressStyles.fill, { width: `${pct}%`, backgroundColor: color }]} />
+        <Animated.View style={[progressStyles.fill, { backgroundColor: color }, fillStyle]} />
+      </View>
+      <View style={progressStyles.metaRow}>
+        <Text style={[progressStyles.pctText, { color }]}>{pct}% complete</Text>
+        <Text style={[progressStyles.toGo, { color: remaining > 0 ? colors.textMuted : '#10B981' }]}>
+          {remaining > 0 ? `${remaining} to go` : 'All done'}
+        </Text>
+      </View>
+    </Card>
+  );
+}
+
+type TopicStatusKind = 'done' | 'started' | 'new';
+
+/**
+ * Trailing control for a support-topic row: a progress label (only when there's
+ * real progress to show) plus a chevron that signals the row opens a page.
+ */
+function TopicStatus({ status, colors }: { status: TopicStatusKind; colors: ThemeColors }) {
+  return (
+    <View style={progressStyles.trailing}>
+      {status === 'done' ? (
+        <View style={progressStyles.statusWrap}>
+          <Ionicons name="checkmark-circle" size={15} color="#10B981" />
+          <Text style={[progressStyles.statusText, { color: '#10B981' }]}>Done</Text>
+        </View>
+      ) : status === 'started' ? (
+        <Text style={[progressStyles.statusText, { color: '#DE9A2E' }]}>In progress</Text>
+      ) : null}
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+    </View>
+  );
+}
+
+/**
+ * Prominent "resume" card at the top of the dashboard. Points at the topic the
+ * person has started but not finished, or — if none is in progress — the first
+ * one they haven't opened yet, so the page always offers a clear next action.
+ */
+function ContinueCard({
+  resource,
+  resumed,
+  colors,
+  onPress,
+}: {
+  resource: Resource;
+  resumed: boolean;
+  colors: ThemeColors;
+  onPress: () => void;
+}) {
+  return (
+    <Card
+      onPress={onPress}
+      accessibilityLabel={`${resumed ? 'Continue' : 'Start'}: ${resource.title}`}
+      style={{ borderColor: resource.color + '55' }}
+    >
+      <View style={continueStyles.row}>
+        <View style={[continueStyles.chip, { backgroundColor: resource.color }]}>
+          <Ionicons name={resource.icon as keyof typeof Ionicons.glyphMap} size={24} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[continueStyles.eyebrow, { color: resource.color }]}>
+            {resumed ? 'PICK UP WHERE YOU LEFT OFF' : 'START HERE'}
+          </Text>
+          <Text style={[continueStyles.title, { color: colors.textDark }]} numberOfLines={2}>
+            {resource.title}
+          </Text>
+        </View>
+        <View style={[continueStyles.cta, { backgroundColor: resource.color }]}>
+          <Text style={continueStyles.ctaText}>{resumed ? 'Continue' : 'Start'}</Text>
+          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+        </View>
       </View>
     </Card>
   );
@@ -80,8 +194,8 @@ export default function ForYouScreen() {
 
   const { resources } = useResources();
   const { colors, appStyles, sharedStyles } = useTheme();
-  const { isWeb } = useResponsive();
-  const { earnedPieceIds, isResourceFullyViewed } = useAccomplishments();
+  const { isWeb, isDesktop } = useResponsive();
+  const { earnedPieceIds, isResourceFullyViewed, openedResourceIds } = useAccomplishments();
 
   const [gridWidth, setGridWidth] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -98,10 +212,30 @@ export default function ForYouScreen() {
   );
   const hasTreeTotal = treeResources.length > 0;
 
-  // Web topics grid geometry.
-  const topicCols = viewMode === 'list'
-    ? 1
-    : (gridWidth > 0 ? gridColumns(gridWidth, 300) : 1);
+  // ── "Continue where you left off" ─────────────────────────────────────────
+  // Prefer a topic that's started but unfinished; otherwise the first unopened
+  // one. Null when every topic is done (the card then hides).
+  const topicResources = useMemo(
+    () =>
+      data.topics
+        .map(t => resources.find(r => r.title.toLowerCase() === t.toLowerCase()))
+        .filter((r): r is Resource => !!r),
+    [data.topics, resources]
+  );
+  const continueItem = useMemo(() => {
+    const inProgress = topicResources.find(
+      r => openedResourceIds.has(r.id) && !isResourceFullyViewed(r.id)
+    );
+    if (inProgress) return { resource: inProgress, resumed: true };
+    const notStarted = topicResources.find(r => !openedResourceIds.has(r.id));
+    if (notStarted) return { resource: notStarted, resumed: false };
+    return null;
+  }, [topicResources, openedResourceIds, isResourceFullyViewed]);
+
+  // Web topics grid geometry. Grid = two comfortable columns on desktop so the
+  // enriched rows have room; list = a single full-width column. (Below desktop the
+  // width is too tight for two, so both modes fall back to one column.)
+  const topicCols = viewMode === 'grid' && isDesktop ? 2 : 1;
   const topicWidth = gridWidth > 0
     ? Math.floor((gridWidth - WEB_TOPIC_GAP * (topicCols - 1)) / topicCols)
     : 0;
@@ -157,53 +291,67 @@ export default function ForYouScreen() {
         {isWeb ? (
           // ── Web learning-portal dashboard ──────────────────────────────────
           <View style={styles.webWrap}>
-            <Text style={styles.sectionTitle}>Your progress</Text>
-            <View style={styles.progressRow}>
-              <ProgressStat
-                label="Puzzles"
-                icon="extension-puzzle"
-                color="#F59E0B"
-                value={puzzlesEarned}
-                total={TOTAL_PIECES}
-                onPress={() => router.push('/accomplishments' as any)}
-                colors={colors}
-                style={styles.progressCard}
-              />
-              {hasTreeTotal && (
+            {continueItem && (
+              <FadeSlideIn delay={40} style={styles.continueWrap}>
+                <ContinueCard
+                  resource={continueItem.resource}
+                  resumed={continueItem.resumed}
+                  colors={colors}
+                  onPress={() => handleTopicPress(continueItem.resource.title, continueItem.resource.route)}
+                />
+              </FadeSlideIn>
+            )}
+            <FadeSlideIn delay={continueItem ? 110 : 40}>
+              <Text style={styles.sectionTitle}>Your progress</Text>
+              <View style={styles.progressRow}>
                 <ProgressStat
-                  label="Knowledge Tree"
-                  icon="leaf"
-                  color="#10B981"
-                  value={treeLit}
-                  total={treeResources.length}
-                  onPress={() => router.push('/knowledge-tree' as any)}
+                  label="Puzzles"
+                  icon="extension-puzzle"
+                  color="#F59E0B"
+                  value={puzzlesEarned}
+                  total={TOTAL_PIECES}
+                  onPress={() => router.push('/accomplishments' as any)}
                   colors={colors}
                   style={styles.progressCard}
                 />
-              )}
-            </View>
-
-            <View style={styles.topicsHeaderRow}>
-              <Text style={styles.sectionTitleInline}>Your support topics</Text>
-              <View style={[styles.segment, { backgroundColor: colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Grid view"
-                  onPress={() => setViewMode('grid')}
-                  style={[styles.segBtn, viewMode === 'grid' && { backgroundColor: colors.white }]}
-                >
-                  <Ionicons name="grid-outline" size={16} color={viewMode === 'grid' ? colors.primary : colors.textLight} />
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="List view"
-                  onPress={() => setViewMode('list')}
-                  style={[styles.segBtn, viewMode === 'list' && { backgroundColor: colors.white }]}
-                >
-                  <Ionicons name="list-outline" size={16} color={viewMode === 'list' ? colors.primary : colors.textLight} />
-                </Pressable>
+                {hasTreeTotal && (
+                  <ProgressStat
+                    label="Knowledge Tree"
+                    icon="leaf"
+                    color="#10B981"
+                    value={treeLit}
+                    total={treeResources.length}
+                    onPress={() => router.push('/knowledge-tree' as any)}
+                    colors={colors}
+                    style={styles.progressCard}
+                  />
+                )}
               </View>
-            </View>
+            </FadeSlideIn>
+
+            <FadeSlideIn delay={continueItem ? 170 : 100}>
+              <View style={styles.topicsHeaderRow}>
+                <Text style={styles.sectionTitleInline}>Your support topics</Text>
+                <View style={[styles.segment, { backgroundColor: colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Grid view"
+                    onPress={() => setViewMode('grid')}
+                    style={[styles.segBtn, viewMode === 'grid' && { backgroundColor: colors.white }]}
+                  >
+                    <Ionicons name="grid-outline" size={16} color={viewMode === 'grid' ? colors.primary : colors.textLight} />
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="List view"
+                    onPress={() => setViewMode('list')}
+                    style={[styles.segBtn, viewMode === 'list' && { backgroundColor: colors.white }]}
+                  >
+                    <Ionicons name="list-outline" size={16} color={viewMode === 'list' ? colors.primary : colors.textLight} />
+                  </Pressable>
+                </View>
+              </View>
+            </FadeSlideIn>
 
             {data.topics.length > 0 ? (
               <View
@@ -214,10 +362,16 @@ export default function ForYouScreen() {
                   const resource = resources.find(r => r.title.toLowerCase() === topic.toLowerCase());
                   const color = resource?.color || colors.primary;
                   const icon = (resource?.icon || 'bookmarks') as keyof typeof Ionicons.glyphMap;
+                  const status: TopicStatusKind = resource && isResourceFullyViewed(resource.id)
+                    ? 'done'
+                    : resource && openedResourceIds.has(resource.id)
+                      ? 'started'
+                      : 'new';
 
                   return (
-                    <View
+                    <FadeSlideIn
                       key={index}
+                      delay={(continueItem ? 220 : 150) + Math.min(index, 8) * 55}
                       style={topicWidth > 0 ? { width: topicWidth } : { width: '100%' }}
                     >
                       <ResourceRow
@@ -225,9 +379,11 @@ export default function ForYouScreen() {
                         icon={icon}
                         color={color}
                         category={resource?.category}
+                        description={resource?.shortDescription}
+                        right={<TopicStatus status={status} colors={colors} />}
                         onPress={() => handleTopicPress(topic, resource?.route)}
                       />
-                    </View>
+                    </FadeSlideIn>
                   );
                 })}
               </View>
@@ -329,6 +485,77 @@ const progressStyles = StyleSheet.create({
     height: 8,
     borderRadius: RADII.pill,
   },
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  statusWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  statusText: {
+    ...TYPOGRAPHY.caption,
+    fontFamily: 'Raleway_700Bold',
+    fontSize: 12,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: SPACING.sm,
+  },
+  pctText: {
+    ...TYPOGRAPHY.caption,
+    fontFamily: 'Raleway_700Bold',
+    fontSize: 12,
+  },
+  toGo: {
+    ...TYPOGRAPHY.caption,
+    fontSize: 12,
+  },
+});
+
+const continueStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  chip: {
+    width: 48,
+    height: 48,
+    borderRadius: RADII.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  eyebrow: {
+    ...TYPOGRAPHY.caption,
+    fontFamily: 'Raleway_700Bold',
+    fontSize: 11,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  title: {
+    ...TYPOGRAPHY.h3,
+  },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADII.pill,
+    flexShrink: 0,
+  },
+  ctaText: {
+    ...TYPOGRAPHY.caption,
+    fontFamily: 'Raleway_700Bold',
+    fontSize: 13,
+    color: '#FFFFFF',
+  },
 });
 
 const makeStyles = (c: ThemeColors, isWeb: boolean) =>
@@ -393,6 +620,9 @@ const makeStyles = (c: ThemeColors, isWeb: boolean) =>
       width: '100%' as const,
       maxWidth: CONTENT_WIDTH.app,
       alignSelf: 'center' as const,
+    },
+    continueWrap: {
+      marginBottom: SPACING.xxxl,
     },
     progressRow: {
       flexDirection: 'row',

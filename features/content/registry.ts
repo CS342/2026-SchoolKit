@@ -38,12 +38,27 @@ const AccordionItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTo
 const CardItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTokenSchema, body: Str, href: z.string().optional() });
 const StepItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTokenSchema, detail: Str });
 const LinkItemS = z.object({ id: Id, name: Str, icon: Icon, color: ColorTokenSchema, blurb: Str, url: Str, display: Str });
+const ReferenceItemS = z.object({ id: Id, label: Str, url: z.string().optional() });
+const ChecklistItemS = z.object({ id: Id, text: Str, done: z.boolean().optional() });
+const StatItemS = z.object({ id: Id, value: Str, label: Str, icon: Icon.optional(), color: ColorTokenSchema });
+const GalleryItemS = z.object({ id: Id, url: Str, alt: Str, caption: z.string().optional() });
+const TestimonialItemS = z.object({ id: Id, text: Str, author: z.string().optional(), role: z.string().optional() });
+const TabItemS = z.object({ id: Id, label: Str, icon: Icon.optional(), markdown: Str });
+const FlipCardItemS = z.object({ id: Id, front: Str, back: Str, icon: Icon.optional(), color: ColorTokenSchema });
+const ComparisonRowS = z.object({ id: Id, cells: z.array(z.string()) });
 
 // ─── editor field-config types (moved here from editor/templates.ts) ─────────────
-export type FieldKind = 'text' | 'textarea' | 'color' | 'icon' | 'toggle';
-export interface FieldDef { key: string; label: string; kind: FieldKind; placeholder?: string }
+export type FieldKind = 'text' | 'textarea' | 'color' | 'icon' | 'toggle' | 'select';
+export interface FieldDef {
+  key: string;
+  label: string;
+  kind: FieldKind;
+  placeholder?: string;
+  /** For kind:'select' — the choices shown as a segmented control. */
+  options?: { value: string; label: string }[];
+}
 export interface ItemConfig { arrayKey: string; noun: string; fields: FieldDef[]; make: () => any }
-export interface BlockConfig { fields: FieldDef[]; item?: ItemConfig; special?: 'hero' | 'resourceRefList' }
+export interface BlockConfig { fields: FieldDef[]; item?: ItemConfig; special?: 'hero' | 'resourceRefList' | 'comparisonTable' }
 export interface BlockMeta { type: BlockType; label: string; icon: string; blurb: string }
 
 const HEADER: FieldDef[] = [
@@ -56,6 +71,14 @@ export const makeAccordionItem = (): AccordionItem => ({ id: nid(), title: 'New 
 export const makeCard = (): CardItem => ({ id: nid(), title: 'New card', icon: 'star-outline', color: 'teal', body: '' });
 export const makeStep = (): StepItem => ({ id: nid(), title: 'New step', icon: 'ellipse-outline', color: 'teal', detail: '' });
 export const makeLink = (): LinkItem => ({ id: nid(), name: 'New link', icon: 'link-outline', color: 'teal', blurb: '', url: 'https://', display: '' });
+export const makeReference = () => ({ id: nid(), label: 'Source name', url: 'https://' });
+export const makeChecklistItem = () => ({ id: nid(), text: 'To-do item', done: false });
+export const makeStat = () => ({ id: nid(), value: '100%', label: 'What this measures', icon: 'stats-chart-outline', color: 'teal' as const });
+export const makeGalleryImage = () => ({ id: nid(), url: '', alt: '' });
+export const makeTestimonial = () => ({ id: nid(), text: 'Something encouraging someone shared.', author: '' });
+export const makeTab = () => ({ id: nid(), label: 'New tab', icon: 'ellipse-outline', markdown: 'Tab content. **Bold** and *italic* work.' });
+export const makeFlipCard = () => ({ id: nid(), front: 'Front', back: 'The answer or detail on the back.', icon: 'sparkles-outline', color: 'teal' as const });
+export const makeComparisonRow = (cols = 2) => ({ id: nid(), cells: Array.from({ length: cols }, () => '') });
 
 // ─── the manifest ────────────────────────────────────────────────────────────────
 export interface BlockDef {
@@ -233,12 +256,180 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     summary: (b) => `${b.heading} · ${(b.resourceIds ?? []).length} guides`,
     aiPrompt: `- resourceRefList: { id, type:"resourceRefList", heading, subheading?, ranked?:true, resourceIds:[ids] } — link to existing SchoolKit guides.`,
   },
+  divider: {
+    type: 'divider',
+    schema: z.object({ ...idOpt, type: z.literal('divider'), variant: z.enum(['line', 'dots', 'space']).optional(), tone: ColorTokenSchema.optional() }),
+    make: () => ({ id: nid(), type: 'divider', variant: 'line', tone: undefined }),
+    editor: { fields: [
+      { key: 'variant', label: 'Style', kind: 'select', options: [
+        { value: 'line', label: 'Line' },
+        { value: 'dots', label: 'Dots' },
+        { value: 'space', label: 'Blank space' },
+      ] },
+      { key: 'tone', label: 'Color', kind: 'color' },
+    ] },
+    palette: { label: 'Divider', icon: 'remove-outline', blurb: 'A visual break between sections.', manuallyAddable: true, order: 12 },
+    summary: (b) => `Divider · ${b.variant ?? 'line'}`,
+    aiPrompt: `- divider: { id, type:"divider", variant?:"line"|"dots"|"space", tone? } — a light visual break between sections.`,
+  },
+  references: {
+    type: 'references',
+    schema: z.object({ ...idOpt, type: z.literal('references'), heading: z.string().optional(), items: z.array(ReferenceItemS) }),
+    make: () => ({ id: nid(), type: 'references', heading: 'Sources', items: [makeReference()] }),
+    editor: { fields: [{ key: 'heading', label: 'Section title', kind: 'text', placeholder: 'Optional' }], item: { arrayKey: 'items', noun: 'source', make: makeReference, fields: [
+      { key: 'label', label: 'Label', kind: 'text' },
+      { key: 'url', label: 'URL', kind: 'text', placeholder: 'https://… (optional)' },
+    ] } },
+    palette: { label: 'References', icon: 'documents-outline', blurb: 'A numbered list of sources.', manuallyAddable: true, order: 13 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    summary: (b) => `${b.heading ?? 'References'} · ${(b.items ?? []).length} sources`,
+    aiPrompt: `- references: { id, type:"references", heading?, items:[{id,label,url?}] } — numbered sources/citations; url optional.`,
+  },
+  checklist: {
+    type: 'checklist',
+    schema: z.object({ ...idOpt, type: z.literal('checklist'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(ChecklistItemS) }),
+    make: () => ({ id: nid(), type: 'checklist', heading: 'Checklist', subheading: '', items: [makeChecklistItem()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'item', make: makeChecklistItem, fields: [
+      { key: 'text', label: 'Item', kind: 'text' },
+      { key: 'done', label: 'Checked by default', kind: 'toggle' },
+    ] } },
+    palette: { label: 'Checklist', icon: 'checkbox-outline', blurb: 'A tappable, printable checklist.', manuallyAddable: true, order: 14 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    summary: (b) => `${b.heading ?? 'Checklist'} · ${(b.items ?? []).length} items`,
+    aiPrompt: `- checklist: { id, type:"checklist", heading?, subheading?, items:[{id,text,done?}] } — a prep/packing checklist; 3–8 short items.`,
+  },
+  statGrid: {
+    type: 'statGrid',
+    schema: z.object({ ...idOpt, type: z.literal('statGrid'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(StatItemS) }),
+    make: () => ({ id: nid(), type: 'statGrid', heading: 'By the numbers', subheading: '', items: [makeStat(), makeStat()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'stat', make: makeStat, fields: [
+      { key: 'value', label: 'Value', kind: 'text', placeholder: 'e.g. 1 in 5' },
+      { key: 'label', label: 'Label', kind: 'text' },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'color', label: 'Color', kind: 'color' },
+    ] } },
+    palette: { label: 'Stat tiles', icon: 'stats-chart-outline', blurb: 'Number + label highlight tiles.', manuallyAddable: true, order: 15 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    wideLayout: true,
+    summary: (b) => `${b.heading ?? 'Stats'} · ${(b.items ?? []).length} tiles`,
+    aiPrompt: `- statGrid: { id, type:"statGrid", heading?, subheading?, items:[{id,value,label,icon?,color}] } — 2–4 number + label tiles. Only with real, grounded numbers.`,
+  },
+  gallery: {
+    type: 'gallery',
+    schema: z.object({ ...idOpt, type: z.literal('gallery'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(GalleryItemS) }),
+    make: () => ({ id: nid(), type: 'gallery', heading: 'Gallery', subheading: '', items: [makeGalleryImage()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'image', make: makeGalleryImage, fields: [
+      { key: 'url', label: 'Image URL', kind: 'text', placeholder: 'https://…' },
+      { key: 'alt', label: 'Alt text', kind: 'text', placeholder: 'Describe the image' },
+      { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
+    ] } },
+    palette: { label: 'Gallery', icon: 'images-outline', blurb: 'Several images in a grid.', manuallyAddable: true, order: 16 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    wideLayout: true,
+    summary: (b) => `${b.heading ?? 'Gallery'} · ${(b.items ?? []).length} images`,
+    aiPrompt: `- gallery: { id, type:"gallery", heading?, subheading?, items:[{id,url,alt,caption?}] } — ONLY with real/attached image urls; never invent urls.`,
+  },
+  testimonials: {
+    type: 'testimonials',
+    schema: z.object({ ...idOpt, type: z.literal('testimonials'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(TestimonialItemS) }),
+    make: () => ({ id: nid(), type: 'testimonials', heading: 'In their words', subheading: '', items: [makeTestimonial()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'quote', make: makeTestimonial, fields: [
+      { key: 'text', label: 'Quote', kind: 'textarea' },
+      { key: 'author', label: 'Name', kind: 'text', placeholder: 'Optional' },
+      { key: 'role', label: 'Role', kind: 'text', placeholder: 'Optional' },
+    ] } },
+    palette: { label: 'Testimonials', icon: 'chatbubbles-outline', blurb: 'A few short quotes.', manuallyAddable: true, order: 17 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    summary: (b) => `${b.heading ?? 'Testimonials'} · ${(b.items ?? []).length} quotes`,
+    aiPrompt: `- testimonials: { id, type:"testimonials", heading?, subheading?, items:[{id,text,author?,role?}] } — 2–4 short quotes; author/role only if provided.`,
+  },
+  columns: {
+    type: 'columns',
+    schema: z.object({ ...idOpt, type: z.literal('columns'), heading: z.string().optional(), left: Str, right: Str }),
+    make: () => ({ id: nid(), type: 'columns', heading: '', left: 'Left column.\n\nWrite here.', right: 'Right column.\n\nWrite here.' }),
+    editor: { fields: [
+      { key: 'heading', label: 'Heading', kind: 'text', placeholder: 'Optional' },
+      { key: 'left', label: 'Left column', kind: 'textarea' },
+      { key: 'right', label: 'Right column', kind: 'textarea' },
+    ] },
+    palette: { label: 'Two columns', icon: 'browsers-outline', blurb: 'Side-by-side text columns.', manuallyAddable: true, order: 18 },
+    headingField: 'heading',
+    summary: (b) => `Columns${b.heading ? ' · ' + b.heading : ''}`,
+    aiPrompt: `- columns: { id, type:"columns", heading?, left, right } — two side-by-side markdown columns (stack on mobile). Keep each column short.`,
+  },
+  tabs: {
+    type: 'tabs',
+    schema: z.object({ ...idOpt, type: z.literal('tabs'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(TabItemS) }),
+    make: () => ({ id: nid(), type: 'tabs', heading: 'Section title', subheading: '', items: [makeTab(), makeTab()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'tab', make: makeTab, fields: [
+      { key: 'label', label: 'Tab label', kind: 'text' },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'markdown', label: 'Content', kind: 'textarea' },
+    ] } },
+    palette: { label: 'Tabs', icon: 'albums-outline', blurb: 'Tabbed sections, one at a time.', manuallyAddable: true, order: 19 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    summary: (b) => `${b.heading ?? 'Tabs'} · ${(b.items ?? []).length} tabs`,
+    aiPrompt: `- tabs: { id, type:"tabs", heading?, subheading?, items:[{id,label,icon?,markdown}] } — 2–4 tabbed sections; each panel is markdown.`,
+  },
+  flipCard: {
+    type: 'flipCard',
+    schema: z.object({ ...idOpt, type: z.literal('flipCard'), heading: z.string().optional(), subheading: z.string().optional(), items: z.array(FlipCardItemS) }),
+    make: () => ({ id: nid(), type: 'flipCard', heading: 'Section title', subheading: '', items: [makeFlipCard(), makeFlipCard()] }),
+    editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'card', make: makeFlipCard, fields: [
+      { key: 'front', label: 'Front', kind: 'text' },
+      { key: 'back', label: 'Back', kind: 'textarea' },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'color', label: 'Color', kind: 'color' },
+    ] } },
+    palette: { label: 'Flip cards', icon: 'sync-outline', blurb: 'Tap-to-flip term/definition cards.', manuallyAddable: true, order: 20 },
+    itemArrayKey: 'items',
+    headingField: 'heading',
+    wideLayout: true,
+    summary: (b) => `${b.heading ?? 'Flip cards'} · ${(b.items ?? []).length} cards`,
+    aiPrompt: `- flipCard: { id, type:"flipCard", heading?, subheading?, items:[{id,front,back,icon?,color}] } — 2–6 tap-to-flip cards (term→definition, myth→fact).`,
+  },
+  comparisonTable: {
+    type: 'comparisonTable',
+    schema: z.object({ ...idOpt, type: z.literal('comparisonTable'), heading: z.string().optional(), subheading: z.string().optional(), columns: z.array(z.string()).min(1), rows: z.array(ComparisonRowS) }),
+    make: () => ({ id: nid(), type: 'comparisonTable', heading: 'Compare options', subheading: '', columns: ['Option', 'Details'], rows: [makeComparisonRow(2), makeComparisonRow(2)] }),
+    editor: { fields: HEADER, special: 'comparisonTable' },
+    palette: { label: 'Comparison table', icon: 'grid-outline', blurb: 'Rows and columns to compare.', manuallyAddable: true, order: 21 },
+    itemArrayKey: 'rows',
+    headingField: 'heading',
+    wideLayout: true,
+    summary: (b) => `${b.heading ?? 'Table'} · ${(b.columns ?? []).length}×${(b.rows ?? []).length}`,
+    aiPrompt: `- comparisonTable: { id, type:"comparisonTable", heading?, subheading?, columns:[string], rows:[{id,cells:[string]}] } — each row's cells align to columns (same length). 2–4 columns.`,
+  },
+  video: {
+    type: 'video',
+    schema: z.object({ ...idOpt, type: z.literal('video'), provider: z.enum(['youtube', 'vimeo', 'mp4']).optional(), url: Str, title: z.string().optional(), caption: z.string().optional() }),
+    make: () => ({ id: nid(), type: 'video', provider: 'youtube', url: '', title: '' }),
+    editor: { fields: [
+      { key: 'provider', label: 'Source', kind: 'select', options: [
+        { value: 'youtube', label: 'YouTube' },
+        { value: 'vimeo', label: 'Vimeo' },
+        { value: 'mp4', label: 'Direct (MP4)' },
+      ] },
+      { key: 'url', label: 'Video URL', kind: 'text', placeholder: 'https://…' },
+      { key: 'title', label: 'Title', kind: 'text', placeholder: 'Optional' },
+      { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
+    ] },
+    palette: { label: 'Video', icon: 'videocam-outline', blurb: 'An embedded video.', manuallyAddable: true, order: 22 },
+    summary: (b) => b.title || b.url || 'Video',
+    aiPrompt: `- video: { id, type:"video", provider?:"youtube"|"vimeo"|"mp4", url, title?, caption? } — ONLY if the request supplies a real video URL; never invent one.`,
+  },
   recommendations: {
     type: 'recommendations',
     schema: z.object({ ...idOpt, type: z.literal('recommendations') }),
     make: () => ({ id: nid(), type: 'recommendations' }),
     editor: { fields: [] },
-    palette: { label: 'Recommendations', icon: 'sparkles-outline', blurb: 'Auto-suggested related pages.', manuallyAddable: true, order: 11 },
+    palette: { label: 'Recommendations', icon: 'sparkles-outline', blurb: 'Auto-suggested related pages.', manuallyAddable: true, order: 99 },
     summary: () => 'Related pages (automatic)',
     aiPrompt: `- recommendations: { id, type:"recommendations" } — always the LAST block.`,
   },

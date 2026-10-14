@@ -51,10 +51,22 @@ token set, not free-form.)
 
 ---
 
-## 2. Block vocabulary (v1)
+## 2. Block vocabulary
 
-Twelve block types. Each maps to one renderer; several are harvested from the finances page and the
-existing `features/design-editor` `Preview*` components.
+The core twelve block types are defined below. Each maps to one renderer; several are harvested from
+the finances page and the existing `features/design-editor` `Preview*` components.
+
+> **Update (block manifest):** block types are now declared once in a central manifest,
+> `features/content/registry.ts` (`REGISTRY: Record<BlockType, BlockDef>` — schema, default factory,
+> editor field-config, palette metadata, item-array key, TOC heading, layout flag, card summary, and
+> AI-prompt fragment per type). Every consumer (zod validator, editor palette/config, the page
+> renderer's `BLOCK_RENDERERS`, the AI system prompt) derives from it, so adding a type is one
+> manifest entry + one `BLOCK_RENDERERS` entry, both compiler-enforced via `Record<BlockType, …>`.
+>
+> Beyond the original twelve, the following were added for layout/content variety (manifest +
+> renderer only, no schema/op changes): `divider`, `references`, `checklist`, `statGrid`, `gallery`,
+> `testimonials`, `columns`, `tabs`, `flipCard`, `comparisonTable` (rows item-array), and `video`
+> (YouTube/Vimeo/mp4 embed via `react-native-webview` on native, `<iframe>`/`<video>` on web).
 
 ```ts
 type ContentBlock =
@@ -174,8 +186,10 @@ interface RecommendationsBlock extends BlockBase { type: 'recommendations'; }
 ```
 
 > **Extensibility:** new capability = new block type + renderer + zod schema, registered in one
-> place. The AI's palette is literally the list of registered types. Interactive primitives from the
-> old canvas system (`PreviewCarousel`, `PreviewQuiz`, `PreviewTabs`, …) become future block types.
+> place — now literally one entry in `features/content/registry.ts` plus one in `BLOCK_RENDERERS`.
+> The AI's palette is literally the list of registered types (the prompt's block list derives from the
+> manifest). Interactive primitives from the old canvas system (`PreviewCarousel`, `PreviewQuiz`,
+> `PreviewTabs`, …) have begun landing as block types (`tabs`, `flipCard`, …).
 
 ---
 
@@ -365,7 +379,9 @@ Abbreviated — shows every current section maps to a block with no loss:
 1. **Flat blocks in v1** — no nesting / multi-column containers. ✅
 2. **AI edit = ops, not full regen.** ✅
 3. **Colors are tokens only** — the AI never emits raw hex. ✅
-4. **v1 vocabulary = the 12 blocks above** (footnote added in Phase 1). `quiz`/`carousel`/`tabs` deferred. ✅
+4. **v1 vocabulary = the 12 core blocks above** (footnote added in Phase 1). Since extended via the
+   central manifest with layout/content/media blocks (`divider`, `columns`, `tabs`, `checklist`,
+   `statGrid`, `comparisonTable`, `gallery`, `video`, `flipCard`, `references`, `testimonials`). ✅
 5. **`resourceRefList` references live resources** (ids, not copies). ✅
 6. **`designs` = deprecated as a delivery format.** The block model is the only content-page path
    going forward. We keep existing `designs` code/rows but **do not extend** the canvas; its

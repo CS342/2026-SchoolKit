@@ -26,6 +26,8 @@ interface ArticleLayoutProps {
   wide?: boolean;
   children: React.ReactNode;
   contentStyle?: ViewStyle;
+  /** Forwarded to the article ScrollView so callers can detect read-to-end. */
+  onScroll?: (e: any) => void;
 }
 
 function scrollToSection(id: string) {
@@ -43,7 +45,7 @@ const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: 20 } as any) 
  *  - narrow: a single centered reading column.
  * Title and actions share one row. Web-only; native screens keep their own layout.
  */
-export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wide, children, contentStyle }: ArticleLayoutProps) {
+export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wide, children, contentStyle, onScroll }: ArticleLayoutProps) {
   const { colors } = useTheme();
   const { width } = useResponsive();
   const showToc = !!sections && sections.length >= 3 && width >= 920;
@@ -63,6 +65,8 @@ export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wid
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 48, paddingTop: SPACING.xl, paddingBottom: 96 }}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         {/* Breadcrumb anchors to the left content edge, above the centered article. */}
         <Breadcrumb items={breadcrumb} />

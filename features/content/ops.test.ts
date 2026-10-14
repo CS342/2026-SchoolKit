@@ -100,6 +100,48 @@ describe('applyOps — purity & validation', () => {
   });
 });
 
+describe('applyOps — new item-array blocks (checklist)', () => {
+  const docWithChecklist = (): ContentDoc => ({
+    schemaVersion: 1, slug: 's', title: 'T', accent: 'primary', tags: [],
+    blocks: [
+      { id: 'chk', type: 'checklist', heading: 'H', items: [
+        { id: 'c1', text: 'One' },
+        { id: 'c2', text: 'Two' },
+      ] },
+    ],
+  });
+  const chk = (d: ContentDoc) => d.blocks.find((b) => b.id === 'chk') as any;
+  it('insert / move / remove items via the derived ARRAY_KEY', () => {
+    let d = applyOps(docWithChecklist(), [{ op: 'insertItem', block: 'chk', at: { after: 'c1' }, item: { text: 'Mid' } }], genId);
+    expect(chk(d).items.map((i: any) => i.id)).toEqual(['c1', 'gen1', 'c2']);
+    d = applyOps(d, [{ op: 'moveItem', block: 'chk', item: 'c2', to: 0 }], genId);
+    expect(chk(d).items.map((i: any) => i.id)).toEqual(['c2', 'c1', 'gen1']);
+    d = applyOps(d, [{ op: 'removeItem', block: 'chk', item: 'gen1' }], genId);
+    expect(chk(d).items.map((i: any) => i.id)).toEqual(['c2', 'c1']);
+  });
+});
+
+describe('applyOps — comparisonTable rows (array key other than items/steps)', () => {
+  const docWithTable = (): ContentDoc => ({
+    schemaVersion: 1, slug: 's', title: 'T', accent: 'primary', tags: [],
+    blocks: [
+      { id: 'cmp', type: 'comparisonTable', columns: ['A', 'B'], rows: [
+        { id: 'r1', cells: ['a1', 'b1'] },
+        { id: 'r2', cells: ['a2', 'b2'] },
+      ] },
+    ],
+  });
+  const cmp = (d: ContentDoc) => d.blocks.find((b) => b.id === 'cmp') as any;
+  it('insert / update / remove rows via the "rows" ARRAY_KEY', () => {
+    let d = applyOps(docWithTable(), [{ op: 'insertItem', block: 'cmp', at: 1, item: { cells: ['a3', 'b3'] } }], genId);
+    expect(cmp(d).rows.map((r: any) => r.id)).toEqual(['r1', 'gen1', 'r2']);
+    d = applyOps(d, [{ op: 'updateItem', block: 'cmp', item: 'r2', patch: { cells: ['x', 'y'] } }], genId);
+    expect(cmp(d).rows.find((r: any) => r.id === 'r2').cells).toEqual(['x', 'y']);
+    d = applyOps(d, [{ op: 'removeItem', block: 'cmp', item: 'gen1' }], genId);
+    expect(cmp(d).rows.map((r: any) => r.id)).toEqual(['r1', 'r2']);
+  });
+});
+
 describe('parseContentDoc (zod)', () => {
   it('drops malformed blocks, keeps good ones', () => {
     const res = parseContentDoc({

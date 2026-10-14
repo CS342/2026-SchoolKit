@@ -41,12 +41,28 @@ import {
 } from '../../constants/onboarding-theme';
 import { WEB_GRID_GAP } from '../../components/WebResourceTile';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive, gridColumns, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { ThemeColors, ThemeShadows } from '../../constants/theme';
 
 const CATEGORIES = ['All', ...RESOURCE_CATEGORIES, 'Designs'] as const;
 type CategoryTab = (typeof CATEGORIES)[number];
 type SegmentType = 'all' | 'saved' | 'downloaded';
+type SortMode = 'recommended' | 'az' | 'category';
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'recommended', label: 'Recommended' },
+  { value: 'az', label: 'A–Z' },
+  { value: 'category', label: 'Category' },
+];
+
+function sortResources(list: Resource[], mode: SortMode): Resource[] {
+  if (mode === 'recommended') return list;
+  const copy = [...list];
+  if (mode === 'az') return copy.sort((a, b) => a.title.localeCompare(b.title));
+  // 'category': group by category, A–Z within each
+  return copy.sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
+}
 
 const RECENT_SEARCHES_KEY = '@schoolkit_recent_searches';
 const MAX_RECENT_SEARCHES = 5;
@@ -90,6 +106,17 @@ export default function LibraryScreen() {
   const [activeSegment, setActiveSegment] = useState<SegmentType>('all');
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
   const [webViewMode, setWebViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<SortMode>('recommended');
+
+  const { isAdmin } = useAuth();
+  // Designs is an admin-only catalog, gated like the Content tab in the sidebar.
+  const visibleCategories = useMemo<readonly CategoryTab[]>(
+    () => (isAdmin ? CATEGORIES : CATEGORIES.filter(c => c !== 'Designs')),
+    [isAdmin],
+  );
+  useEffect(() => {
+    if (!isAdmin && selectedCategory === 'Designs') setSelectedCategory('All');
+  }, [isAdmin, selectedCategory]);
 
   const indicatorPosition = useSharedValue(0);
 
@@ -100,14 +127,14 @@ export default function LibraryScreen() {
   const WEB_ROW_GAP = 16;
   const webRowCols = webViewMode === 'list'
     ? 1
-    : (gridWidth > 0 ? gridColumns(gridWidth, 300) : 1);
+    : (gridWidth > 0 ? gridColumns(gridWidth, 360) : 1);
   const webRowWidth = gridWidth > 0
     ? Math.floor((gridWidth - WEB_ROW_GAP * (webRowCols - 1)) / webRowCols)
     : undefined;
 
   const { bookmarksWithTimestamps, downloads = [] } = useOnboarding();
   const { stories, storyBookmarks, downloadedStories } = useStories();
-  const { resources } = useResources();
+  const { resources, loading: resourcesLoading } = useResources();
 
   const [segmentContainerWidth, setSegmentContainerWidth] = useState(0);
 
@@ -179,6 +206,11 @@ export default function LibraryScreen() {
     return matchesSearch && matchesCategory;
   }), [resources, searchQuery, selectedCategory]);
 
+  const sortedAllResources = useMemo(
+    () => sortResources(allFilteredResources, sortBy),
+    [allFilteredResources, sortBy],
+  );
+
   // Saved
   const bookmarkedResources = useMemo(() => bookmarksWithTimestamps
     .map(b => {
@@ -222,17 +254,37 @@ export default function LibraryScreen() {
       onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
     >
       {list.map(resource => (
-        <ResourceRow
-          key={`${keyPrefix}${resource.id}`}
-          title={resource.title}
-          icon={resource.icon as keyof typeof Ionicons.glyphMap}
-          color={resource.color}
-          category={resource.category}
-          description={resource.shortDescription}
-          onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
-          right={<BookmarkButton resourceId={resource.id} size={20} />}
-          style={webRowWidth ? { width: webRowWidth } : undefined}
-        />
+        // Width-fixed column wrapper so cards in a row stretch to equal height
+        // (ResourceRow's Card uses fillHeight → flex:1 inside this column).
+        <View key={`${keyPrefix}${resource.id}`} style={webRowWidth ? { width: webRowWidth } : { width: '100%' }}>
+          <ResourceRow
+            title={resource.title}
+            icon={resource.icon as keyof typeof Ionicons.glyphMap}
+            color={resource.color}
+            category={resource.category}
+            description={resource.shortDescription}
+            downloaded={downloads.includes(resource.id)}
+            fillHeight
+            onPress={() => handleResourcePress(resource.id, resource.title, resource.route)}
+            right={<BookmarkButton resourceId={resource.id} size={20} />}
+          />
+        </View>
+      ))}
+    </View>
+  );
+
+  // Placeholder cards shown while the resource list is loading and empty.
+  const renderWebSkeleton = () => (
+    <View style={styles.webRowsContainer}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <View key={`sk-${i}`} style={[styles.skeletonCard, webRowWidth ? { width: webRowWidth } : { width: '100%' }]}>
+          <View style={styles.skeletonChip} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <View style={[styles.skeletonLine, { width: '80%' }]} />
+            <View style={[styles.skeletonLine, { width: '45%', height: 10 }]} />
+            <View style={[styles.skeletonLine, { width: '95%', height: 10, marginTop: 6 }]} />
+          </View>
+        </View>
       ))}
     </View>
   );
@@ -356,13 +408,18 @@ export default function LibraryScreen() {
         {activeSegment === 'all' && (
           <>
             <AnimatedSection delay={150}>
+              {isWebDesktop && (
+                <View style={styles.filtersCaptionRow}>
+                  <Text style={[styles.filtersCaption, { color: colors.textLight }]}>BROWSE BY TOPIC</Text>
+                </View>
+              )}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={[styles.filtersContainer, isWebDesktop && styles.filtersContainerWeb]}
                 contentContainerStyle={styles.filtersContent}
               >
-                {CATEGORIES.map(category => {
+                {visibleCategories.map(category => {
                   const isActive = selectedCategory === category;
                   const iconName = CATEGORY_ICONS[category] || 'ellipse';
                   const chipContent = (
@@ -409,10 +466,61 @@ export default function LibraryScreen() {
               </ScrollView>
             </AnimatedSection>
 
-            {allFilteredResources.length > 0 ? (
-              isWebDesktop ? renderWebRows(allFilteredResources) : (
+            {/* Result count + sort + active-filter reset (web). Anchors the grid
+                and separates the topic filter from the scope segment above. */}
+            {isWebDesktop && (allFilteredResources.length > 0 || resourcesLoading) && (
+              <AnimatedSection delay={180}>
+                <View style={styles.countSortRow}>
+                  <View style={styles.countSortLeft}>
+                    <Text style={[styles.countText, { color: colors.textMuted }]}>
+                      {resourcesLoading && allFilteredResources.length === 0
+                        ? 'Loading…'
+                        : `${allFilteredResources.length} ${allFilteredResources.length === 1 ? 'resource' : 'resources'}`}
+                    </Text>
+                    {(selectedCategory !== 'All' || searchQuery.length > 0) && (
+                      <Pressable
+                        onPress={() => { setSelectedCategory('All'); setSearchQuery(''); }}
+                        style={styles.clearFilterBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel="Clear filters"
+                      >
+                        <Ionicons name="close-circle" size={15} color={colors.primary} />
+                        <Text style={[styles.clearFilterText, { color: colors.primary }]}>
+                          Clear{selectedCategory !== 'All' ? ` · ${selectedCategory}` : ''}
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+                  <View style={styles.sortGroup}>
+                    <Text style={[styles.sortLabel, { color: colors.textLight }]}>Sort</Text>
+                    {SORT_OPTIONS.map(opt => {
+                      const active = sortBy === opt.value;
+                      return (
+                        <Pressable
+                          key={opt.value}
+                          onPress={() => setSortBy(opt.value)}
+                          style={[styles.sortChip, active && { backgroundColor: colors.primarySoft }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Sort by ${opt.label}`}
+                          accessibilityState={{ selected: active }}
+                        >
+                          <Text style={[styles.sortChipText, { color: active ? colors.primary : colors.textMuted }]}>
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              </AnimatedSection>
+            )}
+
+            {isWebDesktop && resourcesLoading && allFilteredResources.length === 0 ? (
+              renderWebSkeleton()
+            ) : sortedAllResources.length > 0 ? (
+              isWebDesktop ? renderWebRows(sortedAllResources) : (
                 <View style={styles.resourcesContainer}>
-                  {allFilteredResources.map((resource, index) => (
+                  {sortedAllResources.map((resource, index) => (
                     <ResourceCard
                       key={resource.id}
                       id={resource.id}
@@ -439,10 +547,13 @@ export default function LibraryScreen() {
                 >
                   <Ionicons name={searchQuery ? 'search-outline' : 'compass-outline'} size={SIZING.iconPage} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={sharedStyles.pageTitle}>{searchQuery ? 'No results found' : 'Start exploring'}</Text>
-                <Text style={sharedStyles.pageSubtitle}>
-                  {searchQuery ? 'Try different keywords or adjust your filters' : 'Search for topics and support materials'}
+                <Text style={sharedStyles.pageTitle}>{(searchQuery || selectedCategory !== 'All') ? 'No results found' : 'Start exploring'}</Text>
+                <Text style={[sharedStyles.pageSubtitle, (searchQuery || selectedCategory !== 'All') && { marginBottom: 24 }]}>
+                  {(searchQuery || selectedCategory !== 'All') ? 'Try different keywords or clear the filter' : 'Search for topics and support materials'}
                 </Text>
+                {(searchQuery || selectedCategory !== 'All') && (
+                  <PrimaryButton title="Clear filters" icon="close-circle-outline" onPress={() => { setSelectedCategory('All'); setSearchQuery(''); }} />
+                )}
               </View>
             )}
           </>
@@ -713,11 +824,95 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       fontWeight: '500',
       marginLeft: 5,
     },
+    filtersCaptionRow: {
+      width: '100%' as const,
+      maxWidth: CONTENT_WIDTH.app,
+      alignSelf: 'center' as const,
+      marginBottom: 8,
+    },
+    filtersCaption: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.8,
+    },
     filtersContainer: { marginBottom: SPACING.smallGap },
     filtersContainerWeb: {
       width: '100%' as const,
       maxWidth: CONTENT_WIDTH.app,
       alignSelf: 'center' as const,
+    },
+    // Count + sort + clear-filter toolbar (web)
+    countSortRow: {
+      width: '100%' as const,
+      maxWidth: CONTENT_WIDTH.app,
+      alignSelf: 'center' as const,
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      flexWrap: 'wrap' as const,
+      gap: 12,
+      marginTop: 4,
+      marginBottom: 14,
+    },
+    countSortLeft: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 12,
+    },
+    countText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    clearFilterBtn: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 4,
+    },
+    clearFilterText: {
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    sortGroup: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: 6,
+    },
+    sortLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+      marginRight: 2,
+    },
+    sortChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: RADII.pill,
+    },
+    sortChipText: {
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    // Loading skeleton cards
+    skeletonCard: {
+      flexDirection: 'row' as const,
+      gap: SPACING.md,
+      padding: SPACING.lg,
+      borderRadius: RADII.cardLarge,
+      borderWidth: BORDERS.card,
+      borderColor: c.borderCard,
+      backgroundColor: c.white,
+      minHeight: 120,
+    },
+    skeletonChip: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: c.backgroundLighter,
+    },
+    skeletonLine: {
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: c.backgroundLighter,
     },
     filtersContent: {
       paddingVertical: 4,

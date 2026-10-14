@@ -23,13 +23,25 @@ import { BlockRenderer, HeroTitle, blockHeading } from './blocks';
 import { BlockEntrance } from './util';
 import { StepModal } from './StepModal';
 
-export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean }) {
+export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean; onReachEnd?: () => void }) {
   const { selectedVoice } = useOnboarding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, isDark } = useTheme();
   const webAuto = useWebLayout();
   const web = forceLayout ? forceLayout === 'web' : webAuto;
+
+  // Fire onReachEnd once when the reader nears the bottom — the "read to end"
+  // signal the content route turns into resource progress.
+  const reachedEndRef = useRef(false);
+  const handleScroll = ({ nativeEvent }: any) => {
+    if (reachedEndRef.current || !onReachEnd) return;
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 48) {
+      reachedEndRef.current = true;
+      onReachEnd();
+    }
+  };
 
   const styles = useMemo(() => makeBlockStyles(colors, shadows, isDark), [colors, shadows, isDark]);
   const color = useMemo(() => makeColorResolver(colors.primary), [colors.primary]);
@@ -150,6 +162,7 @@ export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; fo
           title={titleNode}
           actions={actionsNode}
           sections={sections}
+          onScroll={handleScroll}
         >
           {body}
         </ArticleLayout>
@@ -167,7 +180,12 @@ export function ContentPage({ doc, forceLayout, preview }: { doc: ContentDoc; fo
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{actionsNode}</View>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
           <ContentColumn width="reading">
             {titleNode}
             {body}

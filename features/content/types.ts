@@ -137,6 +137,144 @@ export interface RecommendationsBlock extends BlockBase {
   type: 'recommendations';
 }
 
+// ─── added blocks (variety: layout, lists/data, media) ─────────────────────────
+
+/** A visual break between sections. */
+export interface DividerBlock extends BlockBase {
+  type: 'divider';
+  variant?: 'line' | 'dots' | 'space';
+  tone?: ColorToken;
+}
+
+export interface ReferenceItem {
+  id: string;
+  label: string;
+  url?: string;
+}
+/** A numbered list of sources / citations. */
+export interface ReferencesBlock extends BlockBase {
+  type: 'references';
+  heading?: string;
+  items: ReferenceItem[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  /** Authored default checked state; toggling in the reader is ephemeral. */
+  done?: boolean;
+}
+/** A tappable / printable checklist. */
+export interface ChecklistBlock extends BlockBase {
+  type: 'checklist';
+  heading?: string;
+  subheading?: string;
+  items: ChecklistItem[];
+}
+
+export interface StatItem {
+  id: string;
+  value: string;
+  label: string;
+  icon?: IconName;
+  color: ColorToken;
+}
+/** A row of number + label stat tiles. */
+export interface StatGridBlock extends BlockBase {
+  type: 'statGrid';
+  heading?: string;
+  subheading?: string;
+  items: StatItem[];
+}
+
+export interface GalleryItem {
+  id: string;
+  url: string;
+  alt: string;
+  caption?: string;
+}
+/** Several images in a grid. */
+export interface GalleryBlock extends BlockBase {
+  type: 'gallery';
+  heading?: string;
+  subheading?: string;
+  items: GalleryItem[];
+}
+
+export interface TestimonialItem {
+  id: string;
+  text: string;
+  author?: string;
+  role?: string;
+}
+/** Multiple short quotes (generalizes the single `quote` block). */
+export interface TestimonialsBlock extends BlockBase {
+  type: 'testimonials';
+  heading?: string;
+  subheading?: string;
+  items: TestimonialItem[];
+}
+
+/** Two side-by-side markdown columns (stacked on mobile). */
+export interface ColumnsBlock extends BlockBase {
+  type: 'columns';
+  heading?: string;
+  left: string;
+  right: string;
+}
+
+export interface TabItem {
+  id: string;
+  label: string;
+  icon?: IconName;
+  markdown: string;
+}
+/** Tabbed sections — one panel visible at a time. */
+export interface TabsBlock extends BlockBase {
+  type: 'tabs';
+  heading?: string;
+  subheading?: string;
+  items: TabItem[];
+}
+
+export interface FlipCardItem {
+  id: string;
+  front: string;
+  back: string;
+  icon?: IconName;
+  color: ColorToken;
+}
+/** Tap-to-flip cards (e.g. term → definition, myth → fact). */
+export interface FlipCardBlock extends BlockBase {
+  type: 'flipCard';
+  heading?: string;
+  subheading?: string;
+  items: FlipCardItem[];
+}
+
+export interface ComparisonRow {
+  id: string;
+  /** One cell per column; length should match `columns`. */
+  cells: string[];
+}
+/** A simple comparison table (columns + rows). Rows are the item array. */
+export interface ComparisonTableBlock extends BlockBase {
+  type: 'comparisonTable';
+  heading?: string;
+  subheading?: string;
+  columns: string[];
+  rows: ComparisonRow[];
+}
+
+/** An embedded video (YouTube/Vimeo embed, or a direct mp4). */
+export interface VideoBlock extends BlockBase {
+  type: 'video';
+  provider?: 'youtube' | 'vimeo' | 'mp4';
+  url: string;
+  title?: string;
+  caption?: string;
+}
+
 export type ContentBlock =
   | HeroBlock
   | CalloutBlock
@@ -149,12 +287,24 @@ export type ContentBlock =
   | StepperBlock
   | LinkListBlock
   | ResourceRefListBlock
-  | RecommendationsBlock;
+  | RecommendationsBlock
+  | DividerBlock
+  | ReferencesBlock
+  | ChecklistBlock
+  | StatGridBlock
+  | GalleryBlock
+  | TestimonialsBlock
+  | ColumnsBlock
+  | TabsBlock
+  | FlipCardBlock
+  | ComparisonTableBlock
+  | VideoBlock;
 
 export type BlockType = ContentBlock['type'];
 
-/** Blocks that own an addressable item array (for item-level ops). */
-export type ItemArrayKey = 'items' | 'steps';
+/** The field name of a block's addressable item array (for item-level ops).
+ *  A plain string so new item-array blocks can use their own key (e.g. 'rows'). */
+export type ItemArrayKey = string;
 
 // ─── Document ─────────────────────────────────────────────────────────────────
 

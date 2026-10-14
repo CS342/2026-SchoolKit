@@ -67,6 +67,29 @@ export async function deleteContentPage(id: string): Promise<{ ok: true } | { er
   return error ? { error: friendly(error.message) } : { ok: true };
 }
 
+/** Flip a page's publish state without loading/round-tripping its whole doc. */
+export async function setPageStatus(
+  id: string,
+  status: PageStatus,
+): Promise<{ ok: true } | { error: string }> {
+  const { error } = await supabase
+    .from('content_pages')
+    .update({ status, published_at: status === 'published' ? new Date().toISOString() : null })
+    .eq('id', id);
+  return error ? { error: friendly(error.message) } : { ok: true };
+}
+
+/** Deep-copy a page's doc into a new draft ("… (copy)"), returning the new id. */
+export async function duplicateContentPage(
+  id: string,
+): Promise<{ id: string; slug: string } | { error: string }> {
+  const loaded = await loadContentPage(id);
+  if (!loaded) return { error: 'Could not load the page to duplicate.' };
+  // Clear the slug so saveContentPage regenerates a unique one from the new title.
+  const copy: ContentDoc = { ...loaded.doc, title: `${loaded.doc.title} (copy)`, slug: '' };
+  return saveContentPage(null, copy, 'draft');
+}
+
 function friendly(msg: string): string {
   if (/duplicate key|unique/i.test(msg)) return 'That URL slug is already taken — change it in Page settings.';
   if (/row-level security|permission/i.test(msg)) return 'You need moderator access to save pages.';

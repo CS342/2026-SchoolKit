@@ -8,6 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { ContentPage } from '../../components/content-blocks';
 import { FIXTURE_DOCS } from '../../features/content/fixtures';
 import { parseContentDoc } from '../../features/content/validate';
@@ -17,6 +18,7 @@ export default function ContentPageRoute() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const [loading, setLoading] = useState(true);
   const [doc, setDoc] = useState<ContentDoc | null>(null);
 
@@ -49,6 +51,14 @@ export default function ContentPageRoute() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  // Record read-progress so For You / Knowledge Tree can show In progress / Done.
+  // Opened fires on load; scrolled-to-end is reported by ContentPage's onReachEnd.
+  // Keyed by doc.resourceId — the same id bookmarks, downloads, and the resource
+  // list use — so the status attaches to the right row.
+  useEffect(() => {
+    if (doc?.resourceId) fireResourceOpened(doc.resourceId);
+  }, [doc?.resourceId]);
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.appBackground }}>
@@ -69,5 +79,10 @@ export default function ContentPageRoute() {
     );
   }
 
-  return <ContentPage doc={doc} />;
+  return (
+    <ContentPage
+      doc={doc}
+      onReachEnd={() => { if (doc.resourceId) fireResourceScrolledToEnd(doc.resourceId); }}
+    />
+  );
 }
