@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,19 +12,24 @@ import Animated, {
 import { useAuth } from '../../contexts/AuthContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, ANIMATION, COLORS, TYPOGRAPHY, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { ANIMATION, TYPOGRAPHY } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 export default function Step1Screen() {
   const router = useRouter();
   const { updateName } = useOnboarding();
   const { isAnonymous, signOut } = useAuth();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
+  const stepInfo = getOnboardingStep('name');
 
   const [name, setName] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -72,30 +77,30 @@ export default function Step1Screen() {
   };
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 1, total: 5, label: 'Your name' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <OnboardingHeader
-            currentStep={1}
-            totalSteps={5}
+            currentStep={stepInfo.current}
+            totalSteps={stepInfo.total}
             showBackOnFirstStep={isAnonymous}
             onBack={handleBack}
           />
 
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, alignItems: 'center' }]}>
-            <Animated.View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
-              <Ionicons name="person-circle-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <Animated.View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }, iconStyle]}>
+              <Ionicons name="person-circle-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </Animated.View>
 
-            <Animated.Text style={[SHARED_STYLES.pageTitle, titleStyle]}>
+            <Animated.Text style={[sharedStyles.pageTitle, titleStyle]}>
               What's your name?
             </Animated.Text>
 
-            <Animated.Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }, subtitleStyle]}>
+            <Animated.Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }, subtitleStyle]}>
               Let's personalize your experience
             </Animated.Text>
 
@@ -105,7 +110,7 @@ export default function Step1Screen() {
                 value={name}
                 onChangeText={setName}
                 placeholder="Enter your name"
-                placeholderTextColor={COLORS.inputPlaceholder}
+                placeholderTextColor={colors.inputPlaceholder}
                 autoFocus
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
@@ -126,13 +131,13 @@ export default function Step1Screen() {
         </KeyboardAvoidingView>
 
         {!isWebDesktop && (
-        <Animated.View style={[SHARED_STYLES.buttonContainer, buttonStyle]}>
+        <Animated.View style={[sharedStyles.buttonContainer, buttonStyle]}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!name.trim()}
           />
-          <View style={SHARED_STYLES.skipPlaceholder} />
+          <View style={sharedStyles.skipPlaceholder} />
         </Animated.View>
         )}
       </View>
@@ -141,7 +146,7 @@ export default function Step1Screen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -155,16 +160,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     padding: 20,
     ...TYPOGRAPHY.input,
-    color: COLORS.textDark,
+    color: c.textDark,
     textAlign: 'center',
   },
   inputFocused: {
-    borderColor: COLORS.primary,
+    borderColor: c.primary,
   },
 });

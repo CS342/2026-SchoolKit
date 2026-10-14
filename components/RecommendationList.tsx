@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 interface RecommendationListProps {
   currentId: string;
   currentTags: string[];
+  /** 'rail' = compact vertical list for a web sidebar rail. */
+  variant?: 'default' | 'rail';
 }
 
 type RecommendedItem = 
@@ -21,7 +23,7 @@ type RecommendedItem =
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
 
-export function RecommendationList({ currentId, currentTags }: RecommendationListProps) {
+export function RecommendationList({ currentId, currentTags, variant = 'default' }: RecommendationListProps) {
   const router = useRouter();
   const { stories } = useStories();
   const { colors, isDark } = useTheme();
@@ -79,6 +81,41 @@ export function RecommendationList({ currentId, currentTags }: RecommendationLis
 
   if (recommendations.length === 0) {
     return null;
+  }
+
+  // Compact vertical list for a web rail.
+  if (variant === 'rail') {
+    return (
+      <View>
+        <Text style={[styles.railHeader, { color: colors.textLight }]}>You may also find helpful</Text>
+        <View style={{ gap: 10 }}>
+          {recommendations.map((rec) => {
+            const isStory = rec.type === 'story';
+            const story = isStory ? (rec.item as Story) : null;
+            const resource = !isStory ? (rec.item as Resource) : null;
+            const label = isStory ? 'Story' : resource!.category;
+            const tint = isStory ? colors.primary : resource!.color;
+            const icon = isStory ? 'book-outline' : (resource!.icon as any);
+            const title = isStory ? story!.title : resource!.title;
+            return (
+              <Pressable
+                key={`${rec.type}-${rec.item.id}`}
+                style={[styles.railCard, { backgroundColor: colors.white, borderColor: colors.borderCard }]}
+                onPress={() => router.push((isStory ? `/story-detail?id=${story!.id}` : resource!.route) as any)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${title}`}
+              >
+                <View style={styles.cardHeader}>
+                  <Ionicons name={icon} size={14} color={tint} style={styles.icon} />
+                  <Text style={[styles.cardType, { color: tint }]}>{label}</Text>
+                </View>
+                <Text style={[styles.railTitle, { color: colors.textDark }]} numberOfLines={2}>{title}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -221,6 +258,21 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     fontSize: 12,
     color: c.textLight,
     fontWeight: '500',
+  },
+  railHeader: {
+    ...TYPOGRAPHY.overline,
+    marginBottom: 10,
+  },
+  railCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+  },
+  railTitle: {
+    ...TYPOGRAPHY.caption,
+    fontFamily: 'Raleway_600SemiBold',
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 }

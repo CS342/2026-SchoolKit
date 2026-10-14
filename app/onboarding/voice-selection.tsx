@@ -16,13 +16,15 @@ import Animated, {
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { VOICE_META, generateSpeech, VoiceData } from '../../services/elevenLabs';
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, COLORS, RADII, SHARED_STYLES, SHADOWS, ANIMATION } from '../../constants/onboarding-theme';
+import { RADII, ANIMATION } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 function AnimatedVoiceCard({ children, index }: { children: React.ReactNode; index: number }) {
   const scale = useSharedValue(1);
@@ -57,6 +59,8 @@ export default function VoiceSelectionScreen() {
   const router = useRouter();
   const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding, preferredLanguage } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, shadows, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
   const { fireEvent } = useAccomplishments();
   const isSpanish = preferredLanguage === 'spanish';
@@ -69,7 +73,8 @@ export default function VoiceSelectionScreen() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isSampleLoading, setIsSampleLoading] = useState(false);
 
-  const isStudent = data.role && (data.role === 'student-k8' || data.role === 'student-hs');
+  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const stepInfo = getOnboardingStep('voice', isStudent);
 
   useEffect(() => {
     if (playerStatus.isLoaded && playerStatus.didJustFinish) {
@@ -141,12 +146,12 @@ export default function VoiceSelectionScreen() {
   const accentOrder = isSpanish ? ['Spanish'] : ['American', 'British', 'Australian'];
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: isStudent ? 6 : 5, total: isStudent ? 6 : 5, label: 'Voice' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
         <OnboardingHeader
-          currentStep={isStudent ? 6 : 5}
-          totalSteps={isStudent ? 6 : 5}
+          currentStep={stepInfo.current}
+          totalSteps={stepInfo.total}
         />
 
         <ScrollView
@@ -154,12 +159,12 @@ export default function VoiceSelectionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48 }]}>
-            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="mic-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="mic-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>Choose your guide</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
+            <Text style={sharedStyles.pageTitle}>Choose your guide</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
               Select a voice you'd like to hear. You can change this later.
             </Text>
 
@@ -184,7 +189,8 @@ export default function VoiceSelectionScreen() {
                             style={[
                               styles.voiceCard,
                               isSelected && styles.voiceCardSelected,
-                              !isSelected && SHADOWS.card,
+                              isSelected && shadows.cardSelected,
+                              !isSelected && shadows.card,
                             ]}
                             onPress={() => setSelectedVoice(voice.id)}
                           >
@@ -197,14 +203,14 @@ export default function VoiceSelectionScreen() {
                             )}
 
                             <View style={styles.voiceInfo}>
-                              <Text style={[styles.voiceName, isSelected && { color: COLORS.primary }]}>{voice.name}</Text>
+                              <Text style={[styles.voiceName, isSelected && { color: colors.primary }]}>{voice.name}</Text>
                               <Text style={styles.voiceDesc}>{voice.description}</Text>
                             </View>
 
                             <Pressable
                               style={[
                                 styles.playButton,
-                                isPlaying ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.backgroundLight }
+                                isPlaying ? { backgroundColor: colors.primary } : { backgroundColor: colors.backgroundLight }
                               ]}
                               onPress={(e) => {
                                 e.stopPropagation();
@@ -217,7 +223,7 @@ export default function VoiceSelectionScreen() {
                                 <Ionicons
                                   name={isPlaying ? "stop" : "play"}
                                   size={16}
-                                  color={isPlaying ? '#FFFFFF' : COLORS.primary}
+                                  color={isPlaying ? '#FFFFFF' : colors.primary}
                                 />
                               )}
                             </Pressable>
@@ -238,8 +244,8 @@ export default function VoiceSelectionScreen() {
                   title="Continue"
                   onPress={handleContinue}
                 />
-                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+                  <Text style={sharedStyles.skipText}>Skip for now</Text>
                 </Pressable>
               </View>
             )}
@@ -247,13 +253,13 @@ export default function VoiceSelectionScreen() {
         </ScrollView>
 
         {!isWebDesktop && (
-        <View style={SHARED_STYLES.buttonContainer}>
+        <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
           />
-          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+          <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+            <Text style={sharedStyles.skipText}>Skip for now</Text>
           </Pressable>
         </View>
         )}
@@ -263,7 +269,7 @@ export default function VoiceSelectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -286,7 +292,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: COLORS.textLight,
+    color: c.textLight,
     marginBottom: 12,
     marginLeft: 4,
   },
@@ -298,21 +304,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 14,
     borderRadius: RADII.card,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   voiceCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.backgroundLight,
-    ...SHADOWS.cardSelected,
+    borderColor: c.primary,
+    backgroundColor: c.backgroundLight,
   },
   voiceAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
     marginRight: 12,
-    backgroundColor: COLORS.backgroundLight,
+    backgroundColor: c.backgroundLight,
   },
   voiceAvatarPlaceholder: {
     width: 48,
@@ -333,12 +338,12 @@ const styles = StyleSheet.create({
   voiceName: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 2,
   },
   voiceDesc: {
     fontSize: 13,
-    color: COLORS.textLight,
+    color: c.textLight,
   },
   playButton: {
     width: 36,

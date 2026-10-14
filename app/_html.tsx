@@ -19,7 +19,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         />
 
         {/* PWA */}
-        <meta name="theme-color" content="#7B68EE" />
+        <meta name="theme-color" content="#6B5AD6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
@@ -46,7 +46,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
                   'Helvetica Neue', sans-serif;
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
-                background-color: #F8F5FF;
+                background-color: #FAF8FC;
                 overflow-x: hidden;
               }
 
@@ -70,16 +70,16 @@ export default function Root({ children }: { children: React.ReactNode }) {
               }
 
               ::-webkit-scrollbar-track {
-                background: #F0EBFF;
+                background: #F4F1F9;
               }
 
               ::-webkit-scrollbar-thumb {
-                background: #7B68EE;
+                background: #C9C1E4;
                 border-radius: 4px;
               }
 
               ::-webkit-scrollbar-thumb:hover {
-                background: #6A57DD;
+                background: #6B5AD6;
               }
             `,
           }}

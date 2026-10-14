@@ -41,7 +41,11 @@ export default function CreateNotebookScreen() {
             const finalTitle = title.trim() || "Untitled Notebook";
             const id = await createNotebook(finalTitle.slice(0, 40), selectedCover.id, selectedPaper.id);
             if (!id) {
-                Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                if (Platform.OS === "web") {
+                    window.alert(`Limit Reached\nYou can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                } else {
+                    Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                }
                 return;
             }
             router.replace(`/journal/${id}`);

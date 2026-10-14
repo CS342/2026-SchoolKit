@@ -49,7 +49,7 @@ export function WebResourceTile({
         style={[
           styles.tile,
           {
-            backgroundColor: isDark ? colors.backgroundLight : '#FFFFFF',
+            backgroundColor: isDark ? colors.backgroundLight : colors.white,
             borderColor: colors.borderCard,
             width: tileSize,
             height: tileSize,
@@ -60,7 +60,7 @@ export function WebResourceTile({
           colors={[...gradient] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.iconCircle}
+          style={[styles.iconCircle, { shadowColor: colors.shadow }]}
         >
           <Ionicons name={icon as any} size={32} color="#FFF" />
         </LinearGradient>
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

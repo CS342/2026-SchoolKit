@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, COLORS, RADII, SHADOWS, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { RADII } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 const LANGUAGES = [
   { id: 'english' as const, label: 'English', flag: '🇺🇸', subtitle: 'Continue in English' },
@@ -18,7 +20,10 @@ export default function StepLanguageScreen() {
   const router = useRouter();
   const { updatePreferredLanguage, preferredLanguage } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, shadows, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
+  const stepInfo = getOnboardingStep('language');
 
   const [selected, setSelected] = useState<'english' | 'spanish'>(preferredLanguage || 'english');
 
@@ -28,18 +33,18 @@ export default function StepLanguageScreen() {
   };
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 2, total: 6, label: 'Language' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
         <View style={styles.container}>
-          <OnboardingHeader currentStep={2} totalSteps={6} />
+          <OnboardingHeader currentStep={stepInfo.current} totalSteps={stepInfo.total} />
 
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', paddingTop: 48, alignItems: 'center' }]}>
-            <View style={SHARED_STYLES.pageIconCircle}>
+            <View style={sharedStyles.pageIconCircle}>
               <Text style={styles.globeEmoji}>🌐</Text>
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>Preferred language</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 32 }]}>
+            <Text style={sharedStyles.pageTitle}>Preferred language</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 32 }]}>
               Choose the language you'd like to use the app in.
             </Text>
 
@@ -49,12 +54,12 @@ export default function StepLanguageScreen() {
                 return (
                   <Pressable
                     key={lang.id}
-                    style={[styles.optionCard, isSelected && styles.optionCardSelected, !isSelected && SHADOWS.card]}
+                    style={[styles.optionCard, isSelected && styles.optionCardSelected, isSelected && shadows.cardSelected, !isSelected && shadows.card]}
                     onPress={() => setSelected(lang.id)}
                   >
                     <Text style={styles.flag}>{lang.flag}</Text>
                     <View style={styles.optionText}>
-                      <Text style={[styles.optionLabel, isSelected && { color: COLORS.primary }]}>{lang.label}</Text>
+                      <Text style={[styles.optionLabel, isSelected && { color: colors.primary }]}>{lang.label}</Text>
                       <Text style={styles.optionSubtitle}>{lang.subtitle}</Text>
                     </View>
                     <View style={[styles.radio, isSelected && styles.radioSelected]}>
@@ -73,9 +78,9 @@ export default function StepLanguageScreen() {
           </View>
 
           {!isWebDesktop && (
-            <View style={SHARED_STYLES.buttonContainer}>
+            <View style={sharedStyles.buttonContainer}>
               <PrimaryButton title="Continue" onPress={handleContinue} />
-              <View style={SHARED_STYLES.skipPlaceholder} />
+              <View style={sharedStyles.skipPlaceholder} />
             </View>
           )}
         </View>
@@ -84,7 +89,7 @@ export default function StepLanguageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: { flex: 1 },
   content: {
     flex: 1,
@@ -104,14 +109,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 18,
     borderRadius: RADII.card,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   optionCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.backgroundLight,
-    ...SHADOWS.cardSelected,
+    borderColor: c.primary,
+    backgroundColor: c.backgroundLight,
   },
   flag: {
     fontSize: 36,
@@ -123,29 +127,29 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 2,
   },
   optionSubtitle: {
     fontSize: 13,
-    color: COLORS.textLight,
+    color: c.textLight,
   },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: COLORS.primary,
+    borderColor: c.primary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: COLORS.primary,
+    backgroundColor: c.primary,
   },
 });

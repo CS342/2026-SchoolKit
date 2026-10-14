@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,12 +12,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, SHADOWS, ANIMATION, COLORS, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { ANIMATION, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 interface GradeOption {
   value: string;
@@ -59,6 +61,8 @@ function GradeCell({
   onPress: () => void;
   index: number;
 }) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
@@ -89,9 +93,9 @@ function GradeCell({
           isSelected && {
             borderColor: grade.color,
             backgroundColor: grade.color + '10',
-            ...SHADOWS.cardSelected,
+            ...shadows.cardSelected,
           },
-          !isSelected && SHADOWS.card,
+          !isSelected && shadows.card,
           cellStyle,
         ]}
       >
@@ -108,12 +112,16 @@ export default function Step2bScreen() {
   const router = useRouter();
   const { data, updateGradeLevel } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
 
   const [selectedGrade, setSelectedGrade] = useState<string | null>(data.gradeLevel || null);
 
   const isParentOrStaff = data.role === 'parent' || data.role === 'staff';
   const isMiddleSchool = data.role === 'student-k8';
+  // Only guardians (parents/staff) reach the grade screen; students skip it.
+  const stepInfo = getOnboardingStep('grade', false);
   const grades = isParentOrStaff ? PARENT_GRADES : isMiddleSchool ? MIDDLE_SCHOOL_GRADES : HS_GRADES;
 
 
@@ -131,22 +139,22 @@ export default function Step2bScreen() {
   };
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 3, total: 6, label: 'Grade level' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
-        <OnboardingHeader currentStep={3} totalSteps={6} />
+        <OnboardingHeader currentStep={stepInfo.current} totalSteps={stepInfo.total} />
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, alignItems: 'center' }]}>
-            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="ribbon-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="ribbon-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>{isParentOrStaff ? "Select child's grade" : 'What grade are you in?'}</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
+            <Text style={sharedStyles.pageTitle}>{isParentOrStaff ? "Select child's grade" : 'What grade are you in?'}</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
               We'll tailor resources to fit {isParentOrStaff ? "the child's needs." : 'where you are.'}
             </Text>
 
@@ -169,8 +177,8 @@ export default function Step2bScreen() {
                   onPress={handleContinue}
                   disabled={!selectedGrade}
                 />
-                <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-                  <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+                <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+                  <Text style={sharedStyles.skipText}>Skip for now</Text>
                 </Pressable>
               </View>
             )}
@@ -178,14 +186,14 @@ export default function Step2bScreen() {
         </ScrollView>
 
         {!isWebDesktop && (
-        <View style={SHARED_STYLES.buttonContainer}>
+        <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!selectedGrade}
           />
-          <Pressable style={SHARED_STYLES.skipButton} onPress={handleSkip}>
-            <Text style={SHARED_STYLES.skipText}>Skip for now</Text>
+          <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
+            <Text style={sharedStyles.skipText}>Skip for now</Text>
           </Pressable>
         </View>
         )}
@@ -195,7 +203,7 @@ export default function Step2bScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -220,10 +228,10 @@ const styles = StyleSheet.create({
     width: '46%',
   },
   gridCell: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.card,
     borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
+    borderColor: c.borderCard,
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
@@ -232,7 +240,7 @@ const styles = StyleSheet.create({
   gridCellLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textDark,
+    color: c.textDark,
     textAlign: 'center',
     marginTop: 10,
   },

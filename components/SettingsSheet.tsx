@@ -552,7 +552,14 @@ export function SettingsSheet() {
   const handleDownloadAll = () => {
     const allDownloaded = downloads.length >= ALL_RESOURCES.length;
     if (allDownloaded) {
-      Alert.alert('Already Downloaded', 'All resources are already available offline.');
+      if (Platform.OS === 'web') {
+        window.alert('Already Downloaded\nAll resources are already available offline.');
+      } else {
+        Alert.alert('Already Downloaded', 'All resources are already available offline.');
+      }
+    } else if (Platform.OS === 'web') {
+      if (!window.confirm('Download All Resources\nThis will save all resources for offline access.')) return;
+      downloadAllResources().then(() => { window.alert('Success\nAll resources are now available offline!'); });
     } else {
       Alert.alert('Download All Resources', 'This will save all resources for offline access.', [
         { text: 'Cancel', style: 'cancel' },
@@ -609,6 +616,9 @@ export function SettingsSheet() {
                   <SheetRow icon="mic-outline" label="Voice" value={voiceName} onPress={() => setCurrentView('voice')} theme={theme} />
                   {Platform.OS === 'web' && isAdmin && (
                     <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
+                  )}
+                  {Platform.OS === 'web' && isAdmin && (
+                    <SheetRow icon="create-outline" label="Content Pages" value="Write guides" onPress={() => { close(); router.push('/(editor)/content-pages'); }} theme={theme} />
                   )}
                   <SheetRow icon="cloud-download-outline" label="Download All" value={downloads.length >= ALL_RESOURCES.length ? 'All saved' : `${downloads.length}/${ALL_RESOURCES.length}`} onPress={handleDownloadAll} theme={theme} />
                   <SheetRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />

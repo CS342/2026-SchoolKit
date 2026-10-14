@@ -20,6 +20,7 @@ export const ALL_RESOURCES: Resource[] = [
   { id: '15', abbr: 'Find People', shortDescription: 'How to find people who understand your journey.', title: 'How to Find People Who Understand Your Journey', category: 'Social', tags: ['social', 'friends', 'support', 'survivors', 'connections', 'peer'], icon: 'compass', color: '#10B981', route: '/finding-support' },
   { id: '16', abbr: 'Coping Away', shortDescription: 'Tips for staying connected and making your hospital room feel more like home.', title: 'Coping When Away From Home', category: 'Family', tags: ['home', 'hospital', 'coping', 'family', 'comfort', 'connected', 'homesick'], icon: 'home', color: '#E8734A', route: '/coping-away-from-home' },
   { id: '17', abbr: 'Symptoms', shortDescription: 'Practical guidance for understanding and managing treatment-related symptoms.', title: 'Tips for Managing Symptoms', category: 'Health', tags: ['health', 'symptoms', 'cancer', 'treatment', 'managing', 'body', 'side effects'], icon: 'body-outline', color: '#6366F1', route: '/managing-symptoms' },
+  { id: '18', abbr: 'Finances', shortDescription: 'Where the costs come from, who can help, and organizations that offer real financial support.', title: 'Navigating the Finances of Childhood Cancer', category: 'Family', tags: ['finances', 'money', 'costs', 'insurance', 'grants', 'family', 'support'], icon: 'wallet', color: '#3C9A8D', route: '/page/finances-childhood-cancer' },
 ];
 
 export const ALL_RESOURCE_IDS = ALL_RESOURCES.map(r => r.id);

@@ -21,6 +21,10 @@ const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
 
 const PENDING_CHANGES_KEY = "@schoolkit_pending_changes";
 
+// Drop a change after this many failed sync attempts so a permanently-failing
+// change doesn't get retried forever.
+const MAX_SYNC_ATTEMPTS = 5;
+
 interface PendingChange {
   id: string;
   type:
@@ -32,11 +36,14 @@ interface PendingChange {
     | "story_bookmark_remove";
   payload: Record<string, unknown>;
   timestamp: number;
+  /** Number of failed sync attempts so far. Absent for changes queued before this field existed. */
+  attempts?: number;
 }
 
 export function OfflineProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
   const isOnlineRef = useRef(true);
+  const isSyncingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
@@ -83,6 +90,10 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   const syncPendingChanges = async () => {
     if (!isOnlineRef.current) return;
+    // Prevent concurrent runs (e.g. NetInfo reconnect firing while another
+    // trigger is mid-sync) from reading the same snapshot and double-applying.
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
 
     try {
       const stored = await AsyncStorage.getItem(PENDING_CHANGES_KEY);
@@ -149,8 +160,19 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
             }
           }
         } catch (err) {
-          console.error(`Failed to sync change ${change.id}:`, err);
-          failedChanges.push(change);
+          const attempts = (change.attempts ?? 0) + 1;
+          if (attempts >= MAX_SYNC_ATTEMPTS) {
+            console.error(
+              `Dropping change ${change.id} after ${attempts} failed attempts:`,
+              err
+            );
+          } else {
+            console.error(
+              `Failed to sync change ${change.id} (attempt ${attempts}):`,
+              err
+            );
+            failedChanges.push({ ...change, attempts });
+          }
         }
       }
 
@@ -170,6 +192,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       );
     } catch (error) {
       console.error("Error syncing pending changes:", error);
+    } finally {
+      isSyncingRef.current = false;
     }
   };
 

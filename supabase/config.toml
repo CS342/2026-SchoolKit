@@ -20,6 +20,10 @@ entrypoint = "./functions/generate-tts/index.ts"
 verify_jwt = true
 entrypoint = "./functions/generate-design/index.ts"
 
+[functions.generate-content]
+verify_jwt = true
+entrypoint = "./functions/generate-content/index.ts"
+
 # Public by design: share-link viewers are unauthenticated; access is gated
 # by the unguessable share token, and lookups use the service role key.
 [functions.get-shared-design]

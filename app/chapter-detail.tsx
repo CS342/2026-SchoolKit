@@ -9,10 +9,12 @@ import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { COLORS, SHADOWS } from '../constants/onboarding-theme';
 import PuzzleGrid from '../components/puzzle/PuzzleGrid';
 import PieceDetailModal from '../components/puzzle/PieceDetailModal';
+import { useWebLayout, CONTENT_WIDTH } from '../hooks/useResponsive';
 
 export default function ChapterDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const webLayout = useWebLayout();
   const { chapterId } = useLocalSearchParams<{ chapterId: string }>();
   const { earnedPieceIds, earnedAt } = useAccomplishments();
   const [inspectingPiece, setInspectingPiece] = useState<PieceDefinition | null>(null);
@@ -43,28 +45,34 @@ export default function ChapterDetailScreen() {
         end={{ x: 1, y: 0 }}
         style={styles.header}
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.9)" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <View style={styles.headerText}>
-            <Text style={styles.chapterTitle}>{chapter.title}</Text>
-            <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
-          </View>
-          {isComplete ? (
-            <View style={styles.completeBadge}>
-              <Text style={styles.completeBadgeText}>Complete</Text>
+        <View style={webLayout ? styles.webInner : undefined}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.9)" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <View style={styles.headerText}>
+              <Text style={styles.chapterTitle}>{chapter.title}</Text>
+              <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
             </View>
-          ) : (
-            <Text style={styles.progressText}>
-              {earnedCount} / {chapter.pieceCount}
-            </Text>
-          )}
+            {isComplete ? (
+              <View style={styles.completeBadge}>
+                <Text style={styles.completeBadgeText}>Complete</Text>
+              </View>
+            ) : (
+              <Text style={styles.progressText}>
+                {earnedCount} / {chapter.pieceCount}
+              </Text>
+            )}
+          </View>
         </View>
       </LinearGradient>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 40 },
+          webLayout && styles.webInner,
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Intro text */}
@@ -117,6 +125,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
+  },
+  webInner: {
+    width: '100%',
+    maxWidth: CONTENT_WIDTH.reading,
+    alignSelf: 'center',
   },
   backBtn: {
     width: 36,

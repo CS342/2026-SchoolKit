@@ -32,6 +32,7 @@ import { ReportCommentModal } from "../components/ReportCommentModal";
 import { RecommendationList } from "../components/RecommendationList";
 import { diffWords } from "diff";
 import { FeedbackBanner } from "../components/FeedbackBanner";
+import { Breadcrumb } from "../components/ui";
 import { useResponsive } from "../hooks/useResponsive";
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
@@ -256,7 +257,7 @@ const makeCommentStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, 
     container: {
       paddingVertical: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: isDark ? c.borderCard : "#E5E5EA",
+      borderBottomColor: c.borderCard,
     },
     headerRow: {
       flexDirection: "row",
@@ -500,27 +501,29 @@ export default function StoryDetailScreen() {
   };
 
   const handleDeleteComment = (commentId: string) => {
+    if (!id) return;
+    const doDelete = async () => {
+      try {
+        // Only remove from local state once the delete actually resolves,
+        // so a failed delete doesn't silently vanish and then reappear on refresh.
+        await deleteComment(commentId, id);
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      } catch (error) {
+        if (Platform.OS === "web") {
+          window.alert("Couldn't delete the comment. Please try again.");
+        } else {
+          Alert.alert("Error", "Couldn't delete the comment. Please try again.");
+        }
+      }
+    };
     if (Platform.OS === "web") {
       if (window.confirm("Delete this comment?")) {
-        if (id) {
-          deleteComment(commentId, id).then(() => {
-            setComments((prev) => prev.filter((c) => c.id !== commentId));
-          });
-        }
+        doDelete();
       }
     } else {
       Alert.alert("Delete Comment", "Delete this comment?", [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            if (id) {
-              await deleteComment(commentId, id);
-              setComments((prev) => prev.filter((c) => c.id !== commentId));
-            }
-          },
-        },
+        { text: "Delete", style: "destructive", onPress: doDelete },
       ]);
     }
   };
@@ -837,7 +840,7 @@ export default function StoryDetailScreen() {
       <View style={styles.modalHeader}>
         <Text style={styles.modalTitle}>Responses</Text>
         <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="close" size={24} color={colors.textDark || "#1E1E24"} />
+          <Ionicons name="close" size={24} color={colors.textDark} />
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={false}>
@@ -893,7 +896,18 @@ export default function StoryDetailScreen() {
           >
             <Ionicons name="chevron-back" size={22} color={colors.textDark} />
           </Pressable>
-          <Text style={appStyles.editHeaderTitle}>Story</Text>
+          {Platform.OS === "web" ? (
+            <View style={{ flex: 1, marginLeft: 6 }}>
+              <Breadcrumb
+                items={[
+                  { label: "Stories", onPress: () => router.push("/(tabs)/stories") },
+                  { label: story.title || "Story" },
+                ]}
+              />
+            </View>
+          ) : (
+            <Text style={appStyles.editHeaderTitle}>Story</Text>
+          )}
           {isOwnStory ? (
             <Pressable onPress={handleDelete} style={{ padding: 8 }}>
               <Ionicons name="trash-outline" size={22} color={colors.error} />
@@ -1040,7 +1054,7 @@ export default function StoryDetailScreen() {
               </TouchableOpacity>
 
               {showOriginalVersion && (
-                <View style={[styles.previousVersionContainer, { backgroundColor: isDark ? colors.borderCard : '#F9F9FB', borderColor: colors.borderCard }]}>
+                <View style={[styles.previousVersionContainer, { backgroundColor: isDark ? colors.borderCard : colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
                   <Text style={styles.previousVersionTitleText}>Original Submitted Version</Text>
                   {story.previous_title && (
                     <Text style={[styles.storyTitle, { fontSize: 18, color: COLORS.textLight, marginBottom: 8 }]}>
@@ -1263,19 +1277,13 @@ export default function StoryDetailScreen() {
         onClose={() => setShowReportModal(false)}
         onSubmit={async (reason, details) => {
           if (!story) return;
-          try {
-            await reportStory(story.id, reason, details);
-            if (Platform.OS === 'web') {
-              window.alert("Story reported. Our moderators will review it shortly.");
-            } else {
-              Alert.alert("Report Received", "Our moderators will review this story shortly.");
-            }
-          } catch (error) {
-            if (Platform.OS === 'web') {
-              window.alert("Failed to submit report. Please try again.");
-            } else {
-              Alert.alert("Error", "Failed to submit report. Please try again.");
-            }
+          // Let errors propagate so the modal keeps itself open and shows an
+          // inline error instead of misleading the user that the report was filed.
+          await reportStory(story.id, reason, details);
+          if (Platform.OS === 'web') {
+            window.alert("Story reported. Our moderators will review it shortly.");
+          } else {
+            Alert.alert("Report Received", "Our moderators will review this story shortly.");
           }
         }}
       />
@@ -1294,7 +1302,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     },
     webHeaderInner: {
       width: "100%" as any,
-      maxWidth: 800 as any,
+      maxWidth: 760 as any,
       flexDirection: "row" as const,
       alignItems: "center" as const,
       justifyContent: "space-between" as const,
@@ -1302,7 +1310,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     },
     webContainer: {
       width: "100%" as any,
-      maxWidth: 800 as any,
+      maxWidth: 760 as any,
       alignSelf: "center" as any,
       flex: 1,
     },
@@ -1313,7 +1321,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     },
     webMaxWidth: {
       width: "100%" as any,
-      maxWidth: 800 as any,
+      maxWidth: 760 as any,
       alignSelf: "center" as any,
     },
     scrollContent: {
@@ -1440,9 +1448,9 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       marginTop: 18,
       marginBottom: 20,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: "#E5E5EA",
+      borderTopColor: c.borderCard,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: "#E5E5EA",
+      borderBottomColor: c.borderCard,
     },
     actionLeft: {
       flexDirection: "row",
@@ -1490,7 +1498,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     commentInputWrapper: {
       backgroundColor: c.white,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: "#E5E5EA",
+      borderTopColor: c.borderCard,
       paddingTop: 8,
     },
     reminderText: {
@@ -1519,7 +1527,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       fontWeight: "400",
       color: c.textDark,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: "#E5E5EA",
+      borderColor: c.borderCard,
     },
     sendButton: {
       padding: 8,
@@ -1540,7 +1548,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       borderRadius: 100,
       backgroundColor: COLORS.appBackground,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: "#E5E5EA",
+      borderColor: c.borderCard,
     },
     anonToggleActive: {
       backgroundColor: COLORS.primary + "12",
@@ -1554,7 +1562,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     guestCommentWrapper: {
       backgroundColor: c.white,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: "#E5E5EA",
+      borderTopColor: c.borderCard,
       paddingTop: 16,
       alignItems: 'center',
     },
@@ -1577,7 +1585,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       height: '80%',
-      shadowColor: '#000',
+      shadowColor: c.shadow,
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.1,
       shadowRadius: 8,
@@ -1590,7 +1598,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       paddingHorizontal: 20,
       paddingVertical: 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: '#E5E5EA',
+      borderBottomColor: c.borderCard,
     },
     modalTitle: {
       fontSize: fs(18),

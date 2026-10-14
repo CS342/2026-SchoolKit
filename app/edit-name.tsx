@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -91,6 +91,11 @@ const makeStyles = (
     },
     content: {
       padding: SPACING.screenPadding,
+      // Web-only: cap and center this single-input form so it doesn't stretch
+      // edge-to-edge on desktop. No-op on native.
+      ...(Platform.OS === 'web'
+        ? { width: '100%', maxWidth: 560, alignSelf: 'center' as const }
+        : {}),
     },
     label: {
       fontSize: 18,

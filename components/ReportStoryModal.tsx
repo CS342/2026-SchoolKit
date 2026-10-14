@@ -28,18 +28,21 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setSelectedReason(null);
       setDetails('');
       setIsSubmitting(false);
+      setSubmitError(null);
     }
   }, [visible]);
 
   const handleSubmit = async () => {
     if (selectedReason && !isSubmitting) {
       setIsSubmitting(true);
+      setSubmitError(null);
       try {
         await onSubmit(selectedReason, details);
         setSelectedReason(null);
@@ -47,6 +50,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
         onClose();
       } catch (error) {
         console.error('Submit report error:', error);
+        setSubmitError("We couldn't submit your report. Please check your connection and try again.");
       } finally {
         setIsSubmitting(false);
       }
@@ -121,6 +125,9 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
           </ScrollView>
 
           <View style={styles.footer}>
+            {submitError && (
+              <Text style={styles.errorText}>{submitError}</Text>
+            )}
             <View style={styles.submitBtn}>
               <PrimaryButton 
                 title="Submit Report" 
@@ -257,6 +264,12 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
   },
   submitBtn: {
     width: '100%',
+  },
+  errorText: {
+    fontSize: 13,
+    color: c.error,
+    marginBottom: 12,
+    textAlign: 'center',
   }
 });
 }

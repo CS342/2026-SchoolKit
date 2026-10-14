@@ -24,6 +24,7 @@ import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { COLORS } from "../constants/onboarding-theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -215,7 +216,7 @@ function SmartGoalCard({ accentColor }: { accentColor: string }) {
     return (
         <View style={smartStyles.container}>
             <Text style={[smartStyles.exampleLabel, { color: accentColor }]}>Example goal:</Text>
-            <Text style={[smartStyles.example, { backgroundColor: isDark ? accentColor + "20" : "#F5F3FF", color: colors.textMuted }]}>
+            <Text style={[smartStyles.example, { backgroundColor: isDark ? accentColor + "20" : colors.backgroundLighter, color: colors.textMuted }]}>
                 "I will complete my history essay outline by Thursday at 8 PM so I'm not stressed the night before it's due."
             </Text>
             <Text style={[smartStyles.buildLabel, { color: accentColor }]}>Build your goal:</Text>
@@ -395,7 +396,7 @@ function ExpandedCardModal({
 
                 {/* Back */}
                 <Animated.View style={[styles.expandedCardShadow, styles.expandedCardBackSide, { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, height: cardHeight }]}>
-                    <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF", borderColor: color }]}>
+                    <View style={[styles.expandedCard, { height: "100%", backgroundColor: isDark ? colors.backgroundLight : colors.white, borderColor: color }]}>
                         <View style={styles.expandedCardInner}>
                             <View style={styles.factHeader}>
                                 <View>
@@ -412,7 +413,7 @@ function ExpandedCardModal({
                                         {isLoadingAudio ? (
                                             <ActivityIndicator size="small" color={color} />
                                         ) : (
-                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : isDark ? colors.textDark : "#2D2D44"} />
+                                            <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? colors.error : colors.textDark} />
                                         )}
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
@@ -495,7 +496,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                     <Animated.View style={[handoutStyles.backdrop, { opacity: backdropAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.55] }) }]} />
                 </Pressable>
 
-                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }], backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF" }]}>
+                <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }], backgroundColor: isDark ? colors.backgroundLight : colors.white }]}>
                     {/* Handle bar */}
                     <View style={handoutStyles.handleArea}>
                         <View style={handoutStyles.handle} />
@@ -549,7 +550,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                                                         : { borderColor: handout.color },
                                                 ]}>
                                                     {checked && (
-                                                        <Ionicons name="checkmark" size={12} color="#fff" />
+                                                        <Ionicons name="checkmark" size={12} color={colors.white} />
                                                     )}
                                                 </View>
                                                 <Text style={[
@@ -752,6 +753,127 @@ export default function SchoolLifeBalanceScreen() {
         } catch { }
     };
 
+    const actionsNode = (
+        <>
+            <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+                <Ionicons name="share-outline" size={26} color={colors.textLight} />
+            </TouchableOpacity>
+            <DownloadButton resourceId="14" size={26} color="#7B68EE" />
+            <BookmarkButton resourceId="14" size={25} color="#7B68EE" />
+        </>
+    );
+
+    const titleNode = (
+        <Text style={styles.pageTitle}>
+            Best Practices for Juggling{"\n"}
+            <Text style={{ color: "#7B68EE" }}>School and Life</Text>
+        </Text>
+    );
+
+    const articleBody = (
+        <>
+            {/* Intro */}
+            <View nativeID="balance-intro">
+                <Text style={styles.subtitleText}>
+                    Balancing school with jobs, home duties, or other responsibilities can feel tough—but with the right tools, you can find a rhythm that works for you.
+                </Text>
+                <Text style={styles.instructionText}>Tap each card to flip it and read the tips.</Text>
+            </View>
+
+            {/* 2-column card grid — rows of 2, matching handout box widths */}
+            <View nativeID="balance-tips" style={styles.gridContainer}>
+                {[0, 2, 4].map((rowStart) => (
+                    <View key={rowStart} style={styles.cardRow}>
+                        {CARDS.slice(rowStart, rowStart + 2).map((card, i) => (
+                            <GridCard
+                                key={card.id}
+                                item={card}
+                                color={CARD_COLORS[(rowStart + i) % CARD_COLORS.length]}
+                                index={rowStart + i}
+                                onPress={() => handleCardPress(card)}
+                                styles={styles}
+                            />
+                        ))}
+                    </View>
+                ))}
+            </View>
+
+            {/* Handouts section */}
+            <View nativeID="balance-handouts" style={styles.handoutSection}>
+                <Text style={styles.sectionHeading}>📄 Helpful Handouts</Text>
+                <Text style={styles.subtitleText}>Tap to open and explore.</Text>
+                <View style={styles.handoutGrid}>
+                    {HANDOUTS.map((handout) => (
+                        <TouchableOpacity
+                            key={handout.id}
+                            style={[styles.handoutCard, {
+                                borderColor: isDark ? handout.color + "50" : handout.color + "30",
+                                backgroundColor: isDark ? colors.backgroundLight : handout.color + "08"
+                            }]}
+                            onPress={() => setActiveHandout(handout)}
+                            activeOpacity={0.8}
+                        >
+                            <View style={[styles.handoutIcon, { backgroundColor: handout.color + "20" }]}>
+                                <Ionicons name={handout.icon as any} size={24} color={handout.color} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.handoutName}>{handout.title}</Text>
+                                <Text style={styles.handoutSub}>Self-management tool</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
+        </>
+    );
+
+    const RELATED_TAGS = ['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization'];
+
+    const sections = [
+        { id: "balance-intro", label: "Overview" },
+        { id: "balance-tips", label: "Balance Tips" },
+        { id: "balance-handouts", label: "Handouts" },
+    ];
+
+    // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+    if (Platform.OS === "web") {
+        return (
+            <>
+                <ArticleLayout
+                    breadcrumb={[
+                        { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+                        { label: "School" },
+                        { label: "Best Practices for Juggling School and Life" },
+                    ]}
+                    title={titleNode}
+                    actions={actionsNode}
+                    sections={sections}
+                    aside={<RecommendationList currentId={resourceId} currentTags={RELATED_TAGS} variant="rail" />}
+                >
+                    {articleBody}
+                </ArticleLayout>
+
+                {/* Expanded card modal */}
+                <ExpandedCardModal
+                    visible={expandedCard !== null}
+                    item={expandedCard}
+                    color={expandedColor}
+                    onClose={closeExpandedCard}
+                    isSpeaking={isSpeaking}
+                    isLoadingAudio={isLoadingAudio}
+                    onToggleSpeak={handleSpeak}
+                    playbackRate={playbackRate}
+                    onTogglePlaybackRate={togglePlaybackRate}
+                    styles={styles}
+                />
+
+                {/* Handout modal */}
+                <HandoutModal handout={activeHandout} onClose={() => setActiveHandout(null)} styles={styles} />
+            </>
+        );
+    }
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -760,11 +882,7 @@ export default function SchoolLifeBalanceScreen() {
                     <Ionicons name="arrow-back" size={28} color={colors.textDark} />
                 </TouchableOpacity>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
-                    </TouchableOpacity>
-                    <DownloadButton resourceId="14" size={28} color="#7B68EE" />
-                    <BookmarkButton resourceId="14" size={27} color="#7B68EE" />
+                    {actionsNode}
                 </View>
             </View>
 
@@ -774,70 +892,15 @@ export default function SchoolLifeBalanceScreen() {
                 onScroll={handleScroll}
                 scrollEventThrottle={100}
             >
-                {/* Title */}
-                <Text style={styles.pageTitle}>
-                    Best Practices for Juggling{"\n"}
-                    <Text style={{ color: "#7B68EE" }}>School and Life</Text>
-                </Text>
-
-                {/* Subtitle */}
-                <Text style={styles.subtitleText}>
-                    Balancing school with jobs, home duties, or other responsibilities can feel tough—but with the right tools, you can find a rhythm that works for you.
-                </Text>
-
-                <Text style={styles.instructionText}>Tap each card to flip it and read the tips.</Text>
-
-                {/* 2-column card grid — rows of 2, matching handout box widths */}
-                <View style={styles.gridContainer}>
-                    {[0, 2, 4].map((rowStart) => (
-                        <View key={rowStart} style={styles.cardRow}>
-                            {CARDS.slice(rowStart, rowStart + 2).map((card, i) => (
-                                <GridCard
-                                    key={card.id}
-                                    item={card}
-                                    color={CARD_COLORS[(rowStart + i) % CARD_COLORS.length]}
-                                    index={rowStart + i}
-                                    onPress={() => handleCardPress(card)}
-                                    styles={styles}
-                                />
-                            ))}
-                        </View>
-                    ))}
-                </View>
-
-                {/* Handouts section */}
-                <View style={styles.handoutSection}>
-                    <Text style={styles.sectionHeading}>📄 Helpful Handouts</Text>
-                    <Text style={styles.subtitleText}>Tap to open and explore.</Text>
-                    <View style={styles.handoutGrid}>
-                        {HANDOUTS.map((handout) => (
-                            <TouchableOpacity
-                                key={handout.id}
-                                style={[styles.handoutCard, { 
-                                    borderColor: isDark ? handout.color + "50" : handout.color + "30",
-                                    backgroundColor: isDark ? colors.backgroundLight : handout.color + "08"
-                                }]}
-                                onPress={() => setActiveHandout(handout)}
-                                activeOpacity={0.8}
-                            >
-                                <View style={[styles.handoutIcon, { backgroundColor: handout.color + "20" }]}>
-                                    <Ionicons name={handout.icon as any} size={24} color={handout.color} />
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.handoutName}>{handout.title}</Text>
-                                    <Text style={styles.handoutSub}>Self-management tool</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
+                <ContentColumn width="reading">
+                {titleNode}
+                {articleBody}
                 {/* Recommendations */}
                 <RecommendationList
                     currentId={resourceId}
-                    currentTags={['school', 'balance', 'life', 'work', 'tips', 'stress', 'organization']}
+                    currentTags={RELATED_TAGS}
                 />
+                </ContentColumn>
             </ScrollView>
 
             {/* Expanded card modal */}
@@ -910,7 +973,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
             elevation: 8,
         },
         gridCardText: {
-            color: "#fff",
+            color: c.white,
             fontSize: fs(15),
             fontWeight: "700",
             textAlign: "center",
@@ -925,7 +988,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
         expandedCardBackSide: { position: "absolute", top: 0, left: 0, right: 0 },
         expandedCard: { width: "100%", borderRadius: 32, padding: 24, borderWidth: 1, overflow: "hidden" },
         expandedCardInnerFront: { flex: 1, justifyContent: "center", alignItems: "center" },
-        expandedFrontTitle: { color: "#fff", fontSize: fs(28), fontWeight: "900", textAlign: "center", lineHeight: fs(36) },
+        expandedFrontTitle: { color: c.white, fontSize: fs(28), fontWeight: "900", textAlign: "center", lineHeight: fs(36) },
         flipHint: { color: "rgba(255,255,255,0.7)", fontSize: fs(14), fontWeight: "700", marginTop: 24 },
         expandedCardInner: { flex: 1 },
         factHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },

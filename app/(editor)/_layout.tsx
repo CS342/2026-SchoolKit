@@ -23,6 +23,8 @@ export default function EditorLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="designs" />
       <Stack.Screen name="design/[id]" />
+      <Stack.Screen name="content-pages" />
+      <Stack.Screen name="content/[id]" />
     </Stack>
   );
 }

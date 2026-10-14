@@ -9,6 +9,7 @@ import { COLORS, SHADOWS, RADII, TYPOGRAPHY, withOpacity } from '../constants/on
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
+import { ContentColumn, ArticleLayout } from '../components/ui';
 
 const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
@@ -119,8 +120,54 @@ export default function TopicDetailScreen() {
   if (checkingDesign) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
+
+  const titleNode = (
+    <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
+      <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
+        <Ionicons name="book" size={40} color={color} />
+      </View>
+      <Text style={styles.title}>{title}</Text>
+    </View>
+  );
+
+  const body = (
+    <>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About this topic</Text>
+        <Text style={styles.description}>
+          This is a comprehensive resource about "{title}". Here you'll find helpful information,
+          strategies, and support for navigating this aspect of your school journey.
+        </Text>
+      </View>
+
+      <View style={[styles.section, { alignItems: 'center', paddingVertical: 32 }]}>
+        <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082), width: 64, height: 64, borderRadius: 32, marginBottom: 16 }]}>
+          <Ionicons name="construct-outline" size={32} color={color} />
+        </View>
+        <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Content Coming Soon</Text>
+        <Text style={[styles.description, { textAlign: 'center' }]}>
+          We're working on creating detailed resources for this topic. Check back soon!
+        </Text>
+      </View>
+    </>
+  );
+
+  // Web: a single centered reading column (no outline, no rail) for this light page.
+  if (Platform.OS === 'web') {
+    return (
+      <ArticleLayout
+        breadcrumb={[
+          { label: 'Library', onPress: () => router.push('/(tabs)/bookmarks') },
+          { label: title },
+        ]}
+        title={titleNode}
+      >
+        {body}
+      </ArticleLayout>
     );
   }
 
@@ -128,7 +175,7 @@ export default function TopicDetailScreen() {
     <View style={[styles.container, { backgroundColor: withOpacity(color, 0.03) }]}>
       <View style={[styles.header, { borderBottomColor: color, paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-          <Ionicons name="arrow-back" size={28} color={COLORS.textDark} />
+          <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
@@ -147,30 +194,10 @@ export default function TopicDetailScreen() {
         onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => setContentHeight(h)}
       >
-        <View style={[styles.titleCard, { borderLeftColor: color, borderLeftWidth: 6 }]}>
-          <View style={[styles.iconContainer, { backgroundColor: withOpacity(color, 0.125) }]}>
-            <Ionicons name="book" size={40} color={color} />
-          </View>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About this topic</Text>
-          <Text style={styles.description}>
-            This is a comprehensive resource about "{title}". Here you'll find helpful information,
-            strategies, and support for navigating this aspect of your school journey.
-          </Text>
-        </View>
-
-        <View style={[styles.section, { alignItems: 'center', paddingVertical: 32 }]}>
-          <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082), width: 64, height: 64, borderRadius: 32, marginBottom: 16 }]}>
-            <Ionicons name="construct-outline" size={32} color={color} />
-          </View>
-          <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Content Coming Soon</Text>
-          <Text style={[styles.description, { textAlign: 'center' }]}>
-            We're working on creating detailed resources for this topic. Check back soon!
-          </Text>
-        </View>
+        <ContentColumn width="reading">
+        {titleNode}
+        {body}
+        </ContentColumn>
       </ScrollView>
     </View>
   );
@@ -192,7 +219,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       paddingBottom: 20,
       backgroundColor: isDark ? c.backgroundLight : c.white,
       borderBottomWidth: 3,
-      shadowColor: isDark ? '#000' : COLORS.shadow,
+      shadowColor: isDark ? '#000' : c.shadow,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: isDark ? 0.3 : 0.1,
       shadowRadius: 12,
@@ -220,9 +247,9 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       padding: 28,
       marginBottom: 24,
       borderWidth: 2,
-      borderColor: isDark ? c.borderCard : COLORS.borderCard,
+      borderColor: c.borderCard,
       alignItems: 'center',
-      shadowColor: isDark ? '#000' : COLORS.shadow,
+      shadowColor: isDark ? '#000' : c.shadow,
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: isDark ? 0.4 : 0.08,
       shadowRadius: 20,
@@ -265,8 +292,8 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       borderRadius: 20,
       marginBottom: 12,
       borderWidth: 2,
-      borderColor: isDark ? c.borderCard : COLORS.borderCard,
-      shadowColor: isDark ? '#000' : COLORS.shadow,
+      borderColor: c.borderCard,
+      shadowColor: isDark ? '#000' : c.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: isDark ? 0.2 : 0.05,
       shadowRadius: 8,

@@ -55,7 +55,16 @@ export function useAutoSave(stageRef: React.RefObject<Konva.Stage | null>) {
 
     return () => {
       unsub();
-      if (timerRef.current) clearTimeout(timerRef.current);
+      // If a debounced save is still pending, flush it before unmounting
+      // (e.g. Back pressed within the debounce window). saveNow reads the
+      // latest values via useEditorStore.getState(), so the flush is not stale.
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        if (useEditorStore.getState().isDirty) {
+          void saveNow();
+        }
+      }
     };
   }, [saveNow]);
 

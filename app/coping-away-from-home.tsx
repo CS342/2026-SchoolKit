@@ -8,6 +8,7 @@ import {
     Animated,
     Share,
     ActivityIndicator,
+    Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +17,7 @@ import { BookmarkButton } from "../components/BookmarkButton";
 import { RecommendationList } from "../components/RecommendationList";
 import { DownloadButton } from "../components/DownloadButton";
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 
 const PAGE_COLOR = "#E8734A";
 const RESOURCE_ID = "16";
@@ -49,7 +51,7 @@ function VideoPlaceholder({ icon }: { icon: string }) {
                     <Ionicons name={icon as any} size={36} color={PAGE_COLOR} />
                 </View>
                 <View style={vidStyles.badge}>
-                    <Ionicons name="play-circle-outline" size={14} color="#FFF" style={{ marginRight: 4 }} />
+                    <Ionicons name="play-circle-outline" size={14} color={colors.white} style={{ marginRight: 4 }} />
                     <Text style={vidStyles.badgeText}>Video Coming Soon</Text>
                 </View>
             </View>
@@ -253,7 +255,7 @@ function ListFlipCard({ items, contacts, style, styles }: { items: NumberedItem[
                     transform: [{ perspective: 1000 }, { rotateY: backRotate }], 
                     opacity: backOpacity, 
                     backfaceVisibility: "hidden",
-                    backgroundColor: isDark ? colors.backgroundLight : "#FFFFFF",
+                    backgroundColor: isDark ? colors.backgroundLight : colors.white,
                     borderColor: PAGE_COLOR + "40"
                 }]}>
                     <ContactsBack contacts={contacts} flipped={flipped} fontSizeStep={fontSizeStep} onAaPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} styles={styles} />
@@ -324,31 +326,26 @@ export default function CopingAwayFromHomeScreen() {
 
     const styles = useMemo(() => makeStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
-    return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
-                    <Ionicons name="arrow-back" size={28} color={colors.textDark} />
-                </TouchableOpacity>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <TouchableOpacity onPress={handleShare} style={{ padding: 4 }}>
-                        <Ionicons name="share-outline" size={28} color={colors.textLight} />
-                    </TouchableOpacity>
-                    <DownloadButton resourceId={RESOURCE_ID} size={28} color={PAGE_COLOR} />
-                    <BookmarkButton resourceId={RESOURCE_ID} size={27} color={PAGE_COLOR} />
-                </View>
-            </View>
+    const actionsNode = (
+        <>
+            <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+                <Ionicons name="share-outline" size={26} color={colors.textLight} />
+            </TouchableOpacity>
+            <DownloadButton resourceId={RESOURCE_ID} size={26} color={PAGE_COLOR} />
+            <BookmarkButton resourceId={RESOURCE_ID} size={25} color={PAGE_COLOR} />
+        </>
+    );
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    const titleNode = (
+        <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
+            <Text style={styles.pageTitle}>
+                Coping When <Text style={{ color: PAGE_COLOR }}>Away From Home</Text>
+            </Text>
+        </Animated.View>
+    );
 
-                {/* Title */}
-                <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
-                    <Text style={styles.pageTitle}>
-                        Coping When <Text style={{ color: PAGE_COLOR }}>Away From Home</Text>
-                    </Text>
-                </Animated.View>
-
+    const articleBody = (
+        <>
                 {/* Quote */}
                 <Animated.View style={[styles.quoteCard, { opacity: quoteFade, transform: [{ translateY: quoteSlide }] }]}>
                     <Ionicons name="chatbubble-ellipses-outline" size={22} color={PAGE_COLOR} style={{ marginBottom: 8, opacity: 0.6 }} />
@@ -357,7 +354,7 @@ export default function CopingAwayFromHomeScreen() {
                 </Animated.View>
 
                 {/* ── Section 1: Home vs Hospital ── */}
-                <Animated.View style={{ opacity: s1Fade, transform: [{ translateY: s1Slide }] }}>
+                <Animated.View nativeID="coping-home" style={{ opacity: s1Fade, transform: [{ translateY: s1Slide }] }}>
                     <Text style={styles.sectionTitle}>Home and Hospital</Text>
                     <Text style={styles.sectionSubtitle}>Two very different spaces, but both can feel safe.</Text>
                     <View style={styles.videoRow}>
@@ -382,7 +379,7 @@ export default function CopingAwayFromHomeScreen() {
                 </Animated.View>
 
                 {/* ── Section 3: Staying Connected ── */}
-                <Animated.View style={{ opacity: s2Fade, transform: [{ translateY: s2Slide }] }}>
+                <Animated.View nativeID="coping-connected" style={{ opacity: s2Fade, transform: [{ translateY: s2Slide }] }}>
                     <Text style={[styles.sectionTitle, { marginTop: 4 }]}>Staying Connected with Home</Text>
                     <Text style={styles.sectionSubtitle}>Small rituals can make a big difference.</Text>
                     <View style={styles.sideBySideRow}>
@@ -394,7 +391,7 @@ export default function CopingAwayFromHomeScreen() {
                 </Animated.View>
 
                 {/* ── Section 4: YOUR Hospital Room ── */}
-                <Animated.View style={{ opacity: s3Fade, transform: [{ translateY: s3Slide }] }}>
+                <Animated.View nativeID="coping-room" style={{ opacity: s3Fade, transform: [{ translateY: s3Slide }] }}>
                     <Text style={[styles.sectionTitle, { marginTop: 28 }]}>
                         From Hospital Room to <Text style={{ color: PAGE_COLOR }}>YOUR</Text> Hospital Room
                     </Text>
@@ -407,10 +404,52 @@ export default function CopingAwayFromHomeScreen() {
                     </View>
                 </Animated.View>
 
-                <RecommendationList
-                    currentId={RESOURCE_ID}
-                    currentTags={["home", "hospital", "coping", "family", "comfort", "connected"]}
-                />
+        </>
+    );
+
+    const RELATED_TAGS = ["home", "hospital", "coping", "family", "comfort", "connected"];
+
+    // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+    if (Platform.OS === "web") {
+        return (
+            <ArticleLayout
+                breadcrumb={[
+                    { label: "Library", onPress: () => router.push("/(tabs)/bookmarks") },
+                    { label: "Family" },
+                    { label: "Coping When Away From Home" },
+                ]}
+                title={titleNode}
+                actions={actionsNode}
+                sections={[
+                    { id: "coping-home", label: "Home & Hospital" },
+                    { id: "coping-connected", label: "Staying Connected" },
+                    { id: "coping-room", label: "Your Hospital Room" },
+                ]}
+                aside={<RecommendationList currentId={RESOURCE_ID} currentTags={RELATED_TAGS} variant="rail" />}
+            >
+                {articleBody}
+            </ArticleLayout>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
+                    <Ionicons name="arrow-back" size={28} color={colors.textDark} />
+                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    {actionsNode}
+                </View>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <ContentColumn width="reading">
+                    {titleNode}
+                    {articleBody}
+                    <RecommendationList currentId={RESOURCE_ID} currentTags={RELATED_TAGS} />
+                </ContentColumn>
             </ScrollView>
         </View>
     );
@@ -435,7 +474,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
             marginBottom: 20, marginTop: 8, lineHeight: fs(38), letterSpacing: -1,
         },
         quoteCard: {
-            backgroundColor: isDark ? c.backgroundLight : "#FFFFFF", borderRadius: 20, borderWidth: 2,
+            backgroundColor: isDark ? c.backgroundLight : c.white, borderRadius: 20, borderWidth: 2,
             borderColor: PAGE_COLOR + "30", padding: 22, marginBottom: 28, alignItems: "center",
             shadowColor: PAGE_COLOR, shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
@@ -452,7 +491,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         videoRow: { flexDirection: "row", marginHorizontal: -6, marginBottom: 28 },
 
         introCard: {
-            flexDirection: "row", backgroundColor: isDark ? c.backgroundLight : "#FFFFFF", borderRadius: 20,
+            flexDirection: "row", backgroundColor: isDark ? c.backgroundLight : c.white, borderRadius: 20,
             marginBottom: 28, overflow: "hidden",
             shadowColor: PAGE_COLOR, shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,

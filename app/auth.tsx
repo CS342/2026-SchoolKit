@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
-import { GRADIENTS, SHADOWS, COLORS, TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS, SHARED_STYLES } from '../constants/onboarding-theme';
+import { TYPOGRAPHY, RADII, BORDERS, PASSWORD_STRENGTH_COLORS } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
+import type { ThemeColors } from '../constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 import { useResponsive } from '../hooks/useResponsive';
@@ -46,6 +48,8 @@ export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, shadows, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { signUp, signInWithPassword, signInAnonymously, resetPassword } = useAuth();
@@ -153,23 +157,23 @@ export default function AuthScreen() {
 
   const handleForgotPassword = async () => {
     if (!email.trim()) {
-      Alert.alert('Enter your email', 'Please enter your email address first, then tap Forgot Password.');
+      showAlert('Enter your email', 'Please enter your email address first, then tap Forgot Password.');
       return;
     }
     if (!isValidEmail(email.trim())) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      showAlert('Invalid email', 'Please enter a valid email address.');
       return;
     }
     setLoading(true);
     try {
       const { error } = await resetPassword(email.trim());
       if (error) {
-        Alert.alert('Error', error.message);
+        showAlert('Error', error.message);
       } else {
-        Alert.alert('Check your email', 'If an account exists with that email, you will receive a password reset link.');
+        showAlert('Check your email', 'If an account exists with that email, you will receive a password reset link.');
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
+      showAlert('Error', err.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -181,14 +185,14 @@ export default function AuthScreen() {
       await signInAnonymously();
       router.replace('/');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
+      showAlert('Error', err.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <DecorativeBackground variant="auth" gradientColors={GRADIENTS.screenBackground}>
+    <DecorativeBackground variant="auth" gradientColors={gradients.screenBackground}>
       <AuthWebWrapper variant="auth">
       <KeyboardAvoidingView
         style={styles.container}
@@ -203,19 +207,19 @@ export default function AuthScreen() {
           {/* Gradient Header Banner (mobile only) / Icon + Title (desktop) */}
           {isWebDesktop ? (
             <View style={{ alignItems: 'center' as const, paddingTop: 48 }}>
-              <View style={[SHARED_STYLES.pageIconCircle, { width: 96, height: 96, borderRadius: 48 }]}>
-                <Ionicons name={isSignUp ? 'person-add-outline' : 'lock-closed-outline'} size={56} color={COLORS.primary} />
+              <View style={[sharedStyles.pageIconCircle, { width: 96, height: 96, borderRadius: 48 }]}>
+                <Ionicons name={isSignUp ? 'person-add-outline' : 'lock-closed-outline'} size={56} color={colors.primary} />
               </View>
-              <Text style={SHARED_STYLES.pageTitle}>
+              <Text style={sharedStyles.pageTitle}>
                 {isSignUp ? 'Create your account' : 'Welcome back'}
               </Text>
-              <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>
+              <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
                 {isSignUp ? 'Join SchoolKit to get started' : 'Sign in to continue your journey'}
               </Text>
             </View>
           ) : (
             <LinearGradient
-              colors={[...GRADIENTS.authHeader]}
+              colors={[...gradients.authHeader]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[styles.headerBanner, { paddingTop: insets.top + 2 }]}
@@ -251,16 +255,16 @@ export default function AuthScreen() {
           )}
 
           {/* Form Card */}
-          <View style={[styles.formCard, isWebDesktop && { backgroundColor: 'transparent', borderRadius: 0, padding: 0, marginHorizontal: 0, marginTop: 0, shadowOpacity: 0, elevation: 0 }]}>
+          <View style={[styles.formCard, !isWebDesktop && shadows.card, isWebDesktop && { backgroundColor: 'transparent', borderRadius: 0, padding: 0, marginHorizontal: 0, marginTop: 0, shadowOpacity: 0, elevation: 0 }]}>
             {/* Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <View style={[styles.inputWrapper, emailFocused && styles.inputWrapperFocused]}>
-                <Ionicons name="mail-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor={COLORS.inputPlaceholder}
+                  placeholderTextColor={colors.inputPlaceholder}
                   value={email}
                   onChangeText={setEmail}
                   onFocus={() => setEmailFocused(true)}
@@ -279,12 +283,12 @@ export default function AuthScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
               <View style={[styles.inputWrapper, passwordFocused && styles.inputWrapperFocused]}>
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                 <TextInput
                   ref={passwordRef}
                   style={styles.input}
                   placeholder={isSignUp ? 'Min 8 chars, upper, lower, number' : 'Enter your password'}
-                  placeholderTextColor={COLORS.inputPlaceholder}
+                  placeholderTextColor={colors.inputPlaceholder}
                   value={password}
                   onChangeText={handlePasswordChange}
                   onFocus={() => setPasswordFocused(true)}
@@ -300,7 +304,7 @@ export default function AuthScreen() {
                   }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
+                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -314,12 +318,12 @@ export default function AuthScreen() {
                       key={i}
                       style={[
                         styles.strengthBarSegment,
-                        { backgroundColor: i < passwordStrength.score ? PASSWORD_STRENGTH_COLORS[passwordStrength.score] : COLORS.borderCard },
+                        { backgroundColor: i < passwordStrength.score ? PASSWORD_STRENGTH_COLORS[passwordStrength.score] : colors.borderCard },
                       ]}
                     />
                   ))}
                 </View>
-                <Text style={[styles.strengthLabel, { color: PASSWORD_STRENGTH_COLORS[passwordStrength.score] || COLORS.inputPlaceholder }]}>
+                <Text style={[styles.strengthLabel, { color: PASSWORD_STRENGTH_COLORS[passwordStrength.score] || colors.inputPlaceholder }]}>
                   {passwordStrength.label}
                 </Text>
               </View>
@@ -344,12 +348,12 @@ export default function AuthScreen() {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Confirm Password</Text>
                 <View style={[styles.inputWrapper, confirmFocused && styles.inputWrapperFocused]}>
-                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.inputPlaceholder} style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                   <TextInput
                     ref={confirmPasswordRef}
                     style={styles.input}
                     placeholder="Re-enter your password"
-                    placeholderTextColor={COLORS.inputPlaceholder}
+                    placeholderTextColor={colors.inputPlaceholder}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     onFocus={() => setConfirmFocused(true)}
@@ -362,7 +366,7 @@ export default function AuthScreen() {
                     onSubmitEditing={handleSubmit}
                   />
                   <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
-                    <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={COLORS.inputPlaceholder} />
+                    <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -377,7 +381,7 @@ export default function AuthScreen() {
               />
               {loading && (
                 <View style={styles.loadingOverlay}>
-                  <ActivityIndicator color={COLORS.white} />
+                  <ActivityIndicator color="#FFFFFF" />
                 </View>
               )}
             </View>
@@ -411,7 +415,7 @@ export default function AuthScreen() {
             onPress={handleContinueAsGuest}
             activeOpacity={0.8}
           >
-            <Ionicons name="person-outline" size={20} color={COLORS.textMuted} style={{ marginRight: 8 }} />
+            <Ionicons name="person-outline" size={20} color={colors.textMuted} style={{ marginRight: 8 }} />
             <Text style={styles.guestButtonText}>Continue as Guest</Text>
           </TouchableOpacity>
           <Text style={[styles.guestWarningText, isWebDesktop && { marginHorizontal: 0 }]}>
@@ -425,7 +429,7 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -454,22 +458,21 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...TYPOGRAPHY.h1,
-    color: COLORS.white,
+    color: '#FFFFFF',
     marginTop: 8,
   },
   headerSubtitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.whiteOverlay80,
+    color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
   },
   formCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.formCard,
     padding: 24,
     marginHorizontal: 24,
     marginTop: -20,
-    ...SHADOWS.card,
   },
   inputContainer: {
     marginBottom: 16,
@@ -477,20 +480,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textDark,
+    color: c.textDark,
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.inputBackground,
+    backgroundColor: c.inputBackground,
     borderWidth: BORDERS.input,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     borderRadius: RADII.input,
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
-    borderColor: COLORS.primary,
+    borderColor: c.primary,
   },
   inputIcon: {
     marginRight: 10,
@@ -499,7 +502,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: COLORS.textDark,
+    color: c.textDark,
   },
   eyeButton: {
     padding: 4,
@@ -535,7 +538,7 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: c.primary,
   },
   submitContainer: {
     marginTop: 8,
@@ -552,11 +555,11 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 15,
-    color: COLORS.textMuted,
+    color: c.textMuted,
   },
   toggleTextBold: {
     fontWeight: '700',
-    color: COLORS.primary,
+    color: c.primary,
   },
   divider: {
     flexDirection: 'row',
@@ -568,33 +571,33 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.borderCard,
+    backgroundColor: c.borderCard,
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.inputPlaceholder,
+    color: c.inputPlaceholder,
   },
   guestButton: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     paddingVertical: 16,
     borderRadius: RADII.button,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     marginHorizontal: 24,
   },
   guestButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: c.textMuted,
   },
   guestWarningText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     marginHorizontal: 24,
     marginTop: 8,

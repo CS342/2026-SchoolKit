@@ -5,6 +5,7 @@
 // (keep the app-level aliases at the bottom if you do).
 
 import type { DesignDocument } from '../features/design-editor/types/document';
+import type { ContentDoc } from '../features/content/types';
 
 export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus =
@@ -59,6 +60,20 @@ export type Design = {
   is_shared: boolean;
   share_token: string | null;
   published_resource_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContentPageRow = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string | null;
+  tags: string[];
+  doc: ContentDoc;
+  status: 'draft' | 'published';
+  created_by: string | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -249,6 +264,11 @@ export type Database = {
         DesignAsset,
         Omit<DesignAsset, 'id' | 'created_at' | 'file_size'> & { id?: string; file_size?: number | null },
         Partial<Omit<DesignAsset, 'id' | 'created_at'>>
+      >;
+      content_pages: TableDef<
+        ContentPageRow,
+        Partial<ContentPageRow> & { slug: string; title: string; doc: ContentDoc },
+        Partial<Omit<ContentPageRow, 'id' | 'created_at'>>
       >;
       journals: TableDef<
         Journal,

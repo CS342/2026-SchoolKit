@@ -1,0 +1,108 @@
+// The hand-built finances page expressed as a ContentDoc — the parity fixture for
+// Phase 1. Rendering this through ContentPage should match app/finances-childhood-cancer.tsx.
+import type { ContentDoc } from '../types';
+
+export const financesDoc: ContentDoc = {
+  schemaVersion: 1,
+  slug: 'finances-childhood-cancer',
+  title: 'Navigating the Finances of Childhood Cancer',
+  accent: 'primary',
+  category: 'Family',
+  resourceId: '18',
+  tags: ['finances', 'money', 'costs', 'insurance', 'grants', 'family', 'support'],
+  shareMessage:
+    'Read "Navigating the Finances of Childhood Cancer" on SchoolKit — where costs come from, who can help, and the organizations that offer real financial support.',
+  blocks: [
+    {
+      id: 'hero',
+      type: 'hero',
+      eyebrow: 'Family & Finances',
+      eyebrowIcon: 'wallet-outline',
+      eyebrowColor: 'teal',
+      titleParts: [
+        { text: 'Navigating the ' },
+        { text: 'Finances', accent: true },
+        { text: ' of Childhood Cancer' },
+      ],
+    },
+    {
+      id: 'callout',
+      type: 'callout',
+      icon: 'heart-outline',
+      text:
+        "A cancer diagnosis is never something a family budgets for. The costs can feel overwhelming — but you don't have to face them alone. Help exists, and asking for it early is one of the smartest steps you can take.",
+    },
+    {
+      id: 'costs',
+      type: 'accordion',
+      heading: 'Where the Costs Come From',
+      subheading: 'Tap a card to see what it includes and one thing that helps.',
+      items: [
+        {
+          id: 'c1', title: 'Medical bills & co-pays', icon: 'medkit-outline', color: 'teal',
+          summary: 'Treatment, hospital stays, medications, scans, and specialist visits.',
+          body: "Even with insurance, co-pays and deductibles add up. Ask the billing office about payment plans and whether you've reached your out-of-pocket maximum for the year.",
+        },
+        {
+          id: 'c2', title: 'Travel, lodging & food', icon: 'car-outline', color: 'coral',
+          summary: 'Gas, parking, flights, hotels near the center, and meals away from home.',
+          body: 'Ronald McDonald House and your hospital social worker can often cover lodging and travel — ask before you book anything yourself.',
+        },
+        {
+          id: 'c3', title: 'Lost income & time off', icon: 'briefcase-outline', color: 'amber',
+          summary: 'Missed work for appointments and caregiving, or stepping back from a job.',
+          body: 'Look into FMLA job protection and short-term disability. A social worker can explain exactly what applies to your family.',
+        },
+        {
+          id: 'c4', title: 'Everyday extras', icon: 'home-outline', color: 'indigo',
+          summary: 'Childcare for siblings, higher utility bills, special foods, and small comforts.',
+          body: "Keep a simple log of these 'hidden' costs — some grants reimburse exactly these everyday expenses.",
+        },
+      ],
+    },
+    {
+      id: 'team',
+      type: 'cardGrid',
+      heading: 'Build Your Support Team',
+      subheading: 'The people whose job it is to help with money — start here.',
+      items: [
+        { id: 't1', title: 'Hospital Social Worker', icon: 'people-circle-outline', color: 'teal', body: 'Your first call. They know every assistance program the hospital offers and can connect you to grants, lodging, and counseling — usually at no cost.' },
+        { id: 't2', title: 'Financial Counselor', icon: 'calculator-outline', color: 'coral', body: 'Found in the billing department. They review your bills, set up payment plans, and check whether you qualify for charity-care or hardship programs.' },
+        { id: 't3', title: 'School Counselor', icon: 'school-outline', color: 'indigo', body: "For school costs and a 504 plan or IEP, they arrange accommodations, tutoring, and fee waivers so treatment doesn't add new school expenses." },
+      ],
+    },
+    {
+      id: 'roadmap',
+      type: 'stepper',
+      heading: 'Your Step-by-Step Roadmap',
+      subheading: "Tap each step to learn how — and listen along if you'd like.",
+      steps: [
+        { id: 'r1', title: 'Ask for a Financial Counselor', icon: 'chatbubbles-outline', color: 'teal', detail: "Within the first week, ask your care team to connect you with the hospital's financial counselor or social worker. Say it plainly: “We're worried about costs — who can help us?” This is a normal, common request.\n\nThe earlier you ask, the more programs you may qualify for." },
+        { id: 'r2', title: 'Understand Your Insurance', icon: 'shield-checkmark-outline', color: 'sky', detail: "Call the number on your insurance card and ask three things: What's my deductible and out-of-pocket maximum? Is my treatment center in-network? Do I need pre-authorizations?\n\nWrite down who you spoke to and when — it helps if a claim is ever disputed." },
+        { id: 'r3', title: 'Apply for Grants Early', icon: 'gift-outline', color: 'coral', detail: "Many childhood-cancer nonprofits offer grants for treatment, travel, rent, and utilities. Applications can take weeks, so apply as soon as you're diagnosed.\n\nYour social worker can point you to the programs you're most likely to qualify for." },
+        { id: 'r4', title: 'Track Every Expense', icon: 'receipt-outline', color: 'amber', detail: 'Keep receipts and a simple note for medical costs, mileage, parking, and lodging. These add up — and many are tax-deductible or grant-reimbursable.\n\nA shoebox or a single album on your phone is enough to start.' },
+        { id: 'r5', title: 'Plan for School Costs', icon: 'book-outline', color: 'indigo', detail: 'Meet with the school counselor about a 504 plan, tutoring, and fee waivers. Ask whether the district provides homebound instruction during treatment at no cost.\n\nThis keeps your child on track without adding new expenses.' },
+      ],
+    },
+    {
+      id: 'orgs',
+      type: 'linkList',
+      heading: 'Organizations That Can Help',
+      subheading: 'Trusted nonprofits with real financial support. Tap to visit.',
+      items: [
+        { id: 'o1', name: 'Family Reach', icon: 'cash-outline', color: 'teal', blurb: 'Emergency financial aid, a cost-of-care calculator, and a financial planning helpline for cancer families.', url: 'https://familyreach.org', display: 'familyreach.org' },
+        { id: 'o2', name: "Alex's Lemonade Stand", icon: 'airplane-outline', color: 'coral', blurb: 'The Travel Fund helps cover the cost of getting your child to and from treatment.', url: 'https://www.alexslemonade.org', display: 'alexslemonade.org' },
+        { id: 'o3', name: 'Ronald McDonald House', icon: 'home-outline', color: 'amber', blurb: 'Free or low-cost lodging near the hospital so your family can stay close during treatment.', url: 'https://www.rmhc.org', display: 'rmhc.org' },
+        { id: 'o4', name: 'Leukemia & Lymphoma Society', icon: 'heart-outline', color: 'indigo', blurb: 'Financial aid programs, insurance guidance, and a free information resource center.', url: 'https://www.lls.org', display: 'lls.org' },
+        { id: 'o5', name: 'Cancer Financial Assistance Coalition', icon: 'search-outline', color: 'sky', blurb: 'A searchable directory to find assistance programs by diagnosis and type of need.', url: 'https://www.cancerfac.org', display: 'cancerfac.org' },
+      ],
+    },
+    {
+      id: 'disclaimer',
+      type: 'footnote',
+      text:
+        'This page is general guidance, not financial or legal advice. Program details change — always confirm specifics with your care team and each organization.',
+    },
+    { id: 'recs', type: 'recommendations' },
+  ],
+};

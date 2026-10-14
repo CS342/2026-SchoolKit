@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,12 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
-import { AuthWebWrapper } from '../../components/AuthWebWrapper';
+import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
 import { useResponsive } from '../../hooks/useResponsive';
-import { GRADIENTS, SHADOWS, ANIMATION, COLORS, TYPOGRAPHY, SIZING, RADII, BORDERS, SHARED_STYLES } from '../../constants/onboarding-theme';
+import { GRADIENTS, ANIMATION, COLORS, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import type { ThemeColors } from '../../constants/theme';
 
 interface RoleOption {
   role: UserRole;
@@ -46,6 +48,8 @@ function RoleCard({
   onPress: () => void;
   index: number;
 }) {
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
@@ -85,9 +89,9 @@ function RoleCard({
           isSelected && {
             borderColor: option.color,
             backgroundColor: option.color + '08',
-            ...SHADOWS.cardSelected,
+            ...shadows.cardSelected,
           },
-          !isSelected && SHADOWS.card,
+          !isSelected && shadows.card,
           cardStyle,
         ]}
       >
@@ -97,7 +101,7 @@ function RoleCard({
           end={{ x: 1, y: 1 }}
           style={styles.roleIconCircle}
         >
-          <Ionicons name={option.iconName} size={24} color={COLORS.white} />
+          <Ionicons name={option.iconName} size={24} color="#FFFFFF" />
         </LinearGradient>
 
         <Text style={styles.roleTitle}>{option.title}</Text>
@@ -116,7 +120,10 @@ export default function Step2Screen() {
   const router = useRouter();
   const { updateRole } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
+  const { colors, gradients, sharedStyles } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
+  const stepInfo = getOnboardingStep('role');
 
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
@@ -133,22 +140,22 @@ export default function Step2Screen() {
   };
 
   return (
-    <DecorativeBackground variant="step" gradientColors={GRADIENTS.screenBackground}>
-      <AuthWebWrapper variant="onboarding" step={{ current: 2, total: 5, label: 'About you' }}>
+    <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
+      <AuthWebWrapper variant="onboarding" step={stepInfo}>
       <View style={styles.container}>
-        <OnboardingHeader currentStep={2} totalSteps={5} />
+        <OnboardingHeader currentStep={stepInfo.current} totalSteps={stepInfo.total} />
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, isWebDesktop && { paddingVertical: 24 }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48, paddingBottom: 0, alignItems: 'center' }]}>
-            <View style={[SHARED_STYLES.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="people-outline" size={isWebDesktop ? 56 : 48} color={COLORS.primary} />
+            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
+              <Ionicons name="people-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={SHARED_STYLES.pageTitle}>Tell us about yourself</Text>
-            <Text style={[SHARED_STYLES.pageSubtitle, { marginBottom: 24 }]}>Choose the option that best describes you</Text>
+            <Text style={sharedStyles.pageTitle}>Tell us about yourself</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>Choose the option that best describes you</Text>
 
             <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16, width: '100%' }]}>
               {ROLES.map((option, index) => (
@@ -176,13 +183,13 @@ export default function Step2Screen() {
         </ScrollView>
 
         {!isWebDesktop && (
-        <View style={SHARED_STYLES.buttonContainer}>
+        <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
             title="Continue"
             onPress={handleContinue}
             disabled={!selectedRole}
           />
-          <View style={SHARED_STYLES.skipPlaceholder} />
+          <View style={sharedStyles.skipPlaceholder} />
         </View>
         )}
       </View>
@@ -191,7 +198,7 @@ export default function Step2Screen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -210,11 +217,11 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   roleCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.card,
     padding: 18,
     borderWidth: BORDERS.card,
-    borderColor: COLORS.borderCard,
+    borderColor: c.borderCard,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -230,14 +237,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textDark,
+    color: c.textDark,
   },
   radioOuter: {
     width: 30,
     height: 30,
     borderRadius: 15,
     borderWidth: BORDERS.cardSelected,
-    borderColor: COLORS.indicatorInactive,
+    borderColor: c.indicatorInactive,
     alignItems: 'center',
     justifyContent: 'center',
   },

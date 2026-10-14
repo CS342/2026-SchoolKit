@@ -27,6 +27,7 @@ import { BookmarkButton } from '../components/BookmarkButton';
 import { RecommendationList } from '../components/RecommendationList';
 import { DownloadButton } from '../components/DownloadButton';
 import { useTheme } from "../contexts/ThemeContext";
+import { ContentColumn, ArticleLayout } from "../components/ui";
 import { ThemeColors, ThemeShadows } from "../constants/theme";
 import { TYPOGRAPHY, SPACING, RADII, BORDERS } from "../constants/onboarding-theme";
 
@@ -122,10 +123,17 @@ const CARD_COLORS = [
   "#CDB4DB", 
 ];
 
-const CARD_OVERLAP = 160; 
+const CARD_OVERLAP = 160;
 const CARD_HEIGHT = 200;
-const FRONT_HEIGHT = 320; 
-const BACK_HEIGHT = 580; 
+const FRONT_HEIGHT = 320;
+const BACK_HEIGHT = 580;
+
+// nativeID anchors for the web "On this page" outline (mapped onto card wrappers).
+const CARD_SECTION_IDS: Record<number, string> = {
+  0: "cancer-intro",
+  1: "cancer-myths",
+  7: "cancer-survival",
+};
 
 // --- Stacked Card Component ---
 function StackedCard({
@@ -180,7 +188,7 @@ function StackedCard({
   if (!item.canFlip) {
     return (
       <Animated.View style={[styles.stackedCardShadow, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
-        <View style={[styles.stackedCard, styles.lastCard, { backgroundColor: isDark ? colors.backgroundLight : "#F0F0FF", borderColor: isDark ? colors.borderCard : "#D0D0E0" }]}>
+        <View style={[styles.stackedCard, styles.lastCard, { backgroundColor: isDark ? colors.backgroundLight : colors.backgroundLighter, borderColor: colors.borderCard }]}>
           <Text style={[styles.lastCardText, { color: colors.textDark }]}>{item.front}</Text>
         </View>
       </Animated.View>
@@ -191,8 +199,8 @@ function StackedCard({
     <TouchableOpacity activeOpacity={0.9} onPress={handlePress}>
       <Animated.View style={[styles.stackedCardShadow, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
         <View style={[styles.stackedCard, { backgroundColor: isDark ? color + "CC" : color, borderColor: color }]}>
-          {isMyth && <Text style={[styles.stackedMythLabel, { color: isDark ? "#FFF" : "#000" }]}>MYTH</Text>}
-          <Text style={[styles.stackedCardText, { color: isDark ? "#FFF" : "#2D2D44" }]} numberOfLines={2}>{displayTitle}</Text>
+          {isMyth && <Text style={[styles.stackedMythLabel, { color: isDark ? colors.white : colors.textDark }]}>MYTH</Text>}
+          <Text style={[styles.stackedCardText, { color: isDark ? colors.white : colors.textDark }]} numberOfLines={2}>{displayTitle}</Text>
           <View style={styles.cardLinesBottom}>
             <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.4)" }]} />
             <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.3)" }]} />
@@ -406,7 +414,7 @@ function ExpandedCardModal({
                   </>
                 )}
                 <View style={styles.expandedFrontContent}>
-                  <Text style={[styles.expandedFrontTitle, { color: isDark ? "#FFF" : "#2D2D44" }]}>{displayTitle}</Text>
+                  <Text style={[styles.expandedFrontTitle, { color: isDark ? colors.white : colors.textDark }]}>{displayTitle}</Text>
                 </View>
               </View>
               <View style={styles.expandedCardLines}>
@@ -428,7 +436,7 @@ function ExpandedCardModal({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio}>
                       {isLoadingAudio ? <ActivityIndicator size="small" color="#10B981" /> : (
-                        <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? "#FF6B6B" : colors.textDark} />
+                        <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? colors.error : colors.textDark} />
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7} style={{ padding: 6 }}>
@@ -611,6 +619,70 @@ export default function UnderstandingCancerScreen() {
     } catch { }
   };
 
+  const titleNode = (
+    <Text style={[styles.pageTitle, { color: colors.textDark }]}>
+      Understanding{"\n"}
+      <Text style={{ color: colors.primary }}>What Cancer Is</Text>
+      {"\n"}and Isn't
+    </Text>
+  );
+
+  const actionsNode = (
+    <>
+      <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+        <Ionicons name="share-outline" size={26} color={colors.textLight} />
+      </TouchableOpacity>
+      <DownloadButton resourceId="11" size={26} color={colors.primary} />
+      <BookmarkButton resourceId="11" size={25} color={colors.primary} />
+    </>
+  );
+
+  const articleBody = (
+    <>
+      <Text style={[styles.instructionText, { color: colors.textMuted }]}>Click each card to learn more.</Text>
+
+      <View style={[styles.stackContainer, { height: CARDS.length * CARD_OVERLAP + CARD_HEIGHT }]}>
+        {CARDS.map((card, index) => (
+          <View key={card.id} nativeID={CARD_SECTION_IDS[index]} style={[styles.stackedCardWrapper, { top: index * CARD_OVERLAP, zIndex: index + 1 }]}>
+            <StackedCard item={card} color={CARD_COLORS[index % CARD_COLORS.length]} index={index} isVisible={index <= visibleLimit} onPress={() => handleCardPress(card)} isDark={isDark} colors={colors} styles={styles} />
+          </View>
+        ))}
+      </View>
+    </>
+  );
+
+  const RELATED_TAGS = ['cancer', 'understanding', 'myths', 'facts'];
+
+  const expandedModal = (
+    <ExpandedCardModal visible={expandedCard !== null} item={expandedCard} color={expandedCard ? getCardColor(expandedCard.id) : colors.white} onClose={closeExpandedCard} isSpeaking={isSpeaking} isLoadingAudio={isLoadingAudio} onToggleSpeak={handleSpeak} isAudioLoaded={playerStatus.isLoaded} playbackRate={playbackRate} onTogglePlaybackRate={togglePlaybackRate} isDark={isDark} colors={colors} styles={styles} />
+  );
+
+  // Web: desktop-first article frame (breadcrumb + sticky outline + reading column + rail).
+  if (Platform.OS === 'web') {
+    return (
+      <>
+        <ArticleLayout
+          breadcrumb={[
+            { label: 'Library', onPress: () => router.push('/(tabs)/bookmarks') },
+            { label: 'Health' },
+            { label: 'Understanding What Cancer Is and Isn\'t' },
+          ]}
+          title={titleNode}
+          actions={actionsNode}
+          sections={[
+            { id: 'cancer-intro', label: 'The Basics' },
+            { id: 'cancer-myths', label: 'Common Myths' },
+            { id: 'cancer-survival', label: 'Survival & Hope' },
+          ]}
+          aside={<RecommendationList currentId="11" currentTags={RELATED_TAGS} variant="rail" />}
+        >
+          {articleBody}
+        </ArticleLayout>
+        {expandedModal}
+      </>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.white, borderBottomColor: colors.borderCard }]}>
@@ -618,34 +690,19 @@ export default function UnderstandingCancerScreen() {
           <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
-            <Ionicons name="share-outline" size={28} color={colors.textLight} />
-          </TouchableOpacity>
-          <DownloadButton resourceId="11" size={28} color={colors.primary} />
-          <BookmarkButton resourceId="11" size={27} color={colors.primary} />
+          {actionsNode}
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
-        <Text style={[styles.pageTitle, { color: colors.textDark }]}>
-          Understanding{"\n"}
-          <Text style={{ color: colors.primary }}>What Cancer Is</Text>
-          {"\n"}and Isn't
-        </Text>
-        <Text style={[styles.instructionText, { color: colors.textMuted }]}>Click each card to learn more.</Text>
-
-        <View style={[styles.stackContainer, { height: CARDS.length * CARD_OVERLAP + CARD_HEIGHT }]}>
-          {CARDS.map((card, index) => (
-            <View key={card.id} style={[styles.stackedCardWrapper, { top: index * CARD_OVERLAP, zIndex: index + 1 }]}>
-              <StackedCard item={card} color={CARD_COLORS[index % CARD_COLORS.length]} index={index} isVisible={index <= visibleLimit} onPress={() => handleCardPress(card)} isDark={isDark} colors={colors} styles={styles} />
-            </View>
-          ))}
-        </View>
-
-        <RecommendationList currentId="11" currentTags={['cancer', 'understanding', 'myths', 'facts']} />
+        <ContentColumn width="reading">
+          {titleNode}
+          {articleBody}
+          <RecommendationList currentId="11" currentTags={RELATED_TAGS} />
+        </ContentColumn>
       </ScrollView>
 
-      <ExpandedCardModal visible={expandedCard !== null} item={expandedCard} color={expandedCard ? getCardColor(expandedCard.id) : colors.white} onClose={closeExpandedCard} isSpeaking={isSpeaking} isLoadingAudio={isLoadingAudio} onToggleSpeak={handleSpeak} isAudioLoaded={playerStatus.isLoaded} playbackRate={playbackRate} onTogglePlaybackRate={togglePlaybackRate} isDark={isDark} colors={colors} styles={styles} />
+      {expandedModal}
     </View>
   );
 }
@@ -717,7 +774,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
   speakerButton: { padding: 8 },
   factBigText: { fontSize: 34, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase" },
   mythBadge: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
-  mythBadgeText: { fontSize: 13, fontWeight: "700", color: "#FFFFFF", letterSpacing: 3, textTransform: "uppercase" },
+  mythBadgeText: { fontSize: 13, fontWeight: "700", color: c.white, letterSpacing: 3, textTransform: "uppercase" },
   mythImage: { position: "absolute", top: "50%", left: "50%", marginTop: -120, marginLeft: -120, width: 240, height: 240, zIndex: 20 },
   backHeadline: { fontSize: 28, fontWeight: "800", textAlign: "left", marginBottom: 12, letterSpacing: -0.5, lineHeight: 34 },
   backDivider: { height: 2, width: "40%", borderRadius: 1, marginBottom: 20 },

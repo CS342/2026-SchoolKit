@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
+import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -82,20 +83,22 @@ export default function EditGradeLevelScreen() {
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
+        <ContentColumn width="reading">
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
 
-        <View style={styles.cardsContainer}>
-          {grades.map((grade, index) => (
-            <AnimatedCardWrapper key={grade.value} index={index}>
-              <SelectableCard
-                title={grade.label}
-                selected={selectedGrade === grade.value}
-                onPress={() => setSelectedGrade(grade.value)}
-                multiSelect={false}
-              />
-            </AnimatedCardWrapper>
-          ))}
-        </View>
+          <View style={styles.cardsContainer}>
+            {grades.map((grade, index) => (
+              <AnimatedCardWrapper key={grade.value} index={index}>
+                <SelectableCard
+                  title={grade.label}
+                  selected={selectedGrade === grade.value}
+                  onPress={() => setSelectedGrade(grade.value)}
+                  multiSelect={false}
+                />
+              </AnimatedCardWrapper>
+            ))}
+          </View>
+        </ContentColumn>
       </ScrollView>
     </View>
   );

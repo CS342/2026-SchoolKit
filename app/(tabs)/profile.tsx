@@ -9,6 +9,7 @@ import {
   Modal,
   Image,
 } from "react-native";
+import { ScreenHeader } from "../../components/ui";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
@@ -25,7 +26,9 @@ import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 import { useStories } from "../../contexts/StoriesContext";
-import { ALL_RESOURCES } from "../../constants/resources";
+import { PAGE_TOPICS } from "../../constants/resources";
+import { useResources } from "../../hooks/useResources";
+import { TOTAL_PIECES } from "../../constants/accomplishments";
 import {
   RADII,
   SIZING,
@@ -34,7 +37,7 @@ import {
   ANIMATION,
 } from "../../constants/onboarding-theme";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useResponsive } from "../../hooks/useResponsive";
+import { useResponsive, CONTENT_WIDTH } from "../../hooks/useResponsive";
 import type { AppTheme, ThemeColors, ThemeShadows } from "../../constants/theme";
 import { getRoleDisplayName, getSchoolStatusText } from "../../utils/profile";
 
@@ -123,6 +126,79 @@ function AnimatedSection({
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
+/**
+ * Web-only vertical progress stat card. Shows a REAL, computed value / total
+ * (never fabricated) with a mini progress bar — same numbers the For You and
+ * Knowledge Tree screens display. Native rendering never uses this.
+ */
+function WebStatCard({
+  icon,
+  tint,
+  glassTint,
+  title,
+  subtitle,
+  value,
+  total,
+  onPress,
+  colors,
+  shadows,
+  isDark,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  tint: string;
+  glassTint: string;
+  title: string;
+  subtitle: string;
+  value: number;
+  total: number;
+  onPress: () => void;
+  colors: ThemeColors;
+  shadows: ThemeShadows;
+  isDark: boolean;
+}) {
+  const hasTotal = total > 0;
+  const pct = hasTotal ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.webStatCard,
+        shadows.card,
+        pressed && { transform: [{ scale: 0.98 }] },
+      ]}
+    >
+      <LinearGradient
+        colors={isDark ? ['rgba(28,28,46,0.9)', glassTint] : ['rgba(255,255,255,0.9)', glassTint]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.webStatGlass}
+      >
+        <View style={styles.webStatTop}>
+          <View style={[styles.webStatIcon, { backgroundColor: tint, ...styles.iconGlow, shadowColor: tint }]}>
+            <Ionicons name={icon} size={24} color="#FFFFFF" />
+          </View>
+          <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
+            <Ionicons name="arrow-forward" size={16} color={tint} />
+          </View>
+        </View>
+        <Text style={[styles.webStatTitle, { color: colors.textDark }]}>{title}</Text>
+        {hasTotal && (
+          <>
+            <View style={styles.webStatValueRow}>
+              <Text style={[styles.webStatValue, { color: colors.textDark }]}>{value}</Text>
+              <Text style={[styles.webStatTotal, { color: colors.textMuted }]}>/ {total}</Text>
+            </View>
+            <View style={[styles.webStatTrack, { backgroundColor: colors.backgroundLighter }]}>
+              <View style={[styles.webStatFill, { width: `${pct}%`, backgroundColor: tint }]} />
+            </View>
+          </>
+        )}
+        <Text style={[styles.webStatSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -132,10 +208,25 @@ export default function ProfileScreen() {
   const { data, updateProfilePicture, bookmarks } = useOnboarding();
   const { user, isAnonymous } = useAuth();
   const { stories, storyBookmarks } = useStories();
-  const { fireEvent } = useAccomplishments();
+  const { fireEvent, earnedPieceIds, isResourceFullyViewed } = useAccomplishments();
+  const { resources } = useResources();
 
   const { isWeb, isDesktop } = useResponsive();
   const isWebDesktop = isWeb && isDesktop;
+
+  // ── Real progress numbers (never fabricated) ──────────────────────────────
+  // Identical to the For You / Knowledge Tree computations so Profile shows the
+  // same "X / total": puzzles = earned pieces, tree = fully-viewed resources.
+  const puzzlesEarned = earnedPieceIds.size;
+  const treeResources = useMemo(() => resources.filter(r => !r.designOnly), [resources]);
+  const treeLit = useMemo(
+    () => treeResources.filter(r => isResourceFullyViewed(r.id)).length,
+    [treeResources, isResourceFullyViewed]
+  );
+  const selectedTopics = useMemo(
+    () => PAGE_TOPICS.filter(t => data.topics.includes(t.label)),
+    [data.topics]
+  );
 
   const myStoriesCount = stories.filter(s => s.author_id === user?.id).length;
   const savedCount = bookmarks.length + storyBookmarks.length;
@@ -192,9 +283,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
-      <View style={[appStyles.tabHeader, { paddingTop: insets.top + 10 }]}>
-        <Text style={appStyles.tabHeaderTitle}>Profile</Text>
-      </View>
+      <ScreenHeader title="Profile" subtitle="Your account, progress, and journal" />
 
       <ScrollView
         contentContainerStyle={isWebDesktop ? styles.scrollWeb : styles.scroll}
@@ -260,174 +349,164 @@ export default function ProfileScreen() {
         </Modal>
 
         {isWebDesktop ? (
-          <View style={styles.webColumns}>
-            <View style={styles.webLeft}>
-              <LinearGradient
-                colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.identityCard, { borderColor: colors.border, marginHorizontal: 0 }]}
-              >
-                <View style={styles.identity}>
-                  <Pressable onPress={() => setShowIconPicker(true)}>
-                    <Animated.View style={avatarStyle}>
-                      <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                        {renderAvatarInner()}
-                      </View>
-                      <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
-                        <Ionicons name="pencil" size={13} color="#FFFFFF" />
-                      </View>
-                    </Animated.View>
-                  </Pressable>
-
-                  <Animated.View style={[styles.identityText, nameStyle]}>
-                    <Text style={[styles.userName, { color: colors.textDark }]}>{data.name}</Text>
-                    <View style={styles.badgeWrapRow}>
-                      {isAnonymous && (
-                        <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
-                          <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
-                        </View>
-                      )}
-                      <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-                        <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
-                      </View>
-                      {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
-                        const labels: Record<string, string> = {
-                          'current-treatment': 'Currently in school',
-                          'returning-after-treatment': 'Taking a break from school',
-                          'supporting-student': 'Planning to return to school soon',
-                          'special-needs': 'Home Hospital Education',
-                        };
-                        const label = labels[status] ?? status.replace(/-/g, ' ');
-                        return (
-                          <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
-                            <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                    <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
-                      <View style={styles.statItem}>
-                        <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
-                      </View>
-                      <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                      <View style={styles.statItem}>
-                        <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
-                      </View>
-                    </View>
-
-                    <Pressable
-                      onPress={() => setShowEditProfile(true)}
-                      style={[styles.editProfileBtn, { borderColor: colors.border }]}
-                    >
-                      <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
-                      <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
-                    </Pressable>
-                  </Animated.View>
-                </View>
-              </LinearGradient>
-            </View>
-
-            <View style={styles.webRight}>
-              <AnimatedSection delay={460}>
-                <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
-
-                <View style={styles.webProgressRow}>
-                  <Pressable
-                    onPress={() => router.push('/knowledge-tree' as any)}
-                    style={({ pressed }) => [
-                      styles.journalWidget,
-                      styles.webProgressCard,
-                      shadows.card,
-                      pressed && { transform: [{ scale: 0.98 }] }
-                    ]}
-                  >
-                    <LinearGradient
-                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.journalGlass}
-                    >
-                      <View style={[styles.journalIconContainer, { backgroundColor: '#10B981', ...styles.iconGlow, shadowColor: '#10B981' }]}>
-                        <Ionicons name="leaf" size={28} color="#FFFFFF" />
-                      </View>
-                      <View style={styles.journalInfo}>
-                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
-                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
-                      </View>
-                      <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
-                        <Ionicons name="arrow-forward" size={18} color="#10B981" />
-                      </View>
-                    </LinearGradient>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => router.push('/accomplishments' as any)}
-                    style={({ pressed }) => [
-                      styles.journalWidget,
-                      styles.webProgressCard,
-                      shadows.card,
-                      pressed && { transform: [{ scale: 0.98 }] }
-                    ]}
-                  >
-                    <LinearGradient
-                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.journalGlass}
-                    >
-                      <View style={[styles.journalIconContainer, { backgroundColor: '#F59E0B', ...styles.iconGlow, shadowColor: '#F59E0B' }]}>
-                        <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
-                      </View>
-                      <View style={styles.journalInfo}>
-                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
-                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
-                      </View>
-                      <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
-                        <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
-                      </View>
-                    </LinearGradient>
-                  </Pressable>
-                </View>
-              </AnimatedSection>
-
-              <AnimatedSection delay={500}>
-                <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
-
-                <Pressable
-                  onPress={() => router.push("/journal")}
-                  style={({ pressed }) => [
-                    styles.journalWidget,
-                    styles.webCard,
-                    shadows.card,
-                    pressed && { transform: [{ scale: 0.98 }] }
-                  ]}
+          <View style={styles.webShell}>
+            <View style={styles.webColumns}>
+              <View style={styles.webLeft}>
+                <LinearGradient
+                  colors={isDark ? ['rgba(123,104,238,0.18)', 'rgba(123,104,238,0.04)'] : ['rgba(123,104,238,0.10)', 'rgba(123,104,238,0.02)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.identityCard, styles.webIdentityCard, { borderColor: colors.border }]}
                 >
-                  <LinearGradient
-                    colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.journalGlass}
-                  >
-                    <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
-                      <Ionicons name="journal" size={28} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.journalInfo}>
-                      <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
-                    </View>
-                    <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
-                      <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                    </View>
-                  </LinearGradient>
-                </Pressable>
-              </AnimatedSection>
+                  <View style={styles.webIdentity}>
+                    <Pressable onPress={() => setShowIconPicker(true)}>
+                      <Animated.View style={avatarStyle}>
+                        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                          {renderAvatarInner()}
+                        </View>
+                        <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                          <Ionicons name="pencil" size={13} color="#FFFFFF" />
+                        </View>
+                      </Animated.View>
+                    </Pressable>
 
-              <Animated.View style={[styles.footer, footerStyle]}>
-                <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-              </Animated.View>
+                    <Animated.View style={[styles.webIdentityText, nameStyle]}>
+                      <Text style={[styles.userName, styles.webUserName, { color: colors.textDark }]}>{data.name}</Text>
+                      <View style={[styles.badgeWrapRow, styles.webBadgeRow]}>
+                        {isAnonymous && (
+                          <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
+                            <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
+                          </View>
+                        )}
+                        <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                          <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
+                        </View>
+                        {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
+                          const labels: Record<string, string> = {
+                            'current-treatment': 'Currently in school',
+                            'returning-after-treatment': 'Taking a break from school',
+                            'supporting-student': 'Planning to return to school soon',
+                            'special-needs': 'Home Hospital Education',
+                          };
+                          const label = labels[status] ?? status.replace(/-/g, ' ');
+                          return (
+                            <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
+                              <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                      <View style={[styles.statsRow, styles.webStatsRow, { borderTopColor: colors.borderCard }]}>
+                        <View style={styles.webStatBlock}>
+                          <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
+                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+                        </View>
+                        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                        <View style={styles.webStatBlock}>
+                          <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
+                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+                        </View>
+                      </View>
+
+                      <Pressable
+                        onPress={() => setShowEditProfile(true)}
+                        style={[styles.editProfileBtn, styles.webEditProfileBtn, { borderColor: colors.border }]}
+                      >
+                        <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
+                        <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+                      </Pressable>
+                    </Animated.View>
+                  </View>
+                </LinearGradient>
+
+                {selectedTopics.length > 0 && (
+                  <AnimatedSection delay={420}>
+                    <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>INTERESTS</Text>
+                    <View style={[styles.webPanel, { backgroundColor: colors.white, borderColor: colors.border }]}>
+                      <View style={styles.webTopicsWrap}>
+                        {selectedTopics.map((topic) => (
+                          <View key={topic.label} style={[styles.webTopicChip, { backgroundColor: colors.backgroundLight }]}>
+                            <Ionicons name={topic.icon as any} size={13} color={topic.color} />
+                            <Text style={[styles.webTopicChipText, { color: colors.textDark }]} numberOfLines={1}>{topic.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  </AnimatedSection>
+                )}
+              </View>
+
+              <View style={styles.webRight}>
+                <AnimatedSection delay={460}>
+                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
+
+                  <View style={styles.webProgressRow}>
+                    <WebStatCard
+                      icon="leaf"
+                      tint="#10B981"
+                      glassTint="rgba(16, 185, 129, 0.15)"
+                      title="Knowledge Tree"
+                      subtitle="Concepts explored"
+                      value={treeLit}
+                      total={treeResources.length}
+                      onPress={() => router.push('/knowledge-tree' as any)}
+                      colors={colors}
+                      shadows={shadows}
+                      isDark={isDark}
+                    />
+                    <WebStatCard
+                      icon="extension-puzzle"
+                      tint="#F59E0B"
+                      glassTint="rgba(245, 158, 11, 0.15)"
+                      title="My Puzzles"
+                      subtitle="Pieces earned"
+                      value={puzzlesEarned}
+                      total={TOTAL_PIECES}
+                      onPress={() => router.push('/accomplishments' as any)}
+                      colors={colors}
+                      shadows={shadows}
+                      isDark={isDark}
+                    />
+                  </View>
+                </AnimatedSection>
+
+                <AnimatedSection delay={500}>
+                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+
+                  <Pressable
+                    onPress={() => router.push("/journal")}
+                    style={({ pressed }) => [
+                      styles.journalWidget,
+                      styles.webCard,
+                      shadows.card,
+                      pressed && { transform: [{ scale: 0.98 }] }
+                    ]}
+                  >
+                    <LinearGradient
+                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.journalGlass}
+                    >
+                      <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow, shadowColor: colors.shadow }]}>
+                        <Ionicons name="journal" size={28} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.journalInfo}>
+                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>Write and revisit your notes</Text>
+                      </View>
+                      <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
+                        <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                      </View>
+                    </LinearGradient>
+                  </Pressable>
+                </AnimatedSection>
+              </View>
             </View>
+
+            <Animated.View style={[styles.footer, styles.webFooter, footerStyle]}>
+              <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+            </Animated.View>
           </View>
         ) : (
           <>
@@ -577,7 +656,7 @@ export default function ProfileScreen() {
                 >
 
 
-                  <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow }]}>
+                  <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow, shadowColor: colors.shadow }]}>
                     <Ionicons name="journal" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
@@ -825,7 +904,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.4)',
-    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
@@ -843,7 +921,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -913,37 +990,175 @@ const styles = StyleSheet.create({
   scrollWeb: {
     paddingBottom: 48,
   },
+  webShell: {
+    width: '100%' as any,
+    maxWidth: CONTENT_WIDTH.app,
+    alignSelf: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 28,
+    paddingBottom: 8,
+  },
   webColumns: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 32,
-    gap: 32,
-    maxWidth: 1200,
-    alignSelf: 'center',
-    width: '100%' as any,
+    gap: 28,
   },
   webLeft: {
-    width: 340,
+    width: 320,
   },
   webRight: {
     flex: 1,
   },
+  // ── Left identity card (web, left-aligned) ──────────────────────────────
+  webIdentityCard: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 20,
+    borderRadius: 24,
+  },
+  webIdentity: {
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 24,
+  },
+  webIdentityText: {
+    alignItems: 'flex-start',
+    alignSelf: 'stretch',
+    marginTop: 16,
+  },
+  webUserName: {
+    marginBottom: 4,
+  },
+  webBadgeRow: {
+    justifyContent: 'flex-start',
+    paddingHorizontal: 0,
+    marginTop: 6,
+  },
+  webStatsRow: {
+    alignSelf: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 28,
+  },
+  webStatBlock: {
+    alignItems: 'flex-start',
+    gap: 2,
+  },
+  webEditProfileBtn: {
+    alignSelf: 'flex-start',
+  },
+  // ── Left panels (interests + account) ───────────────────────────────────
+  webPanel: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 20,
+  },
+  webAccountPanel: {
+    padding: 0,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  webTopicsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  webTopicChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 100,
+    maxWidth: '100%' as any,
+  },
+  webTopicChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+  // ── Right progress stat cards ───────────────────────────────────────────
   webProgressRow: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  webProgressCard: {
+  webStatCard: {
     flex: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  webStatGlass: {
+    padding: 18,
+  },
+  webStatTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  webStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  webStatTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  webStatValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 5,
+    marginBottom: 12,
+  },
+  webStatValue: {
+    fontSize: 30,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  webStatTotal: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  webStatTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  webStatFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  webStatSubtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  webCard: {
     marginHorizontal: 0,
     marginBottom: 0,
     borderWidth: 0,
   },
-  webCard: {
-    marginHorizontal: 0,
-    borderWidth: 0,
-  },
   webSectionLabel: {
     marginLeft: 4,
+  },
+  webFooter: {
+    marginTop: 12,
+    paddingTop: 16,
   },
 });

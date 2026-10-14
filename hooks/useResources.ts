@@ -12,6 +12,34 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const DEFAULT_COLOR = '#7B68EE';
 
+// Block-model content pages (content_pages table) → library resources. Icon/color/
+// description are derived from the page's own doc so cards look intentional.
+const ACCENT_HEX: Record<string, string> = { primary: '#6B5AD6', teal: '#3C9A8D', coral: '#DC6A50', amber: '#DE9A2E', indigo: '#6C7CE0', sky: '#4F9FCB' };
+const CATEGORY_ICONS: Record<string, string> = { School: 'school-outline', Health: 'medkit-outline', Social: 'people-outline', Family: 'home-outline', Emotions: 'happy-outline' };
+
+function contentPageToResource(row: any): Resource {
+  const doc = row.doc || {};
+  const blocks = Array.isArray(doc.blocks) ? doc.blocks : [];
+  const hero = blocks.find((b: any) => b.type === 'hero');
+  const callout = blocks.find((b: any) => b.type === 'callout');
+  const rich = blocks.find((b: any) => b.type === 'richText');
+  const desc = String(callout?.text || hero?.subtitle || rich?.markdown || '')
+    .replace(/[#*_>`-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const words = String(row.title || 'Page').split(' ');
+  return {
+    id: `cp_${row.id}`,
+    title: row.title,
+    abbr: words.slice(0, 2).join(' '),
+    shortDescription: desc,
+    category: row.category || 'Health',
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    icon: hero?.eyebrowIcon || CATEGORY_ICONS[row.category] || 'document-text-outline',
+    color: ACCENT_HEX[doc.accent] || CATEGORY_COLORS[row.category] || DEFAULT_COLOR,
+    route: `/page/${row.slug}`,
+    designOnly: false,
+  };
+}
+
 // DB/design-editor pages with these titles appear in the main library.
 // All other DB pages are still fetched but shown only in the Design Generated tab.
 const APPROVED_DB_TITLES = new Set([
@@ -76,7 +104,18 @@ export function useResources() {
           };
         });
 
-      setResources([...ALL_RESOURCES, ...dbResources]);
+      // Published block-model content pages (editor / AI generated).
+      const { data: pages } = await supabase
+        .from('content_pages')
+        .select('id, slug, title, category, tags, doc, status')
+        .eq('status', 'published');
+
+      const seen = new Set([...hardcodedTitles, ...dbResources.map((r) => r.title.toLowerCase())]);
+      const pageResources: Resource[] = (pages ?? [])
+        .filter((p: any) => p.slug && !seen.has(String(p.title).toLowerCase()))
+        .map(contentPageToResource);
+
+      setResources([...ALL_RESOURCES, ...dbResources, ...pageResources]);
     } catch {
       setResources(ALL_RESOURCES);
     } finally {
@@ -95,6 +134,13 @@ export function useResources() {
         { event: '*', schema: 'public', table: 'resources' },
         (_payload) => {
           fetchResources(); // simple refetch on any change
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_pages' },
+        (_payload) => {
+          fetchResources();
         }
       )
       .subscribe();
