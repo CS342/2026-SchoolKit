@@ -2,7 +2,8 @@
 import { describe, it, test, expect, beforeEach, jest } from '@jest/globals';
 import type { ContentDoc } from './types';
 import { applyOps, ContentOpError } from './ops';
-import { parseContentDoc, validateOps } from './validate';
+import { parseContentDoc, validateOps, validateBlock } from './validate';
+import { newBlock, BLOCK_PALETTE } from './editor/templates';
 
 // deterministic id factory for stable assertions
 let n = 0;
@@ -139,6 +140,16 @@ describe('applyOps — comparisonTable rows (array key other than items/steps)',
     expect(cmp(d).rows.find((r: any) => r.id === 'r2').cells).toEqual(['x', 'y']);
     d = applyOps(d, [{ op: 'removeItem', block: 'cmp', item: 'gen1' }], genId);
     expect(cmp(d).rows.map((r: any) => r.id)).toEqual(['r1', 'r2']);
+  });
+});
+
+describe('newBlock defaults are insertable', () => {
+  it('every addable block type produces a schema-valid default (no empty required fields)', () => {
+    for (const meta of BLOCK_PALETTE) {
+      expect(validateBlock(newBlock(meta.type), false)).toBeNull();
+    }
+    // hero is not in the palette (created with the page) but must also be valid
+    expect(validateBlock(newBlock('hero'), false)).toBeNull();
   });
 });
 

@@ -41,7 +41,8 @@ const LinkItemS = z.object({ id: Id, name: Str, icon: Icon, color: ColorTokenSch
 const ReferenceItemS = z.object({ id: Id, label: Str, url: z.string().optional() });
 const ChecklistItemS = z.object({ id: Id, text: Str, done: z.boolean().optional() });
 const StatItemS = z.object({ id: Id, value: Str, label: Str, icon: Icon.optional(), color: ColorTokenSchema });
-const GalleryItemS = z.object({ id: Id, url: Str, alt: Str, caption: z.string().optional() });
+// url/alt allowed empty so a freshly-added image item is a valid draft until filled.
+const GalleryItemS = z.object({ id: Id, url: z.string(), alt: z.string(), caption: z.string().optional() });
 const TestimonialItemS = z.object({ id: Id, text: Str, author: z.string().optional(), role: z.string().optional() });
 const TabItemS = z.object({ id: Id, label: Str, icon: Icon.optional(), markdown: Str });
 const FlipCardItemS = z.object({ id: Id, front: Str, back: Str, icon: Icon.optional(), color: ColorTokenSchema });
@@ -67,10 +68,12 @@ const HEADER: FieldDef[] = [
 ];
 
 // ─── item makers ─────────────────────────────────────────────────────────────────
-export const makeAccordionItem = (): AccordionItem => ({ id: nid(), title: 'New item', icon: 'ellipse-outline', color: 'teal', summary: '', body: '' });
-export const makeCard = (): CardItem => ({ id: nid(), title: 'New card', icon: 'star-outline', color: 'teal', body: '' });
-export const makeStep = (): StepItem => ({ id: nid(), title: 'New step', icon: 'ellipse-outline', color: 'teal', detail: '' });
-export const makeLink = (): LinkItem => ({ id: nid(), name: 'New link', icon: 'link-outline', color: 'teal', blurb: '', url: 'https://', display: '' });
+// Defaults use non-empty placeholder copy so a freshly-inserted block passes its
+// own zod schema (required text fields are min(1)); the author edits them after.
+export const makeAccordionItem = (): AccordionItem => ({ id: nid(), title: 'New item', icon: 'ellipse-outline', color: 'teal', summary: 'A short summary.', body: 'Add the details here.' });
+export const makeCard = (): CardItem => ({ id: nid(), title: 'New card', icon: 'star-outline', color: 'teal', body: 'Describe this card.' });
+export const makeStep = (): StepItem => ({ id: nid(), title: 'New step', icon: 'ellipse-outline', color: 'teal', detail: 'What happens in this step.' });
+export const makeLink = (): LinkItem => ({ id: nid(), name: 'New link', icon: 'link-outline', color: 'teal', blurb: 'What this organization offers.', url: 'https://', display: 'example.org' });
 export const makeReference = () => ({ id: nid(), label: 'Source name', url: 'https://' });
 export const makeChecklistItem = () => ({ id: nid(), text: 'To-do item', done: false });
 export const makeStat = () => ({ id: nid(), value: '100%', label: 'What this measures', icon: 'stats-chart-outline', color: 'teal' as const });
@@ -163,7 +166,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
   },
   image: {
     type: 'image',
-    schema: z.object({ ...idOpt, type: z.literal('image'), url: Str, alt: Str, caption: z.string().optional(), aspect: z.number().optional() }),
+    // url/alt allowed empty so a freshly-added image block is a valid draft until filled.
+    schema: z.object({ ...idOpt, type: z.literal('image'), url: z.string(), alt: z.string(), caption: z.string().optional(), aspect: z.number().optional() }),
     make: () => ({ id: nid(), type: 'image', url: '', alt: '' }),
     editor: { fields: [
       { key: 'url', label: 'Image URL', kind: 'text', placeholder: 'https://…' },
@@ -408,7 +412,9 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
   },
   video: {
     type: 'video',
-    schema: z.object({ ...idOpt, type: z.literal('video'), provider: z.enum(['youtube', 'vimeo', 'mp4']).optional(), url: Str, title: z.string().optional(), caption: z.string().optional() }),
+    // url allowed empty (required key) so a freshly-added video block is a valid draft;
+    // a block omitting url entirely still fails and is dropped.
+    schema: z.object({ ...idOpt, type: z.literal('video'), provider: z.enum(['youtube', 'vimeo', 'mp4']).optional(), url: z.string(), title: z.string().optional(), caption: z.string().optional() }),
     make: () => ({ id: nid(), type: 'video', provider: 'youtube', url: '', title: '' }),
     editor: { fields: [
       { key: 'provider', label: 'Source', kind: 'select', options: [

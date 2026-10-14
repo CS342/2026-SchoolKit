@@ -332,6 +332,14 @@ export function FootnoteBlock({ block }: { block: FootnoteT }) {
 // ─── Image ─────────────────────────────────────────────────────────────────────
 export function ImageBlock({ block }: { block: ImageT }) {
   const { colors, styles } = useBlockCtx();
+  if (!block.url) {
+    return (
+      <View style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.appBackgroundAlt }}>
+        <Ionicons name="image-outline" size={28} color={colors.textLight} />
+        <Text style={{ color: colors.textLight, fontSize: 13, marginTop: 6 }}>Add an image URL</Text>
+      </View>
+    );
+  }
   return (
     <View>
       <View style={styles.imageWrap}>
@@ -499,8 +507,10 @@ export function GalleryBlock({ block }: { block: GalleryT }) {
       <View style={web ? styles.gridRow : { gap: 12 }}>
         {block.items.map((img) => (
           <View key={img.id} style={web ? styles.gridCol : undefined}>
-            <View style={{ borderRadius: 14, overflow: 'hidden', backgroundColor: colors.appBackgroundAlt }}>
-              <Image source={{ uri: img.url }} accessibilityLabel={img.alt} style={{ width: '100%', aspectRatio: 4 / 3 }} resizeMode="cover" />
+            <View style={{ borderRadius: 14, overflow: 'hidden', backgroundColor: colors.appBackgroundAlt, aspectRatio: 4 / 3, alignItems: 'center', justifyContent: 'center' }}>
+              {img.url
+                ? <Image source={{ uri: img.url }} accessibilityLabel={img.alt} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                : <Ionicons name="image-outline" size={24} color={colors.textLight} />}
             </View>
             {img.caption ? <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 6, textAlign: 'center' }}>{img.caption}</Text> : null}
           </View>
