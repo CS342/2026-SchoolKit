@@ -10,11 +10,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { TYPOGRAPHY, RADII, SPACING } from '../../constants/onboarding-theme';
 import { pickFiles, processFile, UPLOAD_ACCEPT, type Attachment } from '../../features/content/uploads';
 import { guessAudienceFromFilename } from '../../features/content/versions';
-import type { Audience } from '../../features/content/audience';
+import type { Audience, ContentLanguage } from '../../features/content/audience';
 import type { ContentDoc } from '../../features/content/types';
 import { generateTopicVersions } from '../../features/content/editor/generateTopic';
 import { AttachmentBar } from './AttachmentBar';
 import { AudienceChips } from './AudienceChips';
+import { LanguageChips, languageOfFiles } from './LanguageChips';
 import { ToggleRow } from './primitives';
 import { useFileDrop } from './useFileDrop';
 
@@ -32,6 +33,9 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
   const { user } = useAuth();
   const [audience, setAudience] = useState<Audience | undefined>(undefined);
   const [audienceTouched, setAudienceTouched] = useState(false);
+  // Prefilled from the files' language until the author picks one.
+  const [language, setLanguage] = useState<ContentLanguage | undefined>(undefined);
+  const [languageTouched, setLanguageTouched] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [instructions, setInstructions] = useState('');
   const [matchLayout, setMatchLayout] = useState(true);
@@ -51,7 +55,10 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
       if ('error' in res) errs.push(res.error);
       else added.push(res);
     }
-    if (added.length) setAttachments((prev) => [...prev, ...added]);
+    if (added.length) {
+      setAttachments((prev) => [...prev, ...added]);
+      if (!languageTouched) setLanguage((prev) => languageOfFiles([...attachments, ...added]) ?? prev);
+    }
     if (errs.length) setError(errs.join(' '));
     setProcessing(false);
   };
@@ -64,7 +71,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
     setBusy(true); setError(null);
     const { results } = await generateTopicVersions({
       prompt: instructions.trim(),
-      versions: [{ audience, attachments }],
+      versions: [{ audience, language, attachments }],
       topicId,
       matchLayout,
       layoutFrom: layoutDoc,
@@ -108,6 +115,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
             </Text>
 
             <AudienceChips value={audience} onChange={(a) => { setAudience(a); setAudienceTouched(true); }} />
+            <LanguageChips value={language} onChange={(l) => { setLanguage(l); setLanguageTouched(true); }} />
 
             <ToggleRow label={t('editor.addVersion.matchLayout', { label: layoutLabel })} value={matchLayout} onValueChange={setMatchLayout} />
 

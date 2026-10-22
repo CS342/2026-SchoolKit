@@ -187,6 +187,7 @@
       "noFieldChanges": "No field changes (likely a reorder). Apply to continue.",
       "applyChange": "Apply change",
       "applyError": "The AI suggested a change we couldn't apply.",
+      "translatedNoNewText": "This is a translated version, so the AI can't write new text here. Its suggestion added wording that isn't on the page or in your message: {{shown}}. Paste the translator's wording into your message, or make the change on the English version first.",
       "changeApplied": "Change applied.",
       "undoHint": "{{text}}  ·  Undo above if it's not right.",
       "editingSelected": "Editing selected{{type}} block",

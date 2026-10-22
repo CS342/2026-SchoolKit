@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useEditorStore } from '../../features/content/editor/store';
 import { applyOps } from '../../features/content/ops';
 import { editPage } from '../../features/content/ai/client';
+import { authoredSentences } from '../../features/content/fidelity';
 import { pickFiles, processFile, resolveUploadedImages, UPLOAD_ACCEPT, Attachment } from '../../features/content/uploads';
 import type { ContentDoc, Op } from '../../features/content/types';
 import { AttachmentBar } from './AttachmentBar';
@@ -93,6 +94,18 @@ export function AIBar() {
       setResult({ kind: 'error', text: t('editor.ai.applyError') });
       setBusy(false);
       return;
+    }
+    // A translated (non-English) version's text comes from the translator: refuse an edit
+    // that brings in sentences that aren't on the page or in what the author supplied.
+    if ((beforeDoc.language ?? 'en') !== 'en') {
+      const supplied = [instruction, ...attachments.flatMap((a) => (a.kind === 'text' ? [a.text] : []))];
+      const added = authoredSentences(beforeDoc, afterDoc, supplied);
+      if (added.length) {
+        const shown = added.slice(0, 2).map((s) => `“${s.length > 80 ? `${s.slice(0, 79).trimEnd()}…` : s}”`).join(' · ');
+        setResult({ kind: 'error', text: t('editor.ai.translatedNoNewText', { shown }) });
+        setBusy(false);
+        return;
+      }
     }
     setPending({ ops: res.ops, summary: res.summary, beforeDoc, afterDoc, attachments });
     setBusy(false);

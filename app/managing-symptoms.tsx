@@ -27,6 +27,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ContentColumn, ArticleLayout } from "../components/ui";
 
 import { useTranslation } from 'react-i18next';
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const RESOURCE_ID = "17";
@@ -970,20 +971,23 @@ export default function ManagingSymptomsScreen() {
             </View>
 
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={100}
             >
+              <View style={[styles.scrollContent, { paddingBottom: 40 }]}>
                 <ContentColumn width="reading">
                     {titleNode}
                     {articleBody}
-                    {/* Recommendations */}
-                    <RecommendationList
+                </ContentColumn>
+              </View>
+              {/* Full-width footer band, reaching the bottom of the page */}
+              <RecommendationList
                         currentId={RESOURCE_ID}
                         currentTags={RELATED_TAGS}
-                    />
-                </ContentColumn>
+                        band={{ alignWidth: CONTENT_WIDTH.reading, minPad: 24 }}
+                      />
             </ScrollView>
 
             {/* Expanded card modal */}

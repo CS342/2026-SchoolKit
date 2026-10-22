@@ -1,7 +1,7 @@
 // Tests for the generate prompt's topic-version context. Run with `npm test`.
 import { describe, it, expect } from '@jest/globals';
 import type { ContentDoc } from '../types';
-import { buildGenerateMessages, layoutOutline } from './prompt';
+import { buildGenerateMessages, buildEditMessages, layoutOutline, SYSTEM_PROMPT } from './prompt';
 
 const sibling: ContentDoc = {
   schemaVersion: 1,
@@ -59,5 +59,35 @@ describe('buildGenerateMessages — version options', () => {
     const withFile = userText(buildGenerateMessages('', [], [], [{ kind: 'text', id: 'a', name: 'parents.docx', text: 'Some text.', links: [] }]));
     expect(withFile).toContain('SOURCE-ONLY');
     expect(userText(buildGenerateMessages('A guide', []))).not.toContain('SOURCE-ONLY');
+  });
+});
+
+describe('icons and language', () => {
+  it('offers the curated icons, including the specific mci: ones', () => {
+    expect(SYSTEM_PROMPT).toContain('mci:home-heart');
+    expect(SYSTEM_PROMPT).toContain('mci:forum');
+    expect(SYSTEM_PROMPT).toContain('heart-outline');
+    expect(SYSTEM_PROMPT).not.toContain('Icons are Ionicons outline names');
+  });
+
+  it('tells generation which language the page is in', () => {
+    expect(userText(buildGenerateMessages('Make a page', [], [], [], { language: 'es' }))).toMatch(/LANGUAGE: This page is in Spanish/);
+    expect(userText(buildGenerateMessages('Make a page', []))).not.toMatch(/LANGUAGE: This page is in/);
+  });
+});
+
+describe('edit messages', () => {
+  const spanish = { ...sibling, language: 'es', translatedFrom: { pageId: 'p-en', textHashes: { 'h.titleParts[0].text': 'deadbeef' } } } as ContentDoc;
+  const editText = (doc: ContentDoc) => userText(buildEditMessages(doc, 'Add a section', []));
+
+  it('leaves translation bookkeeping out of the page the AI sees', () => {
+    expect(editText(spanish)).not.toContain('textHashes');
+    expect(editText(spanish)).not.toContain('deadbeef');
+    expect(editText(spanish)).toContain('Secret hero wording');
+  });
+
+  it('forbids new wording on translated versions only', () => {
+    expect(editText(spanish)).toMatch(/TRANSLATED VERSION: This page is the Spanish version/);
+    expect(editText(sibling)).not.toMatch(/TRANSLATED VERSION/);
   });
 });

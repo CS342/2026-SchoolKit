@@ -14,12 +14,13 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { TYPOGRAPHY, RADII, SPACING } from '../../constants/onboarding-theme';
 import { pickFiles, processFile, UPLOAD_ACCEPT, Attachment } from '../../features/content/uploads';
-import { audienceLabel, guessAudienceFromFilename } from '../../features/content/versions';
-import type { Audience } from '../../features/content/audience';
+import { versionLabel, guessAudienceFromFilename } from '../../features/content/versions';
+import type { Audience, ContentLanguage } from '../../features/content/audience';
 import type { ContentDoc } from '../../features/content/types';
 import { generateTopicVersions, type VersionProgress } from '../../features/content/editor/generateTopic';
 import { AttachmentBar } from './AttachmentBar';
 import { AudienceChips } from './AudienceChips';
+import { LanguageChips, languageOfFiles } from './LanguageChips';
 import { ToggleRow } from './primitives';
 import { useFileDrop } from './useFileDrop';
 
@@ -32,6 +33,8 @@ const EXAMPLE_KEYS = [
 interface VersionRow {
   key: string;
   audience?: Audience;
+  /** Prefilled from the row's files; unset = detected at generation time. */
+  language?: ContentLanguage;
   attachments: Attachment[];
   state?: VersionProgress;
   error?: string;
@@ -94,7 +97,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
       for (const f of files) {
         const res = await process([f]);
         errs.push(...res.errs);
-        if (res.added.length) made.push(newRow({ attachments: res.added, audience: guessAudienceFromFilename(f.name) }));
+        if (res.added.length) made.push(newRow({ attachments: res.added, audience: guessAudienceFromFilename(f.name), language: languageOfFiles(res.added) }));
       }
       // Fill a trailing empty row before adding new ones. (No mutation of `made`: React
       // may run this updater twice.)
@@ -122,7 +125,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
     setProcessing(true); setError(null);
     const { added, errs } = await process(files);
     setRows((prev) => prev?.map((r) => (r.key === key
-      ? { ...r, attachments: [...r.attachments, ...added], audience: r.attachments.length || r.audience ? r.audience : guessAudienceFromFilename(files[0].name) }
+      ? { ...r, attachments: [...r.attachments, ...added], audience: r.attachments.length || r.audience ? r.audience : guessAudienceFromFilename(files[0].name), language: r.language ?? languageOfFiles(added) }
       : r)) ?? null);
     if (errs.length) setError(errs.join(' '));
     setProcessing(false);
@@ -135,8 +138,8 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
    *  first version, plus an empty one to fill). */
   const startVersions = () => {
     const fromFiles = attachments.length > 1
-      ? attachments.map((a) => newRow({ attachments: [a], audience: guessAudienceFromFilename(a.name) }))
-      : [newRow({ attachments, audience: attachments[0] ? guessAudienceFromFilename(attachments[0].name) : undefined })];
+      ? attachments.map((a) => newRow({ attachments: [a], audience: guessAudienceFromFilename(a.name), language: languageOfFiles([a]) }))
+      : [newRow({ attachments, audience: attachments[0] ? guessAudienceFromFilename(attachments[0].name) : undefined, language: languageOfFiles(attachments) })];
     setRows(fromFiles.length > 1 ? fromFiles : [...fromFiles, newRow()]);
     setAttachments([]);
   };
@@ -167,7 +170,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
     const reference = rows.find((r) => r.doc)?.doc;
     const { topicId: madeTopic, results } = await generateTopicVersions({
       prompt: p,
-      versions: todo.map((r) => ({ audience: r.audience, attachments: r.attachments })),
+      versions: todo.map((r) => ({ audience: r.audience, language: r.language, attachments: r.attachments })),
       topicId,
       topicName: topicId ? undefined : topicName,
       matchLayout,
@@ -277,7 +280,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                         <RowStatus state={r.state} />
                         <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textDark, flex: 1 }} numberOfLines={1}>
-                          {t('editor.newPage.versionLabel', { num: i + 1, audience: audienceLabel(r.audience) })}
+                          {t('editor.newPage.versionLabel', { num: i + 1, audience: versionLabel(r) })}
                         </Text>
                         {!r.pageId && !busy && rows.length > 1 ? (
                           <Pressable onPress={() => setRows((prev) => prev?.filter((x) => x.key !== r.key) ?? null)} accessibilityLabel={t('editor.newPage.removeVersion', { num: i + 1 })} style={{ padding: 2, cursor: 'pointer' as any }}>
@@ -290,6 +293,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                       ) : (
                         <>
                           <AudienceChips value={r.audience} onChange={(audience) => updateRow(r.key, { audience })} compact />
+                          <LanguageChips value={r.language} onChange={(language) => updateRow(r.key, { language })} />
                           <AttachmentBar
                             attachments={r.attachments}
                             onAttach={() => attachToRow(r.key)}

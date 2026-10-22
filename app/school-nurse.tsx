@@ -45,6 +45,7 @@ import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 import { useTranslation } from 'react-i18next';
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
@@ -948,20 +949,23 @@ export default function SchoolNurseScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={100}
       >
+        <View style={[styles.scrollContent, { paddingBottom: 40 }]}>
         <ContentColumn width="reading">
         {titleNode}
         {articleBody}
-        {/* Recommendations */}
+        </ContentColumn>
+        </View>
+        {/* Full-width footer band, reaching the bottom of the page */}
         <RecommendationList
           currentId="13"
           currentTags={RELATED_TAGS}
+          band={{ alignWidth: CONTENT_WIDTH.reading, minPad: SPACING.contentPadding }}
         />
-        </ContentColumn>
       </ScrollView>
 
       {/* Bottom sheet */}

@@ -32,6 +32,7 @@ import { ThemeColors, ThemeShadows } from "../constants/theme";
 import { TYPOGRAPHY, SPACING, RADII, BORDERS } from "../constants/onboarding-theme";
 
 import { useTranslation } from 'react-i18next';
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -696,12 +697,15 @@ export default function UnderstandingCancerScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
+        <View style={[styles.scrollContent, { paddingBottom: 40 }]}>
         <ContentColumn width="reading">
           {titleNode}
           {articleBody}
-          <RecommendationList currentId="11" currentTags={RELATED_TAGS} />
         </ContentColumn>
+        </View>
+        {/* Full-width footer band, reaching the bottom of the page */}
+        <RecommendationList currentId="11" currentTags={RELATED_TAGS} band={{ alignWidth: CONTENT_WIDTH.reading, minPad: 24 }} />
       </ScrollView>
 
       {expandedModal}

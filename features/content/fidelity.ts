@@ -110,6 +110,31 @@ export function checkFidelity(doc: ContentDoc, sources: string[]): FidelityRepor
   return { missing, invented, coverage: checked ? (checked - missing.length) / checked : 1 };
 }
 
+/** Sentences shorter than this (in words) may be new in an edit — a label or heading
+ *  the layout needs ("Más información"). */
+const MIN_AUTHORED_WORDS = 3;
+
+/**
+ * Sentences an edit added that the author didn't supply: not on the page before, and not
+ * in their message or attachments. Moving, splitting and re-blocking existing text adds
+ * none. Used to keep the AI from writing new copy where text must come from a person
+ * (translated versions). Short labels are allowed.
+ */
+export function authoredSentences(before: ContentDoc, after: ContentDoc, supplied: string[]): string[] {
+  const known = ` ${normalizeText([before.title, ...pageTexts(before).map((t) => t.text), ...supplied].join('\n'))} `;
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const t of [after.title, ...pageTexts(after).map((x) => x.text)]) {
+    for (const sentence of splitSentences(t)) {
+      const n = normalizeText(sentence);
+      if (wordCount(n) < MIN_AUTHORED_WORDS || seen.has(n) || known.includes(` ${n} `)) continue;
+      seen.add(n);
+      out.push(sentence);
+    }
+  }
+  return out;
+}
+
 /**
  * On a page converted from the author's files, a SchoolKit guide list (resourceRefList)
  * keeps only guides the files name — by title — and is dropped when none are named.

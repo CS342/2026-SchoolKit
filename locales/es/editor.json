@@ -187,6 +187,7 @@
       "noFieldChanges": "No hay cambios de campos (probablemente un reordenamiento). Aplica para continuar.",
       "applyChange": "Aplicar cambio",
       "applyError": "La IA sugirió un cambio que no pudimos aplicar.",
+      "translatedNoNewText": "Esta es una versión traducida, así que la IA no puede escribir texto nuevo aquí. Su sugerencia agregaba texto que no está en la página ni en tu mensaje: {{shown}}. Pega en tu mensaje el texto del traductor, o haz primero el cambio en la versión en inglés.",
       "changeApplied": "Cambio aplicado.",
       "undoHint": "{{text}}  ·  Deshaz arriba si no quedó bien.",
       "editingSelected": "Editando el bloque{{type}} seleccionado",

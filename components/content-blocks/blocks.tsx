@@ -411,12 +411,13 @@ export function ResourceRefListBlock({ block }: { block: RefListT }) {
 }
 
 // ─── Recommendations ───────────────────────────────────────────────────────────
-export function RecommendationsBlock() {
+/** `band`: rendered by ContentPage as the full-width page footer (see RecommendationList). */
+export function RecommendationsBlock({ band }: { block?: unknown; band?: React.ComponentProps<typeof RecommendationList>['band'] }) {
   const { resourceId, tags, linkedResourceIds, preview } = useBlockCtx();
   // In the editor preview, keep it visible but inert so a card tap can't leave the editor.
   return (
-    <View pointerEvents={preview ? 'none' : 'auto'}>
-      <RecommendationList currentId={resourceId ?? ''} currentTags={tags} excludeIds={linkedResourceIds} />
+    <View pointerEvents={preview ? 'none' : 'auto'} style={band ? { flexGrow: 1 } : undefined}>
+      <RecommendationList currentId={resourceId ?? ''} currentTags={tags} excludeIds={linkedResourceIds} band={band} />
     </View>
   );
 }

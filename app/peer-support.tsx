@@ -43,6 +43,7 @@ import { useOnboarding } from "../contexts/OnboardingContext";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 import { AppTheme, ThemeColors, ThemeShadows } from "../constants/theme";
 
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -790,19 +791,23 @@ export default function PeerSupportScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={100}
       >
+        <View style={[styles.scrollContent, { paddingBottom: 40 }]}>
         <ContentColumn width="reading">
         {titleNode}
         {articleBody}
+        </ContentColumn>
+        </View>
+        {/* Full-width footer band, reaching the bottom of the page */}
         <RecommendationList
           currentId="12"
           currentTags={RELATED_TAGS}
+          band={{ alignWidth: CONTENT_WIDTH.reading, minPad: SPACING.screenPadding }}
         />
-        </ContentColumn>
       </ScrollView>
 
       {bottomSheet}

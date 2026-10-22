@@ -4,9 +4,12 @@
 
 import type { Attachment, ImageAttachment, TextAttachment } from '../uploads';
 import type { ContentDoc } from '../types';
-import type { Audience } from '../audience';
+import type { Audience, ContentLanguage } from '../audience';
 import { audienceLabel } from '../versions';
 import { BLOCK_PROMPT_LINES } from '../registry';
+import { IONICON_SET, MCI_ICON_SET } from '../icons';
+
+const LANGUAGE_NAMES: Record<ContentLanguage, string> = { en: 'English', es: 'Spanish' };
 
 export interface ResourceRef { id: string; title: string; tags: string[] }
 export interface VerifiedLink { url: string; name: string }
@@ -17,7 +20,8 @@ You output ONLY a single JSON object. No prose, no markdown fences.
 
 ## Hard rules
 - Colors are tokens only: "primary" | "teal" | "coral" | "amber" | "indigo" | "sky". Never hex.
-- Icons are Ionicons outline names (e.g. "medkit-outline", "school-outline", "heart-outline").
+- Icons: pick the most specific fitting name from these. Ionicons: ${IONICON_SET.join(', ')}. More specific symbols (use the "mci:" prefix exactly as written): ${MCI_ICON_SET.join(', ')}. Prefer a specific one (e.g. "mci:home-heart" for family/home, "mci:stethoscope" for the school nurse, "mci:forum" for talking with peers) over a generic one. Never invent other names.
+- LANGUAGE: a page is written in ONE language — the language of the user's source material, or of their request when there is none. Every text YOU write (titles, headings, summaries, card titles, filler fields, the hero) is in that language too. Never mix languages on a page, and never translate the user's source text.
 - Ground, don't invent. Use only facts implied by the request or the user's attached source material. External links may use ONLY the provided verifiedLinks (which include links found in the user's message/files) — place them in a linkList or as [text](url) markdown links in richText, but NEVER invent a URL that isn't listed. Reference existing guides (resourceRefList) using ONLY ids from the provided resources. A quote gets an "author" only if the request supplies one — otherwise omit it.
 - Every block and every item needs a short unique "id" (e.g. "b1", "i1"). Ids unique within the page.
 - FIDELITY — preserve the user's words, but DESIGN the layout. When the user provides substantive source text (pasted prose, or an attached/typed document), you are converting it into a well-designed page, not retyping it as one long text block:
@@ -49,7 +53,8 @@ Selection (match the shape of the content — this applies equally to source tex
 
 ## MODE: generate
 Return a ContentDoc:
-{ "schemaVersion":1, "slug":"kebab-slug", "title":"…", "accent":"primary", "category":"School|Health|Social|Family|…", "tags":["…"], "audience":{ "roles":["…"] }, "blocks":[ …exactly one hero first, recommendations last… ] }
+{ "schemaVersion":1, "slug":"kebab-slug", "title":"…", "accent":"primary", "category":"School|Health|Social|Family|…", "tags":["…"], "language":"en", "audience":{ "roles":["…"] }, "blocks":[ …exactly one hero first, recommendations last… ] }
+"language" is "en" (English) or "es" (Spanish): the language the page is written in. "slug", "category" and "tags" stay in English whatever the page language (they're internal).
 audience.roles = who the page is written FOR (who it addresses and who can act on it), from: "student-elementary" (elementary school student, Pre-K–5), "student-k8" (middle school student), "student-hs" (high school student), "parent" (parent/caregiver), "staff" (teachers, nurses, counselors, school staff). Pick only the roles the copy actually speaks to — a page telling a student how to talk to their teacher is for students (and maybe parents), NOT staff; a page on supporting a student in class is for staff. Omit "audience" only if the page is genuinely useful to every role. Add "ageBands" (from "elementary","middle","high","beyond") only when the content is clearly grade-specific.
 Recipes: educational explainer = hero·callout·accordion·(stepper|cardGrid)·resourceRefList·footnote·recommendations. Step-by-step = hero·callout·stepper·accordion·resourceRefList·footnote·recommendations. Ranked list = hero·callout·resourceRefList(ranked:true)·recommendations. Include a footnote when giving medical/financial/legal guidance.
 These recipes are for pages you author from a short description. When converting source material, the SOURCE's own sections and order drive the page: hero (the source's title, verbatim) first, then one well-chosen block per source section (per "Selection"), then recommendations last. Add a callout/footnote only if the source has that content or the page needs a medical/financial disclaimer.
@@ -137,6 +142,8 @@ const SOURCE_ONLY = `SOURCE-ONLY (this overrides the voice, recipe, callout and 
 export interface GenerateOptions {
   /** Who this version is for. Shapes copy the AI writes, never the user's source text. */
   audience?: Audience;
+  /** The language the page is in (the author's choice, or detected from the source). */
+  language?: ContentLanguage;
   /** Another version of the same topic whose structure this one should mirror. */
   layoutFrom?: ContentDoc;
 }
@@ -150,6 +157,9 @@ export function layoutOutline(doc: ContentDoc): string {
 
 function versionBlock(opts: GenerateOptions): string {
   const parts: string[] = [];
+  if (opts.language) {
+    parts.push(`LANGUAGE: This page is in ${LANGUAGE_NAMES[opts.language]}. Write everything you author in ${LANGUAGE_NAMES[opts.language]}, and set "language" to "${opts.language}".`);
+  }
   if (opts.audience) {
     parts.push(
       `AUDIENCE: This page is one version of a topic, written for: ${audienceLabel(opts.audience)}. ` +
@@ -173,11 +183,27 @@ export function buildGenerateMessages(prompt: string, resources: ResourceRef[], 
   ];
 }
 
-export function buildEditMessages(doc: unknown, instruction: string, resources: ResourceRef[], links: VerifiedLink[] = [], attachments: Attachment[] = [], focusBlockId?: string): ChatMessage[] {
+/** On a version made from a human translation, text comes from the translator, never
+ *  the AI. (Enforced after the fact too: authoredSentences in ../fidelity.ts.) */
+export function translatedEditRules(language: ContentLanguage): string {
+  const lang = LANGUAGE_NAMES[language];
+  return `TRANSLATED VERSION: This page is the ${lang} version of a topic, and its text comes from a professional translator. You must NOT write any new ${lang} sentences. Every sentence on the page after your edit must already be on the page, or be given in the user's instruction or attachments (then use it word for word).
+- You MAY: reorder, move or remove blocks and items; change a block's type and move its existing text into the new block; split or merge sections; change icons and colors; and place ${lang} text the user supplies.
+- Short labels the layout needs (2 words or fewer) may be taken from text already on the page.
+- If the instruction needs wording that isn't available, make NO text changes. Return "ops": [] (or only the layout ops you can do) and say in "summary" that the new wording has to come from the translator — or that the change can be made on the English version first.`;
+}
+
+export function buildEditMessages(doc: ContentDoc, instruction: string, resources: ResourceRef[], links: VerifiedLink[] = [], attachments: Attachment[] = [], focusBlockId?: string): ChatMessage[] {
   const focus = focusBlockId
     ? `\n\nFOCUS: Edit ONLY the block with id "${focusBlockId}". Do not add, remove, reorder, or modify any other block.`
     : '';
-  const base = `MODE: edit\n\nCurrent page (JSON):\n${JSON.stringify(doc)}\n\nInstruction:\n${instruction}${focus}\n\n${resourceBlock(resources)}\n\n${linkBlock(links)}\n\nReturn a single JSON object { "summary": "...", "ops": [...] }.`;
+  // translatedFrom is bookkeeping (text fingerprints), not content — leave it out.
+  const { translatedFrom, ...visible } = doc;
+  const language = doc.language ?? 'en';
+  const languageRule = language !== 'en' || translatedFrom
+    ? `\n\n${translatedEditRules(language)}`
+    : '';
+  const base = `MODE: edit\n\nCurrent page (JSON):\n${JSON.stringify(visible)}\n\nInstruction:\n${instruction}${focus}${languageRule}\n\n${resourceBlock(resources)}\n\n${linkBlock(links)}\n\nReturn a single JSON object { "summary": "...", "ops": [...] }.`;
   return [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: userContent(base, attachments) },

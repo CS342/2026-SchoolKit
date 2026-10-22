@@ -3,7 +3,8 @@
 // once) and the editor's "Add version → From file(s)".
 import { generatePage, editPage } from '../ai/client';
 import { resolveUploadedImages, type Attachment, type TextAttachment } from '../uploads';
-import type { Audience } from '../audience';
+import type { Audience, ContentLanguage } from '../audience';
+import { detectLanguage } from '../language';
 import type { ContentDoc } from '../types';
 import type { Notice } from '../lint';
 import { applyOps } from '../ops';
@@ -15,6 +16,8 @@ import { stashGenerationNotices } from './store';
 
 export interface VersionRequest {
   audience?: Audience;
+  /** The page's language. Unset = detected from the attached files (else the AI decides). */
+  language?: ContentLanguage;
   attachments: Attachment[];
 }
 
@@ -86,7 +89,10 @@ async function generateVersion(
   // An audience the author set (even "everyone") is final; with none set, the AI's
   // suggestion is kept.
   const audienceOpt = 'audience' in version ? { audience: version.audience } : {};
-  const res = await generatePage(prompt, version.attachments, [], { ...audienceOpt, layoutFrom: opts.layoutFrom });
+  // The author's language, else the files' — so a page made from a Spanish file is saved
+  // as Spanish even if the model forgets to say so.
+  const language = version.language ?? detectLanguage(sourceTexts(version.attachments).join('\n'));
+  const res = await generatePage(prompt, version.attachments, [], { ...audienceOpt, language, layoutFrom: opts.layoutFrom });
   if ('error' in res) return { ok: false, error: res.error };
   const checked = await enforceSourceText(res.doc, version.attachments);
   // Link lists left in Text blocks become External links blocks, so every version of a

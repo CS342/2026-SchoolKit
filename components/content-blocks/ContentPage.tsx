@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTTS } from '../../hooks/useTTS';
 import { usePageReader } from '../../hooks/usePageReader';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useWebLayout } from '../../hooks/useResponsive';
+import { useWebLayout, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { ContentColumn, ArticleLayout, ArticleSection } from '../ui';
 import { BookmarkButton } from '../BookmarkButton';
 import { DownloadButton } from '../DownloadButton';
@@ -20,11 +20,14 @@ import { WIDE_TYPES } from '../../features/content/registry';
 import { docSpeechSegments } from '../../features/content/speech';
 import { makeBlockStyles } from './styles';
 import { BlockCtx, BlockCtxProvider, makeColorResolver, ResolvedStep, FlipDeck } from './context';
-import { BlockRenderer, HeroTitle, blockHeading } from './blocks';
+import { BlockRenderer, HeroTitle, RecommendationsBlock, blockHeading } from './blocks';
 import { BlockEntrance } from './util';
 import { StepModal } from './StepModal';
 import { FlipCardModal } from './FlipCardModal';
 import { PageReaderBar } from './PageReaderBar';
+
+/** Side padding of the phone layout's scroll content (styles.scrollContent). */
+const PAGE_PAD = 24;
 
 export function ContentPage({ doc, forceLayout, preview, onReachEnd, languageFallback }: {
   doc: ContentDoc;
@@ -93,7 +96,11 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd, languageFal
 
   // ── derive hero, body, TOC ──
   const heroBlock = doc.blocks.find((b) => b.type === 'hero') as HeroBlock | undefined;
-  const bodyBlocks = doc.blocks.filter((b) => b !== heroBlock);
+  // A closing Recommendations block becomes the full-width page footer instead of a
+  // card inside the reading column.
+  const lastBlock = doc.blocks[doc.blocks.length - 1];
+  const footerBlock = lastBlock?.type === 'recommendations' ? lastBlock : undefined;
+  const bodyBlocks = doc.blocks.filter((b) => b !== heroBlock && b !== footerBlock);
   const sections: ArticleSection[] = bodyBlocks
     .map((b) => ({ id: b.id, label: blockHeading(b) }))
     .filter((s): s is ArticleSection => !!s.label);
@@ -188,6 +195,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd, languageFal
           actions={actionsNode}
           sections={sections}
           onScroll={handleScroll}
+          footer={footerBlock ? (align) => <RecommendationsBlock band={{ alignWidth: align.width, minPad: align.minPad }} /> : undefined}
         >
           {body}
         </ArticleLayout>
@@ -206,15 +214,20 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd, languageFal
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{actionsNode}</View>
         </View>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
-          <ContentColumn width="reading">
-            {titleNode}
-            {body}
-          </ContentColumn>
+          <View style={[styles.scrollContent, footerBlock && { paddingBottom: 40 }]}>
+            <ContentColumn width="reading">
+              {titleNode}
+              {body}
+            </ContentColumn>
+          </View>
+          {footerBlock ? (
+            <RecommendationsBlock band={{ alignWidth: CONTENT_WIDTH.reading, minPad: PAGE_PAD, bottomInset: preview ? 0 : insets.bottom }} />
+          ) : null}
         </ScrollView>
       </View>
       {modals}

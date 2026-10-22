@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { COLORS, TYPOGRAPHY, RADII } from '../constants/onboarding-theme';
 import { AppTheme } from '../constants/theme';
 import { AppIcon } from './ui/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface RecommendationListProps {
   currentId: string;
@@ -18,6 +19,11 @@ interface RecommendationListProps {
   excludeIds?: string[];
   /** 'rail' = compact vertical list for a web sidebar rail. */
   variant?: 'default' | 'rail';
+  /** Page-footer band: full-bleed, no outer margin, grows to fill the space below the
+   *  article, with its heading and first card lined up with a centered column of
+   *  `alignWidth` (never closer to the edge than `minPad`). `bottomInset` defaults to the
+   *  device's bottom safe area. */
+  band?: { alignWidth: number; minPad: number; bottomInset?: number };
 }
 
 type RecommendedItem = 
@@ -28,7 +34,7 @@ const { width } = Dimensions.get('window');
 // Capped so cards stay phone-sized in wide windows (e.g. the editor's mobile preview).
 const CARD_WIDTH = Math.min(width * 0.75, 300);
 
-export function RecommendationList({ currentId, currentTags, excludeIds, variant = 'default' }: RecommendationListProps) {
+export function RecommendationList({ currentId, currentTags, excludeIds, variant = 'default', band }: RecommendationListProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { stories } = useStories();
@@ -38,6 +44,10 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
   const { resources } = useResources();
 
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+  // Band mode: inset matching the article column, from the band's measured width.
+  const [bandWidth, setBandWidth] = useState(0);
+  const safeBottom = useSafeAreaInsets().bottom;
+  const inset = band ? Math.max(band.minPad, (bandWidth - band.alignWidth) / 2) : undefined;
 
   const recommendations = useMemo(() => {
     const lowercaseCurrentTags = (currentTags || []).map(t => t.toLowerCase());
@@ -135,18 +145,21 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, band && { marginVertical: 0, flexGrow: 1, paddingTop: 32, paddingBottom: 40 + (band.bottomInset ?? safeBottom) }]}
+      onLayout={band ? (e) => setBandWidth(e.nativeEvent.layout.width) : undefined}
+    >
       <LinearGradient
         colors={[colors.primary, '#E150F4', '#FF7A9F', '#FFAE73', '#FFE770']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.gradientBar}
       />
-      <Text style={styles.headerTitle}>{t('home.recommend.header')}</Text>
+      <Text style={[styles.headerTitle, inset !== undefined && { paddingHorizontal: inset }]}>{t('home.recommend.header')}</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, inset !== undefined && { paddingHorizontal: inset }]}
         snapToInterval={CARD_WIDTH + 14}
         decelerationRate="fast"
       >

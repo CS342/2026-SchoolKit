@@ -1,7 +1,7 @@
 // Tests for source fidelity checks. Run with `npm test`.
 import { describe, it, expect } from '@jest/globals';
 import type { ContentDoc } from './types';
-import { checkFidelity, splitSentences, normalizeText, fidelityNotices, keepSourceNamedGuides } from './fidelity';
+import { checkFidelity, splitSentences, normalizeText, fidelityNotices, keepSourceNamedGuides, authoredSentences } from './fidelity';
 
 const SOURCE = `# Cancer: Separating Fact from Fiction
 
@@ -104,5 +104,34 @@ describe('fidelityNotices', () => {
     expect(notices[0].message).toContain('4 sentences from parents.docx');
     expect(notices[0].message).toContain('(and 1 more)');
     expect(notices[1]).toMatchObject({ blockId: 'c' });
+  });
+});
+
+describe('authoredSentences', () => {
+  const before = doc([
+    { id: 'h', type: 'hero', titleParts: [{ text: 'Hablar con los maestros' }] },
+    { id: 'r', type: 'richText', markdown: 'Es importante hablar con la escuela. Los maestros quieren ayudar a su hijo.' },
+    { id: 'c', type: 'callout', icon: 'x', tone: 'teal', text: 'Lleve una lista de preguntas a la reunión.' },
+  ]);
+
+  it('allows moving, splitting and re-blocking existing text', () => {
+    const after = doc([
+      { id: 'h', type: 'hero', titleParts: [{ text: 'Hablar con los maestros' }] },
+      { id: 'c', type: 'callout', icon: 'x', tone: 'teal', text: 'Lleve una lista de preguntas a la reunión.' },
+      { id: 'a', type: 'accordion', heading: 'Consejos', items: [
+        { id: 'i1', title: 'La escuela', icon: 'x', color: 'teal', summary: 'Es importante hablar con la escuela.', body: 'Los maestros quieren ayudar a su hijo.' },
+      ] },
+    ]);
+    expect(authoredSentences(before, after, [])).toEqual([]);
+  });
+
+  it('flags new sentences the author did not supply', () => {
+    const after = doc([...before.blocks, { id: 'n', type: 'richText', markdown: 'También puede pedir una reunión con la enfermera.' }]);
+    expect(authoredSentences(before, after, [])).toEqual(['También puede pedir una reunión con la enfermera.']);
+  });
+
+  it("allows text from the author's message or files", () => {
+    const after = doc([...before.blocks, { id: 'n', type: 'richText', markdown: 'También puede pedir una reunión con la enfermera.' }]);
+    expect(authoredSentences(before, after, ['Agrega esto: "También puede pedir una reunión con la enfermera."'])).toEqual([]);
   });
 });

@@ -29,6 +29,9 @@ interface ArticleLayoutProps {
   contentStyle?: ViewStyle;
   /** Forwarded to the article ScrollView so callers can detect read-to-end. */
   onScroll?: (e: any) => void;
+  /** Full-width band after the article that reaches the bottom of the page. Gets the
+   *  article's column width and side padding so its content can line up with it. */
+  footer?: (align: { width: number; minPad: number }) => React.ReactNode;
 }
 
 function scrollToSection(id: string) {
@@ -37,6 +40,7 @@ function scrollToSection(id: string) {
   }
 }
 
+const PAGE_PAD = 48;
 const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: 20 } as any) : null;
 
 /**
@@ -46,7 +50,7 @@ const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: 20 } as any) 
  *  - narrow: a single centered reading column.
  * Title and actions share one row. Web-only; native screens keep their own layout.
  */
-export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wide, children, contentStyle, onScroll }: ArticleLayoutProps) {
+export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wide, children, contentStyle, onScroll, footer }: ArticleLayoutProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { width } = useResponsive();
@@ -65,45 +69,48 @@ export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wid
   return (
     <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 48, paddingTop: SPACING.xl, paddingBottom: 96 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: SPACING.xl }}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        {/* Breadcrumb anchors to the left content edge, above the centered article. */}
-        <Breadcrumb items={breadcrumb} />
-        <View style={{ width: '100%', maxWidth: outerMax, alignSelf: 'center' }}>
-          <View style={styles.row}>
-            {showToc ? (
-              <View style={[styles.tocCol, STICKY]}>
-                <Text style={[styles.tocLabel, { color: colors.textLight }]}>{t('design.ui.onThisPage')}</Text>
-                {sections!.map((s) => (
-                  <Pressable
-                    key={s.id}
-                    onPress={() => scrollToSection(s.id)}
-                    style={(({ hovered }: any) => [
-                      styles.tocItem,
-                      { borderLeftColor: hovered ? colors.primary : colors.border },
-                      Platform.OS === 'web' ? { cursor: 'pointer' } : null,
-                    ]) as any}
-                  >
-                    <Text style={[styles.tocText, { color: colors.textMuted }]}>{s.label}</Text>
-                  </Pressable>
-                ))}
+        <View style={{ paddingHorizontal: PAGE_PAD, paddingBottom: footer ? 56 : 96 }}>
+          {/* Breadcrumb anchors to the left content edge, above the centered article. */}
+          <Breadcrumb items={breadcrumb} />
+          <View style={{ width: '100%', maxWidth: outerMax, alignSelf: 'center' }}>
+            <View style={styles.row}>
+              {showToc ? (
+                <View style={[styles.tocCol, STICKY]}>
+                  <Text style={[styles.tocLabel, { color: colors.textLight }]}>{t('design.ui.onThisPage')}</Text>
+                  {sections!.map((s) => (
+                    <Pressable
+                      key={s.id}
+                      onPress={() => scrollToSection(s.id)}
+                      style={(({ hovered }: any) => [
+                        styles.tocItem,
+                        { borderLeftColor: hovered ? colors.primary : colors.border },
+                        Platform.OS === 'web' ? { cursor: 'pointer' } : null,
+                      ]) as any}
+                    >
+                      <Text style={[styles.tocText, { color: colors.textMuted }]}>{s.label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+
+              <View style={[styles.reading, { maxWidth: readingMax }, contentStyle]}>
+                {titleRow}
+                {children}
+                {!showRail && aside ? <View style={{ marginTop: SPACING.xxl }}>{aside}</View> : null}
               </View>
-            ) : null}
 
-            <View style={[styles.reading, { maxWidth: readingMax }, contentStyle]}>
-              {titleRow}
-              {children}
-              {!showRail && aside ? <View style={{ marginTop: SPACING.xxl }}>{aside}</View> : null}
+              {showRail ? (
+                <View style={[styles.railCol, STICKY]}>{aside}</View>
+              ) : null}
             </View>
-
-            {showRail ? (
-              <View style={[styles.railCol, STICKY]}>{aside}</View>
-            ) : null}
           </View>
         </View>
+        {footer?.({ width: outerMax, minPad: PAGE_PAD })}
       </ScrollView>
     </View>
   );

@@ -9,6 +9,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { COLOR_TOKENS, resolveColor } from '../../features/content/tokens';
 import type { ColorToken } from '../../features/content/types';
+// The icon picker's choices — shared with the AI prompt.
+import { ICON_SET } from '../../features/content/icons';
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
@@ -161,26 +163,6 @@ export function ColorSwatches({ value, onChange }: { value: ColorToken; onChange
   );
 }
 
-// Curated Ionicons (outline) covering the SchoolKit content domain.
-export const ICON_SET = [
-  'heart-outline', 'happy-outline', 'sparkles-outline', 'sunny-outline', 'star-outline', 'ribbon-outline',
-  'medkit-outline', 'fitness-outline', 'body-outline', 'bandage-outline', 'thermometer-outline', 'pulse-outline',
-  'battery-half-outline', 'bed-outline', 'nutrition-outline', 'water-outline',
-  'school-outline', 'book-outline', 'library-outline', 'pencil-outline', 'document-text-outline', 'reader-outline',
-  'people-outline', 'people-circle-outline', 'person-outline', 'chatbubbles-outline', 'chatbox-ellipses-outline', 'hand-left-outline',
-  'wallet-outline', 'cash-outline', 'card-outline', 'calculator-outline', 'gift-outline', 'receipt-outline', 'pricetag-outline',
-  'home-outline', 'car-outline', 'airplane-outline', 'bus-outline', 'location-outline', 'map-outline',
-  'calendar-outline', 'time-outline', 'hourglass-outline', 'alarm-outline', 'checkmark-circle-outline', 'shield-checkmark-outline',
-  'call-outline', 'mail-outline', 'globe-outline', 'link-outline', 'search-outline', 'information-circle-outline',
-  'bulb-outline', 'compass-outline', 'flag-outline', 'trophy-outline', 'leaf-outline', 'balloon-outline',
-  'musical-notes-outline', 'game-controller-outline', 'football-outline', 'brush-outline', 'camera-outline', 'headset-outline',
-  // Material Community Icons (more specific symbols), rendered via AppIcon.
-  'mci:home-heart', 'mci:hand-heart', 'mci:account-heart', 'mci:heart-pulse', 'mci:head-heart', 'mci:book-heart',
-  'mci:stethoscope', 'mci:hospital-box', 'mci:thermometer', 'mci:bandage', 'mci:meditation', 'mci:emoticon-happy',
-  'mci:account-school', 'mci:school-outline', 'mci:book-open-page-variant', 'mci:lightbulb-on', 'mci:chat-question', 'mci:forum',
-  'mci:account-group', 'mci:account-voice', 'mci:human-greeting-variant', 'mci:scale-balance', 'mci:piggy-bank', 'mci:cash-multiple',
-  'mci:calendar-heart', 'mci:map-marker-path', 'mci:star-shooting', 'mci:party-popper',
-];
 
 /** Icon picker. With `allowNone`, the field can be cleared — `value` is then undefined
  *  and the picker leads with a "No icon" choice. */

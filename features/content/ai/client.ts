@@ -11,6 +11,7 @@ import { collectVerifiedLinks } from '../uploads';
 import type { Attachment } from '../uploads';
 import type { Notice } from '../lint';
 import type { ContentLanguage } from '../audience';
+import { storedLanguage } from '../language';
 import { buildAlignMessages, parseAlignResult, MAX_SLOTS_PER_REQUEST, type TextSlot } from '../translate';
 
 // The guides the Library actually lists (published pages included), so resourceRefList
@@ -47,8 +48,9 @@ export async function generatePage(prompt: string, attachments: Attachment[] = [
   const parsed = parseGenerateResult(res.result);
   if (!parsed.doc) return { error: parsed.errors.join('; ') || 'The AI returned a page we could not read.' };
   // An audience the caller sets (even undefined = everyone) is the author's choice and
-  // wins; otherwise the model's suggestion stands.
-  const doc = 'audience' in opts ? { ...parsed.doc, audience: opts.audience } : parsed.doc;
+  // wins; otherwise the model's suggestion stands. Same for the language.
+  let doc = 'audience' in opts ? { ...parsed.doc, audience: opts.audience } : parsed.doc;
+  doc = { ...doc, language: storedLanguage(opts.language ?? doc.language) };
   return { doc, notices: parsed.notices };
 }
 

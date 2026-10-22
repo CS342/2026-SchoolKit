@@ -28,6 +28,7 @@ import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
 import { useTranslation } from 'react-i18next';
+import { CONTENT_WIDTH } from '../hooks/useResponsive';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -890,20 +891,23 @@ export default function SchoolLifeBalanceScreen() {
             </View>
 
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={100}
             >
+              <View style={[styles.scrollContent, { paddingBottom: 40 }]}>
                 <ContentColumn width="reading">
                 {titleNode}
                 {articleBody}
-                {/* Recommendations */}
-                <RecommendationList
+                </ContentColumn>
+              </View>
+              {/* Full-width footer band, reaching the bottom of the page */}
+              <RecommendationList
                     currentId={resourceId}
                     currentTags={RELATED_TAGS}
-                />
-                </ContentColumn>
+                    band={{ alignWidth: CONTENT_WIDTH.reading, minPad: 20 }}
+                  />
             </ScrollView>
 
             {/* Expanded card modal */}
