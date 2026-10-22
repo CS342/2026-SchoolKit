@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { diffJson } from 'diff';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,6 +42,7 @@ function affectedBlockIds(beforeDoc: ContentDoc, afterDoc: ContentDoc, ops: Op[]
 }
 
 export function AIBar() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { user } = useAuth();
   const dispatch = useEditorStore((s) => s.dispatch);
@@ -88,7 +90,7 @@ export function AIBar() {
     try {
       afterDoc = applyOps(beforeDoc, res.ops);
     } catch {
-      setResult({ kind: 'error', text: "The AI suggested a change we couldn't apply." });
+      setResult({ kind: 'error', text: t('editor.ai.applyError') });
       setBusy(false);
       return;
     }
@@ -106,7 +108,7 @@ export function AIBar() {
     dispatch(resolved.output);
     select(null);
     const note = resolved.errors.length ? `  ·  ${resolved.errors.join(' ')}` : '';
-    setResult({ kind: resolved.errors.length ? 'error' : 'ok', text: (pending.summary || 'Change applied.') + note });
+    setResult({ kind: resolved.errors.length ? 'error' : 'ok', text: (pending.summary || t('editor.ai.changeApplied')) + note });
     setText('');
     setAttachments([]);
     setPending(null);
@@ -130,7 +132,7 @@ export function AIBar() {
       <View style={{ borderTopWidth: 1, borderTopColor: colors.borderCard, backgroundColor: colors.white, padding: 12, gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
           <Ionicons name="sparkles" size={14} color={colors.primary} style={{ marginTop: 2 }} />
-          <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark, flex: 1 }}>{pending.summary || 'Proposed change'}</Text>
+          <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark, flex: 1 }}>{pending.summary || t('editor.ai.proposedChange')}</Text>
         </View>
         <ScrollView
           style={{ maxHeight: 220, backgroundColor: colors.inputBackground, borderRadius: RADII.md, borderWidth: 1, borderColor: colors.border }}
@@ -149,12 +151,12 @@ export function AIBar() {
                     {p.value}
                   </Text>
                 ))
-              : <Text style={{ color: colors.textMuted }}>No field changes (likely a reorder). Apply to continue.</Text>}
+              : <Text style={{ color: colors.textMuted }}>{t('editor.ai.noFieldChanges')}</Text>}
           </Text>
         </ScrollView>
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
           <Pressable onPress={cancel} disabled={busy} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: RADII.button, cursor: (busy ? 'default' : 'pointer') as any }}>
-            <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: colors.textMuted }}>Cancel</Text>
+            <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: colors.textMuted }}>{t('common.cancel')}</Text>
           </Pressable>
           <Pressable
             onPress={confirm}
@@ -162,7 +164,7 @@ export function AIBar() {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 16, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: (busy ? 'default' : 'pointer') as any }}
           >
             {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={15} color="#fff" />}
-            <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: '#fff' }}>Apply change</Text>
+            <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: '#fff' }}>{t('editor.ai.applyChange')}</Text>
           </Pressable>
         </View>
       </View>
@@ -182,15 +184,15 @@ export function AIBar() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingHorizontal: 4 }}>
           <Ionicons name={result.kind === 'ok' ? 'checkmark-circle' : 'alert-circle'} size={14} color={result.kind === 'ok' ? colors.success : colors.error} style={{ marginTop: 1 }} />
           <Text style={{ ...TYPOGRAPHY.caption, color: result.kind === 'ok' ? colors.textMuted : colors.error, flex: 1 }}>
-            {result.kind === 'ok' ? `${result.text}  ·  Undo above if it's not right.` : result.text}
+            {result.kind === 'ok' ? t('editor.ai.undoHint', { text: result.text }) : result.text}
           </Text>
         </View>
       ) : null}
       {selectedId ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 4, paddingLeft: 10, paddingRight: 6, borderRadius: RADII.pill, backgroundColor: colors.primarySoft }}>
           <Ionicons name="locate" size={12} color={colors.primary} />
-          <Text style={{ ...TYPOGRAPHY.caption, color: colors.primary }}>Editing selected{selectedType ? ` ${selectedType}` : ''} block</Text>
-          <Pressable onPress={() => select(null)} accessibilityLabel="Edit whole page instead" style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' as any }}>
+          <Text style={{ ...TYPOGRAPHY.caption, color: colors.primary }}>{t('editor.ai.editingSelected', { type: selectedType ? ` ${selectedType}` : '' })}</Text>
+          <Pressable onPress={() => select(null)} accessibilityLabel={t('editor.ai.editWholePage')} style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' as any }}>
             <Ionicons name="close" size={12} color={colors.primary} />
           </Pressable>
         </View>
@@ -209,7 +211,7 @@ export function AIBar() {
         <Pressable
           onPress={busy || processing ? undefined : attach}
           disabled={busy || processing}
-          accessibilityLabel="Attach files"
+          accessibilityLabel={t('editor.attach.filesLabel')}
           style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', cursor: (busy || processing ? 'default' : 'pointer') as any }}
         >
           {processing ? <ActivityIndicator size="small" color={colors.textMuted} /> : <Ionicons name="attach" size={18} color={colors.textMuted} />}
@@ -220,14 +222,14 @@ export function AIBar() {
           onChangeText={setText}
           onSubmitEditing={run}
           editable={!busy}
-          placeholder={selectedId ? 'Ask AI to change this block…' : 'Ask AI to change this page…'}
+          placeholder={selectedId ? t('editor.ai.placeholderBlock') : t('editor.ai.placeholderPage')}
           placeholderTextColor={colors.inputPlaceholder}
           style={{ flex: 1, ...TYPOGRAPHY.bodySmall, color: colors.textDark, paddingVertical: 8, outlineStyle: 'none' as any }}
         />
         <Pressable
           onPress={run}
           disabled={!canSend}
-          accessibilityLabel="Send to AI"
+          accessibilityLabel={t('editor.ai.send')}
           style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? colors.primary : colors.disabledButton, cursor: (canSend ? 'pointer' : 'default') as any }}
         >
           {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={18} color="#fff" />}

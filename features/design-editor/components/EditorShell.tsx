@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Konva from 'konva';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { EditorToolbar } from './EditorToolbar';
 import { ToolPanel } from './ToolPanel';
@@ -38,6 +39,7 @@ export function EditorShell({
   onShareChange,
 }: EditorShellProps) {
   const stageRef = useRef<Konva.Stage | null>(null);
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -96,13 +98,13 @@ export function EditorShell({
 
     if (hasSelection) {
       items.push(
-        { label: 'Cut', shortcut: '\u2318X', onClick: () => {
+        { label: t('design.editor.menu.cut'), shortcut: '\u2318X', onClick: () => {
           const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
           copyToClipboard(selectedObjs);
           if (editingComponentId) deleteChildObjects(selectedIds);
           else deleteObjects(selectedIds);
         }},
-        { label: 'Copy', shortcut: '\u2318C', onClick: () => {
+        { label: t('design.editor.menu.copy'), shortcut: '\u2318C', onClick: () => {
           const selectedObjs = objects.filter((o) => selectedIds.includes(o.id));
           copyToClipboard(selectedObjs);
         }},
@@ -110,7 +112,7 @@ export function EditorShell({
     }
 
     if (hasClip) {
-      items.push({ label: 'Paste', shortcut: '\u2318V', onClick: () => {
+      items.push({ label: t('design.editor.menu.paste'), shortcut: '\u2318V', onClick: () => {
         const { objects: clipObjs, pasteCount } = getClipboard();
         const offset = (pasteCount + 1) * 20;
         const offsetObjs = clipObjs.map((o) => ({
@@ -126,17 +128,18 @@ export function EditorShell({
 
     if (hasSelection) {
       items.push(
-        { label: 'Duplicate', shortcut: '\u2318D', divider: true, onClick: () => {
+        { label: t('design.editor.menu.duplicate'), shortcut: '\u2318D', divider: true, onClick: () => {
           duplicateObjects(selectedIds);
-          showToast(`Duplicated ${selectedIds.length} object${selectedIds.length > 1 ? 's' : ''}`);
+          const n = selectedIds.length;
+          showToast(t(n === 1 ? 'design.editor.toast.duplicatedOne' : 'design.editor.toast.duplicatedOther', { count: n }));
         }},
-        { label: 'Bring to Front', shortcut: '\u2318]', divider: true, onClick: () => {
+        { label: t('design.editor.menu.bringToFront'), shortcut: '\u2318]', divider: true, onClick: () => {
           moveToFront(selectedIds);
         }},
-        { label: 'Send to Back', shortcut: '\u2318[', onClick: () => {
+        { label: t('design.editor.menu.sendToBack'), shortcut: '\u2318[', onClick: () => {
           moveToBack(selectedIds);
         }},
-        { label: 'Delete', shortcut: 'Del', divider: true, danger: true, onClick: () => {
+        { label: t('common.delete'), shortcut: 'Del', divider: true, danger: true, onClick: () => {
           if (editingComponentId) deleteChildObjects(selectedIds);
           else deleteObjects(selectedIds);
         }},
@@ -145,7 +148,7 @@ export function EditorShell({
 
     if (items.length === 0) {
       if (hasClip) {
-        items.push({ label: 'Paste', shortcut: '\u2318V', onClick: () => {
+        items.push({ label: t('design.editor.menu.paste'), shortcut: '\u2318V', onClick: () => {
           const { objects: clipObjs, pasteCount } = getClipboard();
           const offset = (pasteCount + 1) * 20;
           const offsetObjs = clipObjs.map((o) => ({
@@ -158,12 +161,12 @@ export function EditorShell({
           pasteObjects(offsetObjs);
         }});
       } else {
-        items.push({ label: 'No actions available', disabled: true, onClick: () => {} });
+        items.push({ label: t('design.editor.menu.noActions'), disabled: true, onClick: () => {} });
       }
     }
 
     return items;
-  }, [selectedIds, objects, editingComponentId, deleteChildObjects, deleteObjects, duplicateObjects, moveToFront, moveToBack, pasteObjects, showToast]);
+  }, [selectedIds, objects, editingComponentId, deleteChildObjects, deleteObjects, duplicateObjects, moveToFront, moveToBack, pasteObjects, showToast, t]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -214,7 +217,8 @@ export function EditorShell({
         e.preventDefault();
         if (selectedIds.length > 0) {
           duplicateObjects(selectedIds);
-          showToast(`Duplicated ${selectedIds.length} object${selectedIds.length > 1 ? 's' : ''}`);
+          const n = selectedIds.length;
+          showToast(t(n === 1 ? 'design.editor.toast.duplicatedOne' : 'design.editor.toast.duplicatedOther', { count: n }));
         }
         return;
       }
@@ -302,7 +306,7 @@ export function EditorShell({
       if (isMeta && e.key === ']' && selectedIds.length > 0) {
         e.preventDefault();
         moveToFront(selectedIds);
-        showToast('Moved to front');
+        showToast(t('design.editor.toast.movedToFront'));
         return;
       }
 
@@ -310,7 +314,7 @@ export function EditorShell({
       if (isMeta && e.key === '[' && selectedIds.length > 0) {
         e.preventDefault();
         moveToBack(selectedIds);
-        showToast('Moved to back');
+        showToast(t('design.editor.toast.movedToBack'));
         return;
       }
 
@@ -372,6 +376,7 @@ export function EditorShell({
     showToast,
     updateObject,
     updateChildObject,
+    t,
   ]);
 
   const handleImageUpload = useCallback(
@@ -455,7 +460,7 @@ export function EditorShell({
                   textTransform: 'capitalize',
                 }}
               >
-                {tab}
+                {t(`design.editor.panel.${tab}`)}
               </button>
             ))}
           </div>
@@ -571,7 +576,7 @@ export function EditorShell({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: colors.textDark }}>Keyboard Shortcuts</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: colors.textDark }}>{t('design.editor.shortcuts.title')}</h3>
               <button
                 onClick={() => setShowShortcuts(false)}
                 style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: colors.textLight }}
@@ -580,42 +585,42 @@ export function EditorShell({
               </button>
             </div>
             {[
-              ['Tools', [
-                ['V', 'Select tool'],
-                ['R', 'Rectangle tool'],
-                ['E', 'Ellipse tool'],
-                ['T', 'Text tool'],
-                ['L', 'Line tool'],
-                ['P', 'Toggle preview'],
+              ['tools', [
+                ['V', 'selectTool'],
+                ['R', 'rectangleTool'],
+                ['E', 'ellipseTool'],
+                ['T', 'textTool'],
+                ['L', 'lineTool'],
+                ['P', 'togglePreview'],
               ]],
-              ['Edit', [
-                ['⌘ Z', 'Undo'],
-                ['⌘ ⇧ Z', 'Redo'],
-                ['⌘ D', 'Duplicate'],
-                ['⌘ A', 'Select all'],
-                ['⌘ C', 'Copy'],
-                ['⌘ X', 'Cut'],
-                ['⌘ V', 'Paste'],
-                ['⌘ S', 'Save'],
-                ['Delete', 'Delete selected'],
+              ['edit', [
+                ['⌘ Z', 'undo'],
+                ['⌘ ⇧ Z', 'redo'],
+                ['⌘ D', 'duplicate'],
+                ['⌘ A', 'selectAll'],
+                ['⌘ C', 'copy'],
+                ['⌘ X', 'cut'],
+                ['⌘ V', 'paste'],
+                ['⌘ S', 'save'],
+                ['Delete', 'deleteSelected'],
               ]],
-              ['Layers', [
-                ['⌘ ]', 'Bring to front'],
-                ['⌘ [', 'Send to back'],
+              ['layers', [
+                ['⌘ ]', 'bringToFront'],
+                ['⌘ [', 'sendToBack'],
               ]],
-              ['Navigation', [
-                ['Enter', 'Edit component'],
-                ['Escape', 'Exit / deselect'],
-                ['?', 'Show shortcuts'],
+              ['navigation', [
+                ['Enter', 'editComponent'],
+                ['Escape', 'exitDeselect'],
+                ['?', 'showShortcuts'],
               ]],
             ].map(([section, shortcuts]) => (
               <div key={section as string} style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: colors.textLight, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-                  {section as string}
+                  {t(`design.editor.shortcuts.sections.${section as string}`)}
                 </div>
                 {(shortcuts as string[][]).map(([key, desc]) => (
                   <div key={key} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13 }}>
-                    <span style={{ color: colors.textDark }}>{desc}</span>
+                    <span style={{ color: colors.textDark }}>{t(`design.editor.shortcuts.desc.${desc}`)}</span>
                     <kbd style={{
                       backgroundColor: colors.backgroundLight,
                       padding: '2px 8px',

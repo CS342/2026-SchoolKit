@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -15,6 +16,7 @@ interface EditorToolbarProps {
 
 export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview, onAIGenerate, onShowShortcuts }: EditorToolbarProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const title = useEditorStore((s) => s.title);
   const setTitle = useEditorStore((s) => s.setTitle);
@@ -40,11 +42,11 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
   const handleRedo = () => temporalStore.getState().redo();
 
   const saveStatus = isSaving
-    ? 'Saving...'
+    ? t('design.editor.status.saving')
     : isDirty
-      ? 'Unsaved'
+      ? t('design.editor.status.unsaved')
       : lastSavedAt
-        ? 'Saved'
+        ? t('design.editor.status.saved')
         : '';
 
   const saveColor = isSaving
@@ -80,7 +82,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           display: 'flex',
           alignItems: 'center',
         }}
-        title="Back to designs"
+        title={t('design.editor.backToDesigns')}
       >
         ←
       </button>
@@ -133,7 +135,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
               padding: 0,
             }}
           >
-            Canvas
+            {t('design.editor.canvas')}
           </button>
           <span>/</span>
           <span style={{ fontWeight: 600, color: colors.textDark }}>
@@ -195,7 +197,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
       <div style={{ display: 'flex', gap: 2 }}>
         <button
           onClick={handleUndo}
-          title="Undo (Cmd+Z)"
+          title={t('design.editor.tooltip.undo')}
           style={{
             padding: '6px 10px',
             borderRadius: 6,
@@ -210,7 +212,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
         </button>
         <button
           onClick={handleRedo}
-          title="Redo (Cmd+Shift+Z)"
+          title={t('design.editor.tooltip.redo')}
           style={{
             padding: '6px 10px',
             borderRadius: 6,
@@ -237,7 +239,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
       {/* AI Generate */}
       <button
         onClick={onAIGenerate}
-        title="Generate with AI"
+        title={t('design.editor.tooltip.generateWithAI')}
         style={{
           padding: '6px 14px',
           borderRadius: 8,
@@ -253,13 +255,13 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
         }}
       >
         <span style={{ fontSize: 14 }}>&#9733;</span>
-        AI Generate
+        {t('design.editor.aiGenerate')}
       </button>
 
       {/* Save */}
       <button
         onClick={onSave}
-        title="Save (Cmd+S)"
+        title={t('design.editor.tooltip.save')}
         style={{
           padding: '6px 14px',
           borderRadius: 8,
@@ -271,7 +273,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           color: colors.textDark,
         }}
       >
-        Save
+        {t('common.save')}
       </button>
 
       {/* Share */}
@@ -288,7 +290,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           color: colors.textDark,
         }}
       >
-        Share
+        {t('common.share')}
       </button>
 
       {/* Publish */}
@@ -305,14 +307,14 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           color: colors.textDark,
         }}
       >
-        Publish
+        {t('design.editor.publish')}
       </button>
 
       {/* Shortcuts help */}
       {onShowShortcuts && (
         <button
           onClick={onShowShortcuts}
-          title="Keyboard shortcuts (?)"
+          title={t('design.editor.tooltip.shortcuts')}
           style={{
             width: 28,
             height: 28,
@@ -335,7 +337,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
       {/* Preview */}
       <button
         onClick={onPreview}
-        title="Preview (P)"
+        title={t('design.editor.tooltip.preview')}
         style={{
           padding: '6px 14px',
           borderRadius: 8,
@@ -347,7 +349,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           color: colors.textDark,
         }}
       >
-        Preview
+        {t('design.editor.preview')}
       </button>
 
       {/* Export */}
@@ -364,7 +366,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
           color: '#fff',
         }}
       >
-        Export
+        {t('design.editor.export')}
       </button>
     </div>
   );

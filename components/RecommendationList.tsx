@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useTheme } from '../contexts/ThemeContext';
 import type { Resource } from '../constants/resources';
@@ -29,6 +30,7 @@ const CARD_WIDTH = Math.min(width * 0.75, 300);
 
 export function RecommendationList({ currentId, currentTags, excludeIds, variant = 'default' }: RecommendationListProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { stories } = useStories();
   const { colors, isDark } = useTheme();
   // The Library's cards for this viewer: published pages included (and in place of the
@@ -95,13 +97,13 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
   if (variant === 'rail') {
     return (
       <View>
-        <Text style={[styles.railHeader, { color: colors.textLight }]}>You may also find helpful</Text>
+        <Text style={[styles.railHeader, { color: colors.textLight }]}>{t('home.recommend.railHeader')}</Text>
         <View style={{ gap: 10 }}>
           {recommendations.map((rec) => {
             const isStory = rec.type === 'story';
             const story = isStory ? (rec.item as Story) : null;
             const resource = !isStory ? (rec.item as Resource) : null;
-            const label = isStory ? 'Story' : resource!.category;
+            const label = isStory ? t('home.recommend.story') : resource!.category;
             const tint = isStory ? colors.primary : resource!.color;
             const icon = isStory ? 'book-outline' : (resource!.icon as any);
             const title = isStory ? story!.title : resource!.title;
@@ -111,7 +113,7 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
                 style={[styles.railCard, { backgroundColor: colors.white, borderColor: colors.borderCard }]}
                 onPress={() => router.push((isStory ? `/story-detail?id=${story!.id}` : resource!.route) as any)}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${title}`}
+                accessibilityLabel={t('home.recommend.openA11y', { title })}
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name={icon} size={14} color={tint} style={styles.icon} />
@@ -134,7 +136,7 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
         end={{ x: 1, y: 0 }}
         style={styles.gradientBar}
       />
-      <Text style={styles.headerTitle}>You may also find helpful:</Text>
+      <Text style={styles.headerTitle}>{t('home.recommend.header')}</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
@@ -151,11 +153,11 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
                 style={styles.card}
                 onPress={() => router.push(`/story-detail?id=${story.id}` as any)}
                 accessibilityRole="button"
-                accessibilityLabel={`Read story: ${story.title}`}
+                accessibilityLabel={t('home.recommend.readStoryA11y', { title: story.title })}
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name="book-outline" size={16} color={COLORS.primary} style={styles.icon} />
-                  <Text style={styles.cardType}>Story</Text>
+                  <Text style={styles.cardType}>{t('home.recommend.story')}</Text>
                 </View>
                 <Text style={styles.cardTitle} numberOfLines={2}>{story.title}</Text>
                 <Text style={styles.cardSubtitle} numberOfLines={2}>{story.body}</Text>
@@ -174,7 +176,7 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
                 style={styles.card}
                 onPress={() => router.push(resource.route as any)}
                 accessibilityRole="button"
-                accessibilityLabel={`Open resource: ${resource.title}`}
+                accessibilityLabel={t('home.recommend.openResourceA11y', { title: resource.title })}
               >
                 <View style={styles.cardHeader}>
                   <Ionicons name={resource.icon as any} size={16} color={resource.color} style={styles.icon} />

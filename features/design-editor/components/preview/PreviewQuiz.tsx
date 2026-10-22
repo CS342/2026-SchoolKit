@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { InteractiveComponentObject, QuizConfig } from '../../types/document';
 import { PreviewObject } from './PreviewObject';
 
 export function PreviewQuiz({ object }: { object: InteractiveComponentObject }) {
+  const { t } = useTranslation();
   const config = object.interactionConfig as QuizConfig;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -47,7 +49,7 @@ export function PreviewQuiz({ object }: { object: InteractiveComponentObject }) 
             cursor: 'pointer',
           }}
         >
-          Try Again
+          {t('design.runtime.tryAgain')}
         </button>
       </div>
     );

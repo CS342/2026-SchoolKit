@@ -2,39 +2,42 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
 type NavItemDef = {
-  label: string;
+  labelKey: string;
   path: string;
   activeIcon: keyof typeof Ionicons.glyphMap;
   inactiveIcon: keyof typeof Ionicons.glyphMap;
 };
 
 const NAV_ITEMS: NavItemDef[] = [
-  { label: 'For You',  path: '/',           activeIcon: 'home',        inactiveIcon: 'home-outline'        },
-  { label: 'Library',  path: '/bookmarks',  activeIcon: 'layers',      inactiveIcon: 'layers-outline'      },
-  { label: 'Stories',  path: '/stories',    activeIcon: 'chatbubbles', inactiveIcon: 'chatbubbles-outline' },
-  { label: 'Profile',  path: '/profile',    activeIcon: 'person',      inactiveIcon: 'person-outline'      },
+  { labelKey: 'auth.nav.forYou',  path: '/',           activeIcon: 'home',        inactiveIcon: 'home-outline'        },
+  { labelKey: 'auth.nav.library', path: '/bookmarks',  activeIcon: 'layers',      inactiveIcon: 'layers-outline'      },
+  { labelKey: 'auth.nav.stories', path: '/stories',    activeIcon: 'chatbubbles', inactiveIcon: 'chatbubbles-outline' },
+  { labelKey: 'auth.nav.profile', path: '/profile',    activeIcon: 'person',      inactiveIcon: 'person-outline'      },
 ];
 
 // Admin-only destinations, appended to the sidebar when the signed-in user has
 // the `admin` role. Content Pages lives here (rather than in Settings) so admins
 // get a persistent, top-level entry point to the content editor.
 const ADMIN_NAV_ITEMS: NavItemDef[] = [
-  { label: 'Content', path: '/content-pages', activeIcon: 'create', inactiveIcon: 'create-outline' },
+  { labelKey: 'auth.nav.content', path: '/content-pages', activeIcon: 'create', inactiveIcon: 'create-outline' },
 ];
 
-function NavItem({ label, path, activeIcon, inactiveIcon, isFocused }: {
-  label: string; path: string;
+function NavItem({ labelKey, path, activeIcon, inactiveIcon, isFocused }: {
+  labelKey: string; path: string;
   activeIcon: keyof typeof Ionicons.glyphMap;
   inactiveIcon: keyof typeof Ionicons.glyphMap;
   isFocused: boolean;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
+  const label = t(labelKey);
 
   return (
     <Pressable

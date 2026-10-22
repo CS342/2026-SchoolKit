@@ -1,18 +1,30 @@
 // The flip-card reveal modal. Hosted once by ContentPage; opened via ctx.onOpenFlip with
 // the block's cards and the tapped index. The card opens on its front, then turns over
 // to its back; tapping it turns it again, and prev/next step through the block's cards.
-// The grid itself only shows fronts, so a long back never stretches it.
+// The grid itself only shows fronts, so a long back never stretches it. The speaker
+// reads the current card (front, then back) through ContentPage's shared card TTS.
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Modal, Platform, Pressable, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Modal, Platform, Pressable, Linking, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useBlockCtx, FlipDeck } from './context';
 import { safeIcon, Markdown } from './util';
+import { md } from '../../features/content/registry';
 
 const IS_WEB = Platform.OS === 'web';
 const HALF_TURN_MS = 160;
 const REVEAL_DELAY_MS = 380;
 
-export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClose: () => void }) {
+export interface FlipCardAudio {
+  isSpeaking: boolean;
+  isLoading: boolean;
+  /** Speak (or pause, if this text is already playing). */
+  speak: (text: string) => void;
+  stop: () => void;
+}
+
+export function FlipCardModal({ deck, onClose, audio }: { deck: FlipDeck | null; onClose: () => void; audio?: FlipCardAudio }) {
+  const { t } = useTranslation();
   const { colors, styles } = useBlockCtx();
   const [index, setIndex] = useState(deck?.index ?? 0);
   const [showBack, setShowBack] = useState(false);
@@ -72,6 +84,10 @@ export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClos
   };
   const go = (delta: number) => setIndex((i) => Math.max(0, Math.min(cards.length - 1, i + delta)));
 
+  // Moving to another card stops the previous card's audio.
+  const stopAudio = audio?.stop;
+  useEffect(() => { stopAudio?.(); }, [index, stopAudio]);
+
   // Keyboard on web: Esc closes, arrows step through the cards, space/enter flips.
   const keyRef = useRef<(e: KeyboardEvent) => void>(() => {});
   keyRef.current = (e: KeyboardEvent) => {
@@ -99,7 +115,7 @@ export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClos
       <Text style={[st.frontText, { color: colors.textDark }]}>{card.front}</Text>
       <View style={st.hintRow}>
         <Ionicons name="sync-outline" size={14} color={colors.textLight} />
-        <Text style={[st.hint, { color: colors.textLight }]}>Tap to flip</Text>
+        <Text style={[st.hint, { color: colors.textLight }]}>{t('editor.blocksUi.tapToFlip')}</Text>
       </View>
     </View>
   );
@@ -130,14 +146,30 @@ export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClos
 
   const content = (
     <View style={styles.modalOverlay} pointerEvents="box-none">
-      <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close">
+      <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t('common.close')}>
         <Animated.View style={[styles.modalBackdrop, { opacity: fade }]} />
       </Pressable>
 
       <Animated.View style={[st.container, { opacity: fade, transform: [{ scale }] }]}>
         <View style={st.topRow}>
-          <Text style={st.counter}>{many ? `${index + 1} of ${cards.length}` : ''}</Text>
-          <TouchableOpacity onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close card" style={[st.roundBtn, IS_WEB && ({ cursor: 'pointer' } as any)]}>
+          <Text style={st.counter}>{many ? t('editor.blocksUi.cardCounter', { current: index + 1, total: cards.length }) : ''}</Text>
+          {audio ? (
+            <TouchableOpacity
+              onPress={() => audio.speak(`${card.front}. ${md(card.back)}`)}
+              disabled={audio.isLoading}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={audio.isSpeaking ? t('editor.blocksUi.pauseReading') : t('editor.blocksUi.readAloud')}
+              style={[st.roundBtn, st.speakBtn, IS_WEB && ({ cursor: 'pointer' } as any)]}
+            >
+              {audio.isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name={audio.isSpeaking ? 'pause' : 'volume-high-outline'} size={18} color="#fff" />
+              )}
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('editor.blocksUi.closeCard')} style={[st.roundBtn, IS_WEB && ({ cursor: 'pointer' } as any)]}>
             <Ionicons name="close" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -146,7 +178,7 @@ export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClos
           onPress={() => flipTo(!showBack)}
           accessibilityRole="button"
           accessibilityLabel={showBack ? `${card.front}. ${card.back}` : card.front}
-          accessibilityHint={showBack ? 'Shows the front of the card' : 'Reveals the back of the card'}
+          accessibilityHint={showBack ? t('editor.blocksUi.hintShowFront') : t('editor.blocksUi.hintShowBack')}
           style={IS_WEB ? ({ cursor: 'pointer' } as any) : undefined}
         >
           <Animated.View style={[st.card, { backgroundColor: colors.white, transform: [{ perspective: 1200 }, { rotateY }] }]}>
@@ -156,8 +188,8 @@ export function FlipCardModal({ deck, onClose }: { deck: FlipDeck | null; onClos
 
         {many ? (
           <View style={st.navRow}>
-            <NavBtn icon="chevron-back" label="Previous card" disabled={index === 0} onPress={() => go(-1)} />
-            <NavBtn icon="chevron-forward" label="Next card" disabled={index === cards.length - 1} onPress={() => go(1)} />
+            <NavBtn icon="chevron-back" label={t('editor.blocksUi.prevCard')} disabled={index === 0} onPress={() => go(-1)} />
+            <NavBtn icon="chevron-forward" label={t('editor.blocksUi.nextCard')} disabled={index === cards.length - 1} onPress={() => go(1)} />
           </View>
         ) : null}
       </Animated.View>
@@ -187,6 +219,7 @@ const st = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   counter: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontFamily: 'Raleway_700Bold', letterSpacing: 0.3 },
   roundBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' },
+  speakBtn: { marginLeft: 'auto', marginRight: 10 },
   card: { borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 12 },
   face: { minHeight: 260, maxHeight: 520, padding: 24, borderRadius: 24, borderWidth: 2 },
   frontFace: { alignItems: 'center', justifyContent: 'center' },

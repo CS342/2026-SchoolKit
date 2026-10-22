@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { ContentColumn } from '../components/ui';
@@ -17,34 +18,34 @@ import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ELEMENTARY_GRADES = [
-  { value: 'pre-k', label: 'Pre-K/kindergarten' },
-  { value: '1', label: '1st grade' },
-  { value: '2', label: '2nd grade' },
-  { value: '3', label: '3rd grade' },
-  { value: '4', label: '4th grade' },
-  { value: '5', label: '5th grade' },
+  { value: 'pre-k' },
+  { value: '1' },
+  { value: '2' },
+  { value: '3' },
+  { value: '4' },
+  { value: '5' },
 ];
 
 const MIDDLE_SCHOOL_GRADES = [
-  { value: '6', label: '6th grade' },
-  { value: '7', label: '7th grade' },
-  { value: '8', label: '8th grade' },
+  { value: '6' },
+  { value: '7' },
+  { value: '8' },
 ];
 
 const HS_GRADES = [
-  { value: '9', label: '9th grade (freshman)' },
-  { value: '10', label: '10th grade (sophomore)' },
-  { value: '11', label: '11th grade (junior)' },
-  { value: '12', label: '12th grade (senior)' },
-  { value: 'college', label: 'College / university' },
+  { value: '9' },
+  { value: '10' },
+  { value: '11' },
+  { value: '12' },
+  { value: 'college' },
 ];
 
 const PARENT_GRADES = [
-  { value: 'pre-k', label: 'Pre-K/kindergarten' },
-  { value: 'elementary', label: 'Elementary school (1-5)' },
-  { value: 'middle-school', label: 'Middle school (6-8)' },
-  { value: 'high-school', label: 'High school (9-12)' },
-  { value: 'high-school-up', label: 'Beyond high school' },
+  { value: 'pre-k' },
+  { value: 'elementary' },
+  { value: 'middle-school' },
+  { value: 'high-school' },
+  { value: 'high-school-up' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
@@ -67,6 +68,7 @@ function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; i
 
 export default function EditGradeLevelScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { data, updateGradeLevel } = useOnboarding();
   const { colors, appStyles } = useTheme();
@@ -82,24 +84,24 @@ export default function EditGradeLevelScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Edit Grade Level</Text>
-        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel="Save">
-          <Text style={appStyles.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.editGradeLevel')}</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel={t('common.save')}>
+          <Text style={appStyles.editSaveText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
         <ContentColumn width="reading">
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{(data.role === 'parent' || data.role === 'staff') ? "Select child's grade" : 'Select your grade level'}</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{(data.role === 'parent' || data.role === 'staff') ? t('profile.selectChildGrade') : t('profile.selectYourGrade')}</Text>
 
           <View style={styles.cardsContainer}>
             {grades.map((grade, index) => (
               <AnimatedCardWrapper key={grade.value} index={index}>
                 <SelectableCard
-                  title={grade.label}
+                  title={t(`profile.gradeOptions.${grade.value}`)}
                   selected={selectedGrade === grade.value}
                   onPress={() => setSelectedGrade(grade.value)}
                   multiSelect={false}

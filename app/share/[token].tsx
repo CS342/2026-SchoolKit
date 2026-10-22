@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import type { DesignDocument } from '../../features/design-editor/types/document';
 
@@ -24,6 +25,7 @@ interface SharedDesign {
 }
 
 export default function ShareViewerPage() {
+  const { t } = useTranslation();
   const { token } = useLocalSearchParams<{ token: string }>();
   const [design, setDesign] = useState<SharedDesign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export default function ShareViewerPage() {
   useEffect(() => {
     async function fetchSharedDesign() {
       if (!token) {
-        setError('Invalid link');
+        setError(t('stories.share.invalidLink'));
         setLoading(false);
         return;
       }
@@ -45,7 +47,7 @@ export default function ShareViewerPage() {
         );
 
         if (!response.ok) {
-          setError('Design not found or link has been revoked');
+          setError(t('stories.share.notFoundOrRevoked'));
           setLoading(false);
           return;
         }
@@ -53,7 +55,7 @@ export default function ShareViewerPage() {
         const result = await response.json();
         setDesign(result);
       } catch (err) {
-        setError('Failed to load design');
+        setError(t('stories.share.failedToLoad'));
       } finally {
         setLoading(false);
       }
@@ -73,7 +75,7 @@ export default function ShareViewerPage() {
         }}
       >
         <Text style={{ fontSize: 16, textAlign: 'center', color: '#666' }}>
-          This design can only be viewed in a web browser.
+          {t('stories.share.webOnly')}
         </Text>
       </View>
     );
@@ -91,7 +93,7 @@ export default function ShareViewerPage() {
       >
         <ActivityIndicator size="large" color="#7B68EE" />
         <Text style={{ marginTop: 12, color: '#6B7280', fontSize: 14 }}>
-          Loading design...
+          {t('stories.share.loading')}
         </Text>
       </View>
     );
@@ -124,10 +126,10 @@ export default function ShareViewerPage() {
             marginBottom: 8,
           }}
         >
-          {error || 'Design not found'}
+          {error || t('stories.share.notFound')}
         </Text>
         <Text style={{ fontSize: 14, color: '#6B7280' }}>
-          This link may have expired or been revoked
+          {t('stories.share.mayHaveExpired')}
         </Text>
       </View>
     );

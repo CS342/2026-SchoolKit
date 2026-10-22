@@ -4,6 +4,7 @@
 import React from 'react';
 import { View, Text, Pressable, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import type { Attachment } from '../../features/content/uploads';
@@ -24,6 +25,7 @@ export function AttachmentBar({
   /** Show the "Attach" pill. Off when the parent provides its own attach affordance. */
   showAttachButton?: boolean;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const canAttach = !disabled && !processing;
 
@@ -33,7 +35,7 @@ export function AttachmentBar({
         <Pressable
           onPress={canAttach ? onAttach : undefined}
           disabled={!canAttach}
-          accessibilityLabel="Attach files"
+          accessibilityLabel={t('editor.attach.filesLabel')}
           style={{
             flexDirection: 'row', alignItems: 'center', gap: 5,
             paddingVertical: 6, paddingHorizontal: 10, borderRadius: RADII.pill,
@@ -44,7 +46,7 @@ export function AttachmentBar({
           {processing
             ? <ActivityIndicator size="small" color={colors.textMuted} />
             : <Ionicons name="attach" size={15} color={colors.textMuted} />}
-          <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted }}>Attach</Text>
+          <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted }}>{t('editor.attach.label')}</Text>
         </Pressable>
       ) : null}
 
@@ -67,7 +69,7 @@ export function AttachmentBar({
           <Pressable
             onPress={disabled ? undefined : () => onRemove(a.id)}
             disabled={disabled}
-            accessibilityLabel={`Remove ${a.name}`}
+            accessibilityLabel={t('editor.attach.remove', { name: a.name })}
             style={{ width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', cursor: (disabled ? 'default' : 'pointer') as any }}
           >
             <Ionicons name="close" size={13} color={colors.textMuted} />

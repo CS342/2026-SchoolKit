@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding, UserRole } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { ContentColumn } from '../components/ui';
@@ -18,17 +19,16 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface RoleOption {
   value: UserRole;
-  label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }
 
 const ROLE_OPTIONS: RoleOption[] = [
-  { value: 'student-elementary', label: 'Student (elementary school)', icon: 'color-palette', color: '#F59E0B' },
-  { value: 'student-k8', label: 'Student (middle school)', icon: 'school', color: '#0EA5E9' },
-  { value: 'student-hs', label: 'Student (high school and up)', icon: 'book', color: '#7B68EE' },
-  { value: 'parent', label: 'Parent / caregiver', icon: 'people', color: '#EC4899' },
-  { value: 'staff', label: 'School staff', icon: 'briefcase', color: '#66D9A6' },
+  { value: 'student-elementary', icon: 'color-palette', color: '#F59E0B' },
+  { value: 'student-k8', icon: 'school', color: '#0EA5E9' },
+  { value: 'student-hs', icon: 'book', color: '#7B68EE' },
+  { value: 'parent', icon: 'people', color: '#EC4899' },
+  { value: 'staff', icon: 'briefcase', color: '#66D9A6' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
@@ -51,6 +51,7 @@ function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; i
 
 export default function EditRoleScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { data, updateRole } = useOnboarding();
   const { colors, appStyles } = useTheme();
@@ -66,24 +67,24 @@ export default function EditRoleScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Edit Role</Text>
-        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel="Save">
-          <Text style={appStyles.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.editRole')}</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel={t('common.save')}>
+          <Text style={appStyles.editSaveText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
         <ContentColumn width="reading">
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select your role</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('profile.selectRole')}</Text>
 
           <View style={styles.cardsContainer}>
             {ROLE_OPTIONS.map((option, index) => (
               <AnimatedCardWrapper key={option.value} index={index}>
                 <SelectableCard
-                  title={option.label}
+                  title={t(`profile.roleOptions.${option.value}`)}
                   icon={option.icon}
                   color={option.color}
                   selected={selectedRole === option.value}

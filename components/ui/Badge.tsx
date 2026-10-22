@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { RADII, SPACING, TYPOGRAPHY } from '../../constants/onboarding-theme';
 
@@ -32,11 +33,12 @@ export function Badge({ label, tone = 'primary', style }: BadgeProps) {
 
 /** Moderation status label — pending/approved/rejected in one consistent shape. */
 export function StatusLabel({ status }: { status: StoryStatusTone }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const map: Record<StoryStatusTone, { bg: string; fg: string; label: string }> = {
-    approved: { bg: colors.successBg, fg: colors.success, label: 'Approved' },
-    pending: { bg: colors.warningBg, fg: colors.warningText, label: 'Pending review' },
-    rejected: { bg: colors.error + '22', fg: colors.error, label: 'Needs edits' },
+    approved: { bg: colors.successBg, fg: colors.success, label: t('design.ui.statusApproved') },
+    pending: { bg: colors.warningBg, fg: colors.warningText, label: t('design.ui.statusPending') },
+    rejected: { bg: colors.error + '22', fg: colors.error, label: t('design.ui.statusRejected') },
   };
   const c = map[status];
   return (

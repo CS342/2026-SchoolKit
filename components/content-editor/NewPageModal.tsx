@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { nanoid } from 'nanoid/non-secure';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { TYPOGRAPHY, RADII, SPACING } from '../../constants/onboarding-theme';
@@ -22,10 +23,10 @@ import { AudienceChips } from './AudienceChips';
 import { ToggleRow } from './primitives';
 import { useFileDrop } from './useFileDrop';
 
-const EXAMPLES = [
-  'A guide to coping with hair loss during treatment, for teens',
-  'The top SchoolKit guides for a student just starting chemo',
-  'How to talk to teachers about missing school for appointments',
+const EXAMPLE_KEYS = [
+  'editor.newPage.example1',
+  'editor.newPage.example2',
+  'editor.newPage.example3',
 ];
 
 interface VersionRow {
@@ -50,6 +51,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
   /** Called with the first generated page once every version is created. */
   onCreated: (pageId: string) => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
@@ -189,10 +191,12 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
   const failedCount = rows?.filter((r) => r.state === 'failed').length ?? 0;
   const firstDone = rows?.find((r) => r.pageId);
   const generateLabel = !rows
-    ? 'Generate page'
+    ? t('editor.newPage.generatePage')
     : failedCount
-      ? `Retry ${failedCount} failed`
-      : `Generate ${pendingRows.length} version${pendingRows.length === 1 ? '' : 's'}`;
+      ? t('editor.newPage.retryFailed', { count: failedCount })
+      : pendingRows.length === 1
+        ? t('editor.newPage.generateVersionsOne', { count: pendingRows.length })
+        : t('editor.newPage.generateVersionsOther', { count: pendingRows.length });
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? undefined : onClose}>
@@ -201,7 +205,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
           {drop.dragging ? (
             <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, zIndex: 10, borderRadius: RADII.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.primary, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Ionicons name="cloud-upload-outline" size={30} color={colors.primary} />
-              <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.primary }}>{rows ? 'Drop files — one version each' : 'Drop files to attach'}</Text>
+              <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.primary }}>{rows ? t('editor.newPage.dropOneEach') : t('editor.common.dropAttach')}</Text>
             </View>
           ) : null}
           <ScrollView contentContainerStyle={{ padding: SPACING.xxl }}>
@@ -209,12 +213,10 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
               <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft }}>
                 <Ionicons name={rows ? 'layers-outline' : 'sparkles'} size={19} color={colors.primary} />
               </View>
-              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>{rows ? 'Create a topic with versions' : 'Create a page'}</Text>
+              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>{rows ? t('editor.newPage.createTopic') : t('editor.newPage.createPage')}</Text>
             </View>
             <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, marginBottom: 16 }}>
-              {rows
-                ? 'One version per audience. Attach each audience’s document — AI converts each into a draft, keeping your wording. Readers automatically get the version for their role and grade.'
-                : 'Describe the page you want. AI drafts it — you review and edit before publishing.'}
+              {rows ? t('editor.newPage.subtitleTopic') : t('editor.newPage.subtitlePage')}
             </Text>
 
             <TextInput
@@ -222,9 +224,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
               onChangeText={setPrompt}
               editable={!busy}
               multiline
-              placeholder={rows
-                ? 'Optional instructions for every version, e.g. “Keep each section short.”'
-                : 'e.g. A guide to returning to school after treatment — what feels different, a plan, and who can help.'}
+              placeholder={rows ? t('editor.newPage.promptPlaceholderTopic') : t('editor.newPage.promptPlaceholderPage')}
               placeholderTextColor={colors.inputPlaceholder}
               style={{ ...TYPOGRAPHY.body, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: colors.border, borderRadius: RADII.md, padding: 14, minHeight: rows ? 64 : 100, textAlignVertical: 'top', outlineStyle: 'none' as any }}
             />
@@ -232,11 +232,14 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
             {!rows ? (
               <>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                  {EXAMPLES.map((ex) => (
-                    <Pressable key={ex} onPress={() => !busy && setPrompt(ex)} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: RADII.pill, backgroundColor: colors.appBackgroundAlt, cursor: 'pointer' as any }}>
-                      <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted }} numberOfLines={1}>{ex}</Text>
-                    </Pressable>
-                  ))}
+                  {EXAMPLE_KEYS.map((key) => {
+                    const ex = t(key);
+                    return (
+                      <Pressable key={key} onPress={() => !busy && setPrompt(ex)} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: RADII.pill, backgroundColor: colors.appBackgroundAlt, cursor: 'pointer' as any }}>
+                        <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted }} numberOfLines={1}>{ex}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
 
                 <View style={{ marginTop: 14 }}>
@@ -248,13 +251,13 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                     disabled={busy}
                   />
                   <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 6 }}>
-                    Attach or drag in images, PDFs, or text to inform the draft. Images are only saved if placed on the page.
+                    {t('editor.newPage.attachHint')}
                   </Text>
                 </View>
 
                 <Pressable onPress={busy ? undefined : startVersions} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, alignSelf: 'flex-start', cursor: 'pointer' as any }}>
                   <Ionicons name="layers-outline" size={15} color={colors.primary} />
-                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add versions for different audiences</Text>
+                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.newPage.addVersionsAudiences')}</Text>
                 </Pressable>
               </>
             ) : (
@@ -263,7 +266,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                   value={topicName}
                   onChangeText={setTopicName}
                   editable={!busy && !topicId}
-                  placeholder="Topic name (optional — defaults to the first version's title)"
+                  placeholder={t('editor.newPage.topicNamePlaceholder')}
                   placeholderTextColor={colors.inputPlaceholder}
                   style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: colors.border, borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12, outlineStyle: 'none' as any }}
                 />
@@ -274,16 +277,16 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                         <RowStatus state={r.state} />
                         <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textDark, flex: 1 }} numberOfLines={1}>
-                          Version {i + 1} · {audienceLabel(r.audience)}
+                          {t('editor.newPage.versionLabel', { num: i + 1, audience: audienceLabel(r.audience) })}
                         </Text>
                         {!r.pageId && !busy && rows.length > 1 ? (
-                          <Pressable onPress={() => setRows((prev) => prev?.filter((x) => x.key !== r.key) ?? null)} accessibilityLabel={`Remove version ${i + 1}`} style={{ padding: 2, cursor: 'pointer' as any }}>
+                          <Pressable onPress={() => setRows((prev) => prev?.filter((x) => x.key !== r.key) ?? null)} accessibilityLabel={t('editor.newPage.removeVersion', { num: i + 1 })} style={{ padding: 2, cursor: 'pointer' as any }}>
                             <Ionicons name="close" size={16} color={colors.textMuted} />
                           </Pressable>
                         ) : null}
                       </View>
                       {r.pageId ? (
-                        <Text style={{ ...TYPOGRAPHY.caption, color: colors.successText }}>Created as a draft.</Text>
+                        <Text style={{ ...TYPOGRAPHY.caption, color: colors.successText }}>{t('editor.newPage.createdDraft')}</Text>
                       ) : (
                         <>
                           <AudienceChips value={r.audience} onChange={(audience) => updateRow(r.key, { audience })} compact />
@@ -304,13 +307,13 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
                   <Pressable onPress={busy ? undefined : () => setRows((prev) => [...(prev ?? []), newRow()])} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, cursor: 'pointer' as any }}>
                     <Ionicons name="add" size={16} color={colors.primary} />
-                    <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add a version</Text>
+                    <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.newPage.addVersionLink')}</Text>
                   </Pressable>
-                  <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>Leave a version's chips empty to make it the one for everyone else.</Text>
+                  <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>{t('editor.newPage.chipsEmptyHint')}</Text>
                 </View>
 
                 <View style={{ marginTop: 14 }}>
-                  <ToggleRow label="Keep versions consistent (use the first version's layout)" value={matchLayout} onValueChange={setMatchLayout} />
+                  <ToggleRow label={t('editor.newPage.matchLayoutToggle')} value={matchLayout} onValueChange={setMatchLayout} />
                 </View>
               </>
             )}
@@ -325,15 +328,15 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, gap: 12 }}>
               {firstDone && !busy ? (
                 <Pressable onPress={() => onCreated(firstDone.pageId!)} style={{ cursor: 'pointer' as any }}>
-                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Open what was created</Text>
+                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.newPage.openCreated')}</Text>
                 </Pressable>
               ) : rows ? (
                 <Pressable onPress={busy || topicId ? undefined : () => { setAttachments(rows.flatMap((r) => r.attachments)); setRows(null); }} style={{ cursor: (busy || topicId ? 'default' : 'pointer') as any }}>
-                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: busy || topicId ? colors.textLight : colors.textMuted }}>Just one page</Text>
+                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: busy || topicId ? colors.textLight : colors.textMuted }}>{t('editor.newPage.justOnePage')}</Text>
                 </Pressable>
               ) : (
                 <Pressable onPress={busy ? undefined : onBlank} style={{ cursor: 'pointer' as any }}>
-                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textMuted }}>Start from blank</Text>
+                  <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textMuted }}>{t('editor.newPage.startBlank')}</Text>
                 </Pressable>
               )}
               <Pressable
@@ -342,7 +345,7 @@ export function NewPageModal({ visible, onClose, onBlank, onCreated }: {
                 style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: canGenerate ? colors.primary : colors.disabledButton, cursor: (canGenerate ? 'pointer' : 'default') as any }, canGenerate ? shadows.button : null]}
               >
                 {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="sparkles" size={16} color="#fff" />}
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{busy ? 'Drafting…' : generateLabel}</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{busy ? t('editor.newPage.drafting') : generateLabel}</Text>
               </Pressable>
             </View>
           </ScrollView>

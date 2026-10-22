@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { CHAPTER_BY_ID, PieceDefinition } from '../constants/accomplishments';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { COLORS, SHADOWS } from '../constants/onboarding-theme';
 import PuzzleGrid from '../components/puzzle/PuzzleGrid';
 import PieceDetailModal from '../components/puzzle/PieceDetailModal';
 import { useWebLayout, CONTENT_WIDTH } from '../hooks/useResponsive';
+import { SHOW_PUZZLES } from '../constants/features';
 
-export default function ChapterDetailScreen() {
+export default function ChapterDetailScreenRoute() {
+  if (!SHOW_PUZZLES) return <Redirect href="/(tabs)" />;
+  return <ChapterDetailScreen />;
+}
+
+function ChapterDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const webLayout = useWebLayout();
@@ -27,7 +35,7 @@ export default function ChapterDetailScreen() {
           <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Chapter not found.</Text>
+          <Text style={styles.notFoundText}>{t('journal.chapterNotFound')}</Text>
         </View>
       </View>
     );
@@ -56,7 +64,7 @@ export default function ChapterDetailScreen() {
             </View>
             {isComplete ? (
               <View style={styles.completeBadge}>
-                <Text style={styles.completeBadgeText}>Complete</Text>
+                <Text style={styles.completeBadgeText}>{t('journal.complete')}</Text>
               </View>
             ) : (
               <Text style={styles.progressText}>
@@ -79,7 +87,7 @@ export default function ChapterDetailScreen() {
         <Text style={styles.introText}>{chapter.introText}</Text>
 
         {/* Hint */}
-        <Text style={styles.hintText}>Tap an earned piece to inspect it.</Text>
+        <Text style={styles.hintText}>{t('journal.inspectHint')}</Text>
 
         {/* Interactive puzzle grid */}
         <View style={styles.gridWrapper}>

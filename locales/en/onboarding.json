@@ -1,0 +1,85 @@
+{
+  "onboarding": {
+    "frame": {
+      "headline": "Let's set up your SchoolKit",
+      "subcopy": "A few quick questions so we can tailor everything to you. You can change any answer later.",
+      "stepOf": "Step {{current}} of {{total}}",
+      "countOf": "{{current}} of {{total}}",
+      "changeLater": "You can change or update any of this later."
+    },
+    "labels": {
+      "name": "Your name",
+      "language": "Language",
+      "role": "About you",
+      "grade": "Grade level",
+      "journey": "School journey",
+      "topics": "Topics",
+      "voice": "Voice"
+    },
+    "name": {
+      "title": "What's your name?",
+      "subtitle": "Let's personalize your experience",
+      "placeholder": "Enter your name"
+    },
+    "language": {
+      "title": "Preferred language",
+      "subtitle": "Choose the language you'd like to use the app in."
+    },
+    "role": {
+      "title": "Tell us about yourself",
+      "subtitle": "Choose the option that best describes you",
+      "options": {
+        "student-elementary": "Student (elementary school)",
+        "student-k8": "Student (middle school)",
+        "student-hs": "Student (high school and up)",
+        "parent": "Parent / caregiver",
+        "staff": "School staff"
+      }
+    },
+    "grade": {
+      "titleGuardian": "Select child's grade",
+      "titleStudent": "What grade are you in?",
+      "subtitleGuardian": "We'll tailor resources to fit the child's needs.",
+      "subtitleStudent": "We'll tailor resources to fit where you are.",
+      "options": {
+        "1": "1st grade",
+        "2": "2nd grade",
+        "3": "3rd grade",
+        "4": "4th grade",
+        "5": "5th grade",
+        "6": "6th grade",
+        "7": "7th grade",
+        "8": "8th grade",
+        "9": "9th grade\n(freshman)",
+        "10": "10th grade\n(sophomore)",
+        "11": "11th grade\n(junior)",
+        "12": "12th grade\n(senior)",
+        "pre-k": "Pre-K/\nkindergarten",
+        "college": "College /\nuniversity",
+        "elementary": "Elementary\nschool (1-5)",
+        "middle-school": "Middle\nschool (6-8)",
+        "high-school": "High\nschool (9-12)",
+        "high-school-up": "Beyond high\nschool"
+      }
+    },
+    "journey": {
+      "titleStudent": "Your school journey",
+      "titleStaff": "Your student's school journey",
+      "titleGuardian": "Your child's school journey",
+      "subtitle": "Every path is valid - we're here to support yours.",
+      "selectAll": "Select all that apply",
+      "options": {
+        "current-treatment": "Currently in school",
+        "returning-after-treatment": "Taking a break from school",
+        "supporting-student": "Planning to return to school soon",
+        "special-needs": "Home hospital education"
+      }
+    },
+    "topics": {
+      "title": "What would you like support with?",
+      "subtitle": "Choose what feels right - you can always explore more later.",
+      "counterOne": "{{count}} topic selected",
+      "counterOther": "{{count}} topics selected"
+    }
+  }
+}

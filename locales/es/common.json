@@ -1,0 +1,32 @@
+{
+  "common": {
+    "continue": "Continuar",
+    "skipForNow": "Omitir por ahora",
+    "getStarted": "Comenzar",
+    "back": "Atrás",
+    "goBack": "Volver",
+    "save": "Guardar",
+    "saveChanges": "Guardar cambios",
+    "cancel": "Cancelar",
+    "done": "Listo",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "remove": "Quitar",
+    "retry": "Intentar de nuevo",
+    "loading": "Cargando…",
+    "search": "Buscar",
+    "seeAll": "Ver todo",
+    "readMore": "Leer más",
+    "share": "Compartir",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "add": "Agregar",
+    "submit": "Enviar",
+    "signOut": "Cerrar sesión",
+    "error": "Algo salió mal.",
+    "ok": "Aceptar"
+  }
+}

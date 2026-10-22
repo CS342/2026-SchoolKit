@@ -4,6 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, ScrollView, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { shadow } from '../../constants/theme';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
@@ -16,6 +17,17 @@ import type { BlockType } from '../../features/content/types';
 const GROUP_ORDER = ['Text', 'Interactive', 'Layout & cards', 'Media', 'Links & references', 'More'] as const;
 type Group = (typeof GROUP_ORDER)[number];
 
+// Stable i18n key per curated group (the display label is translated; the group
+// identity below stays the English constant so GROUP_BY_TYPE keeps matching).
+const GROUP_KEY: Record<Group, string> = {
+  'Text': 'text',
+  'Interactive': 'interactive',
+  'Layout & cards': 'layout',
+  'Media': 'media',
+  'Links & references': 'links',
+  'More': 'more',
+};
+
 const GROUP_BY_TYPE: Record<string, Group> = {
   callout: 'Text', richText: 'Text', quote: 'Text', footnote: 'Text', divider: 'Text',
   accordion: 'Interactive', stepper: 'Interactive', tabs: 'Interactive', flipCard: 'Interactive', checklist: 'Interactive',
@@ -27,12 +39,14 @@ const GROUP_BY_TYPE: Record<string, Group> = {
 type PaletteItem = (typeof BLOCK_PALETTE)[number];
 
 function BlockCard({ item, onPress }: { item: PaletteItem; onPress: () => void }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
+  const label = t(`editor.blocks.${item.type}.label`);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Add ${item.label} block`}
+      accessibilityLabel={t('editor.addBlock.addLabel', { label })}
       style={({ hovered }: any) => ({
         width: 168, flexGrow: 1, flexBasis: 168, maxWidth: 220,
         padding: 14, borderRadius: RADII.lg, borderWidth: 1.5,
@@ -44,13 +58,14 @@ function BlockCard({ item, onPress }: { item: PaletteItem; onPress: () => void }
       <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, marginBottom: 10 }}>
         <Ionicons name={item.icon as any} size={19} color={colors.primary} />
       </View>
-      <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.textDark }}>{item.label}</Text>
-      <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted, marginTop: 2 }}>{item.blurb}</Text>
+      <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.textDark }}>{label}</Text>
+      <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted, marginTop: 2 }}>{t(`editor.blocks.${item.type}.blurb`)}</Text>
     </Pressable>
   );
 }
 
 export function AddBlockMenu() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const doc = useEditorStore((s) => s.doc);
   const dispatch = useEditorStore((s) => s.dispatch);
@@ -70,7 +85,9 @@ export function AddBlockMenu() {
   };
 
   const q = query.trim().toLowerCase();
-  const matches = (m: PaletteItem) => !q || m.label.toLowerCase().includes(q) || m.blurb.toLowerCase().includes(q);
+  const matches = (m: PaletteItem) => !q
+    || t(`editor.blocks.${m.type}.label`).toLowerCase().includes(q)
+    || t(`editor.blocks.${m.type}.blurb`).toLowerCase().includes(q);
 
   // Grouped (no query) or a flat filtered list (while searching).
   const groups = useMemo(() => {
@@ -85,11 +102,11 @@ export function AddBlockMenu() {
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel="Add block"
+        accessibilityLabel={t('editor.addBlock.button')}
         style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: RADII.lg, borderWidth: 1.5, borderStyle: 'dashed', borderColor: hovered ? colors.primary : colors.border, backgroundColor: hovered ? colors.primarySoft : 'transparent', cursor: 'pointer' as any })}
       >
         <Ionicons name="add-circle-outline" size={19} color={colors.primary} />
-        <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.primary }}>Add block</Text>
+        <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.primary }}>{t('editor.addBlock.button')}</Text>
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
@@ -99,13 +116,13 @@ export function AddBlockMenu() {
             <View style={{ paddingTop: SPACING.xl, paddingHorizontal: SPACING.xl }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>Add a block</Text>
-                  <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, marginTop: 2 }}>Pick the kind of content to add.</Text>
+                  <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>{t('editor.addBlock.title')}</Text>
+                  <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, marginTop: 2 }}>{t('editor.addBlock.subtitle')}</Text>
                 </View>
                 <Pressable
                   onPress={close}
                   accessibilityRole="button"
-                  accessibilityLabel="Close"
+                  accessibilityLabel={t('common.close')}
                   style={({ hovered }: any) => ({ width: 34, height: 34, borderRadius: RADII.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: hovered ? colors.backgroundLighter : 'transparent', cursor: 'pointer' as any })}
                 >
                   <Ionicons name="close" size={20} color={colors.textMuted} />
@@ -118,12 +135,12 @@ export function AddBlockMenu() {
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
-                  placeholder="Search block types…"
+                  placeholder={t('editor.addBlock.searchPlaceholder')}
                   placeholderTextColor={colors.inputPlaceholder}
                   style={[st.searchInput, { color: colors.textDark }]}
                 />
                 {query.length > 0 && (
-                  <Pressable onPress={() => setQuery('')} accessibilityLabel="Clear search">
+                  <Pressable onPress={() => setQuery('')} accessibilityLabel={t('editor.common.clearSearch')}>
                     <Ionicons name="close-circle" size={16} color={colors.textLight} />
                   </Pressable>
                 )}
@@ -139,13 +156,13 @@ export function AddBlockMenu() {
                 ) : (
                   <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                     <Ionicons name="search-outline" size={26} color={colors.textLight} />
-                    <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, marginTop: 10 }}>No block types match “{query}”.</Text>
+                    <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, marginTop: 10 }}>{t('editor.addBlock.noMatch', { query })}</Text>
                   </View>
                 )
               ) : (
                 groups.map(({ group, items }) => (
                   <View key={group} style={{ marginBottom: 18 }}>
-                    <Text style={[st.groupLabel, { color: colors.textLight }]}>{group.toUpperCase()}</Text>
+                    <Text style={[st.groupLabel, { color: colors.textLight }]}>{t(`editor.addBlock.groups.${GROUP_KEY[group]}`).toUpperCase()}</Text>
                     <View style={st.grid}>
                       {items.map((m) => <BlockCard key={m.type} item={m} onPress={() => add(m.type)} />)}
                     </View>

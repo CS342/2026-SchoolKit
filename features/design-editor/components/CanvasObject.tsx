@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Rect, Ellipse, Text, Image as KonvaImage, Line, Group, Star, Arrow } from 'react-konva';
 import Konva from 'konva';
 import type { DesignObject, InteractiveComponentObject, StaticDesignObject, GradientConfig } from '../types/document';
@@ -540,6 +541,7 @@ function InteractiveCanvasObject({
   commonProps: Record<string, unknown>;
   onDblClick: (e: Konva.KonvaEventObject<any>) => void;
 }) {
+  const { t } = useTranslation();
   const defaultGroup = object.groups[0];
   const visibleChildIds = defaultGroup ? defaultGroup.objectIds : [];
   const visibleChildren = object.children.filter((c) =>
@@ -586,7 +588,7 @@ function InteractiveCanvasObject({
       <Text
         x={8}
         y={-20}
-        text={getInteractionLabel(object.interactionType)}
+        text={t(`design.runtime.interactionLabels.${getInteractionLabelKey(object.interactionType)}`)}
         fontSize={10}
         fontStyle="bold"
         fill="#FFFFFF"
@@ -609,16 +611,16 @@ function getBadgeWidth(type: string): number {
   }
 }
 
-function getInteractionLabel(type: string): string {
+function getInteractionLabelKey(type: string): string {
   switch (type) {
-    case 'flip-card': return 'Flip Card';
-    case 'bottom-sheet': return 'Bottom Sheet';
-    case 'expandable': return 'Expandable';
-    case 'entrance': return 'Entrance';
-    case 'carousel': return 'Carousel';
-    case 'tabs': return 'Tabs';
-    case 'quiz': return 'Quiz';
-    default: return 'Interactive';
+    case 'flip-card': return 'flip-card';
+    case 'bottom-sheet': return 'bottom-sheet';
+    case 'expandable': return 'expandable';
+    case 'entrance': return 'entrance';
+    case 'carousel': return 'carousel';
+    case 'tabs': return 'tabs';
+    case 'quiz': return 'quiz';
+    default: return 'interactive';
   }
 }
 

@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
@@ -22,6 +23,7 @@ import { useTopicPicker } from '../../hooks/useResources';
 import { isStudentRole } from '../../utils/profile';
 
 function CounterPill({ count }: { count: number }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const scale = useSharedValue(1);
@@ -46,7 +48,7 @@ function CounterPill({ count }: { count: number }) {
       ]}
     >
       <Text style={[styles.counterText, count > 0 ? styles.counterTextActive : styles.counterTextInactive]}>
-        {count} topic{count !== 1 ? 's' : ''} selected
+        {count === 1 ? t('onboarding.topics.counterOne', { count }) : t('onboarding.topics.counterOther', { count })}
       </Text>
     </Animated.View>
   );
@@ -54,6 +56,7 @@ function CounterPill({ count }: { count: number }) {
 
 export default function Step4Screen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data, updateTopics, completeOnboarding } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -94,9 +97,9 @@ export default function Step4Screen() {
               <Ionicons name="sparkles-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={[sharedStyles.pageTitle, { lineHeight: 36 }]}>What would you like support with?</Text>
+            <Text style={[sharedStyles.pageTitle, { lineHeight: 36 }]}>{t('onboarding.topics.title')}</Text>
             <Text style={[sharedStyles.pageSubtitle, styles.subtitleOverride]}>
-              Choose what feels right - you can always explore more later.
+              {t('onboarding.topics.subtitle')}
             </Text>
 
             <CounterPill count={picker.count} />
@@ -120,13 +123,13 @@ export default function Step4Screen() {
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
                 <PrimaryButton
-                  title="Get Started"
+                  title={t('common.getStarted')}
                   onPress={handleFinish}
                   disabled={picker.count === 0}
                   icon="arrow-forward"
                 />
                 <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-                  <Text style={sharedStyles.skipText}>Skip for now</Text>
+                  <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
                 </Pressable>
               </View>
             )}
@@ -136,13 +139,13 @@ export default function Step4Screen() {
         {!isWebDesktop && (
         <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
-            title="Get Started"
+            title={t('common.getStarted')}
             onPress={handleFinish}
             disabled={picker.count === 0}
             icon="arrow-forward"
           />
           <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-            <Text style={sharedStyles.skipText}>Skip for now</Text>
+            <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
           </Pressable>
         </View>
         )}

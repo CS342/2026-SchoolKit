@@ -10,6 +10,8 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Story, useStories } from '../contexts/StoriesContext';
 import { UserRole } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,23 +36,25 @@ const AUDIENCE_DISPLAY: Record<string, string> = {
   'Students': 'Students', 'Parents': 'Parents', 'School Staff': 'School Staff',
 };
 
-function getAudienceHint(targetAudiences?: string[]): string {
+function getAudienceHint(targetAudiences: string[] | undefined, t: TFunction): string {
   if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
   const tags = [...new Set(targetAudiences.map(a => AUDIENCE_DISPLAY[a]).filter(Boolean))];
   const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
   if (hasAll || tags.length === 0) return '';
-  if (tags.length === 1) return `For ${tags[0]}`;
-  if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
-  return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
+  const names = tags.map(a => t(`stories.audiences.${a}`));
+  const joined = names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} ${t('stories.audienceAnd')} ${names[names.length - 1]}`;
+  return t('stories.audienceFor', { audiences: joined });
 }
 
-function getRoleLabel(role: UserRole | null): string {
+function getRoleLabel(role: UserRole | null, t: TFunction): string {
   switch (role) {
     case 'student-elementary':
-    case 'student-k8': return 'Student';
-    case 'student-hs': return 'Student';
-    case 'parent': return 'Parent';
-    case 'staff': return 'Staff';
+    case 'student-k8': return t('stories.roleLabels.student');
+    case 'student-hs': return t('stories.roleLabels.student');
+    case 'parent': return t('stories.roleLabels.parent');
+    case 'staff': return t('stories.roleLabels.staff');
     default: return '';
   }
 }
@@ -107,38 +111,39 @@ export const DEFAULT_TAG_COLOR = { bg: '#EEEEF6', text: '#5C5C8A' };
 // Surface moderator-action failures so the UI never silently rolls back and
 // leaves the moderator believing the action succeeded. Alert.alert is a no-op
 // on web, so use window.alert there.
-function showModError(message: string) {
+function showModError(message: string, t: TFunction) {
   if (Platform.OS === 'web') {
     window.alert(message);
   } else {
-    Alert.alert('Action failed', message);
+    Alert.alert(t('stories.actionFailedTitle'), message);
   }
 }
 
-function getRelativeTime(dateString: string): string {
+function getRelativeTime(dateString: string, t: TFunction): string {
   const now = Date.now();
   const date = new Date(dateString).getTime();
   const diff = now - date;
 
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1) return t('stories.time.justNow');
+  if (minutes < 60) return t('stories.time.minute', { count: minutes });
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return t('stories.time.hour', { count: hours });
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return t('stories.time.day', { count: days });
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w`;
+  if (weeks < 4) return t('stories.time.week', { count: weeks });
 
   const months = Math.floor(days / 30);
-  return `${months}mo`;
+  return t('stories.time.month', { count: months });
 }
 
 export function StoryCard({ story, index, allowModeration = false, showAuthorStatus = false, showRejectedNorms = false }: StoryCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { colors, isDark, fontScale } = useTheme();
   const { isStoryBookmarked, addStoryBookmark, removeStoryBookmark, rejectStory, approveStory, dismissReport, isStoryLiked, toggleLike } = useStories();
@@ -152,15 +157,15 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
 
   const styles = React.useMemo(() => makeCardStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
 
-  const roleLabel = getRoleLabel(story.author_role);
+  const roleLabel = getRoleLabel(story.author_role, t);
   const bookmarked = isStoryBookmarked(story.id);
   const liked = isStoryLiked(story.id);
   const isMyStory = user?.id === story.author_id;
 
-  const metaParts = [story.author_name || 'Anonymous'];
+  const metaParts = [story.author_name || t('stories.anonymous')];
   if (roleLabel) metaParts.push(roleLabel);
-  metaParts.push(getRelativeTime(story.created_at));
-  const audienceHint = getAudienceHint(story.target_audiences);
+  metaParts.push(getRelativeTime(story.created_at, t));
+  const audienceHint = getAudienceHint(story.target_audiences, t);
   if (audienceHint) metaParts.push(audienceHint);
   const metaLine = metaParts.join(' · ');
 
@@ -225,7 +230,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {story.status === 'pending' && allowModeration && (
           <View style={styles.modBanner}>
             <Text style={styles.modBannerText}>
-              Pending Review · Attempt {story.attempt_count || 1}
+              {t('stories.pendingReviewAttempt', { count: story.attempt_count || 1 })}
             </Text>
           </View>
         )}
@@ -234,7 +239,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             {story.report_count > 0 && (
               <View style={{ marginBottom: (story.comment_report_count || 0) > 0 ? 8 : 0 }}>
                 <Text style={[styles.modBannerText, { color: colors.error }]}>
-                  Story Reported {story.report_count} time(s)
+                  {t('stories.storyReportedTimes', { count: story.report_count })}
                 </Text>
                 {story.reports && story.reports.length > 0 && (
                   <View style={styles.reportsList}>
@@ -254,10 +259,10 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             {(story.comment_report_count || 0) > 0 && (
               <View style={{ marginTop: story.report_count > 0 ? 8 : 0 }}>
                 <Text style={[styles.modBannerText, { color: colors.error }]}>
-                  {story.comment_report_count} Comment Report(s)
+                  {t('stories.commentReports', { count: story.comment_report_count })}
                 </Text>
                 <Text style={[styles.reportDetails, { fontStyle: 'normal', color: colors.textMuted, marginTop: 4 }]}>
-                  Click to review reported responses.
+                  {t('stories.clickToReviewResponses')}
                 </Text>
               </View>
             )}
@@ -311,7 +316,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {/* Rejected Norms List */}
         {showRejectedNorms && story.status === 'rejected' && story.rejected_norms && story.rejected_norms.length > 0 && (
           <View style={styles.normsContainer}>
-            <Text style={styles.normsLabel}>Please edit your story to follow these norms:</Text>
+            <Text style={styles.normsLabel}>{t('stories.editToFollowNorms')}</Text>
             {story.rejected_norms.map((norm, idx) => (
               <View key={idx} style={styles.normItem}>
                 <Ionicons name="close-circle" size={16} color={colors.error} />
@@ -325,7 +330,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         {story.status === 'approved' && (
         <View style={styles.actionRow}>
           <View style={styles.actionLeft}>
-            <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={liked ? 'Unlike story' : 'Like story'}>
+            <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={liked ? t('stories.a11yUnlike') : t('stories.a11yLike')}>
               <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
                 <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? '#E53935' : colors.textLight} />
               </RNAnimated.View>
@@ -336,12 +341,12 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
 
             <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/story-detail?id=${story.id}#comments` as any)} hitSlop={10}>
               <Ionicons name="chatbubble-outline" size={26} color={colors.textLight} style={{ transform: [{ scaleX: -1 }] }} />
-              <Text style={styles.actionText}>Discuss</Text>
+              <Text style={styles.actionText}>{t('stories.discuss')}</Text>
             </TouchableOpacity>
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark story'}>
+            <TouchableOpacity onPress={handleBookmark} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={bookmarked ? t('stories.a11yRemoveBookmark') : t('stories.a11yBookmark')}>
               <RNAnimated.View style={{ transform: [{ scale: bookmarkScale }] }}>
                 <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={27} color={bookmarked ? colors.primary : colors.textLight} />
               </RNAnimated.View>
@@ -355,30 +360,30 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
         <View style={styles.modActions}>
           <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); setShowRejectModal(true); }}>
             <Ionicons name="close-circle-outline" size={16} color={colors.error} />
-            <Text style={styles.modRejectText}>Reject</Text>
+            <Text style={styles.modRejectText}>{t('stories.reject')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id).catch(() => showModError("Couldn't approve this story. Please try again.")); }}>
+          <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id).catch(() => showModError(t('stories.approveFailed'), t)); }}>
             <Ionicons name="checkmark-circle-outline" size={16} color={colors.white} />
-            <Text style={styles.modApproveText}>Approve</Text>
+            <Text style={styles.modApproveText}>{t('stories.approve')}</Text>
           </TouchableOpacity>
         </View>
       )}
       
       {allowModeration && story.status === 'approved' && story.report_count > 0 && (
         <View style={styles.modActions}>
-          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); /* Reject completely here or unpublish */ rejectStory(story.id, []).catch(() => showModError("Couldn't take down this story. Please try again.")); }}>
+          <TouchableOpacity style={[styles.modButton, styles.modReject]} onPress={(e) => { e.stopPropagation(); /* Reject completely here or unpublish */ rejectStory(story.id, []).catch(() => showModError(t('stories.takeDownFailed'), t)); }}>
             <Ionicons name="close-circle-outline" size={16} color={colors.error} />
-            <Text style={styles.modRejectText}>Take Down</Text>
+            <Text style={styles.modRejectText}>{t('stories.takeDown')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.modButton, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={(e) => { e.stopPropagation(); dismissReport(story.id).catch(() => showModError("Couldn't dismiss the flags. Please try again.")); }}>
+          <TouchableOpacity style={[styles.modButton, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={(e) => { e.stopPropagation(); dismissReport(story.id).catch(() => showModError(t('stories.dismissFlagsFailed'), t)); }}>
             <Ionicons name="checkmark-done-outline" size={16} color={colors.textLight} />
-            <Text style={[styles.actionText, { color: colors.textLight }]}>Dismiss Flags</Text>
+            <Text style={[styles.actionText, { color: colors.textLight }]}>{t('stories.dismissFlags')}</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {showRejectModal && (
-        <CommunityNormsModal visible={true} onClose={() => setShowRejectModal(false)} onAgree={(norms) => { rejectStory(story.id, norms).catch(() => showModError("Couldn't reject this story. Please try again.")); setShowRejectModal(false); }} mode="select" />
+        <CommunityNormsModal visible={true} onClose={() => setShowRejectModal(false)} onAgree={(norms) => { rejectStory(story.id, norms).catch(() => showModError(t('stories.rejectFailed'), t)); setShowRejectModal(false); }} mode="select" />
       )}
     </Animated.View>
     </Pressable>

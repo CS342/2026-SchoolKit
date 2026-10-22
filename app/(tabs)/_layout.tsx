@@ -1,6 +1,7 @@
 import { Tabs, usePathname } from 'expo-router';
 import { View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomTabBar } from '../../components/CustomTabBar';
 import { SettingsSheet } from '../../components/SettingsSheet';
@@ -26,6 +27,7 @@ function GearButton() {
 }
 
 function TabLayoutInner() {
+  const { t } = useTranslation();
   const { isWeb, isDesktop, isTablet } = useResponsive();
   const useSidebar = isWeb && (isDesktop || isTablet);
 
@@ -38,10 +40,10 @@ function TabLayoutInner() {
           tabBarPosition: 'bottom',
         }}
       >
-        <Tabs.Screen name="index" options={{ title: 'For You' }} />
-        <Tabs.Screen name="bookmarks" options={{ title: 'Library' }} />
-        <Tabs.Screen name="stories" options={{ title: 'Stories' }} />
-        <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+        <Tabs.Screen name="index" options={{ title: t('home.tabs.forYou') }} />
+        <Tabs.Screen name="bookmarks" options={{ title: t('home.tabs.library') }} />
+        <Tabs.Screen name="stories" options={{ title: t('home.tabs.stories') }} />
+        <Tabs.Screen name="profile" options={{ title: t('home.tabs.profile') }} />
       </Tabs>
       <GearButton />
       <SettingsSheet />

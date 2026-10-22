@@ -22,6 +22,7 @@ import {
 import { useOnboarding } from './OnboardingContext';
 import { useStories } from './StoriesContext';
 import { useAuth } from './AuthContext';
+import { SHOW_PUZZLES } from '../constants/features';
 import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = '@schoolkit_accomplishments';
@@ -295,14 +296,17 @@ export function AccomplishmentProvider({ children }: { children: ReactNode }) {
     setVisibleChapterIds(new Set(visibleChapterIdsRef.current));
     setEarnedAt({ ...earnedAtRef.current });
 
-    // Queue toast reveals
-    toastQueue.current.push(...newlyEarned);
-    if (!isShowingToast.current) {
-      showNextToast();
-    }
+    // Pieces are still earned while puzzles are hidden, just not announced.
+    if (SHOW_PUZZLES) {
+      // Queue toast reveals
+      toastQueue.current.push(...newlyEarned);
+      if (!isShowingToast.current) {
+        showNextToast();
+      }
 
-    // Haptic feedback
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+      // Haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+    }
 
     persistState();
 

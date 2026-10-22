@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useStories, Story } from '../contexts/StoriesContext';
@@ -37,6 +38,7 @@ import { isStudentRole } from '../utils/profile';
 // Exporting CreateStoryScreen as default component
 export default function CreateStoryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const isEditing = params.edit === 'true';
   const editId = params.id as string;
@@ -112,9 +114,11 @@ export default function CreateStoryScreen() {
     const tags = targetAudiences.filter(a => ALL_AUDIENCES.includes(a));
     const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
     if (hasAll || tags.length === 0) return '';
-    if (tags.length === 1) return `For ${tags[0]}`;
-    if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
-    return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
+    const names = tags.map(a => t(`stories.audiences.${a}`));
+    const joined = names.length === 1
+      ? names[0]
+      : `${names.slice(0, -1).join(', ')} ${t('stories.audienceAnd')} ${names[names.length - 1]}`;
+    return t('stories.audienceFor', { audiences: joined });
   };
   const audienceHint = getAudienceHint();
 
@@ -129,7 +133,7 @@ export default function CreateStoryScreen() {
   const handlePreSubmit = () => {
     if (!canSubmit) return;
     if (isAnonymous) {
-      showAlert('Sign In Required', 'You need to create an account to share stories.');
+      showAlert(t('stories.signInRequiredTitle'), t('stories.signInRequiredMsg'));
       return;
     }
     setNormsMode('submit');
@@ -163,20 +167,20 @@ export default function CreateStoryScreen() {
 
       if (!isEditing || (isEditing && existingStory?.status === 'rejected')) {
         if (Platform.OS === 'web') {
-          alert('Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.');
+          alert(t('stories.storySubmittedMsg'));
           goToStories();
         } else {
           Alert.alert(
-            'Story Submitted',
-            'Thank you for sharing your story! A moderator will review it shortly. Once approved, it will appear in the safe space feed.',
-            [{ text: 'OK', onPress: goToStories }]
+            t('stories.storySubmittedTitle'),
+            t('stories.storySubmittedMsg'),
+            [{ text: t('common.ok'), onPress: goToStories }]
           );
         }
       } else {
         goToStories();
       }
     } else {
-      showAlert('Error', isEditing ? 'Failed to update story. Please try again.' : 'Failed to create story. Please try again.');
+      showAlert(t('stories.errorTitle'), isEditing ? t('stories.updateFailed') : t('stories.createFailed'));
     }
   };
 
@@ -189,7 +193,7 @@ export default function CreateStoryScreen() {
         <Pressable style={appStyles.editBackButton} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/stories' as any)}>
           <Ionicons name="close" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={appStyles.editHeaderTitle}>{isExhausted ? 'Review Story' : 'Share Your Story'}</Text>
+        <Text style={appStyles.editHeaderTitle}>{isExhausted ? t('stories.createHeaderReview') : t('stories.shareYourStory')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -204,9 +208,9 @@ export default function CreateStoryScreen() {
         >
           <Pressable style={[styles.topicReminder, { backgroundColor: isDark ? colors.backgroundLight : '#EEEEF6' }]} onPress={handleViewNorms}>
             <Ionicons name="school-outline" size={16} color={isDark ? colors.textMuted : "#5C5C8A"} />
-            <Text style={[styles.topicReminderText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>Stories must relate to school and cancer.</Text>
+            <Text style={[styles.topicReminderText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>{t('stories.topicReminder')}</Text>
             <View style={styles.topicReminderLink}>
-              <Text style={[styles.topicReminderLinkText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>Review norms</Text>
+              <Text style={[styles.topicReminderLinkText, { color: isDark ? colors.textMuted : "#5C5C8A" }]}>{t('stories.reviewNorms')}</Text>
               <Ionicons name="chevron-forward" size={13} color={isDark ? colors.textMuted : "#5C5C8A"} />
             </View>
           </Pressable>
@@ -214,15 +218,15 @@ export default function CreateStoryScreen() {
           {isEditing && existingStory?.status === 'rejected' && existingStory.rejected_norms && existingStory.rejected_norms.length > 0 && (
             <View style={[styles.normsContainer, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
               <View style={styles.normsHeader}>
-                <Text style={[styles.normsLabel, { color: colors.error }]}>{isExhausted ? 'Limit Reached' : 'Action Required'}</Text>
+                <Text style={[styles.normsLabel, { color: colors.error }]}>{isExhausted ? t('stories.limitReached') : t('stories.actionRequired')}</Text>
                 <Text style={[styles.normsAttemptText, { color: colors.error }]}>
-                  Attempt {existingStory.attempt_count || 1} of 2
+                  {t('stories.attemptOf', { current: existingStory.attempt_count || 1 })}
                 </Text>
               </View>
               <Text style={styles.normsDesc}>
                 {isExhausted
-                  ? 'This story has reached the maximum number of resubmissions and cannot be edited further. Please review your violations and delete the story.'
-                  : 'Please edit your story to resolve the following community norm violations before resubmitting:'}
+                  ? t('stories.exhaustedDesc')
+                  : t('stories.resolveViolationsDesc')}
               </Text>
               {existingStory.rejected_norms.map((norm, idx) => (
                 <View key={idx} style={styles.normItem}>
@@ -235,7 +239,7 @@ export default function CreateStoryScreen() {
 
           <TextInput
             style={[styles.titleInput, isExhausted && { color: colors.textMuted }]}
-            placeholder="Title"
+            placeholder={t('stories.titlePlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
@@ -246,7 +250,7 @@ export default function CreateStoryScreen() {
           <View style={styles.titleRow}>
             <Pressable onPress={() => !isExhausted && setShowSettingsModal(true)} style={styles.startersBtn}>
               <Ionicons name="options-outline" size={16} color={colors.primary} />
-              <Text style={[styles.startersText, { color: colors.primary }]}>Add tags and change audience</Text>
+              <Text style={[styles.startersText, { color: colors.primary }]}>{t('stories.addTagsAudience')}</Text>
             </Pressable>
             <Text style={styles.charCount}>{title.length}/120</Text>
           </View>
@@ -284,7 +288,7 @@ export default function CreateStoryScreen() {
 
           <TextInput
             style={[styles.bodyInput, isExhausted && { backgroundColor: isDark ? colors.appBackground : colors.backgroundLight, color: colors.textMuted }]}
-            placeholder="Share your experience navigating cancer and school..."
+            placeholder={t('stories.bodyPlaceholder')}
             placeholderTextColor={colors.textMuted}
             value={body}
             onChangeText={setBody}
@@ -296,7 +300,7 @@ export default function CreateStoryScreen() {
           {body.trim().length === 0 && (
             <Pressable onPress={() => !isExhausted && setShowStarters(true)} style={[styles.startersBtn, { marginTop: 12, alignSelf: 'flex-start' }]}>
               <Ionicons name="sparkles" size={16} color={colors.primary} />
-              <Text style={[styles.startersText, { color: colors.primary }]}>Story Starters</Text>
+              <Text style={[styles.startersText, { color: colors.primary }]}>{t('stories.storyStarters')}</Text>
             </Pressable>
           )}
 
@@ -306,7 +310,7 @@ export default function CreateStoryScreen() {
           {(!isExhausted && lookingFor.length > 0) && (
             <View style={styles.lookingForPreview}>
               <Text style={styles.lookingForText}>
-                Looking for: {lookingFor.join(' · ')}
+                {t('stories.lookingForPreview', { items: lookingFor.map(o => t(`stories.lookingFor.${o}`)).join(' · ') })}
               </Text>
             </View>
           )}
@@ -320,11 +324,11 @@ export default function CreateStoryScreen() {
                 color={postAnonymously ? colors.primary : COLORS.textLight}
               />
               <View style={{ flex: 1 }}>
-                <Text style={styles.anonymousLabel}>Post anonymously</Text>
+                <Text style={styles.anonymousLabel}>{t('stories.postAnonymously')}</Text>
                 <Text style={styles.anonymousHint}>
                   {postAnonymously
-                    ? 'Your name and role will be hidden'
-                    : 'Your name and role will be visible'}
+                    ? t('stories.anonHintHidden')
+                    : t('stories.anonHintVisible')}
                 </Text>
               </View>
             </View>
@@ -346,16 +350,16 @@ export default function CreateStoryScreen() {
                 ]}
                 onPress={() => {
                   if (Platform.OS === 'web') {
-                    if (window.confirm('Are you sure you want to delete this story?')) {
+                    if (window.confirm(t('stories.deleteStoryConfirm'))) {
                       deleteStory(editId).then(() => {
                         router.back();
                       });
                     }
                   } else {
-                    Alert.alert('Delete Story', 'Are you sure you want to delete this story?', [
-                      { text: 'Cancel', style: 'cancel' },
+                    Alert.alert(t('stories.deleteStory'), t('stories.deleteStoryConfirm'), [
+                      { text: t('common.cancel'), style: 'cancel' },
                       {
-                        text: 'Delete', style: 'destructive', onPress: async () => {
+                        text: t('common.delete'), style: 'destructive', onPress: async () => {
                           await deleteStory(editId);
                           router.back();
                         }
@@ -366,7 +370,7 @@ export default function CreateStoryScreen() {
               >
                 <Text style={[
                   isExhausted ? styles.deleteBtnTextSolid : styles.deleteBtnText
-                ]}>Delete Story</Text>
+                ]}>{t('stories.deleteStory')}</Text>
               </Pressable>
             )}
 
@@ -380,7 +384,7 @@ export default function CreateStoryScreen() {
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={[styles.primaryBtnText, !canSubmit && styles.primaryBtnTextDisabled]}>
-                    {isEditing && existingStory?.status === 'rejected' ? 'Resubmit' : 'Post Story'}
+                    {isEditing && existingStory?.status === 'rejected' ? t('stories.resubmit') : t('stories.postStory')}
                   </Text>
                 )}
               </Pressable>
@@ -402,23 +406,23 @@ export default function CreateStoryScreen() {
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowSettingsModal(false)} />
           <View style={[styles.settingsModalContent, { paddingBottom: Math.max(insets.bottom + 20, 20) }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Story Settings</Text>
+              <Text style={styles.modalTitle}>{t('stories.storySettings')}</Text>
               <Pressable onPress={() => setShowSettingsModal(false)} hitSlop={10} style={styles.modalDoneBtn}>
-                <Text style={styles.modalDoneBtnText}>Done</Text>
+                <Text style={styles.modalDoneBtnText}>{t('common.done')}</Text>
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.settingsScroll}>
 
               {/* Content Tags via Dropdown/Modal */}
-              <Text style={styles.sectionHeading}>Topic Tags</Text>
+              <Text style={styles.sectionHeading}>{t('stories.topicTags')}</Text>
               <Pressable
                 style={styles.tagsDropdownBtn}
                 onPress={() => !isExhausted && setShowTagsModal(true)}
               >
                 <Text style={storyTags.length > 0 ? styles.tagsDropdownTextSelected : styles.tagsDropdownText}>
                   {storyTags.length > 0
-                    ? `${storyTags.length} ${storyTags.length === 1 ? 'tag' : 'tags'} selected`
-                    : "Select topic tags..."}
+                    ? t(storyTags.length === 1 ? 'stories.tagsSelectedOne' : 'stories.tagsSelectedOther', { count: storyTags.length })
+                    : t('stories.selectTopicTags')}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
               </Pressable>
@@ -446,7 +450,7 @@ export default function CreateStoryScreen() {
               )}
 
               {/* Looking For Chips */}
-              <Text style={styles.sectionHeading}>I'm looking for...</Text>
+              <Text style={styles.sectionHeading}>{t('stories.lookingForHeading')}</Text>
               <View style={styles.chipGroup}>
                 {['Advice', 'Warmth + Support', 'Listening Ear', 'Just Sharing'].map((option) => {
                   const isSelected = lookingFor.includes(option);
@@ -464,7 +468,7 @@ export default function CreateStoryScreen() {
                       }}
                     >
                       <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                        {option}
+                        {t(`stories.lookingFor.${option}`)}
                       </Text>
                     </Pressable>
                   );
@@ -472,7 +476,7 @@ export default function CreateStoryScreen() {
               </View>
 
               {/* Target Audience Chips */}
-              <Text style={[styles.sectionHeading, { marginTop: 20 }]}>Share with...</Text>
+              <Text style={[styles.sectionHeading, { marginTop: 20 }]}>{t('stories.shareWithHeading')}</Text>
               <View style={styles.chipGroup}>
                 {['Students', 'Parents', 'School Staff'].map((option) => {
                   const isSelected = targetAudiences.includes(option);
@@ -483,7 +487,7 @@ export default function CreateStoryScreen() {
                       onPress={() => {
                         if (isExhausted) return;
                         if (option === userGroup) {
-                          showAlert('Required', `As a signed-in member of this community, you must share your story with ${option}.`);
+                          showAlert(t('stories.requiredTitle'), t('stories.requiredAudienceMsg', { audience: t(`stories.audiences.${option}`) }));
                           return;
                         }
                         if (isSelected) {
@@ -494,7 +498,7 @@ export default function CreateStoryScreen() {
                       }}
                     >
                       <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                        {option}
+                        {t(`stories.audiences.${option}`)}
                       </Text>
                     </Pressable>
                   );

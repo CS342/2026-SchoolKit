@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
   withSequence,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { BookmarkButton } from './BookmarkButton';
 import { DownloadIndicator } from './DownloadIndicator';
 import { useTheme } from '../contexts/ThemeContext';
@@ -51,6 +52,7 @@ export function ResourceCard({
   animationBaseDelay = 0,
   staggerDelay: staggerDelayProp = ANIMATION.staggerDelay,
 }: ResourceCardProps) {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
@@ -105,7 +107,7 @@ export function ResourceCard({
           <View style={styles.content}>
             <Text style={[styles.title, { color: colors.textDark, fontSize: Math.round(18 * fontScale) }]}>{title}</Text>
             <View style={[styles.categoryBadge, { backgroundColor: isDark ? color + '33' : withOpacity(color, 0.1) }]}>
-              <Text style={[styles.categoryText, { color, fontSize: Math.round(16 * fontScale) }]}>{category}</Text>
+              <Text style={[styles.categoryText, { color, fontSize: Math.round(16 * fontScale) }]}>{t(`home.categories.${category}`, { defaultValue: category })}</Text>
             </View>
           </View>
         ) : (

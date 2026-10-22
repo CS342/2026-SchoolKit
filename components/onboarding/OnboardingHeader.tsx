@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ProgressBar } from './ProgressBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -26,6 +27,7 @@ interface OnboardingHeaderProps {
 
 export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, onBack, rightAction, showBackOnFirstStep = false }: OnboardingHeaderProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isWeb, isMobile } = useResponsive();
   const { colors, sharedStyles } = useTheme();
@@ -56,17 +58,17 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
             onPress={onBack ?? (() => router.back())}
             style={webStyles.backLink}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Go back"
+            accessibilityLabel={t('common.goBack')}
           >
             <Ionicons name="chevron-back" size={18} color={colors.textMuted} />
-            <Text style={webStyles.backText}>Back</Text>
+            <Text style={webStyles.backText}>{t('common.back')}</Text>
           </Pressable>
         ) : (
           <View style={{ height: 20 }} />
         )}
         {showHelper && (
           <Text style={webStyles.helperText}>
-            You can change or update any of this later.
+            {t('onboarding.frame.changeLater')}
           </Text>
         )}
       </View>
@@ -83,14 +85,14 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
             onPress={onBack ?? (() => router.back())}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Go back"
+            accessibilityLabel={t('common.goBack')}
           >
             <Ionicons name="chevron-back" size={22} color={colors.textMuted} />
           </Pressable>
         )}
 
         <View style={sharedStyles.badge}>
-          <Text style={sharedStyles.badgeText}>{currentStep} of {totalSteps}</Text>
+          <Text style={sharedStyles.badgeText}>{t('onboarding.frame.countOf', { current: currentStep, total: totalSteps })}</Text>
         </View>
 
         <View style={styles.placeholder}>{rightAction}</View>
@@ -102,7 +104,7 @@ export function OnboardingHeader({ currentStep, totalSteps, showHelper = false, 
 
       {showHelper && (
         <Text style={styles.helperText}>
-          You can change or update any of this later.
+          {t('onboarding.frame.changeLater')}
         </Text>
       )}
     </Animated.View>

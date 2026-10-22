@@ -4,10 +4,11 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore } from '../../features/content/editor/store';
-import { BLOCK_LABEL, BLOCK_ICON } from '../../features/content/editor/templates';
+import { BLOCK_ICON } from '../../features/content/editor/templates';
 import { REGISTRY } from '../../features/content/registry';
 import type { ContentBlock } from '../../features/content/types';
 import { BlockFields } from './BlockFields';
@@ -16,6 +17,7 @@ import { IconBtn } from './primitives';
 const summaryOf = (b: ContentBlock): string => REGISTRY[b.type]?.summary(b) ?? '';
 
 export function BlockCard({ block, index, count }: { block: ContentBlock; index: number; count: number }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const selectedId = useEditorStore((s) => s.selectedId);
   const select = useEditorStore((s) => s.select);
@@ -30,13 +32,13 @@ export function BlockCard({ block, index, count }: { block: ContentBlock; index:
             <Ionicons name={BLOCK_ICON[block.type] as any} size={17} color={open ? colors.primary : colors.textMuted} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: open ? colors.primary : colors.textMuted }}>{BLOCK_LABEL[block.type]}</Text>
+            <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: open ? colors.primary : colors.textMuted }}>{t(`editor.blocks.${block.type}.label`)}</Text>
             <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark }} numberOfLines={1}>{summaryOf(block)}</Text>
           </View>
         </Pressable>
-        <IconBtn icon="arrow-up" label="Move up" disabled={index === 0} onPress={() => dispatch([{ op: 'moveBlock', id: block.id, to: index - 1 }])} />
-        <IconBtn icon="arrow-down" label="Move down" disabled={index === count - 1} onPress={() => dispatch([{ op: 'moveBlock', id: block.id, to: index + 1 }])} />
-        <IconBtn icon="trash-outline" label="Delete block" danger onPress={() => { if (open) select(null); dispatch([{ op: 'removeBlock', id: block.id }]); }} />
+        <IconBtn icon="arrow-up" label={t('editor.fields.moveUp')} disabled={index === 0} onPress={() => dispatch([{ op: 'moveBlock', id: block.id, to: index - 1 }])} />
+        <IconBtn icon="arrow-down" label={t('editor.fields.moveDown')} disabled={index === count - 1} onPress={() => dispatch([{ op: 'moveBlock', id: block.id, to: index + 1 }])} />
+        <IconBtn icon="trash-outline" label={t('editor.fields.deleteBlock')} danger onPress={() => { if (open) select(null); dispatch([{ op: 'removeBlock', id: block.id }]); }} />
       </View>
       {open ? (
         <View style={{ paddingHorizontal: 14, paddingBottom: 14, paddingTop: 2, borderTopWidth: 1, borderTopColor: colors.appBackgroundAlt }}>

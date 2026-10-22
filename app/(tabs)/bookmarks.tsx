@@ -22,6 +22,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useStories } from '../../contexts/StoriesContext';
 import { ResourceCard } from '../../components/ResourceCard';
@@ -50,10 +51,10 @@ type CategoryTab = (typeof CATEGORIES)[number];
 type SegmentType = 'all' | 'saved' | 'downloaded';
 type SortMode = 'recommended' | 'az' | 'category';
 
-const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'recommended', label: 'Recommended' },
-  { value: 'az', label: 'A–Z' },
-  { value: 'category', label: 'Category' },
+const SORT_OPTIONS: { value: SortMode }[] = [
+  { value: 'recommended' },
+  { value: 'az' },
+  { value: 'category' },
 ];
 
 function sortResources(list: Resource[], mode: SortMode): Resource[] {
@@ -96,6 +97,7 @@ function AnimatedSection({ children, delay }: { children: React.ReactNode; delay
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, shadows, gradients, appStyles, sharedStyles, isDark } = useTheme();
 
@@ -294,7 +296,7 @@ export default function LibraryScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <ScreenHeader title="Library" subtitle="Your resources, saved items, and downloads" />
+      <ScreenHeader title={t('home.library.title')} subtitle={t('home.library.subtitle')} />
       <Animated.View style={[styles.headerWrap, headerStyle]}>
         <View style={isWebDesktop ? styles.webToolbarRow : undefined}>
         {/* Search bar */}
@@ -307,7 +309,7 @@ export default function LibraryScreen() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search resources..."
+            placeholder={t('home.library.searchPlaceholder')}
             placeholderTextColor={colors.inputPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -337,11 +339,11 @@ export default function LibraryScreen() {
                 onPress={() => handleSegmentChange(seg)}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel={seg === 'all' ? 'All' : seg === 'saved' ? 'Saved' : 'Downloaded'}
+                accessibilityLabel={seg === 'all' ? t('home.segment.all') : seg === 'saved' ? t('home.segment.saved') : t('home.segment.downloaded')}
                 accessibilityState={{ selected: activeSegment === seg }}
               >
                 <Text style={[styles.segmentText, { color: activeSegment === seg ? colors.textDark : colors.textLight }, activeSegment === seg && styles.segmentTextActive]}>
-                  {seg === 'all' ? 'All' : seg === 'saved' ? 'Saved' : 'Downloaded'}
+                  {seg === 'all' ? t('home.segment.all') : seg === 'saved' ? t('home.segment.saved') : t('home.segment.downloaded')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -358,7 +360,7 @@ export default function LibraryScreen() {
                   key={mode}
                   onPress={() => setWebViewMode(mode)}
                   style={[styles.viewToggleBtn, active && { backgroundColor: colors.white, shadowColor: colors.shadow }]}
-                  accessibilityLabel={mode === 'grid' ? 'Grid view' : 'List view'}
+                  accessibilityLabel={mode === 'grid' ? t('home.view.grid') : t('home.view.list')}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                 >
@@ -385,9 +387,9 @@ export default function LibraryScreen() {
           <AnimatedSection delay={100}>
             <View style={styles.recentSearchesContainer}>
               <View style={styles.recentSearchesHeader}>
-                <Text style={[styles.label, { color: colors.textLight }]}>Recent Searches</Text>
+                <Text style={[styles.label, { color: colors.textLight }]}>{t('home.recent.title')}</Text>
                 <Pressable onPress={clearRecentSearches}>
-                  <Text style={[styles.clearRecentText, { color: colors.primary }]}>Clear</Text>
+                  <Text style={[styles.clearRecentText, { color: colors.primary }]}>{t('home.recent.clear')}</Text>
                 </Pressable>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -412,7 +414,7 @@ export default function LibraryScreen() {
             <AnimatedSection delay={150}>
               {isWebDesktop && (
                 <View style={styles.filtersCaptionRow}>
-                  <Text style={[styles.filtersCaption, { color: colors.textLight }]}>BROWSE BY TOPIC</Text>
+                  <Text style={[styles.filtersCaption, { color: colors.textLight }]}>{t('home.library.browseByTopic')}</Text>
                 </View>
               )}
               <ScrollView
@@ -424,11 +426,12 @@ export default function LibraryScreen() {
                 {visibleCategories.map(category => {
                   const isActive = selectedCategory === category;
                   const iconName = CATEGORY_ICONS[category] || 'ellipse';
+                  const categoryLabel = t(`home.categories.${category}`, { defaultValue: category });
                   const chipContent = (
                     <>
                       <Ionicons name={iconName} size={20} color={isActive ? colors.white : colors.textMuted} />
                       <Text style={[styles.filterChipText, { color: isActive ? colors.white : colors.textMuted }]}>
-                        {category}
+                        {categoryLabel}
                       </Text>
                     </>
                   );
@@ -438,7 +441,7 @@ export default function LibraryScreen() {
                         key={category}
                         onPress={() => setSelectedCategory(category)}
                         accessibilityRole="button"
-                        accessibilityLabel={category}
+                        accessibilityLabel={categoryLabel}
                         accessibilityState={{ selected: true }}
                       >
                         <LinearGradient
@@ -458,7 +461,7 @@ export default function LibraryScreen() {
                       style={[styles.filterChip, { backgroundColor: colors.white, borderColor: colors.borderCard }]}
                       onPress={() => setSelectedCategory(category)}
                       accessibilityRole="button"
-                      accessibilityLabel={category}
+                      accessibilityLabel={categoryLabel}
                       accessibilityState={{ selected: false }}
                     >
                       {chipContent}
@@ -476,38 +479,41 @@ export default function LibraryScreen() {
                   <View style={styles.countSortLeft}>
                     <Text style={[styles.countText, { color: colors.textMuted }]}>
                       {resourcesLoading && allFilteredResources.length === 0
-                        ? 'Loading…'
-                        : `${allFilteredResources.length} ${allFilteredResources.length === 1 ? 'resource' : 'resources'}`}
+                        ? t('common.loading')
+                        : allFilteredResources.length === 1
+                          ? t('home.resultsOne', { count: allFilteredResources.length })
+                          : t('home.resultsOther', { count: allFilteredResources.length })}
                     </Text>
                     {(selectedCategory !== 'All' || searchQuery.length > 0) && (
                       <Pressable
                         onPress={() => { setSelectedCategory('All'); setSearchQuery(''); }}
                         style={styles.clearFilterBtn}
                         accessibilityRole="button"
-                        accessibilityLabel="Clear filters"
+                        accessibilityLabel={t('home.filters.clearFilters')}
                       >
                         <Ionicons name="close-circle" size={15} color={colors.primary} />
                         <Text style={[styles.clearFilterText, { color: colors.primary }]}>
-                          Clear{selectedCategory !== 'All' ? ` · ${selectedCategory}` : ''}
+                          {t('home.filters.clear')}{selectedCategory !== 'All' ? ` · ${selectedCategory}` : ''}
                         </Text>
                       </Pressable>
                     )}
                   </View>
                   <View style={styles.sortGroup}>
-                    <Text style={[styles.sortLabel, { color: colors.textLight }]}>Sort</Text>
+                    <Text style={[styles.sortLabel, { color: colors.textLight }]}>{t('home.sort.label')}</Text>
                     {SORT_OPTIONS.map(opt => {
                       const active = sortBy === opt.value;
+                      const optLabel = t(`home.sort.${opt.value}`);
                       return (
                         <Pressable
                           key={opt.value}
                           onPress={() => setSortBy(opt.value)}
                           style={[styles.sortChip, active && { backgroundColor: colors.primarySoft }]}
                           accessibilityRole="button"
-                          accessibilityLabel={`Sort by ${opt.label}`}
+                          accessibilityLabel={t('home.sort.sortByA11y', { label: optLabel })}
                           accessibilityState={{ selected: active }}
                         >
                           <Text style={[styles.sortChipText, { color: active ? colors.primary : colors.textMuted }]}>
-                            {opt.label}
+                            {optLabel}
                           </Text>
                         </Pressable>
                       );
@@ -549,12 +555,12 @@ export default function LibraryScreen() {
                 >
                   <Ionicons name={searchQuery ? 'search-outline' : 'compass-outline'} size={SIZING.iconPage} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={sharedStyles.pageTitle}>{(searchQuery || selectedCategory !== 'All') ? 'No results found' : 'Start exploring'}</Text>
+                <Text style={sharedStyles.pageTitle}>{(searchQuery || selectedCategory !== 'All') ? t('home.library.emptyAllTitleFiltered') : t('home.library.emptyAllTitle')}</Text>
                 <Text style={[sharedStyles.pageSubtitle, (searchQuery || selectedCategory !== 'All') && { marginBottom: 24 }]}>
-                  {(searchQuery || selectedCategory !== 'All') ? 'Try different keywords or clear the filter' : 'Search for topics and support materials'}
+                  {(searchQuery || selectedCategory !== 'All') ? t('home.library.emptyAllSubtitleFiltered') : t('home.library.emptyAllSubtitle')}
                 </Text>
                 {(searchQuery || selectedCategory !== 'All') && (
-                  <PrimaryButton title="Clear filters" icon="close-circle-outline" onPress={() => { setSelectedCategory('All'); setSearchQuery(''); }} />
+                  <PrimaryButton title={t('home.filters.clearFilters')} icon="close-circle-outline" onPress={() => { setSelectedCategory('All'); setSearchQuery(''); }} />
                 )}
               </View>
             )}
@@ -567,7 +573,7 @@ export default function LibraryScreen() {
             <>
               {bookmarkedStories.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textDark }]}>{t('home.sections.stories')}</Text>
                   <View style={styles.storiesContainer}>
                     {bookmarkedStories.map((story, index) => (
                       <View key={story.id} style={styles.storyGridItem}>
@@ -580,7 +586,7 @@ export default function LibraryScreen() {
               {bookmarkedResources.length > 0 && (
                 <View style={styles.sectionContainer}>
                   {bookmarkedStories.length > 0 && (
-                    <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Resources</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textDark }]}>{t('home.sections.resources')}</Text>
                   )}
                   {isWebDesktop ? renderWebRows(bookmarkedResources) : (
                     <View style={styles.resourcesContainer}>
@@ -608,13 +614,13 @@ export default function LibraryScreen() {
                 <Ionicons name="bookmark-outline" size={SIZING.iconPage} color={colors.primary} />
               </View>
               <Text style={sharedStyles.pageTitle}>
-                {searchQuery ? 'No saved items match' : 'Nothing saved yet'}
+                {searchQuery ? t('home.saved.emptyTitleSearch') : t('home.saved.emptyTitle')}
               </Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                {searchQuery ? 'Try a different search term' : 'Bookmark resources and stories to find them here quickly.'}
+                {searchQuery ? t('home.emptySearchHint') : t('home.saved.emptySubtitle')}
               </Text>
               {!searchQuery && (
-                <PrimaryButton title="Browse Resources" icon="search" onPress={() => handleSegmentChange('all')} />
+                <PrimaryButton title={t('home.actions.browseResources')} icon="search" onPress={() => handleSegmentChange('all')} />
               )}
             </View>
           )
@@ -626,7 +632,7 @@ export default function LibraryScreen() {
             <>
               {filteredDownloadedStories.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Stories</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textDark }]}>{t('home.sections.stories')}</Text>
                   <View style={styles.storiesContainer}>
                     {filteredDownloadedStories.map((story, index) => (
                       <View key={`dl-${story.id}`} style={styles.storyGridItem}>
@@ -639,7 +645,7 @@ export default function LibraryScreen() {
               {downloadedResources.length > 0 && (
                 <View style={styles.sectionContainer}>
                   {filteredDownloadedStories.length > 0 && (
-                    <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Resources</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textDark }]}>{t('home.sections.resources')}</Text>
                   )}
                   {isWebDesktop ? renderWebRows(downloadedResources, 'dl-') : (
                     <View style={styles.resourcesContainer}>
@@ -667,13 +673,13 @@ export default function LibraryScreen() {
                 <Ionicons name="download-outline" size={SIZING.iconPage} color={colors.primary} />
               </View>
               <Text style={sharedStyles.pageTitle}>
-                {searchQuery ? 'No downloads match' : 'No downloads yet'}
+                {searchQuery ? t('home.downloaded.emptyTitleSearch') : t('home.downloaded.emptyTitle')}
               </Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                {searchQuery ? 'Try a different search term' : 'Download resources and stories to access them offline.'}
+                {searchQuery ? t('home.emptySearchHint') : t('home.downloaded.emptySubtitle')}
               </Text>
               {!searchQuery && (
-                <PrimaryButton title="Go to Stories" icon="chatbubbles-outline" onPress={() => router.push('/(tabs)/stories')} />
+                <PrimaryButton title={t('home.actions.goToStories')} icon="chatbubbles-outline" onPress={() => router.push('/(tabs)/stories')} />
               )}
             </View>
           )

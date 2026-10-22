@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -16,6 +16,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { CHAPTERS, TOTAL_PIECES } from '../constants/accomplishments';
 import { ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme';
@@ -23,9 +24,16 @@ import ChapterCard from '../components/puzzle/ChapterCard';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeColors, ThemeShadows } from '../constants/theme';
 import { useResponsive, useWebLayout, gridColumns, CONTENT_WIDTH } from '../hooks/useResponsive';
+import { SHOW_PUZZLES } from '../constants/features';
 
-export default function AccomplishmentsScreen() {
+export default function AccomplishmentsScreenRoute() {
+  if (!SHOW_PUZZLES) return <Redirect href="/(tabs)" />;
+  return <AccomplishmentsScreen />;
+}
+
+function AccomplishmentsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, shadows, isDark } = useTheme();
   const { visibleChapterIds, earnedPieceIds, fireEvent } = useAccomplishments();
@@ -102,7 +110,7 @@ export default function AccomplishmentsScreen() {
               >
                 <Ionicons name="chevron-back" size={24} color={colors.textDark} />
               </TouchableOpacity>
-              <Text style={[styles.title, { color: colors.textDark }]}>My Puzzles</Text>
+              <Text style={[styles.title, { color: colors.textDark }]}>{t('profile.myPuzzles')}</Text>
               {hasAny && (
                 <Text style={[styles.countBadge, { color: colors.textMuted }]}>
                   {totalEarned} / {TOTAL_PIECES}
@@ -129,11 +137,9 @@ export default function AccomplishmentsScreen() {
                 <View style={[styles.emptyIconCircle, { backgroundColor: colors.backgroundLight }]}>
                   <Ionicons name="eye-outline" size={40} color={colors.textLight} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.textDark }]}>Still unfolding</Text>
+                <Text style={[styles.emptyTitle, { color: colors.textDark }]}>{t('profile.puzzlesEmptyTitle')}</Text>
                 <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
-                  Your story is still unfolding.{'\n'}
-                  Explore the app and something{'\n'}
-                  unexpected might find you.
+                  {t('profile.puzzlesEmptyMessage')}
                 </Text>
               </Animated.View>
             )}
@@ -155,7 +161,7 @@ export default function AccomplishmentsScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.textDark} />
         </TouchableOpacity>
 
-        <Text style={[styles.title, { color: colors.textDark }]}>My Puzzles</Text>
+        <Text style={[styles.title, { color: colors.textDark }]}>{t('profile.myPuzzles')}</Text>
 
         {hasAny && (
           <Text style={[styles.countBadge, { color: colors.textMuted }]}>
@@ -188,11 +194,9 @@ export default function AccomplishmentsScreen() {
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.backgroundLight }]}>
               <Ionicons name="eye-outline" size={40} color={colors.textLight} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.textDark }]}>Still unfolding</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textDark }]}>{t('profile.puzzlesEmptyTitle')}</Text>
             <Text style={[styles.emptyMessage, { color: colors.textMuted }]}>
-              Your story is still unfolding.{'\n'}
-              Explore the app and something{'\n'}
-              unexpected might find you.
+              {t('profile.puzzlesEmptyMessage')}
             </Text>
           </Animated.View>
         )}

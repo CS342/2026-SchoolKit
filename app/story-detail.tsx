@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useAuth } from "../contexts/AuthContext";
@@ -24,7 +26,7 @@ import { useOnboarding, UserRole } from "../contexts/OnboardingContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
-import { generateSpeech } from "../services/elevenLabs";
+import { generateSpeech, resolveVoice } from "../services/elevenLabs";
 import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
 import { ReportStoryModal } from "../components/ReportStoryModal";
@@ -42,66 +44,73 @@ const AUDIENCE_DISPLAY: Record<string, string> = {
   'parent': 'Parents', 'staff': 'School Staff',
   'Students': 'Students', 'Parents': 'Parents', 'School Staff': 'School Staff',
 };
-const COMMENT_REMINDERS = [
-  "Remember: Lead with empathy.",
-  "Thank you for supporting this author.",
-  "A kind word goes a long way.",
+const COMMENT_REMINDER_KEYS = [
+  "reminderEmpathy",
+  "reminderThankYou",
+  "reminderKindWord",
 ];
 
-function getLookingForText(lookingFor: string[]): string {
-  const lower = lookingFor.map(s => s.charAt(0).toLowerCase() + s.slice(1));
-  if (lower.length === 1) return lower[0] === 'just sharing' ? 'Just sharing' : `Looking for ${lower[0]}`;
-  const onlyJustSharing = lower.every(s => s === 'just sharing');
-  if (onlyJustSharing) return 'Just sharing';
-  return `Looking for ${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`;
+function getLookingForText(lookingFor: string[], t: TFunction): string {
+  if (lookingFor.length === 1) {
+    return lookingFor[0] === 'Just Sharing'
+      ? t('stories.justSharing')
+      : t('stories.lookingForOne', { term: t(`stories.lookingForTerm.${lookingFor[0]}`) });
+  }
+  const onlyJustSharing = lookingFor.every(s => s === 'Just Sharing');
+  if (onlyJustSharing) return t('stories.justSharing');
+  const names = lookingFor.map(s => t(`stories.lookingForTerm.${s}`));
+  const joined = `${names.slice(0, -1).join(', ')} ${t('stories.and')} ${names[names.length - 1]}`;
+  return t('stories.lookingForMany', { terms: joined });
 }
 
-function getAudienceHint(targetAudiences?: string[]): string {
+function getAudienceHint(targetAudiences: string[] | undefined, t: TFunction): string {
   if (!targetAudiences || !Array.isArray(targetAudiences) || targetAudiences.length === 0) return '';
   const tags = [...new Set(targetAudiences.map(a => AUDIENCE_DISPLAY[a]).filter(Boolean))];
   const hasAll = ALL_AUDIENCES.every(a => tags.includes(a));
   if (hasAll || tags.length === 0) return '';
-  if (tags.length === 1) return `For ${tags[0]}`;
-  if (tags.length === 2) return `For ${tags[0]} & ${tags[1]}`;
-  return `For ${tags.slice(0, -1).join(', ')} & ${tags[tags.length - 1]}`;
+  const names = tags.map(a => t(`stories.audiences.${a}`));
+  const joined = names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} ${t('stories.audienceAnd')} ${names[names.length - 1]}`;
+  return t('stories.audienceFor', { audiences: joined });
 }
 
-function getRoleLabel(role: UserRole | null): string {
+function getRoleLabel(role: UserRole | null, t: TFunction): string {
   switch (role) {
     case "student-elementary":
     case "student-k8":
-      return "Student";
+      return t('stories.roleLabels.student');
     case "student-hs":
-      return "Student";
+      return t('stories.roleLabels.student');
     case "parent":
-      return "Parent";
+      return t('stories.roleLabels.parent');
     case "staff":
-      return "Staff";
+      return t('stories.roleLabels.staff');
     default:
       return "";
   }
 }
 
-function getRelativeTime(dateString: string): string {
+function getRelativeTime(dateString: string, t: TFunction): string {
   const now = Date.now();
   const date = new Date(dateString).getTime();
   const diff = now - date;
 
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t('stories.timeAgo.justNow');
+  if (minutes < 60) return t('stories.timeAgo.minute', { count: minutes });
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('stories.timeAgo.hour', { count: hours });
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return t('stories.timeAgo.day', { count: days });
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
+  if (weeks < 4) return t('stories.timeAgo.week', { count: weeks });
 
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t('stories.timeAgo.month', { count: months });
 }
 
 function CommentItem({
@@ -127,14 +136,15 @@ function CommentItem({
   isModerator: boolean;
   fontSizeStep?: number;
 }) {
+  const { t } = useTranslation();
   const { colors, isDark, fontScale } = useTheme();
   const styles = React.useMemo(() => makeCommentStyles(colors, isDark, fontScale), [colors, isDark, fontScale]);
   const FONT_STEPS = [1.0, 1.2, 1.45];
 
-  const roleLabel = getRoleLabel(comment.author_role);
-  const metaParts = [comment.author_name || "Anonymous"];
+  const roleLabel = getRoleLabel(comment.author_role, t);
+  const metaParts = [comment.author_name || t('stories.anonymous')];
   if (roleLabel) metaParts.push(roleLabel);
-  metaParts.push(getRelativeTime(comment.created_at));
+  metaParts.push(getRelativeTime(comment.created_at, t));
   const metaLine = metaParts.join(" · ");
 
   return (
@@ -161,7 +171,7 @@ function CommentItem({
                 }}>
                   <Ionicons name="alert-circle" size={14} color={colors.error} />
                   <Text style={{ fontSize: 11, color: colors.error, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Reported ({comment.report_count})
+                    {t('stories.reportedCount', { count: comment.report_count })}
                   </Text>
                 </View>
 
@@ -181,7 +191,7 @@ function CommentItem({
                   }}
                 >
                   <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
-                  <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>Dismiss</Text>
+                  <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>{t('stories.dismiss')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -299,10 +309,11 @@ const makeCommentStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, 
 
 export default function StoryDetailScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { id, openComments } = useLocalSearchParams<{ id: string, openComments?: string }>();
   const { user, isAnonymous, isModerator } = useAuth();
-  const { selectedVoice, data: onboardingData, preferredLanguage } = useOnboarding();
+  const { selectedVoice, data: onboardingData } = useOnboarding();
   const {
     stories,
     deleteStory,
@@ -370,7 +381,7 @@ export default function StoryDetailScreen() {
   const [translatedBody, setTranslatedBody] = useState<string | null>(null);
   const [showReportBanner, setShowReportBanner] = useState(false);
 
-  const reminderText = useMemo(() => COMMENT_REMINDERS[Math.floor(Math.random() * COMMENT_REMINDERS.length)], []);
+  const reminderText = useMemo(() => t(`stories.${COMMENT_REMINDER_KEYS[Math.floor(Math.random() * COMMENT_REMINDER_KEYS.length)]}`), [t]);
 
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);
@@ -437,7 +448,7 @@ export default function StoryDetailScreen() {
 
   const handleDelete = () => {
     if (Platform.OS === "web") {
-      if (window.confirm("Are you sure you want to delete this story? This cannot be undone.")) {
+      if (window.confirm(t('stories.deleteStoryConfirmUndone'))) {
         if (id) {
           deleteStory(id).then(() => {
             router.back();
@@ -446,12 +457,12 @@ export default function StoryDetailScreen() {
       }
     } else {
       Alert.alert(
-        "Delete Story",
-        "Are you sure you want to delete this story? This cannot be undone.",
+        t('stories.deleteStory'),
+        t('stories.deleteStoryConfirmUndone'),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t('common.cancel'), style: "cancel" },
           {
-            text: "Delete",
+            text: t('common.delete'),
             style: "destructive",
             onPress: async () => {
               if (id) {
@@ -475,12 +486,12 @@ export default function StoryDetailScreen() {
         setCommentText("");
         fireEvent('story_commented');
       } else {
-        Alert.alert("Error", "Failed to post comment. Please try again.");
+        Alert.alert(t('stories.errorTitle'), t('stories.postCommentFailed'));
       }
     } catch (error: any) {
       Alert.alert(
-        "Comment Rejected",
-        error.message || "Failed to post comment."
+        t('stories.commentRejectedTitle'),
+        error.message || t('stories.commentFailed')
       );
     } finally {
       setSubmitting(false);
@@ -510,20 +521,20 @@ export default function StoryDetailScreen() {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
       } catch (error) {
         if (Platform.OS === "web") {
-          window.alert("Couldn't delete the comment. Please try again.");
+          window.alert(t('stories.deleteCommentFailed'));
         } else {
-          Alert.alert("Error", "Couldn't delete the comment. Please try again.");
+          Alert.alert(t('stories.errorTitle'), t('stories.deleteCommentFailed'));
         }
       }
     };
     if (Platform.OS === "web") {
-      if (window.confirm("Delete this comment?")) {
+      if (window.confirm(t('stories.deleteCommentConfirm'))) {
         doDelete();
       }
     } else {
-      Alert.alert("Delete Comment", "Delete this comment?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: doDelete },
+      Alert.alert(t('stories.deleteCommentTitle'), t('stories.deleteCommentConfirm'), [
+        { text: t('common.cancel'), style: "cancel" },
+        { text: t('common.delete'), style: "destructive", onPress: doDelete },
       ]);
     }
   };
@@ -548,9 +559,9 @@ export default function StoryDetailScreen() {
     if (!id) return;
     try {
       await dismissReport(id);
-      Alert.alert("Success", "Story reports dismissed.");
+      Alert.alert(t('stories.successTitle'), t('stories.storyReportsDismissed'));
     } catch (error) {
-      Alert.alert("Error", "Failed to dismiss story reports.");
+      Alert.alert(t('stories.errorTitle'), t('stories.dismissReportsFailed'));
     }
   };
 
@@ -621,7 +632,9 @@ export default function StoryDetailScreen() {
     const titleToSpeak = isTranslated && translatedTitle ? translatedTitle : story.title;
     const bodyToSpeak = isTranslated && translatedBody ? translatedBody : story.body;
     const textToSpeak = `${titleToSpeak}. ${bodyToSpeak}`;
-    const voiceToUse = isTranslated && preferredLanguage !== 'spanish' ? 'dNjJKg63Fr5AXwIdkATa' : selectedVoice;
+    // translate-story always produces Spanish: keep the guide if they read Spanish natively,
+    // otherwise use the Spanish default.
+    const voiceToUse = isTranslated ? resolveVoice(selectedVoice, 'es') : selectedVoice;
 
     setIsSpeaking(true);
 
@@ -649,7 +662,7 @@ export default function StoryDetailScreen() {
       }
     } catch (e: any) {
       console.error('[TTS] Story audio error:', e);
-      let msg = 'Could not generate speech. Please try again.';
+      let msg = t('stories.audioFailedMsg');
       if (e instanceof Error) {
         msg = e.message;
       } else if (typeof e === 'object' && e !== null && (e.error || e.message)) {
@@ -657,9 +670,9 @@ export default function StoryDetailScreen() {
       }
 
       if (Platform.OS === 'web') {
-        window.alert(`Audio failed: ${msg}`);
+        window.alert(t('stories.audioFailedWeb', { msg }));
       } else {
-        Alert.alert('Audio failed', msg);
+        Alert.alert(t('stories.audioFailedTitle'), msg);
       }
       setIsSpeaking(false);
     } finally {
@@ -705,22 +718,22 @@ export default function StoryDetailScreen() {
         setTranslatedBody(data.body);
         setIsTranslated(true);
       } else {
-        throw new Error('Received incomplete translation from server');
+        throw new Error(t('stories.incompleteTranslation'));
       }
       setIsTranslated(true);
     } catch (e: any) {
       console.error('Translation error:', e);
-      let msg = 'Could not translate the story. Please try again.';
+      let msg = t('stories.translationFailedMsg');
       if (e instanceof Error) {
         msg = e.message;
       } else if (typeof e === 'object' && e !== null && e.error) {
         msg = e.error;
       }
-      
+
       if (Platform.OS === 'web') {
-        window.alert(`Translation failed: ${msg}`);
+        window.alert(t('stories.translationFailedWeb', { msg }));
       } else {
-        Alert.alert('Translation failed', msg);
+        Alert.alert(t('stories.translationFailedTitle'), msg);
       }
     } finally {
       setIsTranslating(false);
@@ -750,25 +763,25 @@ export default function StoryDetailScreen() {
           >
             <Ionicons name="chevron-back" size={22} color={colors.textDark} />
           </Pressable>
-          <Text style={appStyles.editHeaderTitle}>Story</Text>
+          <Text style={appStyles.editHeaderTitle}>{t('stories.storyHeader')}</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.notFound}>
           <Text style={styles.notFoundText}>
             {!story
-              ? "Story not found"
-              : "You don't have permission to view this story"}
+              ? t('stories.storyNotFound')
+              : t('stories.noPermission')}
           </Text>
         </View>
       </View>
     );
   }
 
-  const roleLabel = getRoleLabel(story.author_role);
-  const metaParts = [story.author_name || "Anonymous"];
+  const roleLabel = getRoleLabel(story.author_role, t);
+  const metaParts = [story.author_name || t('stories.anonymous')];
   if (roleLabel) metaParts.push(roleLabel);
-  metaParts.push(getRelativeTime(story.created_at));
-  const audienceHint = getAudienceHint(story.target_audiences);
+  metaParts.push(getRelativeTime(story.created_at, t));
+  const audienceHint = getAudienceHint(story.target_audiences, t);
   if (audienceHint) metaParts.push(audienceHint);
   const metaLine = metaParts.join(" · ");
   const renderCommentInput = () => {
@@ -777,7 +790,7 @@ export default function StoryDetailScreen() {
     if (isAnonymous) {
       return (
         <View style={[styles.guestCommentWrapper, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <Text style={styles.guestCommentText}>Sign in to comment</Text>
+          <Text style={styles.guestCommentText}>{t('stories.signInToComment')}</Text>
         </View>
       );
     }
@@ -788,7 +801,7 @@ export default function StoryDetailScreen() {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.commentInput}
-            placeholder="Offer support or share your thoughts..."
+            placeholder={t('stories.commentPlaceholder')}
             placeholderTextColor={COLORS.inputPlaceholder}
             value={commentText}
             onChangeText={setCommentText}
@@ -822,7 +835,7 @@ export default function StoryDetailScreen() {
               color={postAnonymously ? colors.primary : COLORS.textLight}
             />
             <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
-              {postAnonymously ? "Posting anonymously" : "Post anonymously"}
+              {postAnonymously ? t('stories.postingAnonymously') : t('stories.postAnonymously')}
             </Text>
           </Pressable>
         </View>
@@ -838,7 +851,7 @@ export default function StoryDetailScreen() {
       isLargeWeb && { borderTopLeftRadius: 0, borderTopRightRadius: 0, height: '100%', borderLeftWidth: 1, borderLeftColor: colors.borderCard }
     ]}>
       <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>Responses</Text>
+        <Text style={styles.modalTitle}>{t('stories.responses')}</Text>
         <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="close" size={24} color={colors.textDark} />
         </TouchableOpacity>
@@ -851,7 +864,7 @@ export default function StoryDetailScreen() {
           />
         ) : comments.length === 0 ? (
           <Text style={styles.noComments}>
-            {isAnonymous ? "No responses yet." : "No responses yet — be the first to offer support."}
+            {isAnonymous ? t('stories.noResponses') : t('stories.noResponsesBeFirst')}
           </Text>
         ) : (
           comments.map((comment) => {
@@ -900,13 +913,13 @@ export default function StoryDetailScreen() {
             <View style={{ flex: 1, marginLeft: 6 }}>
               <Breadcrumb
                 items={[
-                  { label: "Stories", onPress: () => router.push("/(tabs)/stories") },
-                  { label: story.title || "Story" },
+                  { label: t('stories.breadcrumbStories'), onPress: () => router.push("/(tabs)/stories") },
+                  { label: story.title || t('stories.breadcrumbStoryFallback') },
                 ]}
               />
             </View>
           ) : (
-            <Text style={appStyles.editHeaderTitle}>Story</Text>
+            <Text style={appStyles.editHeaderTitle}>{t('stories.storyHeader')}</Text>
           )}
           {isOwnStory ? (
             <Pressable onPress={handleDelete} style={{ padding: 8 }}>
@@ -933,9 +946,9 @@ export default function StoryDetailScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <FeedbackBanner 
+          <FeedbackBanner
             visible={showReportBanner}
-            message="Report submitted and a moderator is looking at it."
+            message={t('stories.reportSubmittedBanner')}
             onDismiss={() => setShowReportBanner(false)}
             type="success"
             style={{ marginHorizontal: 0, marginBottom: 20, marginTop: 0 }}
@@ -988,10 +1001,10 @@ export default function StoryDetailScreen() {
                   ]}
                 >
                   {isLoadingAudio
-                    ? "Loading..."
+                    ? t('stories.loadingAudio')
                     : isSpeaking
-                      ? "Pause"
-                      : "Listen"}
+                      ? t('stories.pause')
+                      : t('stories.listen')}
                 </Text>
               </TouchableOpacity>
 
@@ -1049,13 +1062,13 @@ export default function StoryDetailScreen() {
               >
                 <Ionicons name={showOriginalVersion ? "eye-off-outline" : "eye-outline"} size={16} color={colors.primary} />
                 <Text style={[styles.showOriginalBtnText, { color: colors.primary }]}>
-                  {showOriginalVersion ? "Hide original version" : "View entire original version"}
+                  {showOriginalVersion ? t('stories.hideOriginal') : t('stories.viewOriginal')}
                 </Text>
               </TouchableOpacity>
 
               {showOriginalVersion && (
                 <View style={[styles.previousVersionContainer, { backgroundColor: isDark ? colors.borderCard : colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
-                  <Text style={styles.previousVersionTitleText}>Original Submitted Version</Text>
+                  <Text style={styles.previousVersionTitleText}>{t('stories.originalSubmittedVersion')}</Text>
                   {story.previous_title && (
                     <Text style={[styles.storyTitle, { fontSize: 18, color: COLORS.textLight, marginBottom: 8 }]}>
                       {story.previous_title}
@@ -1087,7 +1100,7 @@ export default function StoryDetailScreen() {
           {/* Looking for */}
           {Array.isArray(story.looking_for) && story.looking_for.length > 0 && (
             <Text style={styles.lookingForText}>
-              {getLookingForText(story.looking_for)}
+              {getLookingForText(story.looking_for, t)}
             </Text>
           )}
 
@@ -1162,7 +1175,7 @@ export default function StoryDetailScreen() {
                             borderColor: colors.primary + '25',
                           }}
                         >
-                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>Dismiss</Text>
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', textTransform: 'uppercase' }}>{t('stories.dismiss')}</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1263,9 +1276,9 @@ export default function StoryDetailScreen() {
           if (selectedCommentId) {
             await reportComment(selectedCommentId, reason, details);
             if (Platform.OS === 'web') {
-              window.alert("Report received. Our moderators will review this comment shortly.");
+              window.alert(t('stories.commentReportReceivedWeb'));
             } else {
-              Alert.alert("Report Received", "Our moderators will review this comment shortly.");
+              Alert.alert(t('stories.reportReceivedTitle'), t('stories.commentReportReceivedMsg'));
             }
             setSelectedCommentId(null);
           }
@@ -1281,9 +1294,9 @@ export default function StoryDetailScreen() {
           // inline error instead of misleading the user that the report was filed.
           await reportStory(story.id, reason, details);
           if (Platform.OS === 'web') {
-            window.alert("Story reported. Our moderators will review it shortly.");
+            window.alert(t('stories.storyReportedWeb'));
           } else {
-            Alert.alert("Report Received", "Our moderators will review this story shortly.");
+            Alert.alert(t('stories.reportReceivedTitle'), t('stories.storyReportReceivedMsg'));
           }
         }}
       />

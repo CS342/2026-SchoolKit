@@ -11,6 +11,7 @@ import Animated, {
   withRepeat,
   Easing,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { useResponsive } from '../hooks/useResponsive';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,6 +20,7 @@ import { GRADIENTS, ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme'
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isWeb, isMobile } = useResponsive();
   const { sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
@@ -97,7 +99,7 @@ export default function WelcomeScreen() {
               <View style={{ height: 40 }} />
 
               <Animated.Text style={[styles.tagline, isWebDesktop && { fontSize: 28 }, taglineStyle]}>
-                Support for every school journey
+                {t('auth.welcome.tagline')}
               </Animated.Text>
             </View>
           </View>
@@ -113,7 +115,7 @@ export default function WelcomeScreen() {
               }}
             >
               <View style={[styles.button, isWebDesktop && styles.buttonWeb]}>
-                <Text style={[styles.buttonText, isWebDesktop && { fontSize: 22 }]}>Get Started</Text>
+                <Text style={[styles.buttonText, isWebDesktop && { fontSize: 22 }]}>{t('auth.welcome.getStarted')}</Text>
                 {isWebDesktop && <Ionicons name="arrow-forward" size={20} color="#6B5AD6" style={{ marginLeft: 8 }} />}
               </View>
             </Pressable>
@@ -121,7 +123,7 @@ export default function WelcomeScreen() {
           </Animated.View>
 
           {isWebDesktop && (
-            <Text style={styles.webFooter}>Stanford Byers Center for Biodesign</Text>
+            <Text style={styles.webFooter}>{t('auth.welcome.footer')}</Text>
           )}
         </DecorativeBackground>
       </View>

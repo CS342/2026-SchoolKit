@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, Pressable, Switch, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { COLOR_TOKENS, resolveColor } from '../../features/content/tokens';
@@ -93,10 +94,11 @@ export function ChipMultiSelect<T extends string>({ label, options, value, onCha
 }
 
 export function ColorSwatches({ value, onChange }: { value: ColorToken; onChange: (t: ColorToken) => void }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   return (
     <View style={{ marginBottom: SPACING.md }}>
-      <SectionLabel>Color</SectionLabel>
+      <SectionLabel>{t('editor.common.color')}</SectionLabel>
       <View style={{ flexDirection: 'row', gap: 10 }}>
         {COLOR_TOKENS.map((tok) => {
           const hex = resolveColor(tok, colors.primary);
@@ -141,6 +143,7 @@ export const ICON_SET = [
 /** Icon picker. With `allowNone`, the field can be cleared — `value` is then undefined
  *  and the picker leads with a "No icon" choice. */
 export function IconField({ value, onChange, allowNone }: { value: string | undefined; onChange: (icon: string | undefined) => void; allowNone?: boolean }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -151,7 +154,7 @@ export function IconField({ value, onChange, allowNone }: { value: string | unde
 
   return (
     <View style={{ marginBottom: SPACING.md }}>
-      <SectionLabel>Icon</SectionLabel>
+      <SectionLabel>{t('editor.icon.label')}</SectionLabel>
       <Pressable
         onPress={() => setOpen(true)}
         style={{
@@ -161,27 +164,27 @@ export function IconField({ value, onChange, allowNone }: { value: string | unde
         }}
       >
         <Ionicons name={(value ?? 'remove-circle-outline') as any} size={22} color={value ? colors.primary : colors.textLight} />
-        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value ? value.replace('-outline', '') : 'No icon'}</Text>
+        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value ? value.replace('-outline', '') : t('editor.icon.none')}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.textLight} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable onPress={() => setOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
           <Pressable onPress={() => {}} style={{ width: 420, maxWidth: '92%', maxHeight: '78%', backgroundColor: colors.white, borderRadius: RADII.xl, padding: SPACING.xl, ...s.shadow }}>
-            <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 12 }}>Choose an icon</Text>
+            <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 12 }}>{t('editor.icon.chooseTitle')}</Text>
             <TextInput
-              value={q} onChangeText={setQ} placeholder="Search icons" placeholderTextColor={colors.inputPlaceholder}
+              value={q} onChangeText={setQ} placeholder={t('editor.icon.searchPlaceholder')} placeholderTextColor={colors.inputPlaceholder}
               style={{ ...TYPOGRAPHY.body, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: colors.border, borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 9, marginBottom: 14, outlineStyle: 'none' as any }}
             />
             <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} showsVerticalScrollIndicator={false}>
               {allowNone && !q.trim() ? (
                 <Pressable
                   onPress={() => { onChange(undefined); setOpen(false); }}
-                  accessibilityLabel="No icon"
+                  accessibilityLabel={t('editor.icon.none')}
                   style={{ width: 52, height: 52, borderRadius: RADII.md, alignItems: 'center', justifyContent: 'center', backgroundColor: !value ? colors.primarySoft : colors.appBackgroundAlt, borderWidth: !value ? 1.5 : 1, borderStyle: 'dashed', borderColor: !value ? colors.primary : colors.border, cursor: 'pointer' as any }}
                 >
                   <Ionicons name="ban-outline" size={20} color={!value ? colors.primary : colors.textMuted} />
-                  <Text style={{ fontSize: 9, fontFamily: 'Raleway_700Bold', color: !value ? colors.primary : colors.textMuted, marginTop: 2 }}>None</Text>
+                  <Text style={{ fontSize: 9, fontFamily: 'Raleway_700Bold', color: !value ? colors.primary : colors.textMuted, marginTop: 2 }}>{t('editor.icon.noneShort')}</Text>
                 </Pressable>
               ) : null}
               {filtered.map((icon) => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding, SchoolStatus } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
@@ -16,18 +17,18 @@ import { isStudentRole } from '../../utils/profile';
 
 const SCHOOL_STATUS_OPTIONS: {
   value: SchoolStatus;
-  label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }[] = [
-  { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: COLORS.primary },
-  { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: COLORS.studentK8 },
-  { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: COLORS.staff },
-  { value: 'special-needs', label: 'Home hospital education', icon: 'laptop-outline', color: COLORS.parent },
+  { value: 'current-treatment', icon: 'school-outline', color: COLORS.primary },
+  { value: 'returning-after-treatment', icon: 'home-outline', color: COLORS.studentK8 },
+  { value: 'supporting-student', icon: 'arrow-forward-circle-outline', color: COLORS.staff },
+  { value: 'special-needs', icon: 'laptop-outline', color: COLORS.parent },
 ];
 
 export default function Step3Screen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data, updateSchoolStatuses } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -37,7 +38,7 @@ export default function Step3Screen() {
 
   const isStudent = isStudentRole(data.role);
   const isSchoolStaff = data.role === 'staff';
-  const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
+  const title = isStudent ? t('onboarding.journey.titleStudent') : isSchoolStaff ? t('onboarding.journey.titleStaff') : t('onboarding.journey.titleGuardian');
   const stepInfo = getOnboardingStep('journey', isStudent);
 
 
@@ -80,18 +81,18 @@ export default function Step3Screen() {
 
             <Text style={sharedStyles.pageTitle}>{title}</Text>
             <Text style={[sharedStyles.pageSubtitle, styles.subtitleOverride]}>
-              Every path is valid - we're here to support yours.
+              {t('onboarding.journey.subtitle')}
             </Text>
 
             <View style={[sharedStyles.badge, { paddingHorizontal: 16, marginBottom: 24 }]}>
-              <Text style={sharedStyles.badgeText}>Select all that apply</Text>
+              <Text style={sharedStyles.badgeText}>{t('onboarding.journey.selectAll')}</Text>
             </View>
 
             <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
               {SCHOOL_STATUS_OPTIONS.map((option, index) => (
                 <View key={option.value} style={isWebDesktop ? { width: '48%' } : undefined}>
                   <SelectableCard
-                    title={option.label}
+                    title={t(`onboarding.journey.options.${option.value}`)}
                     selected={selectedStatuses.includes(option.value)}
                     onPress={() => toggleStatus(option.value)}
                     multiSelect
@@ -106,12 +107,12 @@ export default function Step3Screen() {
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
                 <PrimaryButton
-                  title="Continue"
+                  title={t('common.continue')}
                   onPress={handleContinue}
                   disabled={selectedStatuses.length === 0}
                 />
                 <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-                  <Text style={sharedStyles.skipText}>Skip for now</Text>
+                  <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
                 </Pressable>
               </View>
             )}
@@ -121,12 +122,12 @@ export default function Step3Screen() {
         {!isWebDesktop && (
         <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
-            title="Continue"
+            title={t('common.continue')}
             onPress={handleContinue}
             disabled={selectedStatuses.length === 0}
           />
           <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-            <Text style={sharedStyles.skipText}>Skip for now</Text>
+            <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
           </Pressable>
         </View>
         )}

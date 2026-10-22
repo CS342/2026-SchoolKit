@@ -1,25 +1,27 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 
 type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 type Distribution = 'horizontal' | 'vertical';
 
-const ALIGN_BUTTONS: { align: Alignment; icon: string; title: string }[] = [
-  { align: 'left', icon: '⫷', title: 'Align Left' },
-  { align: 'center', icon: '⫿', title: 'Align Center' },
-  { align: 'right', icon: '⫸', title: 'Align Right' },
-  { align: 'top', icon: '⊤', title: 'Align Top' },
-  { align: 'middle', icon: '⊝', title: 'Align Middle' },
-  { align: 'bottom', icon: '⊥', title: 'Align Bottom' },
+const ALIGN_BUTTONS: { align: Alignment; icon: string; titleKey: string }[] = [
+  { align: 'left', icon: '⫷', titleKey: 'left' },
+  { align: 'center', icon: '⫿', titleKey: 'center' },
+  { align: 'right', icon: '⫸', titleKey: 'right' },
+  { align: 'top', icon: '⊤', titleKey: 'top' },
+  { align: 'middle', icon: '⊝', titleKey: 'middle' },
+  { align: 'bottom', icon: '⊥', titleKey: 'bottom' },
 ];
 
-const DISTRIBUTE_BUTTONS: { dir: Distribution; icon: string; title: string }[] = [
-  { dir: 'horizontal', icon: '⇔', title: 'Distribute Horizontally' },
-  { dir: 'vertical', icon: '⇕', title: 'Distribute Vertically' },
+const DISTRIBUTE_BUTTONS: { dir: Distribution; icon: string; titleKey: string }[] = [
+  { dir: 'horizontal', icon: '⇔', titleKey: 'horizontal' },
+  { dir: 'vertical', icon: '⇕', titleKey: 'vertical' },
 ];
 
 export function AlignmentToolbar() {
+  const { t } = useTranslation();
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const alignObjects = useEditorStore((s) => s.alignObjects);
   const distributeObjects = useEditorStore((s) => s.distributeObjects);
@@ -28,7 +30,7 @@ export function AlignmentToolbar() {
   const count = selectedIds.length;
   if (count === 0) return null;
 
-  const label = count === 1 ? 'Align to Canvas' : 'Align Objects';
+  const label = count === 1 ? t('design.editor.alignToCanvas') : t('design.editor.alignObjects');
 
   const btnStyle: React.CSSProperties = {
     width: 30,
@@ -71,7 +73,7 @@ export function AlignmentToolbar() {
         {ALIGN_BUTTONS.map((btn) => (
           <button
             key={btn.align}
-            title={btn.title}
+            title={t(`design.editor.align.${btn.titleKey}`)}
             style={btnStyle}
             onClick={() => alignObjects(selectedIds, btn.align)}
           >
@@ -85,7 +87,7 @@ export function AlignmentToolbar() {
         {DISTRIBUTE_BUTTONS.map((btn) => (
           <button
             key={btn.dir}
-            title={btn.title}
+            title={t(`design.editor.distribute.${btn.titleKey}`)}
             style={count >= 3 ? btnStyle : disabledStyle}
             disabled={count < 3}
             onClick={() => distributeObjects(selectedIds, btn.dir)}

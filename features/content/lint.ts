@@ -4,8 +4,9 @@
 //
 // This does NOT drop or change anything (unlike parseContentDoc); it only reports.
 // Every issue says what's wrong AND how to fix it (`fix`), and names the block/item.
+import i18n from '../../lib/i18n';
 import type { ContentBlock, ContentDoc } from './types';
-import { REGISTRY, type FieldDef } from './registry';
+import { REGISTRY, fieldLabel, type FieldDef } from './registry';
 
 /** A message for the checks panel: what's wrong, how to fix it, and (optionally) the
  *  block it's about so the panel can jump to it. Also used for generate-time notices. */
@@ -28,13 +29,15 @@ const clip = (s: string, n = 40) => (s.length > n ? s.slice(0, n - 1).trimEnd() 
  *  `Flip cards “Common Myths”`, or `Flip cards (section 3)` when it has no heading. */
 export function blockDisplayName(block: Partial<ContentBlock> & { type?: string }, index?: number): string {
   const def = REGISTRY[block.type as ContentBlock['type']];
-  const label = def?.palette.label ?? String(block.type ?? 'Block');
+  const label = def
+    ? i18n.t(`editor.blocks.${block.type}.label`)
+    : (block.type ? String(block.type) : i18n.t('editor.lintIssues.blockName.fallback'));
   const b = block as any;
   const title = typeof b.heading === 'string' && b.heading.trim()
     ? b.heading
     : Array.isArray(b.titleParts) ? b.titleParts.map((p: any) => p?.text ?? '').join('').trim() : '';
-  if (title) return `${label} “${clip(title)}”`;
-  return index !== undefined ? `${label} (section ${index + 1})` : label;
+  if (title) return i18n.t('editor.lintIssues.blockName.titled', { label, title: clip(title) });
+  return index !== undefined ? i18n.t('editor.lintIssues.blockName.section', { label, num: index + 1 }) : label;
 }
 
 /** A short identifying label for an item inside a block (its title/front/name/…). */
@@ -59,12 +62,12 @@ function placeholderIssues(b: ContentBlock, index: number): LintIssue[] {
   try { blockDefaults = def.make(); } catch { /* no defaults */ }
   const blockHits = def.editor.fields
     .filter((f) => isTextField(f) && typeof a[f.key] === 'string' && a[f.key] && a[f.key] === blockDefaults?.[f.key])
-    .map((f) => `“${f.label}”`);
+    .map((f) => `“${fieldLabel(b.type, f)}”`);
   if (blockHits.length) {
     out.push({
       level: 'warning',
-      message: `${name} still has placeholder text in ${blockHits.join(', ')}.`,
-      fix: 'Select the block and type the real text, or clear the field if it’s optional.',
+      message: i18n.t('editor.lintIssues.placeholderBlock', { name, fields: blockHits.join(', ') }),
+      fix: i18n.t('editor.lintIssues.placeholderBlockFix'),
       blockId: b.id,
     });
   }
@@ -72,16 +75,17 @@ function placeholderIssues(b: ContentBlock, index: number): LintIssue[] {
   const item = def.editor.item;
   if (item) {
     const itemDefaults = item.make();
+    const noun = i18n.t(`editor.nouns.${item.noun}`);
     ((a[item.arrayKey] ?? []) as any[]).forEach((it, i) => {
       const hits = item.fields
         .filter((f) => isTextField(f) && typeof it?.[f.key] === 'string' && it[f.key] && it[f.key] === itemDefaults[f.key])
-        .map((f) => `“${f.label}”`);
+        .map((f) => `“${fieldLabel(b.type, f)}”`);
       if (!hits.length) return;
       const label = itemDisplayName(it);
       out.push({
         level: 'warning',
-        message: `${name}: ${item.noun} ${i + 1}${label ? ` ${label}` : ''} still has placeholder text in ${hits.join(', ')}.`,
-        fix: `Select the block, open ${item.noun} ${i + 1}, and replace it with the real text — or remove that ${item.noun}.`,
+        message: i18n.t('editor.lintIssues.placeholderItem', { name, noun, num: i + 1, label: label ? ` ${label}` : '', fields: hits.join(', ') }),
+        fix: i18n.t('editor.lintIssues.placeholderItemFix', { noun, num: i + 1 }),
         blockId: b.id,
       });
     });
@@ -89,7 +93,7 @@ function placeholderIssues(b: ContentBlock, index: number): LintIssue[] {
   return out;
 }
 
-const LONG_FIX = 'Fine if this is the source’s exact wording. Otherwise shorten it, or move long passages into a Text block.';
+const longFix = () => i18n.t('editor.lintIssues.longFix');
 
 /**
  * Structural + content checks mirroring the AI self-check rules (exactly one hero
@@ -101,37 +105,37 @@ export function lintDoc(doc: ContentDoc): LintIssue[] {
   const blocks = doc.blocks;
 
   if (!doc.title.trim()) {
-    issues.push({ level: 'warning', message: 'The page has no title.', fix: 'Open Page settings and enter a title.' });
+    issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.noTitle'), fix: i18n.t('editor.lintIssues.noTitleFix') });
   }
 
   if (!doc.audience?.roles?.length) {
-    issues.push({ level: 'warning', message: 'No audience is set, so every role (students, parents and school staff) will see this page.', fix: 'Open Page settings → “Who is this for?” and pick the roles this page is written for.' });
+    issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.noAudience'), fix: i18n.t('editor.lintIssues.noAudienceFix') });
   }
 
   // hero: exactly one, first
   const heroes = blocks.filter((b) => b.type === 'hero');
   if (heroes.length === 0) {
-    issues.push({ level: 'error', message: 'The page has no Title block.', fix: 'Add block → Title, then move it to the top.' });
+    issues.push({ level: 'error', message: i18n.t('editor.lintIssues.noHero'), fix: i18n.t('editor.lintIssues.noHeroFix') });
   } else if (heroes.length > 1) {
-    issues.push({ level: 'error', message: `There are ${heroes.length} Title blocks — a page has exactly one.`, fix: 'Delete the extra Title block (this one).', blockId: heroes[1].id });
+    issues.push({ level: 'error', message: i18n.t('editor.lintIssues.multiHero', { count: heroes.length }), fix: i18n.t('editor.lintIssues.multiHeroFix'), blockId: heroes[1].id });
   }
   if (heroes.length >= 1 && blocks[0]?.type !== 'hero') {
-    issues.push({ level: 'error', message: 'The Title block isn’t first.', fix: 'Use the ↑ arrow to move it to the top of the page.', blockId: heroes[0].id });
+    issues.push({ level: 'error', message: i18n.t('editor.lintIssues.heroNotFirst'), fix: i18n.t('editor.lintIssues.heroNotFirstFix'), blockId: heroes[0].id });
   }
   for (const h of heroes) {
     const titleText = ((h as any).titleParts ?? []).map((p: any) => p.text).join('').trim();
-    if (!titleText) issues.push({ level: 'error', message: 'The Title block is empty.', fix: 'Select it and type the page title.', blockId: h.id });
+    if (!titleText) issues.push({ level: 'error', message: i18n.t('editor.lintIssues.heroEmpty'), fix: i18n.t('editor.lintIssues.heroEmptyFix'), blockId: h.id });
   }
 
   // recommendations: at most one, last
   const recs = blocks.filter((b) => b.type === 'recommendations');
   if (recs.length === 0) {
-    issues.push({ level: 'warning', message: 'The page doesn’t end with Recommendations.', fix: 'Add block → Recommendations. It fills itself in from the page’s tags.' });
+    issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.noRecs'), fix: i18n.t('editor.lintIssues.noRecsFix') });
   } else if (recs.length > 1) {
-    issues.push({ level: 'error', message: `There are ${recs.length} Recommendations blocks — keep one.`, fix: 'Delete the extra one (this one).', blockId: recs[1].id });
+    issues.push({ level: 'error', message: i18n.t('editor.lintIssues.multiRecs', { count: recs.length }), fix: i18n.t('editor.lintIssues.multiRecsFix'), blockId: recs[1].id });
   }
   if (recs.length >= 1 && blocks[blocks.length - 1]?.type !== 'recommendations') {
-    issues.push({ level: 'warning', message: 'Recommendations isn’t the last block.', fix: 'Use the ↓ arrow to move it to the bottom.', blockId: recs[0].id });
+    issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.recsNotLast'), fix: i18n.t('editor.lintIssues.recsNotLastFix'), blockId: recs[0].id });
   }
 
   // per-block content checks (placeholders, length guidance, missing media/targets)
@@ -142,58 +146,58 @@ export function lintDoc(doc: ContentDoc): LintIssue[] {
     switch (b.type) {
       case 'callout': {
         const n = words(a.text);
-        if (n > 60) issues.push({ level: 'warning', message: `${name} is long for a callout (${n} words; callouts read best under 60).`, fix: LONG_FIX, blockId: b.id });
+        if (n > 60) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.calloutLong', { name, count: n }), fix: longFix(), blockId: b.id });
         break;
       }
       case 'accordion':
         for (const it of a.items ?? []) {
           const s = words(it.summary), d = words(it.body);
-          if (s > 20) issues.push({ level: 'warning', message: `${name}: the summary of “${clip(it.title)}” is long (${s} words; aim for under 20 — it shows before the card is opened).`, fix: 'Shorten the summary — the full text belongs in Details.', blockId: b.id });
-          if (d > 60) issues.push({ level: 'warning', message: `${name}: the details of “${clip(it.title)}” are long (${d} words; aim for under 60).`, fix: LONG_FIX, blockId: b.id });
+          if (s > 20) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.accordionSummaryLong', { name, title: clip(it.title), count: s }), fix: i18n.t('editor.lintIssues.accordionSummaryLongFix'), blockId: b.id });
+          if (d > 60) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.accordionDetailsLong', { name, title: clip(it.title), count: d }), fix: longFix(), blockId: b.id });
         }
         break;
       case 'cardGrid':
         for (const it of a.items ?? []) {
           const n = words(it.body);
-          if (n > 45) issues.push({ level: 'warning', message: `${name}: card “${clip(it.title)}” is long (${n} words; cards read best under 45).`, fix: LONG_FIX, blockId: b.id });
+          if (n > 45) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.cardLong', { name, title: clip(it.title), count: n }), fix: longFix(), blockId: b.id });
         }
         break;
       case 'stepper':
         for (const it of a.steps ?? []) {
           const paras = String(it.detail ?? '').split(/\n\n+/).filter((p: string) => p.trim()).length;
-          if (paras > 3 || words(it.detail) > 150) issues.push({ level: 'warning', message: `${name}: step “${clip(it.title)}” is long (${paras} paragraphs).`, fix: LONG_FIX, blockId: b.id });
+          if (paras > 3 || words(it.detail) > 150) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.stepLong', { name, title: clip(it.title), count: paras }), fix: longFix(), blockId: b.id });
         }
         break;
       case 'image':
-        if (!a.url) issues.push({ level: 'warning', message: `${name} has no image yet.`, fix: 'Select the block and upload an image or paste its URL.', blockId: b.id });
-        if (a.url && !String(a.alt ?? '').trim()) issues.push({ level: 'warning', message: `${name} has no alt text, so screen-reader users won’t know what it shows.`, fix: 'Select the block and describe the image in “Alt text” (or use the AI suggestion).', blockId: b.id });
+        if (!a.url) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.imageNoUrl', { name }), fix: i18n.t('editor.lintIssues.imageNoUrlFix'), blockId: b.id });
+        if (a.url && !String(a.alt ?? '').trim()) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.imageNoAlt', { name }), fix: i18n.t('editor.lintIssues.imageNoAltFix'), blockId: b.id });
         break;
       case 'gallery':
         (a.items ?? []).forEach((it: any, i: number) => {
-          if (!it.url) issues.push({ level: 'warning', message: `${name}: image ${i + 1} has no file yet.`, fix: 'Select the block and upload the image, or remove that slot.', blockId: b.id });
-          else if (!String(it.alt ?? '').trim()) issues.push({ level: 'warning', message: `${name}: image ${i + 1} has no alt text.`, fix: 'Select the block and describe the image in its alt text field.', blockId: b.id });
+          if (!it.url) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.galleryNoUrl', { name, num: i + 1 }), fix: i18n.t('editor.lintIssues.galleryNoUrlFix'), blockId: b.id });
+          else if (!String(it.alt ?? '').trim()) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.galleryNoAlt', { name, num: i + 1 }), fix: i18n.t('editor.lintIssues.galleryNoAltFix'), blockId: b.id });
         });
         break;
       case 'video':
-        if (!a.url) issues.push({ level: 'warning', message: `${name} has no video link yet.`, fix: 'Select the block and paste a YouTube, Vimeo, or .mp4 link.', blockId: b.id });
+        if (!a.url) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.videoNoUrl', { name }), fix: i18n.t('editor.lintIssues.videoNoUrlFix'), blockId: b.id });
         break;
       case 'linkList':
         for (const it of a.items ?? []) {
-          if (!it.url || it.url === 'https://') issues.push({ level: 'warning', message: `${name}: the link “${clip(it.name ?? '')}” has no web address.`, fix: 'Select the block and paste the organization’s URL, or remove the link.', blockId: b.id });
+          if (!it.url || it.url === 'https://') issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.linkNoUrl', { name, title: clip(it.name ?? '') }), fix: i18n.t('editor.lintIssues.linkNoUrlFix'), blockId: b.id });
         }
         break;
       case 'resourceRefList':
-        if ((a.resourceIds ?? []).length === 0) issues.push({ level: 'warning', message: `${name} has no guides selected.`, fix: 'Select the block and pick the SchoolKit guides to show, or delete it.', blockId: b.id });
+        if ((a.resourceIds ?? []).length === 0) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.resourceEmpty', { name }), fix: i18n.t('editor.lintIssues.resourceEmptyFix'), blockId: b.id });
         break;
       case 'references':
         (a.items ?? []).forEach((it: any, i: number) => {
-          if (!String(it.label ?? '').trim()) issues.push({ level: 'warning', message: `${name}: source ${i + 1} has no name.`, fix: 'Select the block and enter the source’s title, or remove it.', blockId: b.id });
+          if (!String(it.label ?? '').trim()) issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.referenceNoName', { name, num: i + 1 }), fix: i18n.t('editor.lintIssues.referenceNoNameFix'), blockId: b.id });
         });
         break;
       case 'comparisonTable':
         (a.rows ?? []).forEach((r: any, i: number) => {
           if ((r.cells ?? []).every((c: string) => !String(c ?? '').trim())) {
-            issues.push({ level: 'warning', message: `${name}: row ${i + 1} is empty.`, fix: 'Select the block and fill in the row, or remove it.', blockId: b.id });
+            issues.push({ level: 'warning', message: i18n.t('editor.lintIssues.tableRowEmpty', { name, num: i + 1 }), fix: i18n.t('editor.lintIssues.tableRowEmptyFix'), blockId: b.id });
           }
         });
         break;

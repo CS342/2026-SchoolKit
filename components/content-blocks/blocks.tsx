@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Animated, Image, Platform, LayoutAnimation, UIManager, Linking, ScrollView, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink } from '../external-link';
 import { RecommendationList } from '../RecommendationList';
 import type { Resource } from '../../constants/resources';
@@ -340,12 +341,13 @@ export function FootnoteBlock({ block }: { block: FootnoteT }) {
 
 // ─── Image ─────────────────────────────────────────────────────────────────────
 export function ImageBlock({ block }: { block: ImageT }) {
+  const { t } = useTranslation();
   const { colors, styles } = useBlockCtx();
   if (!block.url) {
     return (
       <View style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.appBackgroundAlt }}>
         <Ionicons name="image-outline" size={28} color={colors.textLight} />
-        <Text style={{ color: colors.textLight, fontSize: 13, marginTop: 6 }}>Add an image URL</Text>
+        <Text style={{ color: colors.textLight, fontSize: 13, marginTop: 6 }}>{t('editor.blocksUi.addImageUrl')}</Text>
       </View>
     );
   }
@@ -631,6 +633,7 @@ function FlipCard({ item, height, onOpen, onMeasure }: {
   onOpen: () => void;
   onMeasure: (id: string, contentHeight: number) => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows, color } = useBlockCtx();
   const hex = color(item.color);
   return (
@@ -639,7 +642,7 @@ function FlipCard({ item, height, onOpen, onMeasure }: {
       onPress={onOpen}
       accessibilityRole="button"
       accessibilityLabel={item.front}
-      accessibilityHint="Opens the card and turns it over"
+      accessibilityHint={t('editor.blocksUi.flipCardHint')}
       style={[{ minHeight: height, flex: 1, padding: FLIP_PAD, borderRadius: 16, borderWidth: 1, backgroundColor: hex + '14', borderColor: hex + '44', alignItems: 'center', justifyContent: 'center' }, shadows.small, IS_WEB && { cursor: 'pointer' } as any]}
     >
       <View onLayout={(e: LayoutChangeEvent) => onMeasure(item.id, Math.ceil(e.nativeEvent.layout.height))} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
@@ -647,7 +650,7 @@ function FlipCard({ item, height, onOpen, onMeasure }: {
         <Text style={{ fontSize: 16, lineHeight: 22, fontFamily: 'Raleway_700Bold', color: colors.textDark, textAlign: 'center' }}>{item.front}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10 }}>
           <Ionicons name="sync-outline" size={13} color={hex} />
-          <Text style={{ fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: hex }}>Tap to reveal</Text>
+          <Text style={{ fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: hex }}>{t('editor.blocksUi.tapToReveal')}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -736,12 +739,13 @@ function videoEmbed(provider: VideoT['provider'], url: string): { kind: 'iframe'
 }
 
 export function VideoBlock({ block }: { block: VideoT }) {
+  const { t } = useTranslation();
   const { colors } = useBlockCtx();
   if (!block.url) {
     return (
       <View style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.appBackgroundAlt }}>
         <Ionicons name="videocam-outline" size={28} color={colors.textLight} />
-        <Text style={{ color: colors.textLight, fontSize: 13, marginTop: 6 }}>Add a video URL</Text>
+        <Text style={{ color: colors.textLight, fontSize: 13, marginTop: 6 }}>{t('editor.blocksUi.addVideoUrl')}</Text>
       </View>
     );
   }

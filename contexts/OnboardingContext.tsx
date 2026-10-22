@@ -4,7 +4,8 @@ import { useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALL_RESOURCE_IDS } from '../constants/resources';
 import { useOffline, queueOfflineChange } from './OfflineContext';
-import { VOICES } from '../services/elevenLabs';
+import { DEFAULT_VOICE, resolveVoice, toVoiceLang } from '../services/elevenLabs';
+import { applyAppLanguage } from '../lib/i18n';
 
 export type UserRole = 'student-elementary' | 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
@@ -50,6 +51,8 @@ interface OnboardingContextType {
    *  useResources), keeping anything already downloaded. Defaults to the built-ins. */
   downloadAllResources: (ids?: string[]) => Promise<void>;
   // Voice
+  /** The guide to read with — the saved choice, or the language's default when the saved
+   *  guide doesn't read the current language or has been retired from the roster. */
   selectedVoice: string;
   updateVoice: (voiceId: string) => Promise<void>;
   // Language
@@ -77,8 +80,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [bookmarksWithTimestamps, setBookmarksWithTimestamps] = useState<BookmarkWithTimestamp[]>([]);
   const [downloads, setDownloads] = useState<string[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<string>(VOICES.PETER);
+  const [voiceChoice, setSelectedVoice] = useState<string>(DEFAULT_VOICE.en);
   const [preferredLanguage, setPreferredLanguage] = useState<'english' | 'spanish'>('english');
+  const selectedVoice = resolveVoice(voiceChoice, toVoiceLang(preferredLanguage));
 
   // Load downloads, voice, and language from AsyncStorage on mount
   useEffect(() => {
@@ -99,7 +103,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const loadLanguage = async () => {
     try {
       const stored = await AsyncStorage.getItem('@schoolkit_preferred_language');
-      if (stored === 'english' || stored === 'spanish') setPreferredLanguage(stored);
+      if (stored === 'english' || stored === 'spanish') {
+        setPreferredLanguage(stored);
+        applyAppLanguage(stored);
+      }
     } catch (error) {
       console.error('Error loading language:', error);
     }
@@ -161,6 +168,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         if (profile.preferred_language) {
           const lang = profile.preferred_language as 'english' | 'spanish';
           setPreferredLanguage(lang);
+          applyAppLanguage(lang);
           AsyncStorage.setItem('@schoolkit_preferred_language', lang);
         }
 
@@ -438,11 +446,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const updatePreferredLanguage = async (lang: 'english' | 'spanish') => {
     setPreferredLanguage(lang);
+    applyAppLanguage(lang);
     await AsyncStorage.setItem('@schoolkit_preferred_language', lang);
-    
-    // Automatically sync default voice
-    const defaultVoice = lang === 'spanish' ? VOICES.SOFIA : VOICES.PETER;
-    await updateVoice(defaultVoice);
+
+    // Keep the guide if it reads the new language; otherwise switch to that language's default
+    const nextVoice = resolveVoice(voiceChoice, toVoiceLang(lang));
+    if (nextVoice !== voiceChoice) await updateVoice(nextVoice);
     
     await updateProfile({ preferred_language: lang });
   };

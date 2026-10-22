@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useJournal, MAX_NOTEBOOKS } from "../../contexts/JournalContext";
@@ -21,6 +22,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 type SetupStep = "cover" | "paper" | "title";
 
 export default function CreateNotebookScreen() {
+    const { t } = useTranslation();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -38,13 +40,13 @@ export default function CreateNotebookScreen() {
         if (isCreating) return;
         setIsCreating(true);
         try {
-            const finalTitle = title.trim() || "Untitled Notebook";
+            const finalTitle = title.trim() || t('journal.create.untitledNotebook');
             const id = await createNotebook(finalTitle.slice(0, 40), selectedCover.id, selectedPaper.id);
             if (!id) {
                 if (Platform.OS === "web") {
-                    window.alert(`Limit Reached\nYou can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                    window.alert(`${t('journal.limitReachedTitle')}\n${t('journal.create.notebookLimit', { count: MAX_NOTEBOOKS })}`);
                 } else {
-                    Alert.alert("Limit Reached", `You can have up to ${MAX_NOTEBOOKS} notebooks.`);
+                    Alert.alert(t('journal.limitReachedTitle'), t('journal.create.notebookLimit', { count: MAX_NOTEBOOKS }));
                 }
                 return;
             }
@@ -56,8 +58,8 @@ export default function CreateNotebookScreen() {
 
     const renderCoverSelection = () => (
         <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.stepContainer}>
-            <Text style={[styles.title, { color: colors.textDark }]}>Choose a Notebook</Text>
-            <Text style={[styles.subtitle, { color: colors.textLight }]}>Select a cover design for your journal</Text>
+            <Text style={[styles.title, { color: colors.textDark }]}>{t('journal.create.chooseCover')}</Text>
+            <Text style={[styles.subtitle, { color: colors.textLight }]}>{t('journal.create.chooseCoverSubtitle')}</Text>
 
             <ScrollView horizontal contentContainerStyle={styles.horizontalScroll} showsHorizontalScrollIndicator={false}>
                 {COVERS.map((cover) => (
@@ -71,7 +73,7 @@ export default function CreateNotebookScreen() {
                         ]}
                         onPress={() => setSelectedCover(cover)}
                     >
-                        <Text style={[styles.coverText, { color: cover.textColor }]}>Journal Title</Text>
+                        <Text style={[styles.coverText, { color: cover.textColor }]}>{t('journal.create.journalTitleSample')}</Text>
                         {selectedCover.id === cover.id && (
                             <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
                                 <Ionicons name="checkmark" size={16} color="#FFF" />
@@ -86,7 +88,7 @@ export default function CreateNotebookScreen() {
                 style={[styles.nextButton, { backgroundColor: colors.primary }]}
                 onPress={() => setStep("paper")}
             >
-                <Text style={styles.nextButtonText}>Next</Text>
+                <Text style={styles.nextButtonText}>{t('common.next')}</Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFF" />
             </TouchableOpacity>
         </Animated.View>
@@ -94,8 +96,8 @@ export default function CreateNotebookScreen() {
 
     const renderPaperSelection = () => (
         <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.stepContainer}>
-            <Text style={[styles.title, { color: colors.textDark }]}>Choose Paper Style</Text>
-            <Text style={[styles.subtitle, { color: colors.textLight }]}>Select a background for your pages</Text>
+            <Text style={[styles.title, { color: colors.textDark }]}>{t('journal.create.choosePaper')}</Text>
+            <Text style={[styles.subtitle, { color: colors.textLight }]}>{t('journal.create.choosePaperSubtitle')}</Text>
 
             <ScrollView horizontal contentContainerStyle={styles.horizontalScroll} showsHorizontalScrollIndicator={false}>
                 {PAPERS.map((paper) => (
@@ -148,7 +150,7 @@ export default function CreateNotebookScreen() {
                         onPress={() => setStep("cover")}
                     >
                         <Ionicons name="arrow-back" size={20} color={colors.textDark} />
-                        <Text style={[styles.backButtonText, { color: colors.textDark }]}>Back</Text>
+                        <Text style={[styles.backButtonText, { color: colors.textDark }]}>{t('common.back')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -157,7 +159,7 @@ export default function CreateNotebookScreen() {
                         style={[styles.nextButton, { backgroundColor: colors.primary, marginTop: 0 }]}
                         onPress={() => setStep("title")}
                     >
-                        <Text style={styles.nextButtonText}>Next</Text>
+                        <Text style={styles.nextButtonText}>{t('common.next')}</Text>
                         <Ionicons name="arrow-forward" size={20} color="#FFF" />
                     </TouchableOpacity>
                 </View>
@@ -167,13 +169,13 @@ export default function CreateNotebookScreen() {
 
     const renderTitleSelection = () => (
         <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.stepContainer}>
-            <Text style={[styles.title, { color: colors.textDark }]}>Name your Journal</Text>
-            <Text style={[styles.subtitle, { color: colors.textLight }]}>Give your new notebook a title</Text>
+            <Text style={[styles.title, { color: colors.textDark }]}>{t('journal.create.nameJournal')}</Text>
+            <Text style={[styles.subtitle, { color: colors.textLight }]}>{t('journal.create.nameJournalSubtitle')}</Text>
 
             <View style={styles.inputContainer}>
                 <TextInput
                     style={[styles.textInput, { color: colors.textDark, backgroundColor: colors.backgroundLight, borderColor: colors.borderCard }]}
-                    placeholder="E.g., Therapy Notes, Daily Gratitude"
+                    placeholder={t('journal.create.titlePlaceholder')}
                     placeholderTextColor={colors.textLight}
                     value={title}
                     onChangeText={setTitle}
@@ -189,7 +191,7 @@ export default function CreateNotebookScreen() {
                         onPress={() => setStep("paper")}
                     >
                         <Ionicons name="arrow-back" size={20} color={colors.textDark} />
-                        <Text style={[styles.backButtonText, { color: colors.textDark }]}>Back</Text>
+                        <Text style={[styles.backButtonText, { color: colors.textDark }]}>{t('common.back')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -198,7 +200,7 @@ export default function CreateNotebookScreen() {
                         style={[styles.nextButton, { backgroundColor: colors.primary, marginTop: 0 }]}
                         onPress={handleCreate}
                     >
-                        <Text style={styles.nextButtonText}>Start</Text>
+                        <Text style={styles.nextButtonText}>{t('journal.create.start')}</Text>
                         <Ionicons name="journal-outline" size={20} color="#FFF" />
                     </TouchableOpacity>
                 </View>
@@ -215,7 +217,7 @@ export default function CreateNotebookScreen() {
                 <TouchableOpacity style={appStyles.editBackButton} onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color={colors.textDark} />
                 </TouchableOpacity>
-                <Text style={appStyles.editHeaderTitle}>New Notebook</Text>
+                <Text style={appStyles.editHeaderTitle}>{t('journal.create.header')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 

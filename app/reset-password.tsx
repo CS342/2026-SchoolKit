@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
@@ -24,11 +25,12 @@ import { PrimaryButton } from '../components/onboarding/PrimaryButton';
 import { useResponsive } from '../hooks/useResponsive';
 
 // Same requirements enforced at sign-up, so a reset can't set a weaker password.
-const PASSWORD_RULES: { key: string; label: string; test: (p: string) => boolean }[] = [
-  { key: 'length', label: 'At least 8 characters', test: p => p.length >= 8 },
-  { key: 'upper', label: 'One uppercase letter', test: p => /[A-Z]/.test(p) },
-  { key: 'lower', label: 'One lowercase letter', test: p => /[a-z]/.test(p) },
-  { key: 'number', label: 'One number', test: p => /[0-9]/.test(p) },
+// Each rule's label is resolved from i18n at render time via its `key`.
+const PASSWORD_RULES: { key: string; test: (p: string) => boolean }[] = [
+  { key: 'length', test: p => p.length >= 8 },
+  { key: 'upper', test: p => /[A-Z]/.test(p) },
+  { key: 'lower', test: p => /[a-z]/.test(p) },
+  { key: 'number', test: p => /[0-9]/.test(p) },
 ];
 
 function passwordMeetsAllRules(password: string) {
@@ -48,6 +50,7 @@ function getUrlAuthError(): string | null {
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, shadows, sharedStyles } = useTheme();
@@ -84,20 +87,20 @@ export default function ResetPasswordScreen() {
     let hasError = false;
 
     if (!password) {
-      setPasswordError('Please enter a new password.');
+      setPasswordError(t('auth.errors.newPasswordRequired'));
       hasError = true;
     } else if (!passwordMeetsAllRules(password)) {
-      setPasswordError('Your password doesn’t meet all the requirements below.');
+      setPasswordError(t('auth.errors.passwordRules'));
       hasError = true;
     } else {
       setPasswordError(null);
     }
 
     if (!confirmPassword.trim()) {
-      setConfirmError('Please confirm your password.');
+      setConfirmError(t('auth.errors.confirmRequired'));
       hasError = true;
     } else if (password !== confirmPassword) {
-      setConfirmError('Passwords don’t match.');
+      setConfirmError(t('auth.errors.passwordsNoMatch'));
       hasError = true;
     } else {
       setConfirmError(null);
@@ -109,13 +112,13 @@ export default function ResetPasswordScreen() {
     try {
       const { error } = await updatePassword(password);
       if (error) {
-        showAlert('Could not update password', error.message);
+        showAlert(t('auth.reset.couldNotUpdate'), error.message);
       } else {
-        showAlert('Password updated', 'Your password has been changed. You are now signed in.');
+        showAlert(t('auth.reset.updatedTitle'), t('auth.reset.updatedBody'));
         router.replace('/');
       }
     } catch (err: any) {
-      showAlert('Error', err.message || 'Something went wrong.');
+      showAlert(t('auth.errorTitle'), err.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -138,38 +141,38 @@ export default function ResetPasswordScreen() {
                 <View style={[sharedStyles.pageIconCircle, { width: 96, height: 96, borderRadius: 48 }]}>
                   <Ionicons name="lock-closed-outline" size={56} color={colors.primary} />
                 </View>
-                <Text style={sharedStyles.pageTitle}>Set a new password</Text>
+                <Text style={sharedStyles.pageTitle}>{t('auth.reset.title')}</Text>
                 <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
-                  Choose a new password for your account.
+                  {t('auth.reset.subtitle')}
                 </Text>
               </View>
 
               {establishing ? (
                 <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                   <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={[styles.helperText, { marginTop: 16 }]}>Verifying your reset link…</Text>
+                  <Text style={[styles.helperText, { marginTop: 16 }]}>{t('auth.reset.verifying')}</Text>
                 </View>
               ) : linkInvalid ? (
                 <View style={[styles.formCard, !isWebDesktop && shadows.card, isWebDesktop && styles.formCardWeb]}>
                   <View style={{ alignItems: 'center', gap: 12 }}>
                     <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
-                    <Text style={[styles.label, { textAlign: 'center' }]}>This reset link isn’t valid</Text>
+                    <Text style={[styles.label, { textAlign: 'center' }]}>{t('auth.reset.linkInvalidTitle')}</Text>
                     <Text style={[styles.helperText, { textAlign: 'center' }]}>
-                      {urlError || 'The link may have expired or already been used. Request a new password reset email and try again.'}
+                      {urlError || t('auth.reset.linkInvalidBody')}
                     </Text>
-                    <PrimaryButton title="Back to Sign In" onPress={() => router.replace('/auth?mode=signin')} />
+                    <PrimaryButton title={t('auth.reset.backToSignIn')} onPress={() => router.replace('/auth?mode=signin')} />
                   </View>
                 </View>
               ) : (
                 <View style={[styles.formCard, !isWebDesktop && shadows.card, isWebDesktop && styles.formCardWeb]}>
                   {/* New password */}
                   <View style={styles.inputContainer}>
-                    <Text style={styles.label}>New Password</Text>
+                    <Text style={styles.label}>{t('auth.reset.labelNewPassword')}</Text>
                     <View style={[styles.inputWrapper, !!passwordError && styles.inputWrapperError]}>
                       <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                       <TextInput
                         style={styles.input}
-                        placeholder="Min 8 chars, upper, lower, number"
+                        placeholder={t('auth.placeholderPasswordSignUp')}
                         placeholderTextColor={colors.inputPlaceholder}
                         value={password}
                         onChangeText={(text) => { setPassword(text); if (passwordError) setPasswordError(null); }}
@@ -179,9 +182,9 @@ export default function ResetPasswordScreen() {
                         textContentType="newPassword"
                         returnKeyType="next"
                         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                        accessibilityLabel="New password"
+                        accessibilityLabel={t('auth.reset.newPasswordA11y')}
                       />
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
                         <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                       </TouchableOpacity>
                     </View>
@@ -201,7 +204,7 @@ export default function ResetPasswordScreen() {
                               color={met ? colors.success : colors.inputPlaceholder}
                             />
                             <Text style={[styles.requirementText, { color: met ? colors.success : colors.textMuted }]}>
-                              {rule.label}
+                              {t(`auth.passwordRules.${rule.key}`)}
                             </Text>
                           </View>
                         );
@@ -211,13 +214,13 @@ export default function ResetPasswordScreen() {
 
                   {/* Confirm password */}
                   <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Confirm Password</Text>
+                    <Text style={styles.label}>{t('auth.labelConfirmPassword')}</Text>
                     <View style={[styles.inputWrapper, !!confirmError && styles.inputWrapperError]}>
                       <Ionicons name="lock-closed-outline" size={20} color={colors.inputPlaceholder} style={styles.inputIcon} />
                       <TextInput
                         ref={confirmPasswordRef}
                         style={styles.input}
-                        placeholder="Re-enter your new password"
+                        placeholder={t('auth.reset.placeholderConfirmNew')}
                         placeholderTextColor={colors.inputPlaceholder}
                         value={confirmPassword}
                         onChangeText={(text) => { setConfirmPassword(text); if (confirmError) setConfirmError(null); }}
@@ -227,9 +230,9 @@ export default function ResetPasswordScreen() {
                         textContentType="newPassword"
                         returnKeyType="go"
                         onSubmitEditing={handleSubmit}
-                        accessibilityLabel="Confirm new password"
+                        accessibilityLabel={t('auth.reset.confirmNewPasswordA11y')}
                       />
-                      <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                      <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
                         <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.inputPlaceholder} />
                       </TouchableOpacity>
                     </View>
@@ -239,7 +242,7 @@ export default function ResetPasswordScreen() {
                   {/* Submit */}
                   <View style={styles.submitContainer}>
                     <PrimaryButton
-                      title={loading ? '' : 'Update Password'}
+                      title={loading ? '' : t('auth.reset.update')}
                       onPress={handleSubmit}
                       disabled={loading}
                     />

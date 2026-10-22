@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { supabase } from '../../../lib/supabase';
 import { useEditorStore } from '../store/editor-store';
@@ -18,6 +19,7 @@ export function ShareModal({
   shareToken,
   onShareChange,
 }: ShareModalProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const designId = useEditorStore((s) => s.designId);
   const [copied, setCopied] = useState(false);
@@ -99,7 +101,7 @@ export function ShareModal({
             margin: '0 0 4px',
           }}
         >
-          Share Design
+          {t('design.modal.share.title')}
         </h3>
         <p
           style={{
@@ -108,7 +110,7 @@ export function ShareModal({
             margin: '0 0 20px',
           }}
         >
-          Anyone with the link can view this design
+          {t('design.modal.share.description')}
         </p>
 
         {isShared && shareUrl ? (
@@ -148,7 +150,7 @@ export function ShareModal({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('design.modal.share.copied') : t('design.modal.share.copy')}
               </button>
             </div>
             <button
@@ -164,7 +166,7 @@ export function ShareModal({
                 cursor: 'pointer',
               }}
             >
-              {loading ? 'Revoking...' : 'Revoke Link'}
+              {loading ? t('design.modal.share.revoking') : t('design.modal.share.revokeLink')}
             </button>
           </>
         ) : (
@@ -183,7 +185,7 @@ export function ShareModal({
               width: '100%',
             }}
           >
-            {loading ? 'Creating...' : 'Create Share Link'}
+            {loading ? t('design.modal.share.creating') : t('design.modal.share.createLink')}
           </button>
         )}
 
@@ -206,7 +208,7 @@ export function ShareModal({
               color: colors.textDark,
             }}
           >
-            Done
+            {t('common.done')}
           </button>
         </div>
       </div>

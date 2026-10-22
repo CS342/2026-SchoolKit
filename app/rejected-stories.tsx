@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +13,7 @@ import { COLORS, RADII, BORDERS, SPACING, TYPOGRAPHY } from '../constants/onboar
 
 export default function RejectedStoriesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { stories, deleteStory } = useStories();
   const { user } = useAuth();
@@ -30,7 +32,7 @@ export default function RejectedStoriesScreen() {
         <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={appStyles.editHeaderTitle}>Needs Revision</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('stories.needsRevision')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -45,8 +47,8 @@ export default function RejectedStoriesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="checkmark-circle-outline" size={48} color={colors.successText} />
-            <Text style={[sharedStyles.pageTitle, { marginTop: 16 }]}>All Clear!</Text>
-            <Text style={sharedStyles.pageSubtitle}>You have no rejected stories.</Text>
+            <Text style={[sharedStyles.pageTitle, { marginTop: 16 }]}>{t('stories.allClear')}</Text>
+            <Text style={sharedStyles.pageSubtitle}>{t('stories.noRejectedStories')}</Text>
           </View>
         }
       />

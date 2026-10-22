@@ -4,6 +4,7 @@
 // Readers get exactly one version per topic: the most specific one that matches them.
 // A version with no audience is universal and acts as the fallback for everyone else.
 import type { UserRole } from '../../lib/database.types';
+import i18n from '../../lib/i18n';
 import { ADULT_ROLES, bandsApplyTo, gradeToAgeBand, isVisibleTo, parseAudience, type AgeBand, type Audience, type AudienceViewer } from './audience';
 import type { Notice } from './lint';
 
@@ -72,21 +73,12 @@ export function resolveTopics<T extends VersionLike & { topic_id: string }>(rows
 
 // ─── Labels ──────────────────────────────────────────────────────────────────
 
-const ROLE_PLURAL: Record<UserRole, string> = {
-  'student-elementary': 'Elementary school students',
-  'student-k8': 'Middle school students',
-  'student-hs': 'High school students',
-  parent: 'Parents',
-  staff: 'School staff',
-};
-const ROLE_ORDER: UserRole[] = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'];
+// Display labels resolve through i18n at call time; the role/band ids below stay
+// English (they are logic/storage values, never shown).
+const rolePlural = (role: UserRole): string => i18n.t(`editor.audienceLabel.rolePlural.${role}`);
+const bandShort = (band: AgeBand): string => i18n.t(`editor.audienceLabel.bandShort.${band}`);
 
-const BAND_SHORT: Record<AgeBand, string> = {
-  elementary: 'Elementary',
-  middle: 'Middle',
-  high: 'High',
-  beyond: 'Beyond HS',
-};
+const ROLE_ORDER: UserRole[] = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'];
 const BAND_ORDER: AgeBand[] = ['elementary', 'middle', 'high', 'beyond'];
 
 /**
@@ -96,37 +88,45 @@ const BAND_ORDER: AgeBand[] = ['elementary', 'middle', 'high', 'beyond'];
 export function audienceLabel(audience: Audience | undefined): string {
   const roles = ROLE_ORDER.filter((r) => audience?.roles?.includes(r));
   const bands = BAND_ORDER.filter((b) => audience?.ageBands?.includes(b));
-  const bandPart = bands.length && bands.length < BAND_ORDER.length ? bands.map((b) => BAND_SHORT[b]).join(' + ') : '';
-  if (roles.length === ROLE_ORDER.length && !bandPart) return 'Everyone';
-  const students = roles.filter((r) => !ADULT_ROLES.includes(r)).map((r) => ROLE_PLURAL[r]).join(' + ');
-  const adultRoles = roles.filter((r) => ADULT_ROLES.includes(r)).map((r) => ROLE_PLURAL[r]).join(' + ');
+  const bandPart = bands.length && bands.length < BAND_ORDER.length ? bands.map((b) => bandShort(b)).join(' + ') : '';
+  if (roles.length === ROLE_ORDER.length && !bandPart) return i18n.t('editor.audienceLabel.everyone');
+  const students = roles.filter((r) => !ADULT_ROLES.includes(r)).map((r) => rolePlural(r)).join(' + ');
+  const adultRoles = roles.filter((r) => ADULT_ROLES.includes(r)).map((r) => rolePlural(r)).join(' + ');
   const adults = adultRoles && bandPart ? `${adultRoles} · ${bandPart}` : adultRoles;
-  return [students, adults].filter(Boolean).join(' + ') || 'Everyone';
+  return [students, adults].filter(Boolean).join(' + ') || i18n.t('editor.audienceLabel.everyone');
 }
 
 // ─── Coverage ────────────────────────────────────────────────────────────────
 
 export interface ViewerCell {
   key: string;
-  label: string;
   viewer: AudienceViewer;
 }
 
 /** Every kind of reader that can see different versions: the two student roles (their
  *  grade doesn't matter), and parents and staff by their child's grade band (see the
- *  grade lists in app/edit-grade-level.tsx). Each uses a representative grade value. */
+ *  grade lists in app/edit-grade-level.tsx). Each uses a representative grade value.
+ *  The display label is resolved on demand via `viewerCellLabel`. */
 export const VIEWER_CELLS: ViewerCell[] = [
-  { key: 'elem', label: 'Elementary school students', viewer: { role: 'student-elementary', gradeLevel: '3' } },
-  { key: 'k8', label: 'Middle school students', viewer: { role: 'student-k8', gradeLevel: '7' } },
-  { key: 'hs', label: 'High school students', viewer: { role: 'student-hs', gradeLevel: '10' } },
+  { key: 'elem', viewer: { role: 'student-elementary', gradeLevel: '3' } },
+  { key: 'k8', viewer: { role: 'student-k8', gradeLevel: '7' } },
+  { key: 'hs', viewer: { role: 'student-hs', gradeLevel: '10' } },
   ...(['parent', 'staff'] as const).flatMap((role) => ([
     ['elementary', 'elementary'], ['middle', 'middle-school'], ['high', 'high-school'], ['beyond', 'high-school-up'],
   ] as const).map(([band, grade]) => ({
     key: `${role}-${band}`,
-    label: `${ROLE_PLURAL[role]} · ${BAND_SHORT[band]}`,
     viewer: { role, gradeLevel: grade } as AudienceViewer,
   }))),
 ];
+
+/** Localized label for a coverage cell: a student role's plural, or `Role · Band` for
+ *  parents/staff (whose child's grade band is what differs). */
+export function viewerCellLabel(cell: ViewerCell): string {
+  const role = cell.viewer.role;
+  if (!role) return '';
+  const band = gradeToAgeBand(cell.viewer.gradeLevel);
+  return ADULT_ROLES.includes(role) && band ? `${rolePlural(role)} · ${bandShort(band)}` : rolePlural(role);
+}
 
 export interface CoverageRow<T> {
   cell: ViewerCell;
@@ -160,12 +160,12 @@ export function tieNotices<T extends VersionLike & { id: string; title?: string 
     if (!row.tie || !row.version || !row.tiedWith) continue;
     const key = `${row.version.id}|${row.tiedWith.id}`;
     const entry = byPair.get(key) ?? { a: row.version, b: row.tiedWith, cells: [] };
-    entry.cells.push(row.cell.label);
+    entry.cells.push(viewerCellLabel(row.cell));
     byPair.set(key, entry);
   }
   return [...byPair.values()].map(({ a, b, cells }) => ({
-    message: `${cells.join(', ')} match two versions equally — ${name(a)} and ${name(b)}. They'll see ${name(a)}, the older one.`,
-    fix: "Narrow one version's audience so each reader has one best match.",
+    message: i18n.t('editor.tieNotices.message', { cells: cells.join(', '), a: name(a), b: name(b) }),
+    fix: i18n.t('editor.tieNotices.fix'),
   }));
 }
 

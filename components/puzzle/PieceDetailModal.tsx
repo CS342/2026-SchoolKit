@@ -12,6 +12,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ChapterDefinition, PieceDefinition } from '../../constants/accomplishments';
 import PuzzlePiece from './PuzzlePiece';
 
@@ -33,6 +34,7 @@ export default function PieceDetailModal({
   earnedAt,
   onDismiss,
 }: PieceDetailModalProps) {
+  const { t } = useTranslation();
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const glowOpacity = useSharedValue(0.3);
@@ -126,7 +128,7 @@ export default function PieceDetailModal({
           {/* Earn date */}
           {earnedAt !== undefined && (
             <Text style={[styles.earnDate, { color: chapterColor }]}>
-              Found on {formatDate(earnedAt)}
+              {t('journal.foundOn', { date: formatDate(earnedAt) })}
             </Text>
           )}
 

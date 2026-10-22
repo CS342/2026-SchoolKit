@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withSequence,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
@@ -20,7 +21,7 @@ import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapp
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 
-import { VOICE_META, generateSpeech, VoiceData } from '../../services/elevenLabs';
+import { VOICE_META, generateSpeech, voicesFor, voiceDescription, toVoiceLang, SHOW_VOICE_AVATARS } from '../../services/elevenLabs';
 import { useResponsive } from '../../hooks/useResponsive';
 import { RADII, ANIMATION } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -58,15 +59,19 @@ function AnimatedVoiceCard({ children, index }: { children: React.ReactNode; ind
 
 export default function VoiceSelectionScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { updateVoice, selectedVoice: initialVoice, data, completeOnboarding, preferredLanguage } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, shadows, sharedStyles } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
   const { fireEvent } = useAccomplishments();
-  const isSpanish = preferredLanguage === 'spanish';
-  const defaultVoice = isSpanish ? VOICE_META['LlsiGQPTj7Tt7gsEPZl0']?.id : '21m00Tcm4TlvDq8ikWAM';
-  const [selectedVoice, setSelectedVoice] = useState<string>(initialVoice || defaultVoice);
+  const lang = toVoiceLang(preferredLanguage);
+  // Until the user picks, follow the context's guide — it resolves to one who reads `lang`,
+  // and the saved language/voice load asynchronously after this screen mounts.
+  const [pickedVoice, setSelectedVoice] = useState<string | null>(null);
+  const selectedVoice = pickedVoice ?? initialVoice;
+  const selectedMeta = VOICE_META[selectedVoice];
 
   // Audio playback state for samples
   const player = useAudioPlayer();
@@ -100,9 +105,7 @@ export default function VoiceSelectionScreen() {
       setPlayingVoiceId(voiceId);
 
       // Intro text for the sample
-      const text = isSpanish
-        ? `Hola, soy ${name}. Estoy emocionado de acompañarte en este camino.`
-        : `Hi, I'm ${name}. I'm excited to help you on your journey.`;
+      const text = t('auth.voice.sampleIntro', { name });
       const uri = await generateSpeech(text, voiceId);
 
       if (uri) {
@@ -130,21 +133,8 @@ export default function VoiceSelectionScreen() {
     router.replace('/loading');
   };
 
-  // Group voices by accent, filtered by preferred language
-  const voicesByAccent = useMemo(() => {
-    const groups: Record<string, VoiceData[]> = {};
-    Object.values(VOICE_META).forEach((voice) => {
-      const isSpanishVoice = voice.accent === 'Spanish';
-      if (isSpanish && !isSpanishVoice) return;
-      if (!isSpanish && isSpanishVoice) return;
-      const accent = voice.accent || 'Other';
-      if (!groups[accent]) groups[accent] = [];
-      groups[accent].push(voice);
-    });
-    return groups;
-  }, [isSpanish]);
-
-  const accentOrder = isSpanish ? ['Spanish'] : ['American', 'British', 'Australian'];
+  // Guides who read the user's language natively (bilingual guides appear in both).
+  const voices = useMemo(() => voicesFor(lang), [lang]);
 
   return (
     <DecorativeBackground variant="step" gradientColors={gradients.screenBackground}>
@@ -160,99 +150,102 @@ export default function VoiceSelectionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.content, isWebDesktop && { maxWidth: 800, width: '100%', alignSelf: 'center', flex: undefined, paddingTop: 48 }]}>
-            <View style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}>
-              <Ionicons name="mic-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
-            </View>
+            {/* Plays the selected guide — testers tapped the old decorative mic expecting audio. */}
+            <Pressable
+              onPress={() => selectedMeta && handlePlaySample(selectedMeta.id, selectedMeta.name)}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.voice.playSelected', { name: selectedMeta?.name ?? '' })}
+              style={[sharedStyles.pageIconCircle, isWebDesktop && { width: 96, height: 96, borderRadius: 48 }]}
+            >
+              {isSampleLoading && playingVoiceId === selectedVoice ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+              ) : (
+                <Ionicons
+                  name={playingVoiceId === selectedVoice ? 'stop' : 'headset-outline'}
+                  size={isWebDesktop ? 56 : 48}
+                  color={colors.primary}
+                />
+              )}
+            </Pressable>
 
-            <Text style={sharedStyles.pageTitle}>Choose your guide</Text>
-            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
-              Select a voice you'd like to hear. You can change this later.
+            <Text style={sharedStyles.pageTitle}>{t('auth.voice.title')}</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 8 }]}>
+              {t('auth.voice.subtitle')}
             </Text>
+            <Text style={[styles.hint, { marginBottom: 24 }]}>{t('auth.voice.hint')}</Text>
 
-            {(() => {
-              let globalIndex = 0;
-              return accentOrder.map((accent) => {
-              const voices = voicesByAccent[accent];
-              if (!voices || voices.length === 0) return null;
-              return (
-                <View key={accent} style={styles.section}>
-                  <Text style={styles.accentLabel}>{accent}</Text>
-                  <View style={[styles.voiceList, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }]}>
-                    {voices.map((voice) => {
-                      const isSelected = selectedVoice === voice.id;
-                      const isPlaying = playingVoiceId === voice.id;
-                      const cardIndex = globalIndex++;
+            <View style={[styles.voiceList, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }]}>
+              {voices.map((voice, cardIndex) => {
+                const isSelected = selectedVoice === voice.id;
+                const isPlaying = playingVoiceId === voice.id;
 
-                      return (
-                        <View key={voice.id} style={isWebDesktop ? { width: '31%' } : undefined}>
-                          <AnimatedVoiceCard index={cardIndex}>
-                          <Pressable
-                            style={[
-                              styles.voiceCard,
-                              isSelected && styles.voiceCardSelected,
-                              isSelected && shadows.cardSelected,
-                              !isSelected && shadows.card,
-                            ]}
-                            onPress={() => setSelectedVoice(voice.id)}
-                            accessibilityRole="radio"
-                            accessibilityLabel={voice.name}
-                            accessibilityState={{ selected: isSelected }}
-                          >
-                            {voice.image ? (
-                              <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
-                            ) : (
-                              <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
-                                <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                              </View>
-                            )}
-
-                            <View style={styles.voiceInfo}>
-                              <Text style={[styles.voiceName, isSelected && { color: colors.primary }]}>{voice.name}</Text>
-                              <Text style={styles.voiceDesc}>{voice.description}</Text>
-                            </View>
-
-                            <Pressable
-                              style={[
-                                styles.playButton,
-                                isPlaying ? { backgroundColor: colors.primary } : { backgroundColor: colors.backgroundLight }
-                              ]}
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                handlePlaySample(voice.id, voice.name);
-                              }}
-                              hitSlop={8}
-                              accessibilityRole="button"
-                              accessibilityLabel={isPlaying ? 'Stop sample' : `Play sample for ${voice.name}`}
-                            >
-                              {isSampleLoading && isPlaying ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                              ) : (
-                                <Ionicons
-                                  name={isPlaying ? "stop" : "play"}
-                                  size={16}
-                                  color={isPlaying ? '#FFFFFF' : colors.primary}
-                                />
-                              )}
-                            </Pressable>
-                          </Pressable>
-                          </AnimatedVoiceCard>
+                return (
+                  <View key={voice.id} style={isWebDesktop ? { width: '31%' } : undefined}>
+                    <AnimatedVoiceCard index={cardIndex}>
+                    <Pressable
+                      style={[
+                        styles.voiceCard,
+                        isSelected && styles.voiceCardSelected,
+                        isSelected && shadows.cardSelected,
+                        !isSelected && shadows.card,
+                      ]}
+                      onPress={() => setSelectedVoice(voice.id)}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${voice.name}, ${t(`auth.voice.accents.${voice.accent}`)}`}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      {SHOW_VOICE_AVATARS && voice.image ? (
+                        <Image source={voice.image} style={styles.voiceAvatar} contentFit="cover" />
+                      ) : (
+                        <View style={[styles.voiceAvatarPlaceholder, { backgroundColor: voice.color }]}>
+                          <Text style={styles.voiceInitial}>{voice.initial}</Text>
                         </View>
-                      );
-                    })}
+                      )}
+
+                      <View style={styles.voiceInfo}>
+                        <Text style={[styles.voiceName, isSelected && { color: colors.primary }]}>{voice.name}</Text>
+                        <Text style={styles.voiceDesc}>{voiceDescription(voice, lang)}</Text>
+                        <Text style={styles.voiceAccent}>{t(`auth.voice.accents.${voice.accent}`)}</Text>
+                      </View>
+
+                      <Pressable
+                        style={[
+                          styles.playButton,
+                          isPlaying ? { backgroundColor: colors.primary } : { backgroundColor: colors.backgroundLight }
+                        ]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handlePlaySample(voice.id, voice.name);
+                        }}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={isPlaying ? t('auth.voice.stopSample') : t('auth.voice.playSample', { name: voice.name })}
+                      >
+                        {isSampleLoading && isPlaying ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Ionicons
+                            name={isPlaying ? "stop" : "play"}
+                            size={16}
+                            color={isPlaying ? '#FFFFFF' : colors.primary}
+                          />
+                        )}
+                      </Pressable>
+                    </Pressable>
+                    </AnimatedVoiceCard>
                   </View>
-                </View>
-              );
-            });
-            })()}
+                );
+              })}
+            </View>
 
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
                 <PrimaryButton
-                  title="Continue"
+                  title={t('common.continue')}
                   onPress={handleContinue}
                 />
                 <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-                  <Text style={sharedStyles.skipText}>Skip for now</Text>
+                  <Text style={sharedStyles.skipText}>{t('auth.skipForNow')}</Text>
                 </Pressable>
               </View>
             )}
@@ -262,11 +255,11 @@ export default function VoiceSelectionScreen() {
         {!isWebDesktop && (
         <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
-            title="Continue"
+            title={t('common.continue')}
             onPress={handleContinue}
           />
           <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-            <Text style={sharedStyles.skipText}>Skip for now</Text>
+            <Text style={sharedStyles.skipText}>{t('auth.skipForNow')}</Text>
           </Pressable>
         </View>
         )}
@@ -290,21 +283,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     paddingTop: 10,
     alignItems: 'center',
   },
-  section: {
-    width: '100%',
-    marginBottom: 24,
-  },
-  accentLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: c.textLight,
-    marginBottom: 12,
-    marginLeft: 4,
-  },
   voiceList: {
+    width: '100%',
     gap: 12,
+    marginBottom: 24,
   },
   voiceCard: {
     flexDirection: "row",
@@ -351,6 +333,17 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   voiceDesc: {
     fontSize: 13,
     color: c.textLight,
+  },
+  voiceAccent: {
+    fontSize: 12,
+    color: c.textLight,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  hint: {
+    fontSize: 13,
+    color: c.textLight,
+    textAlign: "center",
   },
   playButton: {
     width: 36,

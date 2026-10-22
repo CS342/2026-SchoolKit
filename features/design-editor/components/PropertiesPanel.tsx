@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { DesignObject, InteractiveComponentObject, GradientConfig, ShadowConfig, StrokeDashPreset } from '../types/document';
@@ -198,6 +199,7 @@ function ColorInput({
   onChange: (v: string) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [showPresets, setShowPresets] = useState(false);
   return (
     <div style={{ flex: 1 }}>
@@ -255,7 +257,7 @@ function ColorInput({
           type="text"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="none"
+          placeholder={t('design.props.colorNone')}
           style={{
             flex: 1,
             border: 'none',
@@ -278,7 +280,7 @@ function ColorInput({
             padding: '2px',
             lineHeight: 1,
           }}
-          title="Color presets"
+          title={t('design.props.colorPresets')}
         >
           {showPresets ? '▲' : '▼'}
         </button>
@@ -608,6 +610,7 @@ function TextDecorationInput({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const hasUnderline = (value || '').includes('underline');
   const hasLineThrough = (value || '').includes('line-through');
 
@@ -620,12 +623,12 @@ function TextDecorationInput({
   return (
     <div style={{ display: 'flex', gap: 12 }}>
       <CheckboxInput
-        label="Underline"
+        label={t('design.props.underline')}
         value={hasUnderline}
         onChange={(on) => toggle('underline', on)}
       />
       <CheckboxInput
-        label="Strikethrough"
+        label={t('design.props.strikethrough')}
         value={hasLineThrough}
         onChange={(on) => toggle('line-through', on)}
       />
@@ -645,39 +648,40 @@ function StrokeDashSection({
   lineJoin: string | undefined;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Stroke Style">
+    <Section title={t('design.props.strokeStyle')}>
       <div style={{ marginBottom: 6 }}>
         <SelectInput
-          label="Dash Pattern"
+          label={t('design.props.dashPattern')}
           value={dash ?? 'solid'}
           options={[
-            { value: 'solid', label: 'Solid' },
-            { value: 'dashed', label: 'Dashed' },
-            { value: 'dotted', label: 'Dotted' },
-            { value: 'dash-dot', label: 'Dash-Dot' },
+            { value: 'solid', label: t('design.props.options.solid') },
+            { value: 'dashed', label: t('design.props.options.dashed') },
+            { value: 'dotted', label: t('design.props.options.dotted') },
+            { value: 'dash-dot', label: t('design.props.options.dash-dot') },
           ]}
           onChange={(v) => onUpdate({ dash: v } as any)}
         />
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <SelectInput
-          label="Line Cap"
+          label={t('design.props.lineCap')}
           value={lineCap ?? 'butt'}
           options={[
-            { value: 'butt', label: 'Butt' },
-            { value: 'round', label: 'Round' },
-            { value: 'square', label: 'Square' },
+            { value: 'butt', label: t('design.props.options.butt') },
+            { value: 'round', label: t('design.props.options.round') },
+            { value: 'square', label: t('design.props.options.square') },
           ]}
           onChange={(v) => onUpdate({ lineCap: v } as any)}
         />
         <SelectInput
-          label="Line Join"
+          label={t('design.props.lineJoin')}
           value={lineJoin ?? 'miter'}
           options={[
-            { value: 'miter', label: 'Miter' },
-            { value: 'round', label: 'Round' },
-            { value: 'bevel', label: 'Bevel' },
+            { value: 'miter', label: t('design.props.options.miter') },
+            { value: 'round', label: t('design.props.options.round') },
+            { value: 'bevel', label: t('design.props.options.bevel') },
           ]}
           onChange={(v) => onUpdate({ lineJoin: v } as any)}
         />
@@ -693,6 +697,7 @@ export function PropertiesPanel() {
   const canvas = useEditorStore((s) => s.canvas);
   const setCanvasBackground = useEditorStore((s) => s.setCanvasBackground);
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'properties' | 'canvas'>(
     'properties',
   );
@@ -764,7 +769,7 @@ export function PropertiesPanel() {
               borderRadius: '6px 6px 0 0',
             }}
           >
-            {tab === 'properties' ? 'Design' : 'Canvas'}
+            {tab === 'properties' ? t('design.props.tabDesign') : t('design.props.tabCanvas')}
           </button>
         ))}
       </div>
@@ -798,7 +803,7 @@ export function PropertiesPanel() {
                 paddingTop: 20,
               }}
             >
-              {selectedIds.length} objects selected
+              {t('design.props.objectsSelected', { count: selectedIds.length })}
             </div>
           </>
         ) : (
@@ -812,7 +817,7 @@ export function PropertiesPanel() {
             }}
           >
             <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.4 }}>&#9670;</div>
-            Select an object to edit
+            {t('design.props.emptySelect')}
           </div>
         )}
       </div>
@@ -825,21 +830,22 @@ function CanvasProperties() {
   const setCanvasSize = useEditorStore((s) => s.setCanvasSize);
   const setCanvasBackground = useEditorStore((s) => s.setCanvasBackground);
   const setCanvasGradient = useEditorStore((s) => s.setCanvasGradient);
+  const { t } = useTranslation();
   const gradient = canvas.backgroundGradient;
 
   return (
     <>
-      <Section title="Canvas Size">
+      <Section title={t('design.props.canvasSize')}>
         <div style={{ display: 'flex', gap: 8 }}>
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={canvas.width}
             onChange={(w) => setCanvasSize(w, canvas.height)}
             min={100}
             max={5000}
           />
           <NumberInput
-            label="Height"
+            label={t('design.props.height')}
             value={canvas.height}
             onChange={(h) => setCanvasSize(canvas.width, h)}
             min={100}
@@ -847,17 +853,17 @@ function CanvasProperties() {
           />
         </div>
       </Section>
-      <Section title="Background">
+      <Section title={t('design.props.background')}>
         <ColorInput
-          label="Color"
+          label={t('design.props.color')}
           value={canvas.background}
           onChange={setCanvasBackground}
         />
       </Section>
-      <Section title="Background Gradient">
+      <Section title={t('design.props.backgroundGradient')}>
         <div style={{ marginBottom: 8 }}>
           <CheckboxInput
-            label="Enable gradient"
+            label={t('design.props.enableGradient')}
             value={!!gradient}
             onChange={(on) => {
               if (on) {
@@ -872,17 +878,17 @@ function CanvasProperties() {
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <SelectInput
-                label="Type"
+                label={t('design.props.type')}
                 value={gradient.type}
                 options={[
-                  { value: 'linear', label: 'Linear' },
-                  { value: 'radial', label: 'Radial' },
+                  { value: 'linear', label: t('design.props.options.linear') },
+                  { value: 'radial', label: t('design.props.options.radial') },
                 ]}
                 onChange={(v) => setCanvasGradient({ ...gradient, type: v as 'linear' | 'radial' })}
               />
               {gradient.type === 'linear' && (
                 <NumberInput
-                  label="Angle"
+                  label={t('design.props.angle')}
                   value={gradient.angle ?? 0}
                   onChange={(v) => setCanvasGradient({ ...gradient, angle: v })}
                   min={0}
@@ -892,7 +898,7 @@ function CanvasProperties() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <ColorInput
-                label="Start"
+                label={t('design.props.start')}
                 value={gradient.colors[0] || '#7B68EE'}
                 onChange={(c) => {
                   const colors = [...gradient.colors];
@@ -901,7 +907,7 @@ function CanvasProperties() {
                 }}
               />
               <ColorInput
-                label="End"
+                label={t('design.props.end')}
                 value={gradient.colors[1] || '#0EA5E9'}
                 onChange={(c) => {
                   const colors = [...gradient.colors];
@@ -924,31 +930,32 @@ function ObjectProperties({
   object: DesignObject;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {/* Position & Size - all objects */}
-      <Section title="Position & Size">
+      <Section title={t('design.props.positionSize')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <NumberInput
-            label="X"
+            label={t('design.props.axisX')}
             value={object.x}
             onChange={(x) => onUpdate({ x })}
           />
           <NumberInput
-            label="Y"
+            label={t('design.props.axisY')}
             value={object.y}
             onChange={(y) => onUpdate({ y })}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <NumberInput
-            label="W"
+            label={t('design.props.axisW')}
             value={object.width}
             onChange={(width) => onUpdate({ width })}
             min={1}
           />
           <NumberInput
-            label="H"
+            label={t('design.props.axisH')}
             value={object.height}
             onChange={(height) => onUpdate({ height })}
             min={1}
@@ -956,14 +963,14 @@ function ObjectProperties({
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <NumberInput
-            label="Rotation"
+            label={t('design.props.rotation')}
             value={object.rotation}
             onChange={(rotation) => onUpdate({ rotation })}
             min={-360}
             max={360}
           />
           <RangeInput
-            label="Opacity"
+            label={t('design.props.opacity')}
             value={object.opacity}
             onChange={(opacity) => onUpdate({ opacity })}
           />
@@ -971,27 +978,27 @@ function ObjectProperties({
       </Section>
 
       {/* Accessibility & Blend Mode */}
-      <Section title="Accessibility">
+      <Section title={t('design.props.accessibility')}>
         <TextInput
-          label="A11y Label"
+          label={t('design.props.a11yLabel')}
           value={(object as any).accessibilityLabel ?? ''}
           onChange={(v) => onUpdate({ accessibilityLabel: v || undefined } as any)}
-          placeholder="Screen reader label..."
+          placeholder={t('design.props.a11yPlaceholder')}
         />
       </Section>
 
       {object.type !== 'line' && object.type !== 'arrow' && (
-        <Section title="Blend Mode">
+        <Section title={t('design.props.blendMode')}>
           <SelectInput
-            label="Mode"
+            label={t('design.props.mode')}
             value={(object as any).blendMode ?? 'normal'}
             options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'multiply', label: 'Multiply' },
-              { value: 'screen', label: 'Screen' },
-              { value: 'overlay', label: 'Overlay' },
-              { value: 'darken', label: 'Darken' },
-              { value: 'lighten', label: 'Lighten' },
+              { value: 'normal', label: t('design.props.options.normal') },
+              { value: 'multiply', label: t('design.props.options.multiply') },
+              { value: 'screen', label: t('design.props.options.screen') },
+              { value: 'overlay', label: t('design.props.options.overlay') },
+              { value: 'darken', label: t('design.props.options.darken') },
+              { value: 'lighten', label: t('design.props.options.lighten') },
             ]}
             onChange={(v) => onUpdate({ blendMode: v === 'normal' ? undefined : v } as any)}
           />
@@ -1052,12 +1059,13 @@ function GradientSection({
   gradient: GradientConfig | null | undefined;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   const enabled = !!gradient;
   return (
-    <Section title="Gradient">
+    <Section title={t('design.props.gradient')}>
       <div style={{ marginBottom: 8 }}>
         <CheckboxInput
-          label="Enable gradient"
+          label={t('design.props.enableGradient')}
           value={enabled}
           onChange={(on) => {
             if (on) {
@@ -1073,9 +1081,9 @@ function GradientSection({
           {/* Brand gradient presets */}
           <div style={{ marginBottom: 8 }}>
             <SelectInput
-              label="Preset"
+              label={t('design.props.preset')}
               value=""
-              options={[{ value: '', label: 'Custom…' }, ...GRADIENT_PRESETS.map((p) => ({ value: p.value, label: p.label }))]}
+              options={[{ value: '', label: t('design.props.options.custom') }, ...GRADIENT_PRESETS.map((p) => ({ value: p.value, label: t('design.props.gradientPresets.' + p.value) }))]}
               onChange={(v) => {
                 const preset = GRADIENT_PRESETS.find((p) => p.value === v);
                 if (preset) {
@@ -1086,17 +1094,17 @@ function GradientSection({
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <SelectInput
-              label="Type"
+              label={t('design.props.type')}
               value={gradient.type}
               options={[
-                { value: 'linear', label: 'Linear' },
-                { value: 'radial', label: 'Radial' },
+                { value: 'linear', label: t('design.props.options.linear') },
+                { value: 'radial', label: t('design.props.options.radial') },
               ]}
               onChange={(v) => onUpdate({ gradient: { ...gradient, type: v as 'linear' | 'radial' } } as any)}
             />
             {gradient.type === 'linear' && (
               <NumberInput
-                label="Angle"
+                label={t('design.props.angle')}
                 value={gradient.angle ?? 0}
                 onChange={(v) => onUpdate({ gradient: { ...gradient, angle: v } } as any)}
                 min={0}
@@ -1107,7 +1115,7 @@ function GradientSection({
           {gradient.colors.map((color, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6, alignItems: 'flex-end' }}>
               <ColorInput
-                label={i === 0 ? 'Start' : i === gradient.colors.length - 1 ? 'End' : `Stop ${i + 1}`}
+                label={i === 0 ? t('design.props.start') : i === gradient.colors.length - 1 ? t('design.props.end') : t('design.props.stop', { n: i + 1 })}
                 value={color}
                 onChange={(c) => {
                   const colors = [...gradient.colors];
@@ -1166,7 +1174,7 @@ function GradientSection({
                 (e.target as HTMLElement).style.color = '#8E8EA8';
               }}
             >
-              + Add Stop
+              {t('design.props.addStop')}
             </button>
           )}
         </>
@@ -1182,12 +1190,13 @@ function ShadowSection({
   shadow: ShadowConfig | null | undefined;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   const enabled = !!shadow;
   return (
-    <Section title="Shadow">
+    <Section title={t('design.props.shadow')}>
       <div style={{ marginBottom: 8 }}>
         <CheckboxInput
-          label="Enable shadow"
+          label={t('design.props.enableShadow')}
           value={enabled}
           onChange={(on) => {
             if (on) {
@@ -1204,9 +1213,9 @@ function ShadowSection({
           {/* Brand shadow presets */}
           <div style={{ marginBottom: 8 }}>
             <SelectInput
-              label="Preset"
+              label={t('design.props.preset')}
               value=""
-              options={[{ value: '', label: 'Custom…' }, ...SHADOW_PRESETS.map((p) => ({ value: p.value, label: p.label }))]}
+              options={[{ value: '', label: t('design.props.options.custom') }, ...SHADOW_PRESETS.map((p) => ({ value: p.value, label: t('design.props.shadowPresets.' + p.value) }))]}
               onChange={(v) => {
                 const preset = SHADOW_PRESETS.find((p) => p.value === v);
                 if (preset) onUpdate({ shadow: preset.shadow } as any);
@@ -1215,21 +1224,21 @@ function ShadowSection({
           </div>
           <div style={{ marginBottom: 8 }}>
             <ColorInput
-              label="Color"
+              label={t('design.props.color')}
               value={shadow.color}
               onChange={(c) => onUpdate({ shadow: { ...shadow, color: c } } as any)}
             />
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <NumberInput
-              label="Offset X"
+              label={t('design.props.offsetX')}
               value={shadow.offsetX}
               onChange={(v) => onUpdate({ shadow: { ...shadow, offsetX: v } } as any)}
               min={-100}
               max={100}
             />
             <NumberInput
-              label="Offset Y"
+              label={t('design.props.offsetY')}
               value={shadow.offsetY}
               onChange={(v) => onUpdate({ shadow: { ...shadow, offsetY: v } } as any)}
               min={-100}
@@ -1237,7 +1246,7 @@ function ShadowSection({
             />
           </div>
           <NumberInput
-            label="Blur"
+            label={t('design.props.blur')}
             value={shadow.blur}
             onChange={(v) => onUpdate({ shadow: { ...shadow, blur: v } } as any)}
             min={0}
@@ -1256,13 +1265,14 @@ function EntranceAnimationSection({
   animation: { type: string; delay: number; duration: number } | undefined;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   const enabled = !!animation && animation.type !== 'none';
   const a = animation ?? { type: 'none', delay: 0, duration: 400 };
   return (
-    <Section title="Entrance Animation">
+    <Section title={t('design.props.entranceAnimation')}>
       <div style={{ marginBottom: 8 }}>
         <CheckboxInput
-          label="Animate on preview"
+          label={t('design.props.animateOnPreview')}
           value={enabled}
           onChange={(on) => {
             if (on) {
@@ -1277,13 +1287,13 @@ function EntranceAnimationSection({
         <>
           <div style={{ marginBottom: 8 }}>
             <SelectInput
-              label="Type"
+              label={t('design.props.type')}
               value={a.type}
               options={[
-                { value: 'fade-in', label: 'Fade In' },
-                { value: 'slide-up', label: 'Slide Up' },
-                { value: 'slide-down', label: 'Slide Down' },
-                { value: 'scale-up', label: 'Scale Up' },
+                { value: 'fade-in', label: t('design.props.options.fade-in') },
+                { value: 'slide-up', label: t('design.props.options.slide-up') },
+                { value: 'slide-down', label: t('design.props.options.slide-down') },
+                { value: 'scale-up', label: t('design.props.options.scale-up') },
               ]}
               onChange={(v) =>
                 onUpdate({ animation: { ...a, type: v as any } } as any)
@@ -1292,7 +1302,7 @@ function EntranceAnimationSection({
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <NumberInput
-              label="Delay (ms)"
+              label={t('design.props.delayMs')}
               value={a.delay}
               onChange={(v) =>
                 onUpdate({ animation: { ...a, delay: Math.max(0, v) } } as any)
@@ -1302,7 +1312,7 @@ function EntranceAnimationSection({
               step={50}
             />
             <NumberInput
-              label="Duration (ms)"
+              label={t('design.props.durationMs')}
               value={a.duration}
               onChange={(v) =>
                 onUpdate({ animation: { ...a, duration: Math.max(50, v) } } as any)
@@ -1325,10 +1335,11 @@ function BlurSection({
   blur: number | undefined;
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Blur">
+    <Section title={t('design.props.blur')}>
       <NumberInput
-        label="Blur Radius"
+        label={t('design.props.blurRadius')}
         value={blur || 0}
         onChange={(v) => onUpdate({ blur: Math.max(0, Math.min(20, v)) } as any)}
         min={0}
@@ -1352,13 +1363,14 @@ function ShapeProperties({
   const blur = (object as any).blur as number | undefined;
 
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <>
-      <Section title="Fill & Stroke">
+      <Section title={t('design.props.fillStroke')}>
         <div style={{ marginBottom: 8, opacity: gradient ? 0.5 : 1, position: 'relative' }}>
           <ColorInput
-            label="Fill"
+            label={t('design.props.fill')}
             value={object.fill}
             onChange={(fill) => onUpdate({ fill } as Partial<DesignObject>)}
           />
@@ -1369,20 +1381,20 @@ function ShapeProperties({
               fontStyle: 'italic',
               marginTop: 4,
             }}>
-              Overridden by gradient
+              {t('design.props.overriddenByGradient')}
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={object.stroke}
             onChange={(stroke) =>
               onUpdate({ stroke } as Partial<DesignObject>)
             }
           />
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={object.strokeWidth}
             onChange={(strokeWidth) =>
               onUpdate({ strokeWidth } as Partial<DesignObject>)
@@ -1394,9 +1406,9 @@ function ShapeProperties({
       </Section>
 
       {object.type === 'rect' && 'cornerRadius' in object && (
-        <Section title="Corner Radius">
+        <Section title={t('design.props.cornerRadius')}>
           <NumberInput
-            label="Radius"
+            label={t('design.props.radius')}
             value={(object as { cornerRadius: number }).cornerRadius}
             onChange={(cornerRadius) =>
               onUpdate({ cornerRadius } as Partial<DesignObject>)
@@ -1429,10 +1441,11 @@ function TextProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const shadow = (object as any).shadow as ShadowConfig | null | undefined;
   return (
     <>
-      <Section title="Text">
+      <Section title={t('design.props.text')}>
         <textarea
           value={object.text}
           onChange={(e) =>
@@ -1464,10 +1477,10 @@ function TextProperties({
         />
       </Section>
 
-      <Section title="Font">
+      <Section title={t('design.props.font')}>
         <div style={{ marginBottom: 6 }}>
           <SelectInput
-            label="Family"
+            label={t('design.props.family')}
             value={object.fontFamily}
             options={FONT_OPTIONS}
             onChange={(fontFamily) =>
@@ -1477,7 +1490,7 @@ function TextProperties({
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <NumberInput
-            label="Size"
+            label={t('design.props.size')}
             value={object.fontSize}
             onChange={(fontSize) =>
               onUpdate({ fontSize } as Partial<DesignObject>)
@@ -1486,7 +1499,7 @@ function TextProperties({
             max={200}
           />
           <NumberInput
-            label="Line Height"
+            label={t('design.props.lineHeight')}
             value={object.lineHeight}
             onChange={(lineHeight) =>
               onUpdate({ lineHeight } as Partial<DesignObject>)
@@ -1498,65 +1511,65 @@ function TextProperties({
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <SelectInput
-            label="Style"
+            label={t('design.props.style')}
             value={object.fontStyle}
             options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'bold', label: 'Bold' },
-              { value: 'italic', label: 'Italic' },
-              { value: 'bold italic', label: 'Bold Italic' },
+              { value: 'normal', label: t('design.props.options.normal') },
+              { value: 'bold', label: t('design.props.options.bold') },
+              { value: 'italic', label: t('design.props.options.italic') },
+              { value: 'bold italic', label: t('design.props.options.boldItalic') },
             ]}
             onChange={(fontStyle) =>
               onUpdate({ fontStyle } as Partial<DesignObject>)
             }
           />
           <SelectInput
-            label="Weight"
+            label={t('design.props.weight')}
             value={(object as any).fontWeight ?? ''}
             options={[
-              { value: '', label: 'Auto' },
-              { value: '100', label: '100 Thin' },
-              { value: '200', label: '200 Extra Light' },
-              { value: '300', label: '300 Light' },
-              { value: '400', label: '400 Regular' },
-              { value: '500', label: '500 Medium' },
-              { value: '600', label: '600 Semi Bold' },
-              { value: '700', label: '700 Bold' },
-              { value: '800', label: '800 Extra Bold' },
-              { value: '900', label: '900 Black' },
+              { value: '', label: t('design.props.options.weightAuto') },
+              { value: '100', label: t('design.props.options.weight100') },
+              { value: '200', label: t('design.props.options.weight200') },
+              { value: '300', label: t('design.props.options.weight300') },
+              { value: '400', label: t('design.props.options.weight400') },
+              { value: '500', label: t('design.props.options.weight500') },
+              { value: '600', label: t('design.props.options.weight600') },
+              { value: '700', label: t('design.props.options.weight700') },
+              { value: '800', label: t('design.props.options.weight800') },
+              { value: '900', label: t('design.props.options.weight900') },
             ]}
             onChange={(v) => onUpdate({ fontWeight: v || undefined } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <SelectInput
-            label="Align"
+            label={t('design.props.align')}
             value={object.align}
             options={[
-              { value: 'left', label: 'Left' },
-              { value: 'center', label: 'Center' },
-              { value: 'right', label: 'Right' },
-              { value: 'justify', label: 'Justify' },
+              { value: 'left', label: t('design.props.options.left') },
+              { value: 'center', label: t('design.props.options.center') },
+              { value: 'right', label: t('design.props.options.right') },
+              { value: 'justify', label: t('design.props.options.justify') },
             ]}
             onChange={(align) =>
               onUpdate({ align } as Partial<DesignObject>)
             }
           />
           <SelectInput
-            label="Transform"
+            label={t('design.props.transform')}
             value={(object as any).textTransform ?? 'none'}
             options={[
-              { value: 'none', label: 'None' },
-              { value: 'uppercase', label: 'UPPERCASE' },
-              { value: 'lowercase', label: 'lowercase' },
-              { value: 'capitalize', label: 'Capitalize' },
+              { value: 'none', label: t('design.props.options.none') },
+              { value: 'uppercase', label: t('design.props.options.uppercase') },
+              { value: 'lowercase', label: t('design.props.options.lowercase') },
+              { value: 'capitalize', label: t('design.props.options.capitalize') },
             ]}
             onChange={(v) => onUpdate({ textTransform: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <NumberInput
-            label="Letter Spacing"
+            label={t('design.props.letterSpacing')}
             value={object.letterSpacing ?? 0}
             onChange={(v) => onUpdate({ letterSpacing: v } as any)}
             min={-5}
@@ -1564,7 +1577,7 @@ function TextProperties({
             step={0.5}
           />
           <NumberInput
-            label="Padding"
+            label={t('design.props.padding')}
             value={object.padding ?? 0}
             onChange={(v) => onUpdate({ padding: v } as any)}
             min={0}
@@ -1573,51 +1586,51 @@ function TextProperties({
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <SelectInput
-            label="Vertical Align"
+            label={t('design.props.verticalAlign')}
             value={object.verticalAlign ?? 'top'}
             options={[
-              { value: 'top', label: 'Top' },
-              { value: 'middle', label: 'Middle' },
-              { value: 'bottom', label: 'Bottom' },
+              { value: 'top', label: t('design.props.options.top') },
+              { value: 'middle', label: t('design.props.options.middle') },
+              { value: 'bottom', label: t('design.props.options.bottom') },
             ]}
             onChange={(v) => onUpdate({ verticalAlign: v } as any)}
           />
           <SelectInput
-            label="Font Variant"
+            label={t('design.props.fontVariant')}
             value={object.fontVariant ?? 'normal'}
             options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'small-caps', label: 'Small Caps' },
+              { value: 'normal', label: t('design.props.options.normal') },
+              { value: 'small-caps', label: t('design.props.options.small-caps') },
             ]}
             onChange={(v) => onUpdate({ fontVariant: v } as any)}
           />
         </div>
       </Section>
 
-      <Section title="Text Decoration">
+      <Section title={t('design.props.textDecoration')}>
         <TextDecorationInput
           value={object.textDecoration ?? ''}
           onChange={(v) => onUpdate({ textDecoration: v } as any)}
         />
       </Section>
 
-      <Section title="Color">
+      <Section title={t('design.props.color')}>
         <ColorInput
-          label="Text Color"
+          label={t('design.props.textColor')}
           value={object.fill}
           onChange={(fill) => onUpdate({ fill } as Partial<DesignObject>)}
         />
       </Section>
 
-      <Section title="Text Outline">
+      <Section title={t('design.props.textOutline')}>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput
-            label="Outline Color"
+            label={t('design.props.outlineColor')}
             value={object.stroke ?? ''}
             onChange={(v) => onUpdate({ stroke: v } as any)}
           />
           <NumberInput
-            label="Outline Width"
+            label={t('design.props.outlineWidth')}
             value={object.strokeWidth ?? 0}
             onChange={(v) => onUpdate({ strokeWidth: v } as any)}
             min={0}
@@ -1639,19 +1652,20 @@ function LineProperties({
   object: DesignObject & { type: 'line' };
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Line">
+      <Section title={t('design.props.line')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={object.stroke}
             onChange={(stroke) =>
               onUpdate({ stroke } as Partial<DesignObject>)
             }
           />
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={object.strokeWidth}
             onChange={(strokeWidth) =>
               onUpdate({ strokeWidth } as Partial<DesignObject>)
@@ -1662,38 +1676,38 @@ function LineProperties({
         </div>
       </Section>
 
-      <Section title="Stroke Style">
+      <Section title={t('design.props.strokeStyle')}>
         <div style={{ marginBottom: 6 }}>
           <SelectInput
-            label="Dash Pattern"
+            label={t('design.props.dashPattern')}
             value={object.dash ?? 'solid'}
             options={[
-              { value: 'solid', label: 'Solid' },
-              { value: 'dashed', label: 'Dashed' },
-              { value: 'dotted', label: 'Dotted' },
-              { value: 'dash-dot', label: 'Dash-Dot' },
+              { value: 'solid', label: t('design.props.options.solid') },
+              { value: 'dashed', label: t('design.props.options.dashed') },
+              { value: 'dotted', label: t('design.props.options.dotted') },
+              { value: 'dash-dot', label: t('design.props.options.dash-dot') },
             ]}
             onChange={(v) => onUpdate({ dash: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <SelectInput
-            label="Line Cap"
+            label={t('design.props.lineCap')}
             value={object.lineCap}
             options={[
-              { value: 'butt', label: 'Butt' },
-              { value: 'round', label: 'Round' },
-              { value: 'square', label: 'Square' },
+              { value: 'butt', label: t('design.props.options.butt') },
+              { value: 'round', label: t('design.props.options.round') },
+              { value: 'square', label: t('design.props.options.square') },
             ]}
             onChange={(v) => onUpdate({ lineCap: v } as any)}
           />
           <SelectInput
-            label="Line Join"
+            label={t('design.props.lineJoin')}
             value={object.lineJoin}
             options={[
-              { value: 'miter', label: 'Miter' },
-              { value: 'round', label: 'Round' },
-              { value: 'bevel', label: 'Bevel' },
+              { value: 'miter', label: t('design.props.options.miter') },
+              { value: 'round', label: t('design.props.options.round') },
+              { value: 'bevel', label: t('design.props.options.bevel') },
             ]}
             onChange={(v) => onUpdate({ lineJoin: v } as any)}
           />
@@ -1712,19 +1726,20 @@ function StarProperties({
   object: DesignObject & { type: 'star' };
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Star">
+      <Section title={t('design.props.star')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <NumberInput
-            label="Points"
+            label={t('design.props.points')}
             value={object.points}
             onChange={(v) => onUpdate({ points: Math.max(3, Math.min(12, Math.round(v))) } as any)}
             min={3}
             max={12}
           />
           <NumberInput
-            label="Inner Radius"
+            label={t('design.props.innerRadius')}
             value={object.innerRadius}
             onChange={(v) => onUpdate({ innerRadius: Math.max(0.3, Math.min(0.9, v)) } as any)}
             min={0.3}
@@ -1734,22 +1749,22 @@ function StarProperties({
         </div>
       </Section>
 
-      <Section title="Fill & Stroke">
+      <Section title={t('design.props.fillStroke')}>
         <div style={{ marginBottom: 8 }}>
           <ColorInput
-            label="Fill"
+            label={t('design.props.fill')}
             value={object.fill}
             onChange={(fill) => onUpdate({ fill } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={object.stroke}
             onChange={(stroke) => onUpdate({ stroke } as any)}
           />
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={object.strokeWidth}
             onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
             min={0}
@@ -1778,24 +1793,25 @@ function TriangleProperties({
   object: DesignObject & { type: 'triangle' };
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Fill & Stroke">
+      <Section title={t('design.props.fillStroke')}>
         <div style={{ marginBottom: 8 }}>
           <ColorInput
-            label="Fill"
+            label={t('design.props.fill')}
             value={object.fill}
             onChange={(fill) => onUpdate({ fill } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={object.stroke}
             onChange={(stroke) => onUpdate({ stroke } as any)}
           />
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={object.strokeWidth}
             onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
             min={0}
@@ -1824,17 +1840,18 @@ function ArrowProperties({
   object: DesignObject & { type: 'arrow' };
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Arrow">
+      <Section title={t('design.props.arrow')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={object.stroke}
             onChange={(stroke) => onUpdate({ stroke } as any)}
           />
           <NumberInput
-            label="Width"
+            label={t('design.props.width')}
             value={object.strokeWidth}
             onChange={(strokeWidth) => onUpdate({ strokeWidth } as any)}
             min={1}
@@ -1843,14 +1860,14 @@ function ArrowProperties({
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <NumberInput
-            label="Pointer Length"
+            label={t('design.props.pointerLength')}
             value={object.pointerLength}
             onChange={(v) => onUpdate({ pointerLength: v } as any)}
             min={5}
             max={50}
           />
           <NumberInput
-            label="Pointer Width"
+            label={t('design.props.pointerWidth')}
             value={object.pointerWidth}
             onChange={(v) => onUpdate({ pointerWidth: v } as any)}
             min={5}
@@ -1877,36 +1894,37 @@ function ImageProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const shadow = (object as any).shadow as import('../types/document').ShadowConfig | null | undefined;
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Image Style">
+      <Section title={t('design.props.imageStyle')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <NumberInput
-            label="Corner Radius"
+            label={t('design.props.cornerRadius')}
             value={(object as any).cornerRadius ?? 0}
             onChange={(v) => onUpdate({ cornerRadius: v } as any)}
             min={0}
             max={200}
           />
           <SelectInput
-            label="Object Fit"
+            label={t('design.props.objectFit')}
             value={(object as any).objectFit ?? 'cover'}
             options={[
-              { value: 'cover', label: 'Cover' },
-              { value: 'contain', label: 'Contain' },
-              { value: 'fill', label: 'Fill' },
+              { value: 'cover', label: t('design.props.options.cover') },
+              { value: 'contain', label: t('design.props.options.contain') },
+              { value: 'fill', label: t('design.props.options.fill') },
             ]}
             onChange={(v) => onUpdate({ objectFit: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <ColorInput
-            label="Stroke"
+            label={t('design.props.stroke')}
             value={(object as any).stroke ?? ''}
             onChange={(v) => onUpdate({ stroke: v } as any)}
           />
           <NumberInput
-            label="Stroke Width"
+            label={t('design.props.strokeWidthLabel')}
             value={(object as any).strokeWidth ?? 0}
             onChange={(v) => onUpdate({ strokeWidth: v } as any)}
             min={0}
@@ -1927,9 +1945,10 @@ function BadgeProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <>
-      <Section title="Badge Text">
+      <Section title={t('design.props.badgeText')}>
         <input
           type="text"
           value={object.text}
@@ -1958,7 +1977,7 @@ function BadgeProperties({
         />
         <div style={{ marginBottom: 6 }}>
           <SelectInput
-            label="Font Family"
+            label={t('design.props.fontFamily')}
             value={object.fontFamily}
             options={FONT_OPTIONS}
             onChange={(v) => onUpdate({ fontFamily: v } as any)}
@@ -1966,73 +1985,73 @@ function BadgeProperties({
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <NumberInput
-            label="Font Size"
+            label={t('design.props.fontSize')}
             value={object.fontSize}
             onChange={(v) => onUpdate({ fontSize: v } as any)}
             min={8}
             max={48}
           />
           <ColorInput
-            label="Text Color"
+            label={t('design.props.textColor')}
             value={object.textColor}
             onChange={(v) => onUpdate({ textColor: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <SelectInput
-            label="Weight"
+            label={t('design.props.weight')}
             value={(object as any).fontWeight ?? ''}
             options={[
-              { value: '', label: 'Auto' },
-              { value: '100', label: '100 Thin' },
-              { value: '300', label: '300 Light' },
-              { value: '400', label: '400 Regular' },
-              { value: '500', label: '500 Medium' },
-              { value: '600', label: '600 Semi Bold' },
-              { value: '700', label: '700 Bold' },
-              { value: '800', label: '800 Extra Bold' },
-              { value: '900', label: '900 Black' },
+              { value: '', label: t('design.props.options.weightAuto') },
+              { value: '100', label: t('design.props.options.weight100') },
+              { value: '300', label: t('design.props.options.weight300') },
+              { value: '400', label: t('design.props.options.weight400') },
+              { value: '500', label: t('design.props.options.weight500') },
+              { value: '600', label: t('design.props.options.weight600') },
+              { value: '700', label: t('design.props.options.weight700') },
+              { value: '800', label: t('design.props.options.weight800') },
+              { value: '900', label: t('design.props.options.weight900') },
             ]}
             onChange={(v) => onUpdate({ fontWeight: v || undefined } as any)}
           />
           <SelectInput
-            label="Transform"
+            label={t('design.props.transform')}
             value={(object as any).textTransform ?? 'none'}
             options={[
-              { value: 'none', label: 'None' },
-              { value: 'uppercase', label: 'UPPERCASE' },
-              { value: 'lowercase', label: 'lowercase' },
-              { value: 'capitalize', label: 'Capitalize' },
+              { value: 'none', label: t('design.props.options.none') },
+              { value: 'uppercase', label: t('design.props.options.uppercase') },
+              { value: 'lowercase', label: t('design.props.options.lowercase') },
+              { value: 'capitalize', label: t('design.props.options.capitalize') },
             ]}
             onChange={(v) => onUpdate({ textTransform: v } as any)}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <SelectInput
-            label="Align"
+            label={t('design.props.align')}
             value={object.align ?? 'center'}
             options={[
-              { value: 'left', label: 'Left' },
-              { value: 'center', label: 'Center' },
-              { value: 'right', label: 'Right' },
-              { value: 'justify', label: 'Justify' },
+              { value: 'left', label: t('design.props.options.left') },
+              { value: 'center', label: t('design.props.options.center') },
+              { value: 'right', label: t('design.props.options.right') },
+              { value: 'justify', label: t('design.props.options.justify') },
             ]}
             onChange={(v) => onUpdate({ align: v } as any)}
           />
           <SelectInput
-            label="Vertical Align"
+            label={t('design.props.verticalAlign')}
             value={object.verticalAlign ?? 'middle'}
             options={[
-              { value: 'top', label: 'Top' },
-              { value: 'middle', label: 'Middle' },
-              { value: 'bottom', label: 'Bottom' },
+              { value: 'top', label: t('design.props.options.top') },
+              { value: 'middle', label: t('design.props.options.middle') },
+              { value: 'bottom', label: t('design.props.options.bottom') },
             ]}
             onChange={(v) => onUpdate({ verticalAlign: v } as any)}
           />
         </div>
         <div style={{ marginBottom: 6 }}>
           <NumberInput
-            label="Letter Spacing"
+            label={t('design.props.letterSpacing')}
             value={object.letterSpacing ?? 0}
             onChange={(v) => onUpdate({ letterSpacing: v } as any)}
             min={-5}
@@ -2046,16 +2065,16 @@ function BadgeProperties({
         />
       </Section>
 
-      <Section title="Background">
+      <Section title={t('design.props.background')}>
         <div style={{ marginBottom: 8 }}>
           <ColorInput
-            label="Fill"
+            label={t('design.props.fill')}
             value={object.fill}
             onChange={(fill) => onUpdate({ fill } as any)}
           />
         </div>
         <NumberInput
-          label="Corner Radius"
+          label={t('design.props.cornerRadius')}
           value={object.cornerRadius}
           onChange={(v) => onUpdate({ cornerRadius: v } as any)}
           min={0}
@@ -2089,18 +2108,19 @@ function IconProperties({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   return (
     <>
-      <Section title="Icon">
+      <Section title={t('design.props.icon')}>
         <label style={{ fontSize: 10, color: colors.textLight, fontWeight: 600, display: 'block', marginBottom: 4, letterSpacing: 0.3 }}>
-          Ionicon Name
+          {t('design.props.ioniconName')}
         </label>
         <input
           type="text"
           value={object.iconName}
           onChange={(e) => onUpdate({ iconName: e.target.value } as any)}
-          placeholder="e.g. school-outline"
+          placeholder={t('design.props.iconNamePlaceholder')}
           style={{
             width: '100%',
             padding: '6px 8px',
@@ -2119,7 +2139,7 @@ function IconProperties({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter common icons…"
+          placeholder={t('design.props.filterIcons')}
           style={{
             width: '100%',
             padding: '5px 8px',
@@ -2174,10 +2194,10 @@ function IconProperties({
           ))}
         </div>
       </Section>
-      <Section title="Style">
+      <Section title={t('design.props.style')}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <NumberInput
-            label="Size"
+            label={t('design.props.size')}
             value={object.fontSize}
             onChange={(v) =>
               onUpdate({
@@ -2191,7 +2211,7 @@ function IconProperties({
           />
         </div>
         <ColorInput
-          label="Color"
+          label={t('design.props.color')}
           value={object.color}
           onChange={(c) => onUpdate({ color: c } as any)}
         />

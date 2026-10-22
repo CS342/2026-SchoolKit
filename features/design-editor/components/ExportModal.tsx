@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useEditorStore } from '../store/editor-store';
 import Konva from 'konva';
@@ -10,6 +11,7 @@ interface ExportModalProps {
 }
 
 export function ExportModal({ visible, onClose, stageRef }: ExportModalProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const title = useEditorStore((s) => s.title);
 
@@ -34,12 +36,12 @@ export function ExportModal({ visible, onClose, stageRef }: ExportModalProps) {
   const exportOptions = [
     {
       label: 'PNG',
-      description: 'High quality, transparent background support',
+      description: t('design.modal.export.options.png.description'),
       onClick: () => exportAs('image/png', 'png'),
     },
     {
       label: 'JPEG',
-      description: 'Smaller file size, no transparency',
+      description: t('design.modal.export.options.jpeg.description'),
       onClick: () => exportAs('image/jpeg', 'jpg', 0.92),
     },
   ];
@@ -75,7 +77,7 @@ export function ExportModal({ visible, onClose, stageRef }: ExportModalProps) {
             margin: '0 0 4px',
           }}
         >
-          Export Design
+          {t('design.modal.export.title')}
         </h3>
         <p
           style={{
@@ -84,7 +86,7 @@ export function ExportModal({ visible, onClose, stageRef }: ExportModalProps) {
             margin: '0 0 20px',
           }}
         >
-          Download your design as an image
+          {t('design.modal.export.description')}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -146,7 +148,7 @@ export function ExportModal({ visible, onClose, stageRef }: ExportModalProps) {
               color: colors.textDark,
             }}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
       </div>

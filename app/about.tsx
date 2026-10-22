@@ -10,12 +10,14 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { RADII, SPACING } from '../constants/onboarding-theme';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 
 export default function AboutScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, shadows, appStyles } = useTheme();
   const { fireEvent } = useAccomplishments();
@@ -29,10 +31,10 @@ export default function AboutScreen() {
   return (
     <View style={styles.container}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>About SchoolKit</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.aboutTitle')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -50,19 +52,19 @@ export default function AboutScreen() {
 
         {/* Mission */}
         <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>OUR MISSION</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.ourMission')}</Text>
           <Text style={[styles.body, { color: colors.textDark }]}>
-            Cancer survivors who are returning to school, their parents, and their education team need a centralized, accessible platform that addresses the shared educational and social challenges of re-entry — in order to support a smoother transition back into the school environment.
+            {t('profile.aboutMissionBody')}
           </Text>
         </View>
 
         {/* Who it's for */}
         <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>WHO IT'S FOR</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.whoItsFor')}</Text>
           {[
-            { icon: 'school-outline' as const, label: 'Students', desc: 'Young cancer survivors navigating their return to school after treatment.' },
-            { icon: 'people-outline' as const, label: 'Parents & Caregivers', desc: 'Families supporting their child through the re-entry process.' },
-            { icon: 'briefcase-outline' as const, label: 'School Staff', desc: 'Teachers and staff creating an inclusive environment for returning students.' },
+            { icon: 'school-outline' as const, label: t('profile.whoStudents'), desc: t('profile.whoStudentsDesc') },
+            { icon: 'people-outline' as const, label: t('profile.whoParents'), desc: t('profile.whoParentsDesc') },
+            { icon: 'briefcase-outline' as const, label: t('profile.whoStaff'), desc: t('profile.whoStaffDesc') },
           ].map((item, i, arr) => (
             <View
               key={item.label}

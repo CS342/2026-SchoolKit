@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { View, Text, ActivityIndicator, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../../lib/supabase';
 import { useEditorStore } from '../../../features/design-editor/store/editor-store';
@@ -17,6 +18,7 @@ const EditorShell = lazy(() =>
 export default function DesignEditorPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const loadDocument = useEditorStore((s) => s.loadDocument);
   const resetEditor = useEditorStore((s) => s.resetEditor);
@@ -28,7 +30,7 @@ export default function DesignEditorPage() {
   useEffect(() => {
     async function load() {
       if (!id) {
-        setError('No design ID');
+        setError(t('design.dashboard.noDesignId'));
         setLoading(false);
         return;
       }
@@ -42,7 +44,7 @@ export default function DesignEditorPage() {
       if (fetchError || !data) {
         // Fail loudly: opening a blank document here would let autosave
         // overwrite the real design row.
-        setError(fetchError?.message ?? 'Design not found');
+        setError(fetchError?.message ?? t('design.dashboard.notFound'));
         setLoading(false);
         return;
       }
@@ -84,7 +86,7 @@ export default function DesignEditorPage() {
       >
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={{ marginTop: 12, color: colors.textLight, fontSize: 14 }}>
-          Loading design...
+          {t('design.dashboard.loadingDesign')}
         </Text>
       </View>
     );
@@ -114,7 +116,7 @@ export default function DesignEditorPage() {
           style={{ color: colors.primary, fontSize: 14 }}
           onPress={() => router.push('/(editor)/designs')}
         >
-          Back to designs
+          {t('design.dashboard.backToDesigns')}
         </Text>
       </View>
     );

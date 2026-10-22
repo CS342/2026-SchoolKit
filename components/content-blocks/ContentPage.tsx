@@ -1,15 +1,15 @@
 // ContentPage — renders a ContentDoc. Web uses the ArticleLayout frame (breadcrumb,
 // sticky TOC, title/actions); native uses the header + reading column. Hosts the
-// single step-detail modal + TTS. This is the runtime the finances page will render
-// through once it lives in Supabase.
+// page-level modals, the per-card TTS they share, and the whole-page "Listen" reader.
+// This is the runtime the finances page will render through once it lives in Supabase.
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { generateSpeech } from '../../services/elevenLabs';
-import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useTTS } from '../../hooks/useTTS';
+import { usePageReader } from '../../hooks/usePageReader';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useWebLayout } from '../../hooks/useResponsive';
 import { ContentColumn, ArticleLayout, ArticleSection } from '../ui';
@@ -17,15 +17,17 @@ import { BookmarkButton } from '../BookmarkButton';
 import { DownloadButton } from '../DownloadButton';
 import { ContentDoc, HeroBlock } from '../../features/content/types';
 import { WIDE_TYPES } from '../../features/content/registry';
+import { docSpeechSegments } from '../../features/content/speech';
 import { makeBlockStyles } from './styles';
 import { BlockCtx, BlockCtxProvider, makeColorResolver, ResolvedStep, FlipDeck } from './context';
 import { BlockRenderer, HeroTitle, blockHeading } from './blocks';
 import { BlockEntrance } from './util';
 import { StepModal } from './StepModal';
 import { FlipCardModal } from './FlipCardModal';
+import { PageReaderBar } from './PageReaderBar';
 
 export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean; onReachEnd?: () => void }) {
-  const { selectedVoice } = useOnboarding();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, shadows, isDark } = useTheme();
@@ -47,53 +49,28 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
   const styles = useMemo(() => makeBlockStyles(colors, shadows, isDark), [colors, shadows, isDark]);
   const color = useMemo(() => makeColorResolver(colors.primary), [colors.primary]);
 
-  // ── step modal + TTS (ported from finances) ──
+  // ── page-level modals + audio ──
   const [expandedStep, setExpandedStep] = useState<ResolvedStep | null>(null);
   const [flipDeck, setFlipDeck] = useState<FlipDeck | null>(null);
-  const cardPlayer = useAudioPlayer();
-  const cardPlayerStatus = useAudioPlayerStatus(cardPlayer);
-  const [isCardSpeaking, setIsCardSpeaking] = useState(false);
-  const [isCardLoadingAudio, setIsCardLoadingAudio] = useState(false);
-  const [cardPlaybackRate, setCardPlaybackRate] = useState(1.0);
-  const currentCardIdRef = useRef<string | null>(null);
+  // One TTS player for whichever card modal is open; the page reader has its own queue.
+  const cardTts = useTTS();
+  const segments = useMemo(() => docSpeechSegments(doc), [doc]);
+  const reader = usePageReader(segments);
+  const canListen = !preview && segments.length > 0;
 
+  // Only one voice at a time: opening a card pauses the page; listening stops a card.
+  const { pause: pauseReader } = reader;
   useEffect(() => {
-    if (cardPlayerStatus.isLoaded && cardPlayerStatus.didJustFinish) {
-      setIsCardSpeaking(false);
-      cardPlayer.seekTo(0);
-    }
-  }, [cardPlayerStatus.isLoaded, cardPlayerStatus.didJustFinish]);
-
-  const handleCardSpeak = async () => {
-    if (!expandedStep) return;
-    if (isCardSpeaking) { cardPlayer.pause(); setIsCardSpeaking(false); return; }
-    if (cardPlayerStatus.isLoaded && currentCardIdRef.current === expandedStep.id) {
-      cardPlayer.play(); setIsCardSpeaking(true); return;
-    }
-    currentCardIdRef.current = expandedStep.id;
-    setIsCardSpeaking(true);
-    try {
-      setIsCardLoadingAudio(true);
-      const audioUri = await generateSpeech(`${expandedStep.title}. ${expandedStep.detail}`, selectedVoice);
-      if (audioUri) { cardPlayer.replace(audioUri); cardPlayer.play(); }
-      else { setIsCardSpeaking(false); currentCardIdRef.current = null; }
-    } catch {
-      setIsCardSpeaking(false); currentCardIdRef.current = null;
-    } finally {
-      setIsCardLoadingAudio(false);
-    }
+    if (expandedStep || flipDeck) pauseReader();
+  }, [expandedStep, flipDeck, pauseReader]);
+  const speakCard = (text: string) => { reader.pause(); cardTts.speak(text); };
+  const toggleListen = () => {
+    cardTts.stop();
+    if (reader.isOpen) reader.stop(); else reader.toggle();
   };
 
-  const toggleCardPlaybackRate = () => {
-    let next = 1.0;
-    if (cardPlaybackRate === 1.0) next = 1.25;
-    else if (cardPlaybackRate === 1.25) next = 1.5;
-    else if (cardPlaybackRate === 1.5) next = 2.0;
-    setCardPlaybackRate(next);
-    if (cardPlayerStatus.isLoaded) cardPlayer.setPlaybackRate(next);
-  };
-
-  const closeStep = () => { cardPlayer.pause(); setIsCardSpeaking(false); setExpandedStep(null); };
+  const closeStep = () => { cardTts.stop(); setExpandedStep(null); };
+  const closeFlip = () => { cardTts.stop(); setFlipDeck(null); };
 
   // ── ctx ──
   const linkedResourceIds = useMemo(
@@ -119,7 +96,17 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
 
   const actionsNode = (
     <>
-      <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel="Share">
+      {canListen ? (
+        <TouchableOpacity
+          onPress={toggleListen}
+          style={{ padding: 4 }}
+          accessibilityRole="button"
+          accessibilityLabel={reader.isOpen ? t('editor.blocksUi.stopListening') : t('editor.blocksUi.listenToPage')}
+        >
+          <Ionicons name={reader.isOpen ? 'headset' : 'headset-outline'} size={25} color={reader.isOpen ? colors.primary : colors.textLight} />
+        </TouchableOpacity>
+      ) : null}
+      <TouchableOpacity onPress={handleShare} style={{ padding: 4 }} accessibilityLabel={t('common.share')}>
         <Ionicons name="share-outline" size={26} color={colors.textLight} />
       </TouchableOpacity>
       {doc.resourceId ? <DownloadButton resourceId={doc.resourceId} size={26} color={colors.primary} /> : null}
@@ -146,16 +133,21 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
         visible={expandedStep !== null}
         step={expandedStep}
         onClose={closeStep}
-        isSpeaking={isCardSpeaking}
-        isLoadingAudio={isCardLoadingAudio}
-        onToggleSpeak={handleCardSpeak}
-        playbackRate={cardPlaybackRate}
-        onTogglePlaybackRate={toggleCardPlaybackRate}
-        isAudioLoaded={cardPlayerStatus.isLoaded}
+        isSpeaking={cardTts.isSpeaking}
+        isLoadingAudio={cardTts.isLoading}
+        onToggleSpeak={() => expandedStep && speakCard(`${expandedStep.title}. ${expandedStep.detail}`)}
+        playbackRate={cardTts.playbackRate}
+        onTogglePlaybackRate={cardTts.togglePlaybackRate}
+        isAudioLoaded={cardTts.isAudioLoaded}
         colors={colors}
         styles={styles}
       />
-      <FlipCardModal deck={flipDeck} onClose={() => setFlipDeck(null)} />
+      <FlipCardModal
+        deck={flipDeck}
+        onClose={closeFlip}
+        audio={{ isSpeaking: cardTts.isSpeaking, isLoading: cardTts.isLoading, speak: speakCard, stop: cardTts.stop }}
+      />
+      {canListen ? <PageReaderBar reader={reader} /> : null}
     </>
   );
 
@@ -167,8 +159,8 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
         <ArticleLayout
           wide={wide}
           breadcrumb={[
-            { label: 'Library', onPress: preview ? undefined : () => router.push('/(tabs)/bookmarks') },
-            { label: doc.category ?? 'Resources' },
+            { label: t('editor.blocksUi.breadcrumbLibrary'), onPress: preview ? undefined : () => router.push('/(tabs)/bookmarks') },
+            { label: doc.category ?? t('editor.blocksUi.breadcrumbResources') },
             { label: doc.title },
           ]}
           title={titleNode}
@@ -187,7 +179,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
     <BlockCtxProvider value={ctx}>
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.white, borderBottomColor: colors.borderCard }]}>
-          <TouchableOpacity onPress={() => { if (!preview) router.back(); }} style={styles.backButton} accessibilityLabel="Go back">
+          <TouchableOpacity onPress={() => { if (!preview) router.back(); }} style={styles.backButton} accessibilityLabel={t('common.goBack')}>
             <Ionicons name="arrow-back" size={28} color={colors.textDark} />
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{actionsNode}</View>

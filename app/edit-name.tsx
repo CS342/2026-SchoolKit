@@ -10,12 +10,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { RADII, BORDERS, SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function EditNameScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { data, updateName } = useOnboarding();
   const { colors, shadows, appStyles } = useTheme();
@@ -47,24 +49,24 @@ export default function EditNameScreen() {
   return (
     <View style={styles.container}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Edit Name</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.editName')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           style={[appStyles.editSaveButton, !name.trim() && appStyles.editSaveButtonDisabled]}
           disabled={!name.trim()}
           accessibilityRole="button"
-          accessibilityLabel="Save"
+          accessibilityLabel={t('common.save')}
           accessibilityState={{ disabled: !name.trim() }}
         >
-          <Text style={[appStyles.editSaveText, !name.trim() && appStyles.editSaveTextDisabled]}>Save</Text>
+          <Text style={[appStyles.editSaveText, !name.trim() && appStyles.editSaveTextDisabled]}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
       <Animated.View style={[styles.content, cardAnimStyle]}>
-        <Text style={styles.label}>Your Name</Text>
+        <Text style={styles.label}>{t('profile.yourName')}</Text>
         <TextInput
           style={[
             styles.input,
@@ -72,7 +74,7 @@ export default function EditNameScreen() {
           ]}
           value={name}
           onChangeText={setName}
-          placeholder="Enter your name"
+          placeholder={t('profile.namePlaceholder')}
           placeholderTextColor={colors.inputPlaceholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

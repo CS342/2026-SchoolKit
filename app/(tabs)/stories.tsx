@@ -13,15 +13,16 @@ import {
 } from "react-native";
 import { ScreenHeader } from "../../components/ui";
 import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 const WEB_NORMS = [
-  { icon: "🎒", title: "School Stories Only", desc: "Every story must connect to school life." },
-  { icon: "💙", title: "Be Kind & Supportive", desc: "Support each other with empathy." },
-  { icon: "🩺", title: "No Medical Advice", desc: "Consult your healthcare team." },
-  { icon: "🔒", title: "Protect Privacy", desc: "Keep identities anonymous." },
-  { icon: "🤝", title: "Respect Journeys", desc: "Everyone's experience is unique." },
-  { icon: "🚫", title: "Zero Tolerance", desc: "No hate, bullying, or harassment." },
-  { icon: "🌿", title: "Safe Language", desc: "Avoid triggering or graphic details." },
+  { icon: "🎒", key: "schoolStoriesOnly" },
+  { icon: "💙", key: "beKind" },
+  { icon: "🩺", key: "noMedicalAdvice" },
+  { icon: "🔒", key: "protectPrivacy" },
+  { icon: "🤝", key: "respectJourneys" },
+  { icon: "🚫", key: "zeroTolerance" },
+  { icon: "🌿", key: "safeLanguage" },
 ];
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -55,6 +56,7 @@ import { isStudentRole } from '../../utils/profile';
 
 export default function StoriesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { user, isAnonymous, isModerator } = useAuth();
   const { stories, storiesLoading, refreshStories, downloadedStories } =
@@ -196,8 +198,8 @@ export default function StoriesScreen() {
       <View style={styles.container}>
         {/* Sticky page header */}
         <ScreenHeader
-          title="Peer Support"
-          subtitle="Safe space to share and find support."
+          title={t('stories.header.title')}
+          subtitle={t('stories.header.subtitle')}
           right={
             <>
               {isModerator && (
@@ -234,11 +236,11 @@ export default function StoriesScreen() {
             {/* ── Left Sidebar ──────────────────────────── */}
             <View style={styles.webLeftCol}>
               <View style={[styles.webSidebarCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
-                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>SORT BY</Text>
+                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>{t('stories.sortBy')}</Text>
                 {[
-                  { id: "new", label: "New", icon: "time-outline" as const },
-                  { id: "popular", label: "Popular", icon: "trending-up-outline" as const },
-                  ...(user ? [{ id: "my-stories", label: "My Stories", icon: "person-outline" as const }] : []),
+                  { id: "new", label: t('stories.options.new'), icon: "time-outline" as const },
+                  { id: "popular", label: t('stories.options.popular'), icon: "trending-up-outline" as const },
+                  ...(user ? [{ id: "my-stories", label: t('stories.options.myStories'), icon: "person-outline" as const }] : []),
                 ].map((opt) => {
                   const isActive = sort === opt.id;
                   return (
@@ -255,13 +257,13 @@ export default function StoriesScreen() {
 
                 <View style={[styles.webDivider, { backgroundColor: colors.border }]} />
 
-                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>FILTER BY TAG</Text>
+                <Text style={[styles.webSidebarLabel, { color: colors.textLight }]}>{t('stories.filterByTag')}</Text>
                 <Pressable style={[styles.webTagPickerBtn, { backgroundColor: colors.primary + "10" }]} onPress={() => setShowTagsModal(true)}>
                   <Ionicons name="options-outline" size={15} color={colors.primary} />
                   <Text style={[styles.webTagPickerText, { color: colors.primary }]}>
                     {selectedTags.length > 0
-                      ? `${selectedTags.length} tag${selectedTags.length > 1 ? "s" : ""} selected`
-                      : "Choose tags..."}
+                      ? t(selectedTags.length === 1 ? 'stories.tagsSelectedOne' : 'stories.tagsSelectedOther', { count: selectedTags.length })
+                      : t('stories.chooseTags')}
                   </Text>
                 </Pressable>
                 {selectedTags.length > 0 && (
@@ -280,7 +282,7 @@ export default function StoriesScreen() {
                       );
                     })}
                     <Pressable onPress={() => setSelectedTags([])}>
-                      <Text style={[styles.webClearTags, { color: colors.textLight }]}>Clear all</Text>
+                      <Text style={[styles.webClearTags, { color: colors.textLight }]}>{t('stories.clearAll')}</Text>
                     </Pressable>
                   </View>
                 )}
@@ -294,7 +296,7 @@ export default function StoriesScreen() {
                 <Ionicons name="search" size={15} color={colors.textLight} />
                 <TextInput
                   style={[styles.webSearchInput, { color: colors.textDark }]}
-                  placeholder="Search stories..."
+                  placeholder={t('stories.searchPlaceholder')}
                   placeholderTextColor={colors.textLight}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -309,10 +311,10 @@ export default function StoriesScreen() {
               {isModeratorMode && (
                 <View style={[styles.modModeBar, { borderRadius: 12, marginBottom: 16, backgroundColor: colors.primary + "10", borderBottomColor: colors.primary + "30" }]}>
                   <Ionicons name="shield" size={13} color={colors.primary} />
-                  <Text style={[styles.modModeBarText, { color: colors.primary }]}>Moderator Mode</Text>
+                  <Text style={[styles.modModeBarText, { color: colors.primary }]}>{t('stories.moderatorMode')}</Text>
                   {pendingCount > 0 && (
                     <View style={[styles.modModeCount, { backgroundColor: colors.primary + "20" }]}>
-                      <Text style={[styles.modModeCountText, { color: colors.primary }]}>{pendingCount} pending</Text>
+                      <Text style={[styles.modModeCountText, { color: colors.primary }]}>{t('stories.pendingCount', { count: pendingCount })}</Text>
                     </View>
                   )}
                 </View>
@@ -321,7 +323,7 @@ export default function StoriesScreen() {
                 <View style={[styles.pendingBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: colors.warningBg, borderColor: colors.warningText + "40" }]}>
                   <Ionicons name="time-outline" size={15} color={colors.warningText} />
                   <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
-                    {userPendingCount === 1 ? "Your story is" : `${userPendingCount} stories are`} being reviewed
+                    {t(userPendingCount === 1 ? 'stories.reviewingOne' : 'stories.reviewingOther', { count: userPendingCount })}
                   </Text>
                   <Pressable onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
                     <Ionicons name="close" size={16} color={colors.warningText} />
@@ -334,10 +336,10 @@ export default function StoriesScreen() {
                     <View style={styles.rejectedBannerLeft}>
                       <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
                       <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
-                        {rejectedCount} {rejectedCount === 1 ? "story needs" : "stories need"} a revision
+                        {t(rejectedCount === 1 ? 'stories.needsRevisionOne' : 'stories.needsRevisionOther', { count: rejectedCount })}
                       </Text>
                     </View>
-                    <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>Review →</Text>
+                    <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>{t('stories.reviewAction')}</Text>
                   </Pressable>
                   <Pressable onPress={() => setDismissedRejectedNotif(true)} hitSlop={10} style={{ paddingLeft: 8 }}>
                     <Ionicons name="close" size={16} color={colors.error} />
@@ -354,13 +356,13 @@ export default function StoriesScreen() {
                   <View style={sharedStyles.pageIconCircle}>
                     <Ionicons name="chatbubbles-outline" size={SIZING.iconPage} color={colors.primary} />
                   </View>
-                  <Text style={sharedStyles.pageTitle}>Your voice matters here</Text>
+                  <Text style={sharedStyles.pageTitle}>{t('stories.empty.voiceTitle')}</Text>
                   <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                    This is a safe, supportive space. Sharing your experience can bring comfort to someone else.
+                    {t('stories.empty.voiceSubtitleWeb')}
                   </Text>
                   {!isAnonymous && (
                     <PrimaryButton
-                      title="Share Your Story"
+                      title={t('stories.shareYourStory')}
                       icon="create-outline"
                       onPress={() => router.push("/create-story" as any)}
                     />
@@ -382,38 +384,38 @@ export default function StoriesScreen() {
             {/* ── Right Sidebar ─────────────────────────── */}
             <View style={styles.webRightCol}>
                 <View style={[styles.webSidebarCard, { marginBottom: 16, backgroundColor: colors.white, borderColor: colors.border }]}>
-                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>Share Your Story</Text>
+                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>{t('stories.shareYourStory')}</Text>
                   <Text style={[styles.webRightCardBody, { color: colors.textMuted }]}>
-                    Your experience can bring comfort and courage to someone walking a similar path.
+                    {t('stories.shareCardBody')}
                   </Text>
                   {isAnonymous ? (
                     <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/auth" as any)}>
                       <Ionicons name="lock-closed-outline" size={15} color={colors.white} />
-                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>Sign in to share your story</Text>
+                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>{t('stories.signInToShare')}</Text>
                     </Pressable>
                   ) : (
                     <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-story" as any)}>
                       <Ionicons name="create-outline" size={15} color={colors.white} />
-                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>Write a Story</Text>
+                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>{t('stories.writeAStory')}</Text>
                     </Pressable>
                   )}
                 </View>
               <Pressable style={[styles.webSidebarCard, { backgroundColor: colors.white, borderColor: colors.border }]} onPress={() => setShowNormsModal(true)}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
                   <Ionicons name="shield-checkmark-outline" size={17} color={colors.primary} />
-                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>Community Norms</Text>
+                  <Text style={[styles.webRightCardTitle, { color: colors.textDark }]}>{t('stories.communityNorms')}</Text>
                 </View>
                 {WEB_NORMS.map((norm, i) => (
                   <View key={i} style={styles.webNormItem}>
                     <Text style={styles.webNormIcon}>{norm.icon}</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.webNormTitle, { color: colors.textDark }]}>{norm.title}</Text>
-                      <Text style={[styles.webNormDesc, { color: colors.textMuted }]}>{norm.desc}</Text>
+                      <Text style={[styles.webNormTitle, { color: colors.textDark }]}>{t(`stories.webNorms.${norm.key}.title`)}</Text>
+                      <Text style={[styles.webNormDesc, { color: colors.textMuted }]}>{t(`stories.webNorms.${norm.key}.desc`)}</Text>
                     </View>
                   </View>
                 ))}
                 <Pressable onPress={() => setShowNormsModal(true)} style={[styles.webNormReadMore, { borderTopColor: colors.border }]}>
-                  <Text style={[styles.webNormReadMoreText, { color: colors.primary }]}>Read full norms →</Text>
+                  <Text style={[styles.webNormReadMoreText, { color: colors.primary }]}>{t('stories.readFullNorms')}</Text>
                 </Pressable>
               </Pressable>
             </View>
@@ -451,10 +453,10 @@ export default function StoriesScreen() {
         <View style={styles.headerTitleRow}>
           <View>
             <Text style={[appStyles.tabHeaderTitle, { color: colors.textDark, marginBottom: 0 }]}>
-              Peer Support
+              {t('stories.header.title')}
             </Text>
             <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-              Safe space to share and find support.
+              {t('stories.header.subtitle')}
             </Text>
           </View>
           <View style={styles.headerActions}>
@@ -506,7 +508,7 @@ export default function StoriesScreen() {
           />
           <TextInput
             style={[styles.searchInput, { color: colors.textDark }]}
-            placeholder="Search stories..."
+            placeholder={t('stories.searchPlaceholder')}
             placeholderTextColor={colors.textLight}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -528,11 +530,11 @@ export default function StoriesScreen() {
       {isModeratorMode ? (
         <View style={[styles.modModeBar, { backgroundColor: colors.primary + "10", borderBottomColor: colors.primary + "30" }]}>
           <Ionicons name="shield" size={13} color={colors.primary} />
-          <Text style={[styles.modModeBarText, { color: colors.primary }]}>Moderator Mode</Text>
+          <Text style={[styles.modModeBarText, { color: colors.primary }]}>{t('stories.moderatorMode')}</Text>
           {Boolean(pendingCount > 0) && (
             <View style={[styles.modModeCount, { backgroundColor: colors.primary + "20" }]}>
               <Text style={[styles.modModeCountText, { color: colors.primary }]}>
-                {pendingCount} pending
+                {t('stories.pendingCount', { count: pendingCount })}
               </Text>
             </View>
           )}
@@ -558,7 +560,7 @@ export default function StoriesScreen() {
               >
                 <Ionicons name="options" size={16} color={colors.white} />
                 <Text style={[styles.chipText, { color: colors.white }, styles.chipTextActive]}>
-                  Filter
+                  {t('stories.filter')}
                 </Text>
                 <View
                   style={[
@@ -578,7 +580,7 @@ export default function StoriesScreen() {
                   size={16}
                   color={colors.textMuted}
                 />
-                <Text style={[styles.chipText, { color: colors.textMuted }]}>Tags</Text>
+                <Text style={[styles.chipText, { color: colors.textMuted }]}>{t('stories.tags')}</Text>
               </View>
             )}
           </Pressable>
@@ -621,17 +623,17 @@ export default function StoriesScreen() {
 
           {/* Sort Options */}
           {[
-            { id: "new", label: "New", icon: "time-outline" as const },
+            { id: "new", label: t('stories.options.new'), icon: "time-outline" as const },
             {
               id: "popular",
-              label: "Popular",
+              label: t('stories.options.popular'),
               icon: "trending-up-outline" as const,
             },
             ...(user
               ? [
                   {
                     id: "my-stories",
-                    label: "My Stories",
+                    label: t('stories.options.myStories'),
                     icon: "person-outline" as const,
                   },
                 ]
@@ -710,7 +712,7 @@ export default function StoriesScreen() {
         <View style={[styles.offlineBanner, { backgroundColor: colors.appBackgroundAlt }]}>
           <Ionicons name="cloud-offline-outline" size={15} color={colors.textMuted} />
           <Text style={[styles.offlineBannerText, { color: colors.textMuted }]}>
-            You're offline · Showing your downloads
+            {t('stories.offline')}
           </Text>
         </View>
       )}
@@ -725,10 +727,7 @@ export default function StoriesScreen() {
         <View style={[styles.pendingBanner, { backgroundColor: colors.warningBg, borderColor: colors.warningText + "40" }]}>
           <Ionicons name="time-outline" size={15} color={colors.warningText} />
           <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
-            {userPendingCount === 1
-              ? "Your story is"
-              : `${userPendingCount} stories are`}{" "}
-            being reviewed · see My Stories
+            {t(userPendingCount === 1 ? 'stories.reviewingSeeMyStoriesOne' : 'stories.reviewingSeeMyStoriesOther', { count: userPendingCount })}
           </Text>
           <Pressable
             onPress={() => setDismissedPendingNotif(true)}
@@ -754,12 +753,10 @@ export default function StoriesScreen() {
             <View style={styles.rejectedBannerLeft}>
               <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
               <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
-                {rejectedCount}{" "}
-                {rejectedCount === 1 ? "story needs" : "stories need"} a
-                revision
+                {t(rejectedCount === 1 ? 'stories.needsRevisionOne' : 'stories.needsRevisionOther', { count: rejectedCount })}
               </Text>
             </View>
-            <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>Review →</Text>
+            <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>{t('stories.reviewAction')}</Text>
           </Pressable>
           <Pressable
             onPress={() => setDismissedRejectedNotif(true)}
@@ -801,10 +798,9 @@ export default function StoriesScreen() {
                   color={colors.textMuted}
                 />
               </View>
-              <Text style={sharedStyles.pageTitle}>No downloads yet</Text>
+              <Text style={sharedStyles.pageTitle}>{t('stories.empty.noDownloadsTitle')}</Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                Save stories while online using the download button, then read
-                them anytime offline.
+                {t('stories.empty.noDownloadsSubtitle')}
               </Text>
             </View>
           ) : isModeratorMode ? (
@@ -821,9 +817,9 @@ export default function StoriesScreen() {
                   color={colors.successText}
                 />
               </View>
-              <Text style={sharedStyles.pageTitle}>All caught up!</Text>
+              <Text style={sharedStyles.pageTitle}>{t('stories.empty.allCaughtUpTitle')}</Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                There are currently no pending stories to review.
+                {t('stories.empty.allCaughtUpSubtitle')}
               </Text>
             </View>
           ) : sort === "my-stories" ? (
@@ -835,13 +831,12 @@ export default function StoriesScreen() {
                   color={colors.primary}
                 />
               </View>
-              <Text style={sharedStyles.pageTitle}>No stories yet</Text>
+              <Text style={sharedStyles.pageTitle}>{t('stories.empty.noStoriesTitle')}</Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                You haven't shared any stories. When you do, they will appear
-                here.
+                {t('stories.empty.noStoriesSubtitle')}
               </Text>
               <PrimaryButton
-                title="Share Your Story"
+                title={t('stories.shareYourStory')}
                 icon="create-outline"
                 onPress={() => router.push("/create-story" as any)}
               />
@@ -856,16 +851,14 @@ export default function StoriesScreen() {
                 />
               </View>
               <Text style={sharedStyles.pageTitle}>
-                Your voice matters here
+                {t('stories.empty.voiceTitle')}
               </Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                This is a safe, supportive space. Sharing your experience can
-                bring comfort and courage to someone else walking a similar
-                path.
+                {t('stories.empty.voiceSubtitle')}
               </Text>
               {!isAnonymous && (
                 <PrimaryButton
-                  title="Share Your Story"
+                  title={t('stories.shareYourStory')}
                   icon="create-outline"
                   onPress={() => router.push("/create-story" as any)}
                 />

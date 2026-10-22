@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useAIGenerate } from '../hooks/useAIGenerate';
 import { useGenerationProgress } from '../hooks/useGenerationProgress';
@@ -24,21 +25,15 @@ const ACCENT_SWATCHES = [
   '#F59E0B', '#10B981', '#0EA5E9', '#1A1A2E',
 ];
 
+// Stable values stored in state and sent to the API; display labels are
+// translated via t(`design.ai.styleOptions.<value>`).
 const STYLE_OPTIONS = ['Modern', 'Playful', 'Minimal', 'Bold'];
 
-const EXAMPLE_PROMPTS = [
-  'A step-by-step guide for returning to school after a cancer diagnosis',
-  'Myth vs fact flip cards about childhood cancer treatments',
-  'A feelings check-in card with emotions kids may experience during treatment',
-  'Tips for talking to friends and classmates about your diagnosis',
-];
+// Example-prompt suggestion chips. Keys resolve to translated display text
+// via t(`design.ai.examples.<key>`) / t(`design.ai.editExamples.<key>`).
+const EXAMPLE_PROMPT_KEYS = ['returningGuide', 'mythFact', 'feelingsCheckin', 'talkingToFriends'];
 
-const EDIT_EXAMPLE_PROMPTS = [
-  'Change the title color to red',
-  'Make the background darker',
-  'Add a subtitle below the title',
-  'Remove the footer section',
-];
+const EDIT_EXAMPLE_PROMPT_KEYS = ['titleColor', 'darkerBg', 'addSubtitle', 'removeFooter'];
 
 export function AIGenerateModal({
   visible,
@@ -47,6 +42,7 @@ export function AIGenerateModal({
   onDesignGenerated,
   existingDocument,
 }: AIGenerateModalProps) {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const { generate, isGenerating, error, clearError } = useAIGenerate();
 
@@ -256,10 +252,10 @@ export function AIGenerateModal({
             }}
           >
             {step === 'mode'
-              ? 'Generate with AI'
+              ? t('design.ai.title.generate')
               : isGenerating
-                ? (isEditMode ? 'Updating Your Design' : 'Creating Your Design')
-                : (isEditMode ? 'Edit with AI' : 'Describe Your Design')}
+                ? (isEditMode ? t('design.ai.title.updating') : t('design.ai.title.creating'))
+                : (isEditMode ? t('design.ai.title.editWithAi') : t('design.ai.title.describe'))}
           </h2>
         </div>
         <p
@@ -270,14 +266,14 @@ export function AIGenerateModal({
           }}
         >
           {step === 'mode'
-            ? 'Choose how you want to create your design'
+            ? t('design.ai.subtitle.mode')
             : isGenerating
-              ? 'AI is working its magic — this may take a moment'
+              ? t('design.ai.subtitle.generating')
               : isEditMode
-                ? 'Describe what you want to change'
+                ? t('design.ai.subtitle.editDescribe')
                 : selectedTemplate
-                  ? `Template: ${AI_TEMPLATES.find((t) => t.id === selectedTemplate)?.name}`
-                  : 'AI Freestyle — describe anything'}
+                  ? t('design.ai.subtitle.template', { name: AI_TEMPLATES.find((tpl) => tpl.id === selectedTemplate)?.name })
+                  : t('design.ai.subtitle.freestyle')}
         </p>
 
         {/* Step 1: Mode Selection — chat input is the hero, templates are secondary */}
@@ -318,10 +314,10 @@ export function AIGenerateModal({
                       lineHeight: 1.2,
                     }}
                   >
-                    AI Freestyle
+                    {t('design.ai.freestyle.title')}
                   </div>
                   <div style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
-                    Describe anything and AI builds it from scratch
+                    {t('design.ai.freestyle.subtitle')}
                   </div>
                 </div>
               </div>
@@ -335,7 +331,7 @@ export function AIGenerateModal({
                     handleFreestyleGenerate();
                   }
                 }}
-                placeholder="e.g. A step-by-step guide for returning to school after a cancer diagnosis"
+                placeholder={t('design.ai.freestyle.placeholder')}
                 rows={4}
                 autoFocus
                 style={{
@@ -356,9 +352,11 @@ export function AIGenerateModal({
                   marginTop: 10,
                 }}
               >
-                {EXAMPLE_PROMPTS.map((ex) => (
+                {EXAMPLE_PROMPT_KEYS.map((k) => {
+                  const ex = t(`design.ai.examples.${k}`);
+                  return (
                   <button
-                    key={ex}
+                    key={k}
                     onClick={() => setPrompt(ex)}
                     style={{
                       padding: '5px 10px',
@@ -372,7 +370,8 @@ export function AIGenerateModal({
                   >
                     {ex}
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Generate button */}
@@ -388,7 +387,7 @@ export function AIGenerateModal({
                     fontSize: 14,
                   }}
                 >
-                  Generate Design
+                  {t('design.ai.generateDesign')}
                 </button>
               </div>
             </div>
@@ -404,7 +403,7 @@ export function AIGenerateModal({
                 marginBottom: 10,
               }}
             >
-              Or start from a template
+              {t('design.ai.orTemplate')}
             </div>
             <div
               style={{
@@ -467,7 +466,7 @@ export function AIGenerateModal({
                   color: colors.textDark,
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -557,7 +556,7 @@ export function AIGenerateModal({
                       textAlign: 'center',
                     }}
                   >
-                    Step {currentStepIndex + 1} of {totalSteps}
+                    {t('design.ai.stepCounter', { current: currentStepIndex + 1, total: totalSteps })}
                   </div>
                 </div>
               </div>
@@ -598,7 +597,7 @@ export function AIGenerateModal({
                             inputTab === tab ? colors.textDark : colors.textLight,
                         }}
                       >
-                        {tab === 'structured' ? 'Structured' : 'Describe It'}
+                        {tab === 'structured' ? t('design.ai.tab.structured') : t('design.ai.tab.describe')}
                       </button>
                     ))}
                   </div>
@@ -610,34 +609,34 @@ export function AIGenerateModal({
                     {/* Title */}
                     <div>
                       <label style={labelStyle(colors)}>
-                        Title <span style={{ color: '#EF4444' }}>*</span>
+                        {t('design.ai.field.title')} <span style={{ color: '#EF4444' }}>*</span>
                       </label>
                       <input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Welcome to Science Class"
+                        placeholder={t('design.ai.field.titlePlaceholder')}
                         style={inputStyle(colors)}
                       />
                     </div>
 
                     {/* Subtitle */}
                     <div>
-                      <label style={labelStyle(colors)}>Subtitle</label>
+                      <label style={labelStyle(colors)}>{t('design.ai.field.subtitle')}</label>
                       <input
                         value={subtitle}
                         onChange={(e) => setSubtitle(e.target.value)}
-                        placeholder="e.g. Chapter 3: The Solar System"
+                        placeholder={t('design.ai.field.subtitlePlaceholder')}
                         style={inputStyle(colors)}
                       />
                     </div>
 
                     {/* Body text */}
                     <div>
-                      <label style={labelStyle(colors)}>Body Text</label>
+                      <label style={labelStyle(colors)}>{t('design.ai.field.bodyText')}</label>
                       <textarea
                         value={bodyText}
                         onChange={(e) => setBodyText(e.target.value)}
-                        placeholder="Additional content to include..."
+                        placeholder={t('design.ai.field.bodyPlaceholder')}
                         rows={3}
                         style={{
                           ...inputStyle(colors),
@@ -649,7 +648,7 @@ export function AIGenerateModal({
 
                     {/* Style */}
                     <div>
-                      <label style={labelStyle(colors)}>Style</label>
+                      <label style={labelStyle(colors)}>{t('design.ai.field.style')}</label>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {STYLE_OPTIONS.map((s) => (
                           <button
@@ -667,7 +666,7 @@ export function AIGenerateModal({
                               color: style === s ? colors.primary : colors.textDark,
                             }}
                           >
-                            {s}
+                            {t(`design.ai.styleOptions.${s}`)}
                           </button>
                         ))}
                       </div>
@@ -675,7 +674,7 @@ export function AIGenerateModal({
 
                     {/* Accent color */}
                     <div>
-                      <label style={labelStyle(colors)}>Accent Color</label>
+                      <label style={labelStyle(colors)}>{t('design.ai.field.accentColor')}</label>
                       <div style={{ display: 'flex', gap: 8 }}>
                         {ACCENT_SWATCHES.map((c) => (
                           <button
@@ -710,7 +709,7 @@ export function AIGenerateModal({
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={isEditMode ? "Describe what you want to change..." : "Describe the design you want..."}
+                      placeholder={isEditMode ? t('design.ai.promptPlaceholder.edit') : t('design.ai.promptPlaceholder.create')}
                       rows={5}
                       style={{
                         ...inputStyle(colors),
@@ -726,9 +725,11 @@ export function AIGenerateModal({
                         marginTop: 10,
                       }}
                     >
-                      {(isEditMode ? EDIT_EXAMPLE_PROMPTS : EXAMPLE_PROMPTS).map((ex) => (
+                      {(isEditMode ? EDIT_EXAMPLE_PROMPT_KEYS : EXAMPLE_PROMPT_KEYS).map((k) => {
+                        const ex = t(`design.ai.${isEditMode ? 'editExamples' : 'examples'}.${k}`);
+                        return (
                         <button
-                          key={ex}
+                          key={k}
                           onClick={() => setPrompt(ex)}
                           style={{
                             padding: '5px 10px',
@@ -742,7 +743,8 @@ export function AIGenerateModal({
                         >
                           {ex}
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -775,7 +777,7 @@ export function AIGenerateModal({
                     color: '#fff',
                   }}
                 >
-                  Try Again
+                  {t('design.ai.tryAgain')}
                 </button>
               </div>
             )}
@@ -801,7 +803,7 @@ export function AIGenerateModal({
                   cursor: isGenerating ? 'default' : 'pointer',
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               {!isGenerating && (
                 <button
@@ -814,7 +816,7 @@ export function AIGenerateModal({
                     color: canGenerate ? '#fff' : colors.textLight,
                   }}
                 >
-                  {isEditMode ? 'Update Design' : 'Generate Design'}
+                  {isEditMode ? t('design.ai.updateDesign') : t('design.ai.generateDesign')}
                 </button>
               )}
             </div>

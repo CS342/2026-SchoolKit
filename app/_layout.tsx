@@ -3,6 +3,7 @@ import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, R
 import { StatusBar } from 'expo-status-bar';
 import { Stack, usePathname, DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import '../lib/i18n'; // initialize i18next before any screen renders
 import { AuthProvider } from '../contexts/AuthContext';
 import { OnboardingProvider } from '../contexts/OnboardingContext';
 import { OfflineProvider } from '../contexts/OfflineContext';
@@ -12,6 +13,7 @@ import { JournalProvider } from '../contexts/JournalContext';
 import { AccomplishmentProvider } from '../contexts/AccomplishmentContext';
 import { OfflineBanner } from '../components/OfflineBanner';
 import PieceRevealOverlay from '../components/puzzle/PieceRevealOverlay';
+import { SHOW_PUZZLES } from '../constants/features';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PersistentSidebar } from '../components/PersistentSidebar';
 import { useResponsive } from '../hooks/useResponsive';
@@ -76,13 +78,13 @@ function InnerLayout() {
           {!hideSidebar && <PersistentSidebar />}
           <View style={{ flex: 1 }}>
             {stack}
-            <PieceRevealOverlay />
+            {SHOW_PUZZLES && <PieceRevealOverlay />}
           </View>
         </View>
       ) : (
         <View style={{ flex: 1 }}>
           {stack}
-          <PieceRevealOverlay />
+          {SHOW_PUZZLES && <PieceRevealOverlay />}
         </View>
       )}
     </NavThemeProvider>

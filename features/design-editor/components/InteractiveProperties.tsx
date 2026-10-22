@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type {
@@ -228,14 +229,22 @@ export function InteractiveProperties({
   const updateInteractionConfig = useEditorStore((s) => s.updateInteractionConfig);
   const enterComponent = useEditorStore((s) => s.enterComponent);
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const update = (changes: Record<string, unknown>) => {
     updateInteractionConfig(object.id, changes as any);
   };
 
+  const itemsNoun =
+    object.interactionType === 'carousel'
+      ? t('design.interactive.nouns.slides')
+      : object.interactionType === 'tabs'
+      ? t('design.interactive.nouns.tabs')
+      : t('design.interactive.nouns.sheets');
+
   return (
     <>
-      <Section title="Component">
+      <Section title={t('design.interactive.component')}>
         <div
           style={{
             padding: '8px 12px',
@@ -247,7 +256,7 @@ export function InteractiveProperties({
             marginBottom: 8,
           }}
         >
-          {getTypeLabel(object.interactionType)}
+          {getTypeLabel(object.interactionType, t)}
         </div>
         <button
           onClick={() => {
@@ -266,11 +275,11 @@ export function InteractiveProperties({
             cursor: 'pointer',
           }}
         >
-          Edit Contents
+          {t('design.interactive.editContents')}
         </button>
       </Section>
 
-      <Section title={`Groups (${object.groups.length})`}>
+      <Section title={t('design.interactive.groups', { count: object.groups.length })}>
         {object.groups.map((group) => (
           <div
             key={group.role}
@@ -285,16 +294,18 @@ export function InteractiveProperties({
           >
             <span>{group.label}</span>
             <span style={{ fontSize: 11, color: colors.textLight }}>
-              {group.objectIds.length} objects
+              {t(
+                group.objectIds.length === 1
+                  ? 'design.interactive.objectsCountOne'
+                  : 'design.interactive.objectsCountOther',
+                { count: group.objectIds.length },
+              )}
             </span>
           </div>
         ))}
         {['carousel', 'tabs', 'bottom-sheet'].includes(object.interactionType) && (
           <div style={{ fontSize: 11, color: colors.textLight, marginTop: 4 }}>
-            Use the tab bar above the canvas to add or remove {
-              object.interactionType === 'carousel' ? 'slides' :
-              object.interactionType === 'tabs' ? 'tabs' : 'sheets'
-            }.
+            {t('design.interactive.groupsHint', { items: itemsNoun })}
           </div>
         )}
       </Section>
@@ -358,11 +369,12 @@ function FlipCardProperties({
   config: FlipCardConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Flip Settings">
+    <Section title={t('design.interactive.flip.title')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <NumberInput
-          label="Duration (ms)"
+          label={t('design.interactive.durationMs')}
           value={config.flipDuration}
           onChange={(v) => onUpdate({ flipDuration: v })}
           min={100}
@@ -370,21 +382,21 @@ function FlipCardProperties({
           step={50}
         />
         <SelectInput
-          label="Direction"
+          label={t('design.interactive.flip.direction')}
           value={config.flipDirection}
           options={[
-            { value: 'horizontal', label: 'Horizontal' },
-            { value: 'vertical', label: 'Vertical' },
+            { value: 'horizontal', label: t('design.interactive.options.horizontal') },
+            { value: 'vertical', label: t('design.interactive.options.vertical') },
           ]}
           onChange={(v) => onUpdate({ flipDirection: v })}
         />
       </div>
       <SelectInput
-        label="Default Side"
+        label={t('design.interactive.flip.defaultSide')}
         value={config.defaultSide}
         options={[
-          { value: 'front', label: 'Front' },
-          { value: 'back', label: 'Back' },
+          { value: 'front', label: t('design.interactive.options.front') },
+          { value: 'back', label: t('design.interactive.options.back') },
         ]}
         onChange={(v) => onUpdate({ defaultSide: v })}
       />
@@ -399,18 +411,19 @@ function BottomSheetProperties({
   config: BottomSheetConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Sheet Settings">
+    <Section title={t('design.interactive.sheet.title')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <NumberInput
-          label="Height %"
+          label={t('design.interactive.sheet.heightPercent')}
           value={config.sheetHeightPercent}
           onChange={(v) => onUpdate({ sheetHeightPercent: v })}
           min={20}
           max={100}
         />
         <NumberInput
-          label="Duration (ms)"
+          label={t('design.interactive.durationMs')}
           value={config.slideDuration}
           onChange={(v) => onUpdate({ slideDuration: v })}
           min={100}
@@ -420,7 +433,7 @@ function BottomSheetProperties({
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <NumberInput
-          label="Backdrop Opacity"
+          label={t('design.interactive.sheet.backdropOpacity')}
           value={config.backdropOpacity}
           onChange={(v) => onUpdate({ backdropOpacity: Math.max(0, Math.min(1, v)) })}
           min={0}
@@ -429,7 +442,7 @@ function BottomSheetProperties({
         />
       </div>
       <CheckboxInput
-        label="Dismiss on backdrop tap"
+        label={t('design.interactive.sheet.dismissOnBackdropTap')}
         value={config.dismissOnBackdropTap}
         onChange={(v) => onUpdate({ dismissOnBackdropTap: v })}
       />
@@ -444,11 +457,12 @@ function ExpandableProperties({
   config: ExpandableConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Expand Settings">
+    <Section title={t('design.interactive.expand.title')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <NumberInput
-          label="Duration (ms)"
+          label={t('design.interactive.durationMs')}
           value={config.expandDuration}
           onChange={(v) => onUpdate({ expandDuration: v })}
           min={100}
@@ -456,20 +470,20 @@ function ExpandableProperties({
           step={50}
         />
         <SelectInput
-          label="Easing"
+          label={t('design.interactive.expand.easing')}
           value={config.easing}
           options={[
-            { value: 'ease', label: 'Ease' },
-            { value: 'ease-in', label: 'Ease In' },
-            { value: 'ease-out', label: 'Ease Out' },
-            { value: 'ease-in-out', label: 'Ease In-Out' },
-            { value: 'linear', label: 'Linear' },
+            { value: 'ease', label: t('design.interactive.options.ease') },
+            { value: 'ease-in', label: t('design.interactive.options.ease-in') },
+            { value: 'ease-out', label: t('design.interactive.options.ease-out') },
+            { value: 'ease-in-out', label: t('design.interactive.options.ease-in-out') },
+            { value: 'linear', label: t('design.interactive.options.linear') },
           ]}
           onChange={(v) => onUpdate({ easing: v })}
         />
       </div>
       <CheckboxInput
-        label="Default expanded"
+        label={t('design.interactive.expand.defaultExpanded')}
         value={config.defaultExpanded}
         onChange={(v) => onUpdate({ defaultExpanded: v })}
       />
@@ -484,33 +498,34 @@ function EntranceProperties({
   config: EntranceConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Entrance Settings">
+    <Section title={t('design.interactive.entrance.title')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <SelectInput
-          label="Animation"
+          label={t('design.interactive.entrance.animation')}
           value={config.animation}
           options={[
-            { value: 'fade-in', label: 'Fade In' },
-            { value: 'slide-up', label: 'Slide Up' },
-            { value: 'scale-up', label: 'Scale Up' },
-            { value: 'bounce', label: 'Bounce' },
+            { value: 'fade-in', label: t('design.interactive.options.fade-in') },
+            { value: 'slide-up', label: t('design.interactive.options.slide-up') },
+            { value: 'scale-up', label: t('design.interactive.options.scale-up') },
+            { value: 'bounce', label: t('design.interactive.options.bounce') },
           ]}
           onChange={(v) => onUpdate({ animation: v })}
         />
         <SelectInput
-          label="Trigger"
+          label={t('design.interactive.entrance.trigger')}
           value={config.trigger}
           options={[
-            { value: 'on-load', label: 'On Load' },
-            { value: 'on-scroll', label: 'On Scroll' },
+            { value: 'on-load', label: t('design.interactive.options.on-load') },
+            { value: 'on-scroll', label: t('design.interactive.options.on-scroll') },
           ]}
           onChange={(v) => onUpdate({ trigger: v })}
         />
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <NumberInput
-          label="Duration (ms)"
+          label={t('design.interactive.durationMs')}
           value={config.duration}
           onChange={(v) => onUpdate({ duration: v })}
           min={100}
@@ -518,7 +533,7 @@ function EntranceProperties({
           step={50}
         />
         <NumberInput
-          label="Stagger (ms)"
+          label={t('design.interactive.entrance.stagger')}
           value={config.staggerDelay}
           onChange={(v) => onUpdate({ staggerDelay: v })}
           min={0}
@@ -529,7 +544,7 @@ function EntranceProperties({
       {config.animation === 'bounce' && (
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <NumberInput
-            label="Spring Friction"
+            label={t('design.interactive.entrance.springFriction')}
             value={config.springFriction ?? 8}
             onChange={(v) => onUpdate({ springFriction: v })}
             min={1}
@@ -537,7 +552,7 @@ function EntranceProperties({
             step={1}
           />
           <NumberInput
-            label="Spring Tension"
+            label={t('design.interactive.entrance.springTension')}
             value={config.springTension ?? 40}
             onChange={(v) => onUpdate({ springTension: v })}
             min={10}
@@ -559,11 +574,12 @@ function CarouselProperties({
   config: CarouselConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Carousel Settings">
+    <Section title={t('design.interactive.carousel.title')}>
       <div style={{ marginBottom: 8 }}>
         <CheckboxInput
-          label="Auto-play"
+          label={t('design.interactive.carousel.autoPlay')}
           value={config.autoPlay}
           onChange={(v) => onUpdate({ autoPlay: v })}
         />
@@ -572,7 +588,7 @@ function CarouselProperties({
         <>
           <div style={{ marginBottom: 8 }}>
             <NumberInput
-              label="Interval (ms)"
+              label={t('design.interactive.carousel.interval')}
               value={config.autoPlayInterval}
               onChange={(v) => onUpdate({ autoPlayInterval: v })}
               min={1000}
@@ -582,7 +598,7 @@ function CarouselProperties({
           </div>
           <div style={{ marginBottom: 8 }}>
             <CheckboxInput
-              label="Pause on interaction"
+              label={t('design.interactive.carousel.pauseOnInteraction')}
               value={config.pauseOnInteraction !== false}
               onChange={(v) => onUpdate({ pauseOnInteraction: v })}
             />
@@ -590,7 +606,7 @@ function CarouselProperties({
           {config.pauseOnInteraction !== false && (
             <div style={{ marginBottom: 8 }}>
               <NumberInput
-                label="Resume Delay (ms)"
+                label={t('design.interactive.carousel.resumeDelay')}
                 value={config.resumeDelay ?? 3000}
                 onChange={(v) => onUpdate({ resumeDelay: v })}
                 min={1000}
@@ -603,18 +619,18 @@ function CarouselProperties({
       )}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <CheckboxInput
-          label="Show dots"
+          label={t('design.interactive.carousel.showDots')}
           value={config.showDots}
           onChange={(v) => onUpdate({ showDots: v })}
         />
         <CheckboxInput
-          label="Show arrows"
+          label={t('design.interactive.carousel.showArrows')}
           value={config.showArrows}
           onChange={(v) => onUpdate({ showArrows: v })}
         />
       </div>
       <NumberInput
-        label="Transition (ms)"
+        label={t('design.interactive.carousel.transition')}
         value={config.transitionDuration}
         onChange={(v) => onUpdate({ transitionDuration: v })}
         min={100}
@@ -626,17 +642,17 @@ function CarouselProperties({
       {(config.showArrows || config.showDots) && (
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8EA8', marginBottom: 8 }}>
-            Navigation Styling
+            {t('design.interactive.carousel.navigationStyling')}
           </div>
           {config.showArrows && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <ColorInputInline
-                label="Arrow Color"
+                label={t('design.interactive.carousel.arrowColor')}
                 value={config.arrowColor ?? '#374151'}
                 onChange={(v) => onUpdate({ arrowColor: v })}
               />
               <ColorInputInline
-                label="Arrow BG"
+                label={t('design.interactive.carousel.arrowBg')}
                 value={config.arrowBgColor ?? 'rgba(255,255,255,0.9)'}
                 onChange={(v) => onUpdate({ arrowBgColor: v })}
               />
@@ -646,22 +662,22 @@ function CarouselProperties({
             <>
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                 <ColorInputInline
-                  label="Active Dot"
+                  label={t('design.interactive.carousel.activeDot')}
                   value={config.dotActiveColor ?? '#ffffff'}
                   onChange={(v) => onUpdate({ dotActiveColor: v })}
                 />
                 <ColorInputInline
-                  label="Inactive Dot"
+                  label={t('design.interactive.carousel.inactiveDot')}
                   value={config.dotInactiveColor ?? 'rgba(255,255,255,0.4)'}
                   onChange={(v) => onUpdate({ dotInactiveColor: v })}
                 />
               </div>
               <SelectInput
-                label="Dot Position"
+                label={t('design.interactive.carousel.dotPosition')}
                 value={config.dotPosition ?? 'bottom'}
                 options={[
-                  { value: 'bottom', label: 'Bottom' },
-                  { value: 'top', label: 'Top' },
+                  { value: 'bottom', label: t('design.interactive.options.bottom') },
+                  { value: 'top', label: t('design.interactive.options.top') },
                 ]}
                 onChange={(v) => onUpdate({ dotPosition: v })}
               />
@@ -680,33 +696,34 @@ function TabsProperties({
   config: TabsConfig;
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Tabs Settings">
+    <Section title={t('design.interactive.tabs.title')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <NumberInput
-          label="Default Tab"
+          label={t('design.interactive.tabs.defaultTab')}
           value={config.defaultTab}
           onChange={(v) => onUpdate({ defaultTab: Math.max(0, Math.round(v)) })}
           min={0}
           max={10}
         />
         <SelectInput
-          label="Position"
+          label={t('design.interactive.tabs.position')}
           value={config.tabPosition}
           options={[
-            { value: 'top', label: 'Top' },
-            { value: 'bottom', label: 'Bottom' },
+            { value: 'top', label: t('design.interactive.options.top') },
+            { value: 'bottom', label: t('design.interactive.options.bottom') },
           ]}
           onChange={(v) => onUpdate({ tabPosition: v })}
         />
       </div>
       <SelectInput
-        label="Tab Style"
+        label={t('design.interactive.tabs.tabStyle')}
         value={config.tabStyle}
         options={[
-          { value: 'underline', label: 'Underline' },
-          { value: 'pill', label: 'Pill' },
-          { value: 'boxed', label: 'Boxed' },
+          { value: 'underline', label: t('design.interactive.options.underline') },
+          { value: 'pill', label: t('design.interactive.options.pill') },
+          { value: 'boxed', label: t('design.interactive.options.boxed') },
         ]}
         onChange={(v) => onUpdate({ tabStyle: v })}
       />
@@ -722,12 +739,13 @@ function QuizProperties({
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <>
-    <Section title="Quiz Settings">
+    <Section title={t('design.interactive.quiz.title')}>
       <div style={{ marginBottom: 8 }}>
         <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
-          Question
+          {t('design.interactive.quiz.question')}
         </label>
         <textarea
           value={config.questionText}
@@ -750,7 +768,7 @@ function QuizProperties({
 
       <div style={{ marginBottom: 8 }}>
         <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
-          Options
+          {t('design.interactive.quiz.options')}
         </label>
         {config.options.map((opt, i) => (
           <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
@@ -760,7 +778,7 @@ function QuizProperties({
               checked={config.correctIndex === i}
               onChange={() => onUpdate({ correctIndex: i })}
               style={{ accentColor: colors.primary }}
-              title="Mark as correct"
+              title={t('design.interactive.quiz.markCorrect')}
             />
             <input
               type="text"
@@ -817,14 +835,14 @@ function QuizProperties({
               width: '100%',
             }}
           >
-            + Add option
+            {t('design.interactive.quiz.addOption')}
           </button>
         )}
       </div>
 
       <div style={{ marginBottom: 8 }}>
         <CheckboxInput
-          label="Show feedback"
+          label={t('design.interactive.quiz.showFeedback')}
           value={config.showFeedback}
           onChange={(v) => onUpdate({ showFeedback: v })}
         />
@@ -834,7 +852,7 @@ function QuizProperties({
         <>
           <div style={{ marginBottom: 4 }}>
             <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
-              Correct Feedback
+              {t('design.interactive.quiz.correctFeedback')}
             </label>
             <input
               type="text"
@@ -854,7 +872,7 @@ function QuizProperties({
           </div>
           <div>
             <label style={{ fontSize: 11, color: colors.textLight, fontWeight: 500, display: 'block', marginBottom: 3 }}>
-              Incorrect Feedback
+              {t('design.interactive.quiz.incorrectFeedback')}
             </label>
             <input
               type="text"
@@ -876,27 +894,27 @@ function QuizProperties({
       )}
 
     </Section>
-    <Section title="Quiz Styling">
+    <Section title={t('design.interactive.quiz.stylingTitle')}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <ColorInputInline
-          label="Correct Color"
+          label={t('design.interactive.quiz.correctColor')}
           value={config.correctColor ?? '#22C55E'}
           onChange={(v) => onUpdate({ correctColor: v })}
         />
         <ColorInputInline
-          label="Incorrect Color"
+          label={t('design.interactive.quiz.incorrectColor')}
           value={config.incorrectColor ?? '#EF4444'}
           onChange={(v) => onUpdate({ incorrectColor: v })}
         />
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <ColorInputInline
-          label="Button Color"
+          label={t('design.interactive.quiz.buttonColor')}
           value={config.buttonColor ?? '#7B68EE'}
           onChange={(v) => onUpdate({ buttonColor: v })}
         />
         <ColorInputInline
-          label="Option Highlight"
+          label={t('design.interactive.quiz.optionHighlight')}
           value={config.optionHighlight ?? 'rgba(123,104,238,0.1)'}
           onChange={(v) => onUpdate({ optionHighlight: v })}
         />
@@ -906,15 +924,15 @@ function QuizProperties({
   );
 }
 
-function getTypeLabel(type: string): string {
+function getTypeLabel(type: string, t: (key: string) => string): string {
   switch (type) {
-    case 'flip-card': return 'Flip Card';
-    case 'bottom-sheet': return 'Bottom Sheet';
-    case 'expandable': return 'Expandable';
-    case 'entrance': return 'Entrance Animation';
-    case 'carousel': return 'Carousel';
-    case 'tabs': return 'Tabs';
-    case 'quiz': return 'Quiz';
-    default: return 'Interactive';
+    case 'flip-card': return t('design.interactive.types.flip-card');
+    case 'bottom-sheet': return t('design.interactive.types.bottom-sheet');
+    case 'expandable': return t('design.interactive.types.expandable');
+    case 'entrance': return t('design.interactive.types.entrance');
+    case 'carousel': return t('design.interactive.types.carousel');
+    case 'tabs': return t('design.interactive.types.tabs');
+    case 'quiz': return t('design.interactive.types.quiz');
+    default: return t('design.interactive.types.interactive');
   }
 }

@@ -1,0 +1,684 @@
+{
+  "design": {
+    "ui": {
+      "onThisPage": "En esta página",
+      "statusApproved": "Aprobado",
+      "statusPending": "Pendiente de revisión",
+      "statusRejected": "Necesita cambios",
+      "downloaded": "Descargado"
+    },
+    "dashboard": {
+      "noDesignId": "Sin ID de diseño",
+      "notFound": "Diseño no encontrado",
+      "loadingDesign": "Cargando diseño...",
+      "backToDesigns": "Volver a diseños",
+      "untitledDesign": "Diseño sin título",
+      "backToProfile": "Volver al perfil",
+      "myDesigns": "Mis diseños",
+      "subtitle": "Crea y gestiona contenido visual",
+      "generateWithAI": "Generar con IA",
+      "newDesign": "Nuevo diseño",
+      "loading": "Cargando...",
+      "noDesignsYet": "Aún no hay diseños",
+      "emptyHint": "Crea tu primer diseño para empezar",
+      "aiGeneratedDesign": "Diseño generado con IA"
+    },
+    "view": {
+      "invalid": "Diseño no válido",
+      "notFound": "Diseño no encontrado",
+      "loadFailed": "No se pudo cargar el diseño",
+      "loadingDesign": "Cargando diseño...",
+      "shareMessage": "Mira \"{{title}}\" en SchoolKit"
+    },
+    "modal": {
+      "export": {
+        "title": "Exportar diseño",
+        "description": "Descarga tu diseño como imagen",
+        "options": {
+          "png": {
+            "description": "Alta calidad, admite fondo transparente"
+          },
+          "jpeg": {
+            "description": "Archivo más pequeño, sin transparencia"
+          }
+        }
+      },
+      "share": {
+        "title": "Compartir diseño",
+        "description": "Cualquier persona con el enlace puede ver este diseño",
+        "copied": "¡Copiado!",
+        "copy": "Copiar",
+        "revoking": "Revocando…",
+        "revokeLink": "Revocar enlace",
+        "creating": "Creando…",
+        "createLink": "Crear enlace para compartir"
+      },
+      "publish": {
+        "title": "Publicar como recurso",
+        "description": "Haz que este diseño esté disponible como recurso de la app para los usuarios",
+        "checkingStatus": "Comprobando estado…",
+        "publishedBadge": "Publicado",
+        "publishedNote": "Este diseño está activo como recurso en la app. Actualiza los campos de abajo para cambiarlo.",
+        "titleLabel": "Título",
+        "descriptionLabel": "Descripción",
+        "descriptionPlaceholder": "Breve descripción para los usuarios…",
+        "categoryLabel": "Categoría",
+        "iconLabel": "Icono",
+        "visibleToLabel": "Visible para",
+        "updating": "Actualizando…",
+        "publishing": "Publicando…",
+        "updateResource": "Actualizar recurso",
+        "publish": "Publicar",
+        "unpublish": "Dejar de publicar",
+        "roles": {
+          "student-elementary": "Estudiantes (primaria)",
+          "student-k8": "Estudiantes (secundaria)",
+          "student-hs": "Estudiantes (preparatoria y más)",
+          "parent": "Padres/cuidadores",
+          "staff": "Personal escolar"
+        }
+      },
+      "preview": {
+        "pressEscape": "Presiona Escape para cerrar",
+        "closePreview": "Cerrar vista previa",
+        "interactiveHint": "Vista previa interactiva — Haz clic para interactuar"
+      },
+      "card": {
+        "justNow": "Ahora mismo",
+        "minutesAgo": "hace {{count}} min",
+        "hoursAgo": "hace {{count}} h",
+        "daysAgo": "hace {{count}} d",
+        "shared": "Compartido",
+        "duplicate": "Duplicar",
+        "deleteConfirm": "¿Eliminar \"{{title}}\"?"
+      }
+    },
+    "runtime": {
+      "byAuthor": "por {{author}}",
+      "viewOnly": "Solo lectura",
+      "tapToFlip": "Toca para girar",
+      "tryAgain": "Intentar de nuevo",
+      "optionLabel": "Opción {{number}}: {{label}}",
+      "interactionLabels": {
+        "flip-card": "Tarjeta giratoria",
+        "bottom-sheet": "Hoja inferior",
+        "expandable": "Expandible",
+        "entrance": "Entrada",
+        "carousel": "Carrusel",
+        "tabs": "Pestañas",
+        "quiz": "Cuestionario",
+        "interactive": "Interactivo"
+      }
+    },
+    "ai": {
+      "title": {
+        "generate": "Generar con IA",
+        "creating": "Creando tu diseño",
+        "updating": "Actualizando tu diseño",
+        "editWithAi": "Editar con IA",
+        "describe": "Describe tu diseño"
+      },
+      "subtitle": {
+        "mode": "Elige cómo quieres crear tu diseño",
+        "generating": "La IA está haciendo su magia: esto puede tardar un momento",
+        "editDescribe": "Describe lo que quieres cambiar",
+        "template": "Plantilla: {{name}}",
+        "freestyle": "IA libre: describe lo que sea"
+      },
+      "freestyle": {
+        "title": "IA libre",
+        "subtitle": "Describe lo que sea y la IA lo construye desde cero",
+        "placeholder": "p. ej. Una guía paso a paso para volver a la escuela después de un diagnóstico de cáncer"
+      },
+      "generateDesign": "Generar diseño",
+      "updateDesign": "Actualizar diseño",
+      "orTemplate": "O empieza con una plantilla",
+      "tab": {
+        "structured": "Estructurado",
+        "describe": "Descríbelo"
+      },
+      "field": {
+        "title": "Título",
+        "titlePlaceholder": "p. ej. Bienvenido a la clase de Ciencias",
+        "subtitle": "Subtítulo",
+        "subtitlePlaceholder": "p. ej. Capítulo 3: El sistema solar",
+        "bodyText": "Texto del cuerpo",
+        "bodyPlaceholder": "Contenido adicional para incluir...",
+        "style": "Estilo",
+        "accentColor": "Color de acento"
+      },
+      "styleOptions": {
+        "Modern": "Moderno",
+        "Playful": "Divertido",
+        "Minimal": "Minimalista",
+        "Bold": "Llamativo"
+      },
+      "promptPlaceholder": {
+        "create": "Describe el diseño que quieres...",
+        "edit": "Describe lo que quieres cambiar..."
+      },
+      "examples": {
+        "returningGuide": "Una guía paso a paso para volver a la escuela después de un diagnóstico de cáncer",
+        "mythFact": "Tarjetas giratorias de mito vs. realidad sobre los tratamientos del cáncer infantil",
+        "feelingsCheckin": "Una tarjeta de registro de emociones que los niños pueden sentir durante el tratamiento",
+        "talkingToFriends": "Consejos para hablar con amigos y compañeros sobre tu diagnóstico"
+      },
+      "editExamples": {
+        "titleColor": "Cambia el color del título a rojo",
+        "darkerBg": "Haz el fondo más oscuro",
+        "addSubtitle": "Agrega un subtítulo debajo del título",
+        "removeFooter": "Elimina la sección del pie de página"
+      },
+      "stepCounter": "Paso {{current}} de {{total}}",
+      "tryAgain": "Intentar de nuevo",
+      "generationSteps": {
+        "create": {
+          "understanding": "Entendiendo tu solicitud...",
+          "layout": "Diseñando la composición...",
+          "styling": "Aplicando estilos...",
+          "finalizing": "Finalizando el diseño..."
+        },
+        "edit": {
+          "analyzing": "Analizando tu diseño...",
+          "applying": "Aplicando cambios...",
+          "refining": "Ajustando la composición...",
+          "finalizing": "Finalizando las actualizaciones..."
+        }
+      },
+      "errors": {
+        "generationFailed": "No se pudo generar el diseño",
+        "invalidStructure": "La IA devolvió una estructura de diseño no válida.",
+        "generic": "Algo salió mal"
+      }
+    },
+    "tools": {
+      "categories": {
+        "select": "Seleccionar",
+        "shapes": "Formas",
+        "text": "Texto",
+        "media": "Multimedia",
+        "interactive": "Interactivo",
+        "blocks": "Bloques",
+        "settings": "Ajustes"
+      },
+      "shapes": {
+        "rectangle": "Rectángulo",
+        "ellipse": "Elipse",
+        "star": "Estrella",
+        "triangle": "Triángulo",
+        "line": "Línea",
+        "arrow": "Flecha",
+        "icon": "Icono"
+      },
+      "interactive": {
+        "flip-card": {
+          "label": "Tarjeta giratoria",
+          "desc": "Tarjeta de dos caras con animación de giro"
+        },
+        "bottom-sheet": {
+          "label": "Panel inferior",
+          "desc": "Panel deslizable con botón de activación"
+        },
+        "expandable": {
+          "label": "Expandible",
+          "desc": "Sección de contenido plegable"
+        },
+        "entrance": {
+          "label": "Entrada",
+          "desc": "Animaciones de entrada escalonadas"
+        },
+        "carousel": {
+          "label": "Carrusel",
+          "desc": "Visor de varias diapositivas deslizable"
+        },
+        "tabs": {
+          "label": "Pestañas",
+          "desc": "Alternador de contenido por pestañas"
+        },
+        "quiz": {
+          "label": "Cuestionario",
+          "desc": "Opción múltiple con retroalimentación"
+        }
+      },
+      "blocks": {
+        "info-card": {
+          "label": "Tarjeta informativa",
+          "desc": "Tarjeta con icono, título y cuerpo"
+        },
+        "stat-counter": {
+          "label": "Contador de estadística",
+          "desc": "Número grande con etiqueta"
+        },
+        "numbered-list": {
+          "label": "Lista numerada",
+          "desc": "Lista ordenada con distintivos"
+        },
+        "quote-block": {
+          "label": "Bloque de cita",
+          "desc": "Cita con estilo y atribución"
+        },
+        "cta-block": {
+          "label": "Bloque de llamada a la acción",
+          "desc": "Llamada a la acción con botón"
+        },
+        "header-section": {
+          "label": "Sección de encabezado",
+          "desc": "Encabezado de sección de ancho completo"
+        },
+        "icon-grid": {
+          "label": "Cuadrícula de iconos",
+          "desc": "Cuadrícula de 3×2 de círculos con iconos"
+        },
+        "image-caption": {
+          "label": "Imagen + leyenda",
+          "desc": "Marcador de posición con texto de leyenda"
+        }
+      },
+      "text": {
+        "addText": {
+          "label": "Agregar texto",
+          "hint": "Haz clic en el lienzo para colocar (T)"
+        },
+        "badge": {
+          "label": "Distintivo",
+          "hint": "Etiqueta de texto con estilo"
+        }
+      },
+      "media": {
+        "label": "Subir imagen",
+        "hint": "Haz clic para explorar (I)"
+      },
+      "settings": {
+        "showGrid": "Mostrar cuadrícula",
+        "snapToGrid": "Ajustar a la cuadrícula",
+        "magneticSnap": "Ajuste magnético",
+        "gridSize": "Tamaño de cuadrícula"
+      }
+    },
+    "interactive": {
+      "component": "Componente",
+      "editContents": "Editar contenido",
+      "groups": "Grupos ({{count}})",
+      "objectsCountOne": "{{count}} objeto",
+      "objectsCountOther": "{{count}} objetos",
+      "groupsHint": "Usa la barra de pestañas sobre el lienzo para agregar o quitar {{items}}.",
+      "durationMs": "Duración (ms)",
+      "nouns": {
+        "slides": "diapositivas",
+        "tabs": "pestañas",
+        "sheets": "hojas"
+      },
+      "types": {
+        "flip-card": "Tarjeta volteable",
+        "bottom-sheet": "Hoja inferior",
+        "expandable": "Expandible",
+        "entrance": "Animación de entrada",
+        "carousel": "Carrusel",
+        "tabs": "Pestañas",
+        "quiz": "Cuestionario",
+        "interactive": "Interactivo"
+      },
+      "flip": {
+        "title": "Ajustes de volteo",
+        "direction": "Dirección",
+        "defaultSide": "Lado predeterminado"
+      },
+      "sheet": {
+        "title": "Ajustes de hoja",
+        "heightPercent": "Altura %",
+        "backdropOpacity": "Opacidad del fondo",
+        "dismissOnBackdropTap": "Cerrar al tocar el fondo"
+      },
+      "expand": {
+        "title": "Ajustes de expansión",
+        "easing": "Suavizado",
+        "defaultExpanded": "Expandido de forma predeterminada"
+      },
+      "entrance": {
+        "title": "Ajustes de entrada",
+        "animation": "Animación",
+        "trigger": "Activador",
+        "stagger": "Escalonado (ms)",
+        "springFriction": "Fricción del resorte",
+        "springTension": "Tensión del resorte"
+      },
+      "carousel": {
+        "title": "Ajustes del carrusel",
+        "autoPlay": "Reproducción automática",
+        "interval": "Intervalo (ms)",
+        "pauseOnInteraction": "Pausar al interactuar",
+        "resumeDelay": "Retraso para reanudar (ms)",
+        "showDots": "Mostrar puntos",
+        "showArrows": "Mostrar flechas",
+        "transition": "Transición (ms)",
+        "navigationStyling": "Estilo de navegación",
+        "arrowColor": "Color de flecha",
+        "arrowBg": "Fondo de flecha",
+        "activeDot": "Punto activo",
+        "inactiveDot": "Punto inactivo",
+        "dotPosition": "Posición de puntos"
+      },
+      "tabs": {
+        "title": "Ajustes de pestañas",
+        "defaultTab": "Pestaña predeterminada",
+        "position": "Posición",
+        "tabStyle": "Estilo de pestaña"
+      },
+      "quiz": {
+        "title": "Ajustes del cuestionario",
+        "question": "Pregunta",
+        "options": "Opciones",
+        "markCorrect": "Marcar como correcta",
+        "addOption": "+ Agregar opción",
+        "showFeedback": "Mostrar retroalimentación",
+        "correctFeedback": "Retroalimentación correcta",
+        "incorrectFeedback": "Retroalimentación incorrecta",
+        "stylingTitle": "Estilo del cuestionario",
+        "correctColor": "Color de correcta",
+        "incorrectColor": "Color de incorrecta",
+        "buttonColor": "Color del botón",
+        "optionHighlight": "Resaltado de opción"
+      },
+      "options": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertical",
+        "front": "Frente",
+        "back": "Reverso",
+        "ease": "Suave",
+        "ease-in": "Suave al inicio",
+        "ease-out": "Suave al final",
+        "ease-in-out": "Suave inicio y final",
+        "linear": "Lineal",
+        "fade-in": "Aparecer",
+        "slide-up": "Deslizar hacia arriba",
+        "scale-up": "Ampliar",
+        "bounce": "Rebote",
+        "on-load": "Al cargar",
+        "on-scroll": "Al desplazar",
+        "top": "Arriba",
+        "bottom": "Abajo",
+        "underline": "Subrayado",
+        "pill": "Píldora",
+        "boxed": "Recuadro"
+      }
+    },
+    "editor": {
+      "backToDesigns": "Volver a diseños",
+      "canvas": "Lienzo",
+      "aiGenerate": "Generar con IA",
+      "publish": "Publicar",
+      "preview": "Vista previa",
+      "export": "Exportar",
+      "zoomReset": "Restablecer",
+      "alignToCanvas": "Alinear al lienzo",
+      "alignObjects": "Alinear objetos",
+      "exitComponentTooltip": "Salir del componente (Escape)",
+      "removeGroupTooltip": "Eliminar {{label}}",
+      "addSlideTooltip": "Agregar diapositiva",
+      "addTabTooltip": "Agregar pestaña",
+      "addSheetTooltip": "Agregar hoja",
+      "emptyState": "Aún no hay objetos",
+      "status": {
+        "saving": "Guardando...",
+        "unsaved": "Sin guardar",
+        "saved": "Guardado"
+      },
+      "tooltip": {
+        "undo": "Deshacer (Cmd+Z)",
+        "redo": "Rehacer (Cmd+Shift+Z)",
+        "generateWithAI": "Generar con IA",
+        "save": "Guardar (Cmd+S)",
+        "shortcuts": "Atajos de teclado (?)",
+        "preview": "Vista previa (P)"
+      },
+      "menu": {
+        "cut": "Cortar",
+        "copy": "Copiar",
+        "paste": "Pegar",
+        "duplicate": "Duplicar",
+        "bringToFront": "Traer al frente",
+        "sendToBack": "Enviar al fondo",
+        "noActions": "No hay acciones disponibles"
+      },
+      "toast": {
+        "duplicatedOne": "Se duplicó {{count}} objeto",
+        "duplicatedOther": "Se duplicaron {{count}} objetos",
+        "movedToFront": "Movido al frente",
+        "movedToBack": "Movido al fondo"
+      },
+      "panel": {
+        "properties": "Propiedades",
+        "layers": "Capas"
+      },
+      "align": {
+        "left": "Alinear a la izquierda",
+        "center": "Alinear al centro",
+        "right": "Alinear a la derecha",
+        "top": "Alinear arriba",
+        "middle": "Alinear al medio",
+        "bottom": "Alinear abajo"
+      },
+      "distribute": {
+        "horizontal": "Distribuir horizontalmente",
+        "vertical": "Distribuir verticalmente"
+      },
+      "layer": {
+        "unlock": "Desbloquear",
+        "lock": "Bloquear",
+        "unlockAria": "Desbloquear capa",
+        "lockAria": "Bloquear capa",
+        "hide": "Ocultar",
+        "show": "Mostrar",
+        "hideAria": "Ocultar capa",
+        "showAria": "Mostrar capa",
+        "moveUp": "Subir",
+        "moveUpAria": "Subir capa",
+        "moveDown": "Bajar",
+        "moveDownAria": "Bajar capa"
+      },
+      "shortcuts": {
+        "title": "Atajos de teclado",
+        "sections": {
+          "tools": "Herramientas",
+          "edit": "Editar",
+          "layers": "Capas",
+          "navigation": "Navegación"
+        },
+        "desc": {
+          "selectTool": "Herramienta de selección",
+          "rectangleTool": "Herramienta de rectángulo",
+          "ellipseTool": "Herramienta de elipse",
+          "textTool": "Herramienta de texto",
+          "lineTool": "Herramienta de línea",
+          "togglePreview": "Alternar vista previa",
+          "undo": "Deshacer",
+          "redo": "Rehacer",
+          "duplicate": "Duplicar",
+          "selectAll": "Seleccionar todo",
+          "copy": "Copiar",
+          "cut": "Cortar",
+          "paste": "Pegar",
+          "save": "Guardar",
+          "deleteSelected": "Eliminar selección",
+          "bringToFront": "Traer al frente",
+          "sendToBack": "Enviar al fondo",
+          "editComponent": "Editar componente",
+          "exitDeselect": "Salir / deseleccionar",
+          "showShortcuts": "Mostrar atajos"
+        }
+      }
+    },
+    "props": {
+      "colorNone": "ninguno",
+      "colorPresets": "Colores predefinidos",
+      "tabDesign": "Diseño",
+      "tabCanvas": "Lienzo",
+      "objectsSelected": "{{count}} objetos seleccionados",
+      "emptySelect": "Selecciona un objeto para editar",
+      "canvasSize": "Tamaño del lienzo",
+      "width": "Ancho",
+      "height": "Alto",
+      "background": "Fondo",
+      "color": "Color",
+      "backgroundGradient": "Degradado de fondo",
+      "enableGradient": "Activar degradado",
+      "type": "Tipo",
+      "angle": "Ángulo",
+      "start": "Inicio",
+      "end": "Fin",
+      "stop": "Punto {{n}}",
+      "addStop": "+ Agregar punto",
+      "positionSize": "Posición y tamaño",
+      "axisX": "X",
+      "axisY": "Y",
+      "axisW": "An",
+      "axisH": "Al",
+      "rotation": "Rotación",
+      "opacity": "Opacidad",
+      "accessibility": "Accesibilidad",
+      "a11yLabel": "Etiqueta de accesibilidad",
+      "a11yPlaceholder": "Etiqueta para lectores de pantalla...",
+      "blendMode": "Modo de fusión",
+      "mode": "Modo",
+      "gradient": "Degradado",
+      "preset": "Preajuste",
+      "shadow": "Sombra",
+      "enableShadow": "Activar sombra",
+      "offsetX": "Desplazamiento X",
+      "offsetY": "Desplazamiento Y",
+      "blur": "Desenfoque",
+      "blurRadius": "Radio de desenfoque",
+      "entranceAnimation": "Animación de entrada",
+      "animateOnPreview": "Animar en vista previa",
+      "delayMs": "Retraso (ms)",
+      "durationMs": "Duración (ms)",
+      "fillStroke": "Relleno y borde",
+      "fill": "Relleno",
+      "stroke": "Borde",
+      "overriddenByGradient": "Anulado por el degradado",
+      "cornerRadius": "Radio de esquina",
+      "radius": "Radio",
+      "strokeStyle": "Estilo de borde",
+      "dashPattern": "Patrón de guiones",
+      "lineCap": "Extremo de línea",
+      "lineJoin": "Unión de línea",
+      "text": "Texto",
+      "font": "Fuente",
+      "family": "Familia",
+      "size": "Tamaño",
+      "lineHeight": "Interlineado",
+      "style": "Estilo",
+      "weight": "Grosor",
+      "align": "Alineación",
+      "transform": "Transformar",
+      "letterSpacing": "Espaciado entre letras",
+      "padding": "Relleno interno",
+      "verticalAlign": "Alineación vertical",
+      "fontVariant": "Variante de fuente",
+      "textDecoration": "Decoración de texto",
+      "textColor": "Color de texto",
+      "textOutline": "Contorno de texto",
+      "outlineColor": "Color de contorno",
+      "outlineWidth": "Ancho de contorno",
+      "underline": "Subrayado",
+      "strikethrough": "Tachado",
+      "line": "Línea",
+      "star": "Estrella",
+      "points": "Puntas",
+      "innerRadius": "Radio interior",
+      "arrow": "Flecha",
+      "pointerLength": "Longitud de punta",
+      "pointerWidth": "Ancho de punta",
+      "imageStyle": "Estilo de imagen",
+      "objectFit": "Ajuste de objeto",
+      "strokeWidthLabel": "Ancho de borde",
+      "badgeText": "Texto de insignia",
+      "fontFamily": "Familia de fuente",
+      "fontSize": "Tamaño de fuente",
+      "icon": "Icono",
+      "ioniconName": "Nombre de Ionicon",
+      "iconNamePlaceholder": "p. ej. school-outline",
+      "filterIcons": "Filtrar iconos comunes…",
+      "options": {
+        "solid": "Sólido",
+        "dashed": "Discontinuo",
+        "dotted": "Punteado",
+        "dash-dot": "Trazo-punto",
+        "butt": "Plano",
+        "round": "Redondo",
+        "square": "Cuadrado",
+        "miter": "Inglete",
+        "bevel": "Bisel",
+        "linear": "Lineal",
+        "radial": "Radial",
+        "normal": "Normal",
+        "multiply": "Multiplicar",
+        "screen": "Trama",
+        "overlay": "Superponer",
+        "darken": "Oscurecer",
+        "lighten": "Aclarar",
+        "fade-in": "Aparecer",
+        "slide-up": "Deslizar hacia arriba",
+        "slide-down": "Deslizar hacia abajo",
+        "scale-up": "Ampliar",
+        "bold": "Negrita",
+        "italic": "Cursiva",
+        "boldItalic": "Negrita cursiva",
+        "weightAuto": "Automático",
+        "weight100": "100 Fino",
+        "weight200": "200 Extraligero",
+        "weight300": "300 Ligero",
+        "weight400": "400 Normal",
+        "weight500": "500 Medio",
+        "weight600": "600 Seminegrita",
+        "weight700": "700 Negrita",
+        "weight800": "800 Extranegrita",
+        "weight900": "900 Negro",
+        "left": "Izquierda",
+        "center": "Centro",
+        "right": "Derecha",
+        "justify": "Justificar",
+        "none": "Ninguno",
+        "uppercase": "MAYÚSCULAS",
+        "lowercase": "minúsculas",
+        "capitalize": "Capitalizar",
+        "top": "Arriba",
+        "middle": "Medio",
+        "bottom": "Abajo",
+        "small-caps": "Versalitas",
+        "cover": "Cubrir",
+        "contain": "Contener",
+        "fill": "Rellenar",
+        "custom": "Personalizado…"
+      },
+      "gradientPresets": {
+        "primaryButton": "Botón principal",
+        "welcomeHero": "Portada de bienvenida",
+        "authHeader": "Encabezado de acceso",
+        "loadingScreen": "Pantalla de carga",
+        "progressFill": "Relleno de progreso",
+        "screenBackground": "Fondo de pantalla",
+        "roleStudentK8": "Rol: Estudiante K-8",
+        "roleStudentHS": "Rol: Estudiante secundaria",
+        "roleParent": "Rol: Padre/madre",
+        "roleStaff": "Rol: Personal",
+        "accentAmber": "Acento: Ámbar",
+        "accentCyan": "Acento: Cian",
+        "accentViolet": "Acento: Violeta",
+        "accentOrange": "Acento: Naranja",
+        "accentEmerald": "Acento: Esmeralda",
+        "errorRed": "Rojo de error",
+        "infoBlue": "Azul informativo"
+      },
+      "shadowPresets": {
+        "card": "Tarjeta (suave)",
+        "cardLarge": "Tarjeta grande",
+        "cardSelected": "Tarjeta seleccionada (brillo morado)",
+        "button": "Botón (morado intenso)",
+        "small": "Pequeña (morado)",
+        "header": "Encabezado",
+        "iconCircle": "Círculo de icono"
+      }
+    }
+  }
+}

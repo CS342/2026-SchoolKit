@@ -21,6 +21,7 @@ import {
   createImageCaption,
 } from '../utils/block-templates';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface ToolPanelProps {
   onImageUpload: (file: File) => Promise<{ assetId: string; url: string } | null>;
@@ -42,35 +43,36 @@ const TOOL_TO_CATEGORY: Record<string, CategoryId> = {
   select: 'select',
 };
 
-const CATEGORIES: { id: CategoryId; icon: string; label: string; bottom?: boolean }[] = [
-  { id: 'select', icon: '↖', label: 'Select' },
-  { id: 'shapes', icon: '◇', label: 'Shapes' },
-  { id: 'text', icon: 'T', label: 'Text' },
-  { id: 'media', icon: '🖼', label: 'Media' },
-  { id: 'interactive', icon: '⚡', label: 'Interactive' },
-  { id: 'blocks', icon: '◫', label: 'Blocks' },
-  { id: 'settings', icon: '⚙', label: 'Settings', bottom: true },
+// Labels/descriptions are rendered via i18n (keyed by id); icons stay literal.
+const CATEGORIES: { id: CategoryId; icon: string; bottom?: boolean }[] = [
+  { id: 'select', icon: '↖' },
+  { id: 'shapes', icon: '◇' },
+  { id: 'text', icon: 'T' },
+  { id: 'media', icon: '🖼' },
+  { id: 'interactive', icon: '⚡' },
+  { id: 'blocks', icon: '◫' },
+  { id: 'settings', icon: '⚙', bottom: true },
 ];
 
 const INTERACTIVE_PRESETS = [
-  { id: 'flip-card' as const, icon: '🔄', label: 'Flip Card', desc: 'Two-sided card with flip animation' },
-  { id: 'bottom-sheet' as const, icon: '📋', label: 'Bottom Sheet', desc: 'Slide-up panel with trigger button' },
-  { id: 'expandable' as const, icon: '📐', label: 'Expandable', desc: 'Collapsible content section' },
-  { id: 'entrance' as const, icon: '✨', label: 'Entrance', desc: 'Staggered entrance animations' },
-  { id: 'carousel' as const, icon: '◀▶', label: 'Carousel', desc: 'Swipeable multi-slide viewer' },
-  { id: 'tabs' as const, icon: '📑', label: 'Tabs', desc: 'Tabbed content switcher' },
-  { id: 'quiz' as const, icon: '❓', label: 'Quiz', desc: 'Multiple choice with feedback' },
+  { id: 'flip-card' as const, icon: '🔄' },
+  { id: 'bottom-sheet' as const, icon: '📋' },
+  { id: 'expandable' as const, icon: '📐' },
+  { id: 'entrance' as const, icon: '✨' },
+  { id: 'carousel' as const, icon: '◀▶' },
+  { id: 'tabs' as const, icon: '📑' },
+  { id: 'quiz' as const, icon: '❓' },
 ] as const;
 
 const BLOCK_PRESETS = [
-  { id: 'info-card' as const, icon: 'ℹ', label: 'Info Card', desc: 'Card with icon, title & body' },
-  { id: 'stat-counter' as const, icon: '##', label: 'Stat Counter', desc: 'Large number with label' },
-  { id: 'numbered-list' as const, icon: '1.', label: 'Numbered List', desc: 'Ordered list with badges' },
-  { id: 'quote-block' as const, icon: '\u201C', label: 'Quote Block', desc: 'Styled quotation with attribution' },
-  { id: 'cta-block' as const, icon: '▶', label: 'CTA Block', desc: 'Call-to-action with button' },
-  { id: 'header-section' as const, icon: 'H', label: 'Header Section', desc: 'Full-width section header' },
-  { id: 'icon-grid' as const, icon: '⊞', label: 'Icon Grid', desc: '3×2 grid of icon circles' },
-  { id: 'image-caption' as const, icon: '📷', label: 'Image + Caption', desc: 'Placeholder with caption text' },
+  { id: 'info-card' as const, icon: 'ℹ' },
+  { id: 'stat-counter' as const, icon: '##' },
+  { id: 'numbered-list' as const, icon: '1.' },
+  { id: 'quote-block' as const, icon: '\u201C' },
+  { id: 'cta-block' as const, icon: '▶' },
+  { id: 'header-section' as const, icon: 'H' },
+  { id: 'icon-grid' as const, icon: '⊞' },
+  { id: 'image-caption' as const, icon: '📷' },
 ] as const;
 
 // ─── Inject flyout animation ────────────────────────────────────
@@ -130,6 +132,7 @@ function ShapesFlyout({
   colors: any;
   onAction: (action: () => void) => void;
 }) {
+  const { t } = useTranslation();
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const addObject = useEditorStore((s) => s.addObject);
   const canvas = useEditorStore((s) => s.canvas);
@@ -137,30 +140,34 @@ function ShapesFlyout({
   const cy = canvas.height / 2;
 
   const shapes = [
-    { icon: '▢', label: 'Rectangle', hint: 'R', action: () => setActiveTool('rect') },
-    { icon: '○', label: 'Ellipse', hint: 'E', action: () => setActiveTool('ellipse') },
+    { icon: '▢', k: 'rectangle', label: t('design.tools.shapes.rectangle'), hint: 'R', action: () => setActiveTool('rect') },
+    { icon: '○', k: 'ellipse', label: t('design.tools.shapes.ellipse'), hint: 'E', action: () => setActiveTool('ellipse') },
     {
       icon: '★',
-      label: 'Star',
+      k: 'star',
+      label: t('design.tools.shapes.star'),
       hint: 'S',
       action: () => { addObject(createStar({ x: cx - 60, y: cy - 60 })); setActiveTool('select'); },
     },
     {
       icon: '△',
-      label: 'Triangle',
+      k: 'triangle',
+      label: t('design.tools.shapes.triangle'),
       hint: '',
       action: () => { addObject(createTriangle({ x: cx - 75, y: cy - 65 })); setActiveTool('select'); },
     },
-    { icon: '╱', label: 'Line', hint: 'L', action: () => setActiveTool('line') },
+    { icon: '╱', k: 'line', label: t('design.tools.shapes.line'), hint: 'L', action: () => setActiveTool('line') },
     {
       icon: '→',
-      label: 'Arrow',
+      k: 'arrow',
+      label: t('design.tools.shapes.arrow'),
       hint: '',
       action: () => { addObject(createArrow({ points: [cx - 100, cy, cx + 100, cy] })); setActiveTool('select'); },
     },
     {
       icon: '✦',
-      label: 'Icon',
+      k: 'icon',
+      label: t('design.tools.shapes.icon'),
       hint: '',
       action: () => { addObject(createIcon({ x: cx - 24, y: cy - 24 })); setActiveTool('select'); },
     },
@@ -170,7 +177,7 @@ function ShapesFlyout({
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
       {shapes.map((s) => (
         <HoverButton
-          key={s.label}
+          key={s.k}
           onClick={() => onAction(s.action)}
           hoverBg={colors.backgroundLight}
           style={{
@@ -201,6 +208,7 @@ function TextFlyout({
   colors: any;
   onAction: (action: () => void) => void;
 }) {
+  const { t } = useTranslation();
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const addObject = useEditorStore((s) => s.addObject);
   const canvas = useEditorStore((s) => s.canvas);
@@ -237,8 +245,8 @@ function TextFlyout({
           flexShrink: 0,
         }}>T</span>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>Add Text</div>
-          <div style={{ fontSize: 12, color: colors.textLight }}>Click canvas to place (T)</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>{t('design.tools.text.addText.label')}</div>
+          <div style={{ fontSize: 12, color: colors.textLight }}>{t('design.tools.text.addText.hint')}</div>
         </div>
       </HoverButton>
       <HoverButton
@@ -271,8 +279,8 @@ function TextFlyout({
           flexShrink: 0,
         }}>⬮</span>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>Badge</div>
-          <div style={{ fontSize: 12, color: colors.textLight }}>Styled text label</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>{t('design.tools.text.badge.label')}</div>
+          <div style={{ fontSize: 12, color: colors.textLight }}>{t('design.tools.text.badge.hint')}</div>
         </div>
       </HoverButton>
     </div>
@@ -286,6 +294,7 @@ function MediaFlyout({
   colors: any;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -308,8 +317,8 @@ function MediaFlyout({
       }}
     >
       <span style={{ fontSize: 36 }}>🖼</span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>Upload Image</span>
-      <span style={{ fontSize: 12, color: colors.textLight }}>Click to browse (I)</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: colors.textDark }}>{t('design.tools.media.label')}</span>
+      <span style={{ fontSize: 12, color: colors.textLight }}>{t('design.tools.media.hint')}</span>
     </button>
   );
 }
@@ -321,6 +330,7 @@ function InteractiveFlyout({
   colors: any;
   onAction: (action: () => void) => void;
 }) {
+  const { t } = useTranslation();
   const addInteractiveComponent = useEditorStore((s) => s.addInteractiveComponent);
   const canvas = useEditorStore((s) => s.canvas);
   const cy = canvas.height / 2;
@@ -365,8 +375,8 @@ function InteractiveFlyout({
             flexShrink: 0,
           }}>{p.icon}</span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: colors.textDark }}>{p.label}</div>
-            <div style={{ fontSize: 11, color: colors.textLight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.desc}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: colors.textDark }}>{t(`design.tools.interactive.${p.id}.label`)}</div>
+            <div style={{ fontSize: 11, color: colors.textLight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(`design.tools.interactive.${p.id}.desc`)}</div>
           </div>
         </HoverButton>
       ))}
@@ -381,6 +391,7 @@ function BlocksFlyout({
   colors: any;
   onAction: (action: () => void) => void;
 }) {
+  const { t } = useTranslation();
   const addObjects = useEditorStore((s) => s.addObjects);
   const canvas = useEditorStore((s) => s.canvas);
   const cx = canvas.width / 2;
@@ -428,8 +439,8 @@ function BlocksFlyout({
             flexShrink: 0,
           }}>{b.icon}</span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: colors.textDark }}>{b.label}</div>
-            <div style={{ fontSize: 11, color: colors.textLight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.desc}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: colors.textDark }}>{t(`design.tools.blocks.${b.id}.label`)}</div>
+            <div style={{ fontSize: 11, color: colors.textLight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(`design.tools.blocks.${b.id}.desc`)}</div>
           </div>
         </HoverButton>
       ))}
@@ -438,6 +449,7 @@ function BlocksFlyout({
 }
 
 function SettingsFlyout({ colors }: { colors: any }) {
+  const { t } = useTranslation();
   const showGrid = useEditorStore((s) => s.showGrid);
   const setShowGrid = useEditorStore((s) => s.setShowGrid);
   const snapToGrid = useEditorStore((s) => s.snapToGrid);
@@ -448,16 +460,16 @@ function SettingsFlyout({ colors }: { colors: any }) {
   const setGridSize = useEditorStore((s) => s.setGridSize);
 
   const toggles = [
-    { label: 'Show Grid', value: showGrid, onChange: () => setShowGrid(!showGrid) },
-    { label: 'Snap to Grid', value: snapToGrid, onChange: () => setSnapToGrid(!snapToGrid) },
-    { label: 'Magnetic Snap', value: snapToObjects, onChange: () => setSnapToObjects(!snapToObjects) },
+    { k: 'showGrid', label: t('design.tools.settings.showGrid'), value: showGrid, onChange: () => setShowGrid(!showGrid) },
+    { k: 'snapToGrid', label: t('design.tools.settings.snapToGrid'), value: snapToGrid, onChange: () => setSnapToGrid(!snapToGrid) },
+    { k: 'magneticSnap', label: t('design.tools.settings.magneticSnap'), value: snapToObjects, onChange: () => setSnapToObjects(!snapToObjects) },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {toggles.map((t) => (
+      {toggles.map((tog) => (
         <div
-          key={t.label}
+          key={tog.k}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -466,15 +478,15 @@ function SettingsFlyout({ colors }: { colors: any }) {
             borderRadius: 10,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 500, color: colors.textDark }}>{t.label}</span>
+          <span style={{ fontSize: 13, fontWeight: 500, color: colors.textDark }}>{tog.label}</span>
           <button
-            onClick={t.onChange}
+            onClick={tog.onChange}
             style={{
               width: 44,
               height: 24,
               borderRadius: 12,
               border: 'none',
-              backgroundColor: t.value ? colors.primary : colors.borderCard,
+              backgroundColor: tog.value ? colors.primary : colors.borderCard,
               position: 'relative',
               cursor: 'pointer',
               transition: 'background-color 0.2s',
@@ -485,7 +497,7 @@ function SettingsFlyout({ colors }: { colors: any }) {
               style={{
                 position: 'absolute',
                 top: 2,
-                left: t.value ? 22 : 2,
+                left: tog.value ? 22 : 2,
                 width: 20,
                 height: 20,
                 borderRadius: 10,
@@ -502,7 +514,7 @@ function SettingsFlyout({ colors }: { colors: any }) {
       {showGrid && (
         <div style={{ padding: '8px 8px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 12, color: colors.textLight }}>Grid Size</span>
+            <span style={{ fontSize: 12, color: colors.textLight }}>{t('design.tools.settings.gridSize')}</span>
             <span style={{ fontSize: 12, fontWeight: 600, color: colors.textDark }}>{gridSize}px</span>
           </div>
           <input
@@ -535,6 +547,7 @@ function FlyoutPanel({
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [pos, setPos] = useState({ top: 0, left: 0, height: 0 });
 
   useEffect(() => {
@@ -544,15 +557,7 @@ function FlyoutPanel({
     }
   }, [category, railRef]);
 
-  const FLYOUT_TITLES: Record<CategoryId, string> = {
-    select: '',
-    shapes: 'Shapes',
-    text: 'Text',
-    media: 'Media',
-    interactive: 'Interactive',
-    blocks: 'Blocks',
-    settings: 'Settings',
-  };
+  const flyoutTitle = category === 'select' ? '' : t(`design.tools.categories.${category}`);
 
   // Close flyout after an action (except settings)
   const handleItemAction = useCallback((action: () => void) => {
@@ -587,7 +592,7 @@ function FlyoutPanel({
         borderBottom: `1px solid ${colors.borderCard}`,
         flexShrink: 0,
       }}>
-        {FLYOUT_TITLES[category]}
+        {flyoutTitle}
       </div>
       <div style={{ padding: 12, overflowY: 'auto', flex: 1 }}>
         {category === 'shapes' && <ShapesFlyout colors={colors} onAction={handleItemAction} />}
@@ -608,6 +613,7 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const editingComponentId = useEditorStore((s) => s.editingComponentId);
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const [openCategory, setOpenCategory] = useState<CategoryId | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -684,7 +690,7 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
             <HoverButton
               key={cat.id}
               onClick={() => handleCategoryClick(cat.id)}
-              title={cat.label}
+              title={t(`design.tools.categories.${cat.id}`)}
               hoverBg={colors.backgroundLight}
               style={{
                 width: 52,
@@ -701,7 +707,7 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
               }}
             >
               <span style={{ fontSize: 20, lineHeight: 1 }}>{cat.icon}</span>
-              <span style={{ fontSize: 9, fontWeight: 600, lineHeight: 1 }}>{cat.label}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, lineHeight: 1 }}>{t(`design.tools.categories.${cat.id}`)}</span>
             </HoverButton>
           );
         })}
@@ -715,7 +721,7 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
             <HoverButton
               key={cat.id}
               onClick={() => handleCategoryClick(cat.id)}
-              title={cat.label}
+              title={t(`design.tools.categories.${cat.id}`)}
               hoverBg={colors.backgroundLight}
               style={{
                 width: 52,
@@ -732,7 +738,7 @@ export function ToolPanel({ onImageUpload }: ToolPanelProps) {
               }}
             >
               <span style={{ fontSize: 20, lineHeight: 1 }}>{cat.icon}</span>
-              <span style={{ fontSize: 9, fontWeight: 600, lineHeight: 1 }}>{cat.label}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, lineHeight: 1 }}>{t(`design.tools.categories.${cat.id}`)}</span>
             </HoverButton>
           );
         })}

@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
@@ -18,6 +19,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 export default function ConfirmEmailScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
   const isWebDesktop = isWeb && !isMobile;
@@ -55,26 +57,25 @@ export default function ConfirmEmailScreen() {
           </Animated.View>
 
           <Animated.Text style={[sharedStyles.pageTitle, titleStyle]}>
-            Check your email
+            {t('auth.alerts.checkEmailTitle')}
           </Animated.Text>
 
           <Animated.Text style={[sharedStyles.pageSubtitle, subtitleStyle]}>
-            We sent a verification link to your email.{'\n'}
-            Tap the link to confirm your account, then sign in.
+            {t('auth.confirmEmail.subtitle')}
           </Animated.Text>
         </View>
 
         {isWebDesktop ? (
           <Animated.View style={[{ maxWidth: 400, width: '100%', alignSelf: 'center' as const, marginTop: 32, marginBottom: 40, gap: 4 }, buttonStyle]}>
             <PrimaryButton
-              title="Go to Sign In"
+              title={t('auth.confirmEmail.goToSignIn')}
               onPress={() => router.replace('/auth?mode=signin')}
             />
           </Animated.View>
         ) : (
           <Animated.View style={[sharedStyles.buttonContainer, buttonStyle]}>
             <PrimaryButton
-              title="Go to Sign In"
+              title={t('auth.confirmEmail.goToSignIn')}
               onPress={() => router.replace('/auth?mode=signin')}
             />
             <View style={sharedStyles.skipPlaceholder} />

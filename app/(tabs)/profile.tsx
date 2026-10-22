@@ -22,12 +22,14 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 import { useStories } from "../../contexts/StoriesContext";
 import { useResources, useVisibleTopics, matchesSavedTopic } from "../../hooks/useResources";
 import { TOTAL_PIECES } from "../../constants/accomplishments";
+import { SHOW_KNOWLEDGE_TREE, SHOW_PUZZLES } from "../../constants/features";
 import {
   RADII,
   SIZING,
@@ -38,7 +40,6 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import { useResponsive, CONTENT_WIDTH } from "../../hooks/useResponsive";
 import type { AppTheme, ThemeColors, ThemeShadows } from "../../constants/theme";
-import { getRoleDisplayName, getSchoolStatusText } from "../../utils/profile";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -201,6 +202,7 @@ function WebStatCard({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { colors, shadows, appStyles, isDark } = theme;
@@ -234,10 +236,10 @@ export default function ProfileScreen() {
   const [showIconPicker, setShowIconPicker] = React.useState(false);
 
   const AVATAR_OPTIONS = [
-    { key: 'icon:star',    icon: 'star'    as const, label: 'Star'    },
-    { key: 'icon:heart',   icon: 'heart'   as const, label: 'Heart'   },
-    { key: 'icon:sparkles', icon: 'sparkles' as const, label: 'Sparkle' },
-    { key: 'icon:initial', icon: null,                label: 'Initial' },
+    { key: 'icon:star',    icon: 'star'    as const, label: t('profile.avatar.star')    },
+    { key: 'icon:heart',   icon: 'heart'   as const, label: t('profile.avatar.heart')   },
+    { key: 'icon:sparkles', icon: 'sparkles' as const, label: t('profile.avatar.sparkle') },
+    { key: 'icon:initial', icon: null,                label: t('profile.avatar.initial') },
   ] as const;
 
   function renderAvatarInner(size = 88) {
@@ -278,12 +280,11 @@ export default function ProfileScreen() {
     opacity: footerOpacity.value,
   }));
 
-  const roleDisplayName = getRoleDisplayName(data.role);
-  const schoolStatusText = getSchoolStatusText(data.schoolStatuses);
+  const roleDisplayName = data.role ? t(`profile.roleOptions.${data.role}`) : t('profile.notSet');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
-      <ScreenHeader title="Profile" subtitle="Your account, progress, and journal" />
+      <ScreenHeader title={t('profile.title')} subtitle={t('profile.headerSubtitle')} />
 
       <ScrollView
         contentContainerStyle={isWebDesktop ? styles.scrollWeb : styles.scroll}
@@ -300,12 +301,12 @@ export default function ProfileScreen() {
             <Pressable style={styles.modalBackdrop} onPress={() => setShowEditProfile(false)} />
             <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 16 }]}>
               <View style={[styles.editModalHandle, { backgroundColor: colors.border }]} />
-              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Edit Profile</Text>
+              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>{t('profile.editProfile')}</Text>
               <View style={[styles.groupCard, { backgroundColor: colors.appBackground, marginHorizontal: 0, marginBottom: 0 }]}>
-                <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
-                <SettingRow icon="school-outline" label="Role" value={roleDisplayName} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
-                <SettingRow icon="book-outline" label="School Status" value={data.schoolStatuses.length > 0 ? `${data.schoolStatuses.length} selected` : 'Not set'} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
-                <SettingRow icon="list-outline" label="Topics" value={`${selectedTopics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
+                <SettingRow icon="person-outline" label={t('profile.name')} value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
+                <SettingRow icon="school-outline" label={t('profile.role')} value={roleDisplayName} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
+                <SettingRow icon="book-outline" label={t('profile.schoolStatus')} value={data.schoolStatuses.length > 0 ? t('profile.selectedCount', { count: data.schoolStatuses.length }) : t('profile.notSet')} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
+                <SettingRow icon="list-outline" label={t('profile.topics')} value={t('profile.selectedCount', { count: selectedTopics.length })} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
               </View>
             </View>
           </View>
@@ -322,7 +323,7 @@ export default function ProfileScreen() {
             <Pressable style={styles.modalBackdrop} onPress={() => setShowIconPicker(false)} />
             <View style={[styles.editModalContent, { backgroundColor: colors.white, paddingBottom: insets.bottom + 24 }]}>
               <View style={[styles.editModalHandle, { backgroundColor: colors.border }]} />
-              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>Choose Avatar</Text>
+              <Text style={[styles.editModalTitle, { color: colors.textDark }]}>{t('profile.chooseAvatar')}</Text>
               <View style={styles.iconPickerGrid}>
                 {AVATAR_OPTIONS.map((opt) => {
                   const isSelected = (data.profilePicture ?? 'icon:initial') === opt.key;
@@ -375,20 +376,14 @@ export default function ProfileScreen() {
                       <View style={[styles.badgeWrapRow, styles.webBadgeRow]}>
                         {isAnonymous && (
                           <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
-                            <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
+                            <Text style={[styles.rolePillText, { color: colors.textMuted }]}>{t('profile.guest')}</Text>
                           </View>
                         )}
                         <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                           <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                         </View>
                         {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
-                          const labels: Record<string, string> = {
-                            'current-treatment': 'Currently in school',
-                            'returning-after-treatment': 'Taking a break from school',
-                            'supporting-student': 'Planning to return to school soon',
-                            'special-needs': 'Home hospital education',
-                          };
-                          const label = labels[status] ?? status.replace(/-/g, ' ');
+                          const label = t(`profile.statusOptions.${status}`, status.replace(/-/g, ' '));
                           return (
                             <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                               <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
@@ -399,12 +394,12 @@ export default function ProfileScreen() {
                       <View style={[styles.statsRow, styles.webStatsRow, { borderTopColor: colors.borderCard }]}>
                         <View style={styles.webStatBlock}>
                           <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
-                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('profile.statStories')}</Text>
                         </View>
                         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                         <View style={styles.webStatBlock}>
                           <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
-                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+                          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('profile.statSaved')}</Text>
                         </View>
                       </View>
 
@@ -413,7 +408,7 @@ export default function ProfileScreen() {
                         style={[styles.editProfileBtn, styles.webEditProfileBtn, { borderColor: colors.border }]}
                       >
                         <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
-                        <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+                        <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>{t('profile.editProfile')}</Text>
                       </Pressable>
                     </Animated.View>
                   </View>
@@ -421,7 +416,7 @@ export default function ProfileScreen() {
 
                 {selectedTopics.length > 0 && (
                   <AnimatedSection delay={420}>
-                    <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>INTERESTS</Text>
+                    <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>{t('profile.sectionInterests')}</Text>
                     <View style={[styles.webPanel, { backgroundColor: colors.white, borderColor: colors.border }]}>
                       <View style={styles.webTopicsWrap}>
                         {selectedTopics.map((topic) => (
@@ -437,16 +432,18 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.webRight}>
+                {(SHOW_PUZZLES || SHOW_KNOWLEDGE_TREE) && (
                 <AnimatedSection delay={460}>
-                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
+                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>{t('profile.sectionProgress')}</Text>
 
                   <View style={styles.webProgressRow}>
+                    {SHOW_KNOWLEDGE_TREE && (
                     <WebStatCard
                       icon="leaf"
                       tint="#10B981"
                       glassTint="rgba(16, 185, 129, 0.15)"
-                      title="Knowledge Tree"
-                      subtitle="Concepts explored"
+                      title={t('profile.knowledgeTree')}
+                      subtitle={t('profile.conceptsExplored')}
                       value={treeLit}
                       total={treeResources.length}
                       onPress={() => router.push('/knowledge-tree' as any)}
@@ -454,12 +451,14 @@ export default function ProfileScreen() {
                       shadows={shadows}
                       isDark={isDark}
                     />
+                    )}
+                    {SHOW_PUZZLES && (
                     <WebStatCard
                       icon="extension-puzzle"
                       tint="#F59E0B"
                       glassTint="rgba(245, 158, 11, 0.15)"
-                      title="My Puzzles"
-                      subtitle="Pieces earned"
+                      title={t('profile.myPuzzles')}
+                      subtitle={t('profile.piecesEarned')}
                       value={puzzlesEarned}
                       total={TOTAL_PIECES}
                       onPress={() => router.push('/accomplishments' as any)}
@@ -467,11 +466,13 @@ export default function ProfileScreen() {
                       shadows={shadows}
                       isDark={isDark}
                     />
+                    )}
                   </View>
                 </AnimatedSection>
+                )}
 
                 <AnimatedSection delay={500}>
-                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+                  <Text style={[styles.sectionLabel, styles.webSectionLabel, { color: colors.textLight }]}>{t('profile.sectionJournal')}</Text>
 
                   <Pressable
                     onPress={() => router.push("/journal")}
@@ -492,8 +493,8 @@ export default function ProfileScreen() {
                         <Ionicons name="journal" size={28} color="#FFFFFF" />
                       </View>
                       <View style={styles.journalInfo}>
-                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
-                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>Write and revisit your notes</Text>
+                        <Text style={[styles.journalTitle, { color: colors.textDark }]}>{t('profile.notebookLibrary')}</Text>
+                        <Text style={[styles.journalCount, { color: colors.textMuted }]}>{t('profile.notebookSubtitle')}</Text>
                       </View>
                       <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                         <Ionicons name="arrow-forward" size={18} color={colors.primary} />
@@ -533,20 +534,14 @@ export default function ProfileScreen() {
                 <View style={styles.badgeWrapRow}>
                   {isAnonymous && (
                     <View style={[styles.rolePill, { backgroundColor: colors.borderCard }]}>
-                      <Text style={[styles.rolePillText, { color: colors.textMuted }]}>Guest</Text>
+                      <Text style={[styles.rolePillText, { color: colors.textMuted }]}>{t('profile.guest')}</Text>
                     </View>
                   )}
                   <View style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                     <Text style={[styles.rolePillText, { color: colors.primary }]}>{roleDisplayName}</Text>
                   </View>
                   {data.schoolStatuses.length > 0 && data.schoolStatuses.map((status: string) => {
-                    const labels: Record<string, string> = {
-                      'current-treatment': 'Currently in school',
-                      'returning-after-treatment': 'Taking a break from school',
-                      'supporting-student': 'Planning to return to school soon',
-                      'special-needs': 'Home hospital education',
-                    };
-                    const label = labels[status] ?? status.replace(/-/g, ' ');
+                    const label = t(`profile.statusOptions.${status}`, status.replace(/-/g, ' '));
                     return (
                       <View key={status} style={[styles.rolePill, { backgroundColor: colors.backgroundLight }]}>
                         <Text style={[styles.rolePillText, { color: colors.primary }]}>{label}</Text>
@@ -557,12 +552,12 @@ export default function ProfileScreen() {
                 <View style={[styles.statsRow, { borderTopColor: colors.borderCard }]}>
                   <View style={styles.statItem}>
                     <Text style={[styles.statNumber, { color: colors.textDark }]}>{myStoriesCount}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>Stories</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('profile.statStories')}</Text>
                   </View>
                   <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.statItem}>
                     <Text style={[styles.statNumber, { color: colors.textDark }]}>{savedCount}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>Saved</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('profile.statSaved')}</Text>
                   </View>
                 </View>
 
@@ -571,15 +566,17 @@ export default function ProfileScreen() {
                   style={[styles.editProfileBtn, { borderColor: colors.border }]}
                 >
                   <Ionicons name="pencil-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>Edit Profile</Text>
+                  <Text style={[styles.editProfileBtnText, { color: colors.textMuted }]}>{t('profile.editProfile')}</Text>
                 </Pressable>
               </Animated.View>
             </View>
             </LinearGradient>
 
+            {(SHOW_PUZZLES || SHOW_KNOWLEDGE_TREE) && (
             <AnimatedSection delay={460}>
-              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY PROGRESS</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.sectionProgress')}</Text>
 
+              {SHOW_KNOWLEDGE_TREE && (
               <Pressable
                 onPress={() => router.push('/knowledge-tree' as any)}
                 style={({ pressed }) => [
@@ -599,15 +596,17 @@ export default function ProfileScreen() {
                     <Ionicons name="leaf" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
-                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>Knowledge Tree</Text>
-                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>Explore concepts</Text>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>{t('profile.knowledgeTree')}</Text>
+                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>{t('profile.exploreConcepts')}</Text>
                   </View>
                   <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color="#10B981" />
                   </View>
                 </LinearGradient>
               </Pressable>
+              )}
 
+              {SHOW_PUZZLES && (
               <Pressable
                 onPress={() => router.push('/accomplishments' as any)}
                 style={({ pressed }) => [
@@ -627,18 +626,20 @@ export default function ProfileScreen() {
                     <Ionicons name="extension-puzzle" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
-                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>My Puzzles</Text>
-                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>View accomplishments</Text>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>{t('profile.myPuzzles')}</Text>
+                    <Text style={[styles.journalCount, { color: colors.textMuted }]}>{t('profile.viewAccomplishments')}</Text>
                   </View>
                   <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color="#F59E0B" />
                   </View>
                 </LinearGradient>
               </Pressable>
+              )}
             </AnimatedSection>
+            )}
 
             <AnimatedSection delay={500}>
-              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>MY JOURNAL</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.sectionJournal')}</Text>
 
               <Pressable
                 onPress={() => router.push("/journal")}
@@ -660,7 +661,7 @@ export default function ProfileScreen() {
                     <Ionicons name="journal" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
-                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>Notebook Library</Text>
+                    <Text style={[styles.journalTitle, { color: colors.textDark }]}>{t('profile.notebookLibrary')}</Text>
                   </View>
                   <View style={[styles.journalArrow, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)', borderColor: colors.border }]}>
                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />

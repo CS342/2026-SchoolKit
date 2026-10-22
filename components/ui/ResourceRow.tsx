@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ViewStyle, Pressable, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -28,6 +29,7 @@ interface ResourceRowProps {
  * scannable than the big centered mobile tiles.
  */
 export function ResourceRow({ title, icon, color, category, description, onPress, right, downloaded, fillHeight, style }: ResourceRowProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [hovered, setHovered] = useState(false);
 
@@ -70,7 +72,7 @@ export function ResourceRow({ title, icon, color, category, description, onPress
                 {downloaded ? (
                   <View style={styles.dlBadge}>
                     <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-                    <Text style={[styles.dlText, { color: colors.success }]}>Downloaded</Text>
+                    <Text style={[styles.dlText, { color: colors.success }]}>{t('design.ui.downloaded')}</Text>
                   </View>
                 ) : null}
               </View>

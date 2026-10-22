@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,6 +23,7 @@ const REPORT_REASONS = [
 ];
 
 export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
@@ -50,7 +52,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
         onClose();
       } catch (error) {
         console.error('Submit report error:', error);
-        setSubmitError("We couldn't submit your report. Please check your connection and try again.");
+        setSubmitError(t('stories.reportSubmitError'));
       } finally {
         setIsSubmitting(false);
       }
@@ -78,14 +80,14 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
         
         <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom + 20, 20) }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Report Story</Text>
+            <Text style={styles.title}>{t('stories.reportStory')}</Text>
             <Pressable onPress={handleClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>
 
           <Text style={styles.subtitle}>
-            Please select a reason for reporting this story to help our moderators understand the issue.
+            {t('stories.reportStorySubtitle')}
           </Text>
 
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -102,7 +104,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
                       {isSelected && <View style={styles.radioInner} />}
                     </View>
                     <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                      {reason}
+                      {t(`stories.reportReasons.${reason}`)}
                     </Text>
                   </Pressable>
                 );
@@ -112,7 +114,7 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
             {selectedReason === 'Other' && (
               <TextInput
                 style={styles.textInput}
-                placeholder="Can you tell us more?"
+                placeholder={t('stories.reportTellMore')}
                 placeholderTextColor={colors.textLight + '80'}
                 value={details}
                 onChangeText={setDetails}
@@ -129,9 +131,9 @@ export function ReportStoryModal({ visible, onClose, onSubmit }: ReportStoryModa
               <Text style={styles.errorText}>{submitError}</Text>
             )}
             <View style={styles.submitBtn}>
-              <PrimaryButton 
-                title="Submit Report" 
-                onPress={handleSubmit} 
+              <PrimaryButton
+                title={t('stories.submitReport')}
+                onPress={handleSubmit}
                 disabled={!selectedReason || (selectedReason === 'Other' && details.trim().length === 0)}
               />
             </View>

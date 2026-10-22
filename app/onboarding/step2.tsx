@@ -11,6 +11,7 @@ import Animated, {
   withSpring,
   withSequence,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding, UserRole } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
@@ -26,17 +27,16 @@ import { isStudentRole } from '../../utils/profile';
 interface RoleOption {
   role: UserRole;
   iconName: keyof typeof Ionicons.glyphMap;
-  title: string;
   color: string;
   gradient: readonly string[];
 }
 
 const ROLES: RoleOption[] = [
-  { role: 'student-elementary', iconName: 'color-palette', title: 'Student (elementary school)', color: COLORS.studentElementary, gradient: GRADIENTS.roleStudentElementary },
-  { role: 'student-k8', iconName: 'school', title: 'Student (middle school)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
-  { role: 'student-hs', iconName: 'book', title: 'Student (high school and up)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
-  { role: 'parent', iconName: 'people', title: 'Parent / caregiver', color: COLORS.parent, gradient: GRADIENTS.roleParent },
-  { role: 'staff', iconName: 'briefcase', title: 'School staff', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
+  { role: 'student-elementary', iconName: 'color-palette', color: COLORS.studentElementary, gradient: GRADIENTS.roleStudentElementary },
+  { role: 'student-k8', iconName: 'school', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
+  { role: 'student-hs', iconName: 'book', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
+  { role: 'parent', iconName: 'people', color: COLORS.parent, gradient: GRADIENTS.roleParent },
+  { role: 'staff', iconName: 'briefcase', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
 ];
 
 function RoleCard({
@@ -50,7 +50,9 @@ function RoleCard({
   onPress: () => void;
   index: number;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
+  const title = t(`onboarding.role.options.${option.role}`);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
@@ -87,7 +89,7 @@ function RoleCard({
     <Pressable
       onPress={handlePress}
       accessibilityRole="radio"
-      accessibilityLabel={option.title}
+      accessibilityLabel={title}
       accessibilityState={{ selected: isSelected }}
     >
       <Animated.View
@@ -111,7 +113,7 @@ function RoleCard({
           <Ionicons name={option.iconName} size={24} color="#FFFFFF" />
         </LinearGradient>
 
-        <Text style={styles.roleTitle}>{option.title}</Text>
+        <Text style={styles.roleTitle}>{title}</Text>
 
         <View style={[styles.radioOuter, isSelected && { borderColor: option.color }]}>
           {isSelected && (
@@ -125,6 +127,7 @@ function RoleCard({
 
 export default function Step2Screen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data, updateRole } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -161,8 +164,8 @@ export default function Step2Screen() {
               <Ionicons name="people-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={sharedStyles.pageTitle}>Tell us about yourself</Text>
-            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>Choose the option that best describes you</Text>
+            <Text style={sharedStyles.pageTitle}>{t('onboarding.role.title')}</Text>
+            <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>{t('onboarding.role.subtitle')}</Text>
 
             <View style={[styles.options, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16, width: '100%' }]}>
               {ROLES.map((option, index) => (
@@ -180,7 +183,7 @@ export default function Step2Screen() {
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
                 <PrimaryButton
-                  title="Continue"
+                  title={t('common.continue')}
                   onPress={handleContinue}
                   disabled={!selectedRole}
                 />
@@ -192,7 +195,7 @@ export default function Step2Screen() {
         {!isWebDesktop && (
         <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
-            title="Continue"
+            title={t('common.continue')}
             onPress={handleContinue}
             disabled={!selectedRole}
           />

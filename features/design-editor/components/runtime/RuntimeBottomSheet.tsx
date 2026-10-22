@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { View, TouchableOpacity, Animated, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { InteractiveComponentObject, BottomSheetConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 import { COLORS, SHADOWS } from '../../../../constants/onboarding-theme';
 
 export function RuntimeBottomSheet({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
+  const { t } = useTranslation();
   const config = object.interactionConfig as BottomSheetConfig;
   const [openSheetIndex, setOpenSheetIndex] = useState<number | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -204,7 +206,7 @@ export function RuntimeBottomSheet({ object, isDark = false }: { object: Interac
               }}
             >
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
-                Next
+                {t('common.next')}
               </Text>
             </TouchableOpacity>
           )}

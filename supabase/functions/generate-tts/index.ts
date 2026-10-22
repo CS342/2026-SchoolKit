@@ -13,6 +13,19 @@ const corsHeaders = {
 // Bound per-request ElevenLabs spend
 const MAX_TEXT_CHARS = 5000;
 
+// Generation settings are part of the cache key, so changing them never serves
+// audio produced with the old ones.
+const MODEL_ID = 'eleven_multilingual_v2';
+const VOICE_SETTINGS = { stability: 0.5, similarity_boost: 0.5 };
+const CACHE_BUCKET = 'tts-cache';
+
+async function cacheKey(voiceId: string, text: string): Promise<string> {
+  const input = JSON.stringify([MODEL_ID, VOICE_SETTINGS, voiceId, text]);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${voiceId}/${hex}.mp3`;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -60,6 +73,27 @@ serve(async (req) => {
       )
     }
 
+    if (typeof voiceId !== 'string' || !/^[A-Za-z0-9]+$/.test(voiceId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid voiceId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Shared cache: serve previously generated audio without calling ElevenLabs.
+    // Any read error (usually "not found") falls through to generation.
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const objectPath = await cacheKey(voiceId, text);
+    const { data: cached } = await admin.storage.from(CACHE_BUCKET).download(objectPath);
+    if (cached) {
+      return new Response(cached, {
+        headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg', 'X-TTS-Cache': 'hit' },
+      })
+    }
+
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
@@ -69,8 +103,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: { stability: 0.5, similarity_boost: 0.5 },
+        model_id: MODEL_ID,
+        voice_settings: VOICE_SETTINGS,
       }),
     })
 
@@ -89,10 +123,16 @@ serve(async (req) => {
 
     const audioBlob = await response.blob()
 
+    const { error: cacheWriteError } = await admin.storage
+      .from(CACHE_BUCKET)
+      .upload(objectPath, audioBlob, { contentType: 'audio/mpeg', upsert: true });
+    if (cacheWriteError) console.warn('TTS cache write failed:', cacheWriteError.message);
+
     return new Response(audioBlob, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'audio/mpeg',
+        'X-TTS-Cache': 'miss',
       },
     })
   } catch (error) {

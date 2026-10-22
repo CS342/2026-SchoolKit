@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Modal, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore, undo, redo, useCanUndo, useCanRedo } from '../../features/content/editor/store';
@@ -28,6 +29,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
   onAddVersion: (kind: AddVersionKind) => void;
   onRenameTopic: (name: string) => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const doc = useEditorStore((s) => s.doc);
   const dirty = useEditorStore((s) => s.dirty);
@@ -59,23 +61,23 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
     <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
       {/* Topbar */}
       <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 12, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.borderCard, zIndex: 10 }, shadows.header]}>
-        <Pressable onPress={onBack} accessibilityLabel="Back to pages" style={{ padding: 4, cursor: 'pointer' as any }}>
+        <Pressable onPress={onBack} accessibilityLabel={t('editor.topbar.backToPages')} style={{ padding: 4, cursor: 'pointer' as any }}>
           <Ionicons name="arrow-back" size={24} color={colors.textDark} />
         </Pressable>
 
         <TextInput
           value={doc.title}
-          onChangeText={(t) => setMeta({ title: t })}
-          placeholder="Page title"
+          onChangeText={(val) => setMeta({ title: val })}
+          placeholder={t('editor.topbar.pageTitlePlaceholder')}
           placeholderTextColor={colors.inputPlaceholder}
           style={{ flex: 1, ...TYPOGRAPHY.h3, color: colors.textDark, paddingVertical: 6, outlineStyle: 'none' as any }}
         />
 
-        {dirty ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>Unsaved</Text> : null}
+        {dirty ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>{t('editor.topbar.unsaved')}</Text> : null}
 
         <View style={{ flexDirection: 'row', gap: 2 }}>
-          <TopBtn icon="arrow-undo" label="Undo" disabled={!canUndo} onPress={undo} />
-          <TopBtn icon="arrow-redo" label="Redo" disabled={!canRedo} onPress={redo} />
+          <TopBtn icon="arrow-undo" label={t('editor.topbar.undo')} disabled={!canUndo} onPress={undo} />
+          <TopBtn icon="arrow-redo" label={t('editor.topbar.redo')} disabled={!canRedo} onPress={redo} />
         </View>
 
         {/* Draft / Published segmented control */}
@@ -83,7 +85,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
           {(['draft', 'published'] as Status[]).map((s) => (
             <Pressable key={s} onPress={() => setStatus(s)} style={{ paddingVertical: 6, paddingHorizontal: 14, borderRadius: RADII.pill, backgroundColor: status === s ? colors.white : 'transparent', cursor: 'pointer' as any, ...(status === s ? shadows.small : {}) }}>
               <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: status === s ? (s === 'published' ? colors.success : colors.textDark) : colors.textLight }}>
-                {s === 'draft' ? 'Draft' : 'Published'}
+                {s === 'draft' ? t('editor.status.draft') : t('editor.status.published')}
               </Text>
             </Pressable>
           ))}
@@ -95,7 +97,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
           style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 9, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: dirty || saving ? colors.primary : colors.disabledButton, opacity: hovered && !saving ? 0.92 : 1, cursor: (saving ? 'default' : 'pointer') as any })}
         >
           <Ionicons name={saving ? 'sync' : 'checkmark'} size={16} color="#fff" />
-          <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}</Text>
+          <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{saving ? t('editor.topbar.saving') : dirty ? t('common.save') : t('editor.topbar.saved')}</Text>
         </Pressable>
       </View>
 
@@ -118,7 +120,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
             ))}
             {doc.blocks.length === 0 ? (
               <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textLight, textAlign: 'center', paddingVertical: 20 }}>
-                An empty page. Add a Title block to start.
+                {t('editor.topbar.emptyPage')}
               </Text>
             ) : null}
             <View style={{ height: 4 }} />
@@ -141,23 +143,23 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
       <Modal visible={!!pending} transparent animationType="fade" onRequestClose={() => !savingForLeave && setPending(null)}>
         <Pressable onPress={() => !savingForLeave && setPending(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
           <Pressable onPress={() => {}} style={[{ width: 440, maxWidth: '92%', backgroundColor: colors.white, borderRadius: RADII.xl, padding: SPACING.xxl }, shadows.cardLarge]}>
-            <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>Save changes to this version?</Text>
+            <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>{t('editor.leavePrompt.title')}</Text>
             <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted }}>
-              You have unsaved changes. Save them as {status === 'published' ? 'published' : 'a draft'} before you leave this version, or discard them.
+              {t('editor.leavePrompt.body', { status: status === 'published' ? t('editor.leavePrompt.statusPublished') : t('editor.leavePrompt.statusDraft') })}
             </Text>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 22 }}>
               <Pressable onPress={() => !savingForLeave && setPending(null)} style={{ paddingVertical: 10, paddingHorizontal: 14, cursor: 'pointer' as any }}>
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>Cancel</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>{t('common.cancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => { if (savingForLeave || !pending) return; const action = pending; setPending(null); action(); }}
                 style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: RADII.button, cursor: 'pointer' as any }}
               >
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.error }}>Discard</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.error }}>{t('editor.leavePrompt.discard')}</Text>
               </Pressable>
               <Pressable onPress={saveThenLeave} disabled={savingForLeave} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: (savingForLeave ? 'default' : 'pointer') as any }}>
                 {savingForLeave ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={16} color="#fff" />}
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{savingForLeave ? 'Saving…' : 'Save & continue'}</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{savingForLeave ? t('editor.topbar.saving') : t('editor.leavePrompt.saveContinue')}</Text>
               </Pressable>
             </View>
           </Pressable>

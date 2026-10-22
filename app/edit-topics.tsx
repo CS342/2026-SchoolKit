@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { ContentColumn } from '../components/ui';
@@ -37,6 +38,7 @@ function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; i
 
 export default function EditTopicsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { data, updateTopics } = useOnboarding();
   const { colors, appStyles } = useTheme();
@@ -50,20 +52,22 @@ export default function EditTopicsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Edit Topics</Text>
-        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel="Save">
-          <Text style={appStyles.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.editTopics')}</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel={t('common.save')}>
+          <Text style={appStyles.editSaveText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
         <ContentColumn width="reading">
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select topics you're interested in</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('profile.selectTopics')}</Text>
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
-            {picker.count} topic{picker.count !== 1 ? 's' : ''} selected
+            {picker.count === 1
+              ? t('profile.topicCountOne', { count: picker.count })
+              : t('profile.topicCountOther', { count: picker.count })}
           </Text>
 
           <View style={styles.cardsContainer}>

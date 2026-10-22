@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ChapterDefinition } from '../../constants/accomplishments';
 import { ANIMATION, COLORS, RADII, SHADOWS, SPACING } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,6 +28,7 @@ interface ChapterCardProps {
 }
 
 export default function ChapterCard({ chapter, earnedPieceIds, index, onPress, web, cardWidth }: ChapterCardProps) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const earnedCount = chapter.pieces.filter(p => earnedPieceIds.has(p.id)).length;
   const isComplete = earnedCount === chapter.pieceCount;
@@ -54,7 +56,12 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress, w
       <Animated.View style={[{ width: cardWidth }, animStyle]}>
         <Card
           onPress={onPress}
-          accessibilityLabel={`${chapter.title}, ${chapter.subtitle}. ${earnedCount} of ${chapter.pieceCount} pieces earned.`}
+          accessibilityLabel={t('journal.cardAccessibility', {
+            title: chapter.title,
+            subtitle: chapter.subtitle,
+            earned: earnedCount,
+            total: chapter.pieceCount,
+          })}
         >
           <View style={styles.webHeaderRow}>
             <LinearGradient
@@ -75,7 +82,7 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress, w
             </View>
             {isComplete ? (
               <View style={[styles.webBadge, { backgroundColor: accent }]}>
-                <Text style={styles.webBadgeText}>Complete</Text>
+                <Text style={styles.webBadgeText}>{t('journal.complete')}</Text>
               </View>
             ) : (
               <Text style={[styles.webProgress, { color: accent }]}>
@@ -114,7 +121,7 @@ export default function ChapterCard({ chapter, earnedPieceIds, index, onPress, w
             </View>
             {isComplete ? (
               <View style={styles.completeBadge}>
-                <Text style={styles.completeBadgeText}>Complete</Text>
+                <Text style={styles.completeBadgeText}>{t('journal.complete')}</Text>
               </View>
             ) : (
               <Text style={styles.progressText}>

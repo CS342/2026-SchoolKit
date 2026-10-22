@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDesignCRUD } from '../../features/design-editor/hooks/useDesignCRUD';
 import { DesignCard } from '../../features/design-editor/components/DesignCard';
@@ -9,6 +10,7 @@ import type { DesignDocument } from '../../features/design-editor/types/document
 
 export default function DesignsDashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { designs, loading, fetchDesigns, createDesign, deleteDesign, duplicateDesign } =
     useDesignCRUD();
@@ -29,7 +31,7 @@ export default function DesignsDashboard() {
       objects: [],
       assets: {},
     };
-    const id = await createDesign('Untitled Design', doc);
+    const id = await createDesign(t('design.dashboard.untitledDesign'), doc);
     if (id) {
       router.push(`/(editor)/design/${id}`);
     }
@@ -70,7 +72,7 @@ export default function DesignsDashboard() {
               gap: 4,
             }}
           >
-            ← Back to Profile
+            ← {t('design.dashboard.backToProfile')}
           </button>
           <h1
             style={{
@@ -80,7 +82,7 @@ export default function DesignsDashboard() {
               margin: 0,
             }}
           >
-            My Designs
+            {t('design.dashboard.myDesigns')}
           </h1>
           <p
             style={{
@@ -89,7 +91,7 @@ export default function DesignsDashboard() {
               margin: '4px 0 0',
             }}
           >
-            Create and manage visual content
+            {t('design.dashboard.subtitle')}
           </p>
         </div>
 
@@ -111,7 +113,7 @@ export default function DesignsDashboard() {
             }}
           >
             <span style={{ fontSize: 16 }}>&#9733;</span>
-            Generate with AI
+            {t('design.dashboard.generateWithAI')}
           </button>
           <button
             onClick={handleCreate}
@@ -129,7 +131,7 @@ export default function DesignsDashboard() {
               gap: 8,
             }}
           >
-            + New Design
+            + {t('design.dashboard.newDesign')}
           </button>
         </div>
       </div>
@@ -145,7 +147,7 @@ export default function DesignsDashboard() {
               color: colors.textLight,
             }}
           >
-            Loading...
+            {t('design.dashboard.loading')}
           </div>
         ) : designs.length === 0 ? (
           <div
@@ -166,10 +168,10 @@ export default function DesignsDashboard() {
                 color: colors.textDark,
               }}
             >
-              No designs yet
+              {t('design.dashboard.noDesignsYet')}
             </div>
             <div style={{ fontSize: 15, color: colors.textLight }}>
-              Create your first design to get started
+              {t('design.dashboard.emptyHint')}
             </div>
             <button
               onClick={handleCreate}
@@ -185,7 +187,7 @@ export default function DesignsDashboard() {
                 marginTop: 8,
               }}
             >
-              + New Design
+              + {t('design.dashboard.newDesign')}
             </button>
           </div>
         ) : (
@@ -214,7 +216,7 @@ export default function DesignsDashboard() {
         visible={showAIGenerate}
         onClose={() => setShowAIGenerate(false)}
         onDesignGenerated={async (doc: DesignDocument, title: string) => {
-          const id = await createDesign(title || 'AI Generated Design', doc);
+          const id = await createDesign(title || t('design.dashboard.aiGeneratedDesign'), doc);
           if (id) {
             router.push(`/(editor)/design/${id}`);
           }

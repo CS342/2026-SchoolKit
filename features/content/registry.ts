@@ -11,12 +11,14 @@
 // block type is: (1) extend the union in types.ts, (2) add one REGISTRY entry,
 // (3) add one BLOCK_RENDERERS entry in blocks.tsx. Nothing can silently drift.
 //
-// PURE module: imports only zod, nanoid, and ./types. It must never import
-// validate.ts, editor/templates.ts, or anything React Native, so the validation/
-// test path (node env) stays free of RN.
+// PURE module: imports only zod, nanoid, ./types, and the shared i18n instance
+// (used to localize the card `summary` display strings — react-i18next/i18next are
+// pure JS, no React Native). It must never import validate.ts, editor/templates.ts,
+// or anything React Native, so the validation/test path (node env) stays free of RN.
 
 import { z } from 'zod';
 import { nanoid } from 'nanoid/non-secure';
+import i18n from '../../lib/i18n';
 import type {
   BlockType, ContentBlock,
   AccordionItem, CardItem, StepItem, LinkItem,
@@ -87,6 +89,31 @@ export const makeTab = () => ({ id: nid(), label: 'New tab', icon: 'ellipse-outl
 export const makeFlipCard = () => ({ id: nid(), front: 'Front', back: 'The answer or detail on the back.', icon: 'sparkles-outline', color: 'teal' as const });
 export const makeComparisonRow = (cols = 2) => ({ id: nid(), cells: Array.from({ length: cols }, () => '') });
 
+// ─── read-aloud helpers ──────────────────────────────────────────────────────────
+const sentence = (line: string) => (/[.!?:;…]$/.test(line) ? line : line + '.');
+
+/** Markdown → plain spoken text: drops syntax and link targets, and ends each line
+ *  (bullets, subheadings) as a sentence so the voice pauses between them. */
+export function md(markdown: string | undefined): string {
+  return (markdown ?? '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*(#{1,6}\s+|[-*]\s+|\d+\.\s+)/gm, '')
+    .replace(/[*_`]+/g, '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map(sentence)
+    .join('\n');
+}
+/** Join spoken pieces as sentences, skipping empties. */
+export function say(...parts: (string | false | null | undefined)[]): string {
+  return parts
+    .map((p) => (p || '').trim())
+    .filter(Boolean)
+    .map(sentence)
+    .join('\n');
+}
+
 // ─── the manifest ────────────────────────────────────────────────────────────────
 export interface BlockDef {
   type: BlockType;
@@ -105,9 +132,22 @@ export interface BlockDef {
   wideLayout?: boolean;
   /** one-line summary shown on the editor block card. */
   summary: (block: any) => string;
+  /** what "Listen" reads aloud for this block — every item, including content hidden
+   *  behind taps (flip-card backs, accordion bodies, inactive tabs). '' = skipped. */
+  speech: (block: any) => string;
   /** one line for the AI system prompt's "Block types (fields)" list. */
   aiPrompt: string;
 }
+
+// ─── localized card-summary helpers ──────────────────────────────────────────────
+// Summaries are display-only (shown on the editor block card), so they resolve through
+// i18n at call time. Headings, nouns and type names stay English in the stored doc.
+/** `${heading} · ${count} ${noun}`, with the count+noun phrase localized. */
+const summaryCount = (heading: string, noun: string, count: number) =>
+  `${heading} · ${i18n.t(`editor.summary.counts.${noun}`, { count })}`;
+/** A block's own heading when set, else the localized default for `key`. */
+const headingOr = (key: string, heading?: string) =>
+  heading || i18n.t(`editor.summary.headings.${key}`);
 
 // NOTE: insertion order here = the order block types appear in the AI prompt.
 // The add-block menu uses `palette.order` instead.
@@ -118,7 +158,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     make: () => ({ id: nid(), type: 'hero', eyebrow: 'Eyebrow', eyebrowIcon: 'bookmark-outline', eyebrowColor: 'teal', titleParts: [{ text: 'New ' }, { text: 'Page', accent: true }] }),
     editor: { fields: [], special: 'hero' },
     palette: { label: 'Title', icon: 'text', blurb: 'The page title.', manuallyAddable: false, order: 0 },
-    summary: (b) => (b.titleParts ?? []).map((p: any) => p.text).join('') || 'Untitled',
+    summary: (b) => (b.titleParts ?? []).map((p: any) => p.text).join('') || i18n.t('editor.summary.untitled'),
+    speech: (b) => say((b.titleParts ?? []).map((p: any) => p.text).join(''), b.subtitle),
     aiPrompt: `- hero: { id, type:"hero", eyebrow?, eyebrowIcon?, eyebrowColor?, titleParts:[{text, accent?:true}], subtitle? } — exactly one, first. Split the title across titleParts so exactly ONE short key word has accent:true and the rest do not, e.g. [{text:"Coping with "},{text:"Fatigue",accent:true},{text:" at School"}]. Never mark the whole title.`,
   },
   callout: {
@@ -132,6 +173,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     ] },
     palette: { label: 'Callout', icon: 'chatbox-ellipses-outline', blurb: 'A reassuring note up top.', manuallyAddable: true, order: 1 },
     summary: (b) => (b.text ?? '').slice(0, 80),
+    speech: (b) => say(b.text),
     aiPrompt: `- callout: { id, type:"callout", icon, text, tone? } — one reassuring note near the top.`,
   },
   richText: {
@@ -145,6 +187,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Text', icon: 'text-outline', blurb: 'A paragraph of prose.', manuallyAddable: true, order: 7 },
     headingField: 'heading',
     summary: (b) => (b.heading ? b.heading + ' — ' : '') + (b.markdown ?? '').replace(/[#*_>-]/g, '').slice(0, 70),
+    speech: (b) => say(b.heading, md(b.markdown)),
     aiPrompt: `- richText: { id, type:"richText", heading?, markdown } — markdown supports "### " subheadings, **bold**, *italic*, [text](url), "- " bullets, and "1. " numbered lists. Put each subheading and list item on its own line, and separate paragraphs with a blank line (\\n\\n).`,
   },
   quote: {
@@ -157,6 +200,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     ] },
     palette: { label: 'Quote', icon: 'chatbubble-outline', blurb: 'A short, affirming quote.', manuallyAddable: true, order: 8 },
     summary: (b) => (b.text ?? '').slice(0, 80),
+    speech: (b) => say(b.text, b.author && `— ${b.author}`),
     aiPrompt: `- quote: { id, type:"quote", text, author? }`,
   },
   footnote: {
@@ -166,6 +210,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     editor: { fields: [{ key: 'text', label: 'Fine print', kind: 'textarea' }] },
     palette: { label: 'Fine print', icon: 'information-circle-outline', blurb: 'Disclaimer or source note.', manuallyAddable: true, order: 10 },
     summary: (b) => (b.text ?? '').slice(0, 80),
+    speech: (b) => say(b.text),
     aiPrompt: `- footnote: { id, type:"footnote", text } — fine print / "not medical advice".`,
   },
   image: {
@@ -179,7 +224,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
       { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
     ], special: 'image' },
     palette: { label: 'Image', icon: 'image-outline', blurb: 'A picture with a caption.', manuallyAddable: true, order: 9 },
-    summary: (b) => b.alt || b.url || 'Image',
+    summary: (b) => b.alt || b.url || i18n.t('editor.summary.image'),
+    speech: (b) => say(b.caption),
     aiPrompt: `- image: { id, type:"image", url, alt, caption? } — ONLY if the request supplies a real image URL OR an attached-image token (see "Attached images"); otherwise never emit an image. Never invent an image URL. When placing an attached image, copy its token EXACTLY into "url" and write a fitting alt from what you see.`,
   },
   accordion: {
@@ -196,7 +242,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Expandable cards', icon: 'list-outline', blurb: 'Categories to tap and explore.', manuallyAddable: true, order: 2 },
     itemArrayKey: 'items',
     headingField: 'heading',
-    summary: (b) => `${b.heading} · ${(b.items ?? []).length} items`,
+    summary: (b) => summaryCount(b.heading, 'items', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.title, i.summary, md(i.body)))),
     aiPrompt: `- accordion: { id, type:"accordion", heading, subheading?, items:[{id,title,icon,color,summary,body}] } — 3–5 tap-to-expand categories.`,
   },
   cardGrid: {
@@ -213,7 +260,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'items',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading} · ${(b.items ?? []).length} items`,
+    summary: (b) => summaryCount(b.heading, 'items', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.title, md(i.body)))),
     aiPrompt: `- cardGrid: { id, type:"cardGrid", heading, subheading?, items:[{id,title,icon,color,body,href?}] } — 2–4 parallel items.`,
   },
   stepper: {
@@ -230,7 +278,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'steps',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading} · ${(b.steps ?? []).length} steps`,
+    summary: (b) => summaryCount(b.heading, 'steps', (b.steps ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.steps ?? []).map((st: any, n: number) => say(`${n + 1}. ${st.title}`, md(st.detail)))),
     aiPrompt: `- stepper: { id, type:"stepper", heading, subheading?, steps:[{id,title,icon,color,detail}] } — an ORDERED plan (3–6 steps).`,
   },
   linkList: {
@@ -249,7 +298,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'items',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading} · ${(b.items ?? []).length} items`,
+    summary: (b) => summaryCount(b.heading, 'items', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.name, i.blurb))),
     aiPrompt: `- linkList: { id, type:"linkList", heading, subheading?, items:[{id,name,icon,color,blurb?,url,display?}] } — outside orgs/sites; urls from verifiedLinks only. EVERY list of outside links goes in a linkList — never as markdown links in a richText list. heading = the source's own line introducing the list, verbatim (e.g. "Want to learn more? Check out these great resources:"), else a 2–4 word label; never give that intro line to a different block. name = the link's text as written; blurb only if the source describes that link (otherwise omit); display = the site's domain, or omit.`,
   },
   resourceRefList: {
@@ -261,7 +311,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Resource list', icon: 'link-outline', blurb: 'Link to other SchoolKit guides.', manuallyAddable: true, order: 5 },
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading} · ${(b.resourceIds ?? []).length} guides`,
+    summary: (b) => summaryCount(b.heading, 'guides', (b.resourceIds ?? []).length),
+    speech: () => '',
     aiPrompt: `- resourceRefList: { id, type:"resourceRefList", heading, subheading?, ranked?:true, resourceIds:[ids] } — link to existing SchoolKit guides.`,
   },
   divider: {
@@ -277,7 +328,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
       { key: 'tone', label: 'Color', kind: 'color' },
     ] },
     palette: { label: 'Divider', icon: 'remove-outline', blurb: 'A visual break between sections.', manuallyAddable: true, order: 12 },
-    summary: (b) => `Divider · ${b.variant ?? 'line'}`,
+    summary: (b) => i18n.t('editor.summary.dividerVariant', { variant: i18n.t(`editor.selectOptions.divider.${b.variant ?? 'line'}`) }),
+    speech: () => '',
     aiPrompt: `- divider: { id, type:"divider", variant?:"line"|"dots"|"space", tone? } — a light visual break between sections.`,
   },
   references: {
@@ -291,7 +343,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'References', icon: 'documents-outline', blurb: 'A numbered list of sources.', manuallyAddable: true, order: 13 },
     itemArrayKey: 'items',
     headingField: 'heading',
-    summary: (b) => `${b.heading ?? 'References'} · ${(b.items ?? []).length} sources`,
+    summary: (b) => summaryCount(headingOr('references', b.heading), 'sources', (b.items ?? []).length),
+    speech: () => '',
     aiPrompt: `- references: { id, type:"references", heading?, items:[{id,label,url?}] } — numbered sources/citations; url optional.`,
   },
   checklist: {
@@ -305,7 +358,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Checklist', icon: 'checkbox-outline', blurb: 'A tappable, printable checklist.', manuallyAddable: true, order: 14 },
     itemArrayKey: 'items',
     headingField: 'heading',
-    summary: (b) => `${b.heading ?? 'Checklist'} · ${(b.items ?? []).length} items`,
+    summary: (b) => summaryCount(headingOr('checklist', b.heading), 'items', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => i.text)),
     aiPrompt: `- checklist: { id, type:"checklist", heading?, subheading?, items:[{id,text,done?}] } — a prep/packing checklist; 3–8 short items.`,
   },
   statGrid: {
@@ -322,7 +376,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'items',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading ?? 'Stats'} · ${(b.items ?? []).length} tiles`,
+    summary: (b) => summaryCount(headingOr('stats', b.heading), 'tiles', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => `${i.value} — ${i.label}`)),
     aiPrompt: `- statGrid: { id, type:"statGrid", heading?, subheading?, items:[{id,value,label,icon?,color}] } — 2–4 number + label tiles. Only with real, grounded numbers.`,
   },
   gallery: {
@@ -338,7 +393,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'items',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading ?? 'Gallery'} · ${(b.items ?? []).length} images`,
+    summary: (b) => summaryCount(headingOr('gallery', b.heading), 'images', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => i.caption)),
     aiPrompt: `- gallery: { id, type:"gallery", heading?, subheading?, items:[{id,url,alt,caption?}] } — ONLY with real/attached image urls; never invent urls.`,
   },
   testimonials: {
@@ -353,7 +409,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Testimonials', icon: 'chatbubbles-outline', blurb: 'A few short quotes.', manuallyAddable: true, order: 17 },
     itemArrayKey: 'items',
     headingField: 'heading',
-    summary: (b) => `${b.heading ?? 'Testimonials'} · ${(b.items ?? []).length} quotes`,
+    summary: (b) => summaryCount(headingOr('testimonials', b.heading), 'quotes', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.text, i.author && `— ${[i.author, i.role].filter(Boolean).join(', ')}`))),
     aiPrompt: `- testimonials: { id, type:"testimonials", heading?, subheading?, items:[{id,text,author?,role?}] } — 2–4 short quotes; author/role only if provided.`,
   },
   columns: {
@@ -367,7 +424,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     ] },
     palette: { label: 'Two columns', icon: 'browsers-outline', blurb: 'Side-by-side text columns.', manuallyAddable: true, order: 18 },
     headingField: 'heading',
-    summary: (b) => `Columns${b.heading ? ' · ' + b.heading : ''}`,
+    summary: (b) => `${i18n.t('editor.summary.columns')}${b.heading ? ' · ' + b.heading : ''}`,
+    speech: (b) => say(b.heading, md(b.left), md(b.right)),
     aiPrompt: `- columns: { id, type:"columns", heading?, left, right } — two side-by-side markdown columns (stack on mobile). Keep each column short.`,
   },
   tabs: {
@@ -382,7 +440,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Tabs', icon: 'albums-outline', blurb: 'Tabbed sections, one at a time.', manuallyAddable: true, order: 19 },
     itemArrayKey: 'items',
     headingField: 'heading',
-    summary: (b) => `${b.heading ?? 'Tabs'} · ${(b.items ?? []).length} tabs`,
+    summary: (b) => summaryCount(headingOr('tabs', b.heading), 'tabs', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.label, md(i.markdown)))),
     aiPrompt: `- tabs: { id, type:"tabs", heading?, subheading?, items:[{id,label,icon?,markdown}] } — 2–4 tabbed sections; each panel is markdown.`,
   },
   flipCard: {
@@ -399,7 +458,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'items',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading ?? 'Flip cards'} · ${(b.items ?? []).length} cards`,
+    summary: (b) => summaryCount(headingOr('flipCards', b.heading), 'cards', (b.items ?? []).length),
+    speech: (b) => say(b.heading, b.subheading, ...(b.items ?? []).map((i: any) => say(i.front, md(i.back)))),
     aiPrompt: `- flipCard: { id, type:"flipCard", heading?, subheading?, items:[{id,front,back,icon?,color}] } — 2–6 tap-to-flip cards (term→definition, myth→fact).`,
   },
   comparisonTable: {
@@ -411,7 +471,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     itemArrayKey: 'rows',
     headingField: 'heading',
     wideLayout: true,
-    summary: (b) => `${b.heading ?? 'Table'} · ${(b.columns ?? []).length}×${(b.rows ?? []).length}`,
+    summary: (b) => `${headingOr('table', b.heading)} · ${(b.columns ?? []).length}×${(b.rows ?? []).length}`,
+    speech: (b) => say(b.heading, b.subheading, ...(b.rows ?? []).map((r: any) => (r.cells ?? []).map((c: string, n: number) => c && (b.columns?.[n] ? `${b.columns[n]}: ${c}` : c)).filter(Boolean).join('; '))),
     aiPrompt: `- comparisonTable: { id, type:"comparisonTable", heading?, subheading?, columns:[string], rows:[{id,cells:[string]}] } — each row's cells align to columns (same length). 2–4 columns.`,
   },
   video: {
@@ -431,7 +492,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
       { key: 'caption', label: 'Caption', kind: 'text', placeholder: 'Optional' },
     ] },
     palette: { label: 'Video', icon: 'videocam-outline', blurb: 'An embedded video.', manuallyAddable: true, order: 22 },
-    summary: (b) => b.title || b.url || 'Video',
+    summary: (b) => b.title || b.url || i18n.t('editor.summary.video'),
+    speech: () => '',
     aiPrompt: `- video: { id, type:"video", provider?:"youtube"|"vimeo"|"mp4", url, title?, caption? } — ONLY if the request supplies a real video URL; never invent one.`,
   },
   recommendations: {
@@ -440,7 +502,8 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     make: () => ({ id: nid(), type: 'recommendations' }),
     editor: { fields: [] },
     palette: { label: 'Recommendations', icon: 'sparkles-outline', blurb: 'Auto-suggested related pages.', manuallyAddable: true, order: 99 },
-    summary: () => 'Related pages (automatic)',
+    summary: () => i18n.t('editor.summary.recommendations'),
+    speech: () => '',
     aiPrompt: `- recommendations: { id, type:"recommendations" } — always the LAST block.`,
   },
 };
@@ -461,3 +524,19 @@ export const WIDE_TYPES = new Set<BlockType>(DEFS.filter((d) => d.wideLayout).ma
 
 /** one line per type for the AI prompt, in REGISTRY (prompt) order. */
 export const BLOCK_PROMPT_LINES = DEFS.map((d) => d.aiPrompt).join('\n');
+
+// ─── localized field labels/placeholders ──────────────────────────────────────────
+// Field `label`/`placeholder` strings in REGISTRY stay English (the data shape is
+// unchanged); display resolves here, keyed by block type + field key (unique within a
+// block). The English value is the i18n defaultValue, so untranslated keys still render.
+/** Localized display label for a block or item field. */
+export const fieldLabel = (blockType: BlockType | string, field: FieldDef): string =>
+  i18n.t(`editor.fieldLabels.${blockType}.${field.key}`, { defaultValue: field.label });
+/** Localized placeholder for a block or item field (undefined when the field has none). */
+export const fieldPlaceholder = (blockType: BlockType | string, field: FieldDef): string | undefined =>
+  field.placeholder == null
+    ? undefined
+    : i18n.t(`editor.fieldPlaceholders.${blockType}.${field.key}`, { defaultValue: field.placeholder });
+/** Localized label for a `select` field option (keyed by block type + option value). */
+export const fieldOptionLabel = (blockType: BlockType | string, value: string, fallback: string): string =>
+  i18n.t(`editor.selectOptions.${blockType}.${value}`, { defaultValue: fallback });

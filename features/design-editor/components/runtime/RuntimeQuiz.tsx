@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { InteractiveComponentObject, QuizConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 
 export function RuntimeQuiz({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
+  const { t } = useTranslation();
   const config = object.interactionConfig as QuizConfig;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -47,13 +49,13 @@ export function RuntimeQuiz({ object, isDark = false }: { object: InteractiveCom
           <TouchableOpacity
             onPress={() => { setSelectedIndex(null); setShowFeedback(false); }}
             accessibilityRole="button"
-            accessibilityLabel="Try again"
+            accessibilityLabel={t('common.retry')}
             style={{
               paddingVertical: 8, paddingHorizontal: 20, borderRadius: 12,
               backgroundColor: config.buttonColor ?? '#7B68EE',
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Try Again</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{t('design.runtime.tryAgain')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -87,7 +89,7 @@ export function RuntimeQuiz({ object, isDark = false }: { object: InteractiveCom
               setShowFeedback(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Option ${i + 1}: ${option}`}
+            accessibilityLabel={t('design.runtime.optionLabel', { number: i + 1, label: option })}
             style={{
               position: 'absolute',
               left: child.x,

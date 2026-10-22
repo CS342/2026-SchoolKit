@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -10,12 +10,14 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useResources } from '../hooks/useResources';
 import { useResponsive } from '../hooks/useResponsive';
 import { ANIMATION, COLORS, SHADOWS, TYPOGRAPHY } from '../constants/onboarding-theme';
 import KnowledgeTree from '../components/tree/KnowledgeTree';
+import { SHOW_KNOWLEDGE_TREE } from '../constants/features';
 
 // Desktop web uses a wider two-column layout (intro/legend panel + tree hero)
 // so the canvas isn't empty. Everything else keeps the original full-bleed tree.
@@ -32,8 +34,14 @@ const CATEGORIES = [
   { id: 'Family', label: 'Family', color: '#EC4899', icon: 'heart-circle-outline' },
 ] as const;
 
-export default function KnowledgeTreeScreen() {
+export default function KnowledgeTreeScreenRoute() {
+  if (!SHOW_KNOWLEDGE_TREE) return <Redirect href="/(tabs)" />;
+  return <KnowledgeTreeScreen />;
+}
+
+function KnowledgeTreeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isResourceFullyViewed } = useAccomplishments();
   const { isDark, colors } = useTheme();
@@ -89,7 +97,7 @@ export default function KnowledgeTreeScreen() {
           >
             <Ionicons name="chevron-back" size={24} color={colors.textDark} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textDark }]}>Knowledge Tree</Text>
+          <Text style={[styles.title, { color: colors.textDark }]}>{t('home.knowledgeTree.title')}</Text>
           <Text style={[styles.countBadge, { color: colors.textMuted }]}>
             {litCount} / {treeResources.length}
           </Text>
@@ -100,10 +108,10 @@ export default function KnowledgeTreeScreen() {
             {/* Complementary intro + legend panel — fills the void beside the tree */}
             <View style={styles.sidePanel}>
               <Text style={[styles.panelTitle, { color: colors.textDark }]}>
-                Grow your knowledge tree
+                {t('home.knowledgeTree.panelTitle')}
               </Text>
               <Text style={[styles.panelSubtitle, { color: colors.textMuted }]}>
-                Explore concepts across these areas. Each topic you finish lights up a leaf on the tree.
+                {t('home.knowledgeTree.panelSubtitle')}
               </Text>
 
               <View style={styles.legendList}>
@@ -140,7 +148,7 @@ export default function KnowledgeTreeScreen() {
               </View>
 
               <Text style={[styles.panelFootnote, { color: colors.textMuted }]}>
-                {litCount} of {treeResources.length} topics explored
+                {t('home.knowledgeTree.explored', { lit: litCount, total: treeResources.length })}
               </Text>
             </View>
 

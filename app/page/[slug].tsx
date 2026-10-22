@@ -90,7 +90,9 @@ export default function ContentPageRoute() {
     if (doc?.resourceId) fireResourceOpened(doc.resourceId);
   }, [doc?.resourceId]);
 
-  if (loading) {
+  // Only the first load blanks the page: a refetch (e.g. the viewer's profile arriving)
+  // keeps the current doc on screen so reading — and page audio — isn't interrupted.
+  if (loading && !doc) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.appBackground }}>
         <ActivityIndicator size="large" color={colors.primary} />

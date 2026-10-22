@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Stage, Layer, Rect, Group, Text, Ellipse, Image as KonvaImage, Line } from 'react-konva';
 import Konva from 'konva';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { CanvasObject } from './CanvasObject';
 import { SelectionTransformer } from './SelectionTransformer';
@@ -26,6 +27,7 @@ interface EditorCanvasProps {
 }
 
 export function EditorCanvas({ stageRef }: EditorCanvasProps) {
+  const { t } = useTranslation();
   const canvas = useEditorStore((s) => s.canvas);
   const objects = useEditorStore((s) => s.objects);
   const selectedIds = useEditorStore((s) => s.selectedIds);
@@ -405,7 +407,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
               opacity: 0.7,
             }}
           >
-            Reset
+            {t('design.editor.zoomReset')}
           </button>
         </div>
       </div>

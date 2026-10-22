@@ -1,9 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { createSlideChildren, createTabChildren, createSheetContentChildren } from '../utils/interactive-templates';
 
 export function GroupTabBar() {
+  const { t } = useTranslation();
   const editingComponentId = useEditorStore((s) => s.editingComponentId);
   const activeGroupRole = useEditorStore((s) => s.activeGroupRole);
   const switchGroup = useEditorStore((s) => s.switchGroup);
@@ -78,7 +80,7 @@ export function GroupTabBar() {
       {/* Exit button */}
       <button
         onClick={exitComponent}
-        title="Exit component (Escape)"
+        title={t('design.editor.exitComponentTooltip')}
         style={{
           padding: '6px 10px',
           borderRadius: 6,
@@ -134,7 +136,7 @@ export function GroupTabBar() {
             {canRemove && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group.role); }}
-                title={`Remove ${group.label}`}
+                title={t('design.editor.removeGroupTooltip', { label: group.label })}
                 style={{
                   position: 'absolute',
                   right: 4,
@@ -166,7 +168,7 @@ export function GroupTabBar() {
       {supportsAddRemove && dynamicGroups.length < maxGroups && (
         <button
           onClick={handleAddGroup}
-          title={`Add ${component.interactionType === 'carousel' ? 'slide' : component.interactionType === 'tabs' ? 'tab' : 'sheet'}`}
+          title={t(component.interactionType === 'carousel' ? 'design.editor.addSlideTooltip' : component.interactionType === 'tabs' ? 'design.editor.addTabTooltip' : 'design.editor.addSheetTooltip')}
           style={{
             width: 28,
             height: 28,

@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 import { useResources } from '../../hooks/useResources';
@@ -11,12 +12,13 @@ import { isListable } from '../../hooks/useAudienceFilter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEditorStore } from '../../features/content/editor/store';
 import { BLOCK_CONFIG, FieldDef, ItemConfig } from '../../features/content/editor/templates';
-import type { ContentBlock, ColorToken } from '../../features/content/types';
+import { fieldLabel, fieldPlaceholder, fieldOptionLabel } from '../../features/content/registry';
+import type { ContentBlock, ColorToken, BlockType } from '../../features/content/types';
 import { pickFiles, uploadContentImage } from '../../features/content/uploads';
 import { suggestImageText } from '../../features/content/ai/client';
 import { TextField, ColorSwatches, IconField, ToggleRow, IconBtn, SectionLabel } from './primitives';
 
-function SelectRow({ label, options, value, onChange }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
+function SelectRow({ label, options, value, onChange, blockType }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; blockType: BlockType }) {
   const { colors } = useTheme();
   return (
     <View style={{ marginBottom: SPACING.md }}>
@@ -30,7 +32,7 @@ function SelectRow({ label, options, value, onChange }: { label: string; options
               onPress={() => onChange(opt.value)}
               style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: RADII.pill, borderWidth: 1.5, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primarySoft : colors.white, cursor: 'pointer' as any }}
             >
-              <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: on ? colors.primary : colors.textMuted }}>{opt.label}</Text>
+              <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: on ? colors.primary : colors.textMuted }}>{fieldOptionLabel(blockType, opt.value, opt.label)}</Text>
             </Pressable>
           );
         })}
@@ -42,6 +44,7 @@ function SelectRow({ label, options, value, onChange }: { label: string; options
 // A URL text field that normalizes on blur (prepends https:// when a scheme is
 // missing) and shows an inline hint when the value doesn't look like a URL.
 function UrlField({ label, value, onChange, placeholder }: { label?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   const v = value ?? '';
@@ -68,27 +71,30 @@ function UrlField({ label, value, onChange, placeholder }: { label?: string; val
         autoCorrect={false}
         style={{ ...TYPOGRAPHY.body, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: invalid ? colors.error : focused ? colors.primary : colors.border, borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 10, outlineStyle: 'none' as any }}
       />
-      {invalid ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.error, marginTop: 4 }}>That doesn’t look like a valid URL.</Text> : null}
+      {invalid ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.error, marginTop: 4 }}>{t('editor.fields.invalidUrl')}</Text> : null}
     </View>
   );
 }
 
-function FieldInput({ field, value, onChange }: { field: FieldDef; value: any; onChange: (v: any) => void }) {
+function FieldInput({ field, value, onChange, blockType }: { field: FieldDef; value: any; onChange: (v: any) => void; blockType: BlockType }) {
+  const label = fieldLabel(blockType, field);
+  const placeholder = fieldPlaceholder(blockType, field);
   switch (field.kind) {
-    case 'text': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} />;
-    case 'textarea': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} multiline />;
-    case 'url': return <UrlField label={field.label} value={value ?? ''} onChange={onChange} placeholder={field.placeholder} />;
+    case 'text': return <TextField label={label} value={value ?? ''} onChangeText={onChange} placeholder={placeholder} />;
+    case 'textarea': return <TextField label={label} value={value ?? ''} onChangeText={onChange} placeholder={placeholder} multiline />;
+    case 'url': return <UrlField label={label} value={value ?? ''} onChange={onChange} placeholder={placeholder} />;
     case 'color': return <ColorSwatches value={(value ?? 'primary') as ColorToken} onChange={onChange} />;
     case 'icon': return field.optional
       ? <IconField value={value} onChange={onChange} allowNone />
       : <IconField value={value ?? 'ellipse-outline'} onChange={onChange} />;
-    case 'toggle': return <ToggleRow label={field.label} value={!!value} onValueChange={onChange} />;
-    case 'select': return <SelectRow label={field.label} options={field.options ?? []} value={value ?? field.options?.[0]?.value ?? ''} onChange={onChange} />;
+    case 'toggle': return <ToggleRow label={label} value={!!value} onValueChange={onChange} />;
+    case 'select': return <SelectRow label={label} options={field.options ?? []} value={value ?? field.options?.[0]?.value ?? ''} onChange={onChange} blockType={blockType} />;
   }
 }
 
 // ─── hero (title + highlighted word + eyebrow) ─────────────────────────────────
 function HeroFields({ block }: { block: any }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const fullTitle = (block.titleParts ?? []).map((p: any) => p.text).join('');
@@ -112,21 +118,22 @@ function HeroFields({ block }: { block: any }) {
 
   return (
     <View>
-      <TextField label="Title" value={title} onChangeText={(t) => { setTitle(t); push(t, word); }} />
-      <TextField label="Highlight this word" placeholder="One word from the title" value={word} onChangeText={(t) => { setWord(t); push(title, t); }} />
+      <TextField label={t('editor.fields.hero.title')} value={title} onChangeText={(val) => { setTitle(val); push(val, word); }} />
+      <TextField label={t('editor.fields.hero.highlightWord')} placeholder={t('editor.fields.hero.highlightWordPlaceholder')} value={word} onChangeText={(val) => { setWord(val); push(title, val); }} />
       <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: -6, marginBottom: SPACING.md }}>
-        The highlighted word uses the page accent color (set in Page settings).
+        {t('editor.fields.hero.accentNote')}
       </Text>
-      <TextField label="Eyebrow" placeholder="Small label above the title" value={block.eyebrow ?? ''} onChangeText={(t) => set({ eyebrow: t })} />
+      <TextField label={t('editor.fields.hero.eyebrow')} placeholder={t('editor.fields.hero.eyebrowPlaceholder')} value={block.eyebrow ?? ''} onChangeText={(val) => set({ eyebrow: val })} />
       <IconField value={block.eyebrowIcon} onChange={(v) => set({ eyebrowIcon: v })} allowNone />
       <ColorSwatches value={(block.eyebrowColor ?? 'teal') as ColorToken} onChange={(v) => set({ eyebrowColor: v })} />
-      <TextField label="Subtitle" placeholder="Optional" value={block.subtitle ?? ''} onChangeText={(t) => set({ subtitle: t })} />
+      <TextField label={t('editor.fields.hero.subtitle')} placeholder={t('editor.fields.hero.subtitlePlaceholder')} value={block.subtitle ?? ''} onChangeText={(val) => set({ subtitle: val })} />
     </View>
   );
 }
 
 // ─── resourceRefList (pick existing resources) ─────────────────────────────────
 function ResourceRefFields({ block }: { block: any }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const selected: string[] = block.resourceIds ?? [];
@@ -140,10 +147,10 @@ function ResourceRefFields({ block }: { block: any }) {
   };
   return (
     <View style={{ marginTop: SPACING.xs }}>
-      <SectionLabel>Guides to include{selected.length ? ` · ${selected.length} selected` : ''}</SectionLabel>
+      <SectionLabel>{t('editor.fields.guidesToInclude')}{selected.length ? t('editor.fields.selectedSuffix', { count: selected.length }) : ''}</SectionLabel>
       <View style={{ gap: 8 }}>
         {guides.length === 0 ? (
-          <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>No guides are listed in the Library yet. Publish a page to link to it here.</Text>
+          <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{t('editor.fields.noGuides')}</Text>
         ) : null}
         {guides.map((r) => {
           const on = selected.includes(r.id);
@@ -168,6 +175,7 @@ function ResourceRefFields({ block }: { block: any }) {
 
 // ─── comparison table (columns + rows) ─────────────────────────────────────────
 function ComparisonFields({ block }: { block: any }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const columns: string[] = block.columns ?? [];
@@ -175,7 +183,7 @@ function ComparisonFields({ block }: { block: any }) {
   const setBlock = (patch: any) => dispatch([{ op: 'updateBlock', id: block.id, patch }]);
 
   const setColumn = (ci: number, v: string) => { const next = columns.slice(); next[ci] = v; setBlock({ columns: next }); };
-  const addColumn = () => setBlock({ columns: [...columns, `Column ${columns.length + 1}`], rows: rows.map((r) => ({ ...r, cells: [...r.cells, ''] })) });
+  const addColumn = () => setBlock({ columns: [...columns, t('editor.fields.columnN', { num: columns.length + 1 })], rows: rows.map((r) => ({ ...r, cells: [...r.cells, ''] })) });
   const removeColumn = (ci: number) => {
     if (columns.length <= 1) return;
     setBlock({ columns: columns.filter((_, i) => i !== ci), rows: rows.map((r) => ({ ...r, cells: r.cells.filter((_, i) => i !== ci) })) });
@@ -191,38 +199,38 @@ function ComparisonFields({ block }: { block: any }) {
 
   return (
     <View style={{ marginTop: SPACING.xs }}>
-      <SectionLabel>Columns · {columns.length}</SectionLabel>
+      <SectionLabel>{t('editor.fields.columnsCount', { count: columns.length })}</SectionLabel>
       <View style={{ gap: 8 }}>
         {columns.map((c, ci) => (
           <View key={ci} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ flex: 1 }}><TextField label="" value={c} onChangeText={(v) => setColumn(ci, v)} placeholder={`Column ${ci + 1}`} /></View>
-            <IconBtn icon="trash-outline" label="Remove column" danger disabled={columns.length <= 1} onPress={() => removeColumn(ci)} />
+            <View style={{ flex: 1 }}><TextField label="" value={c} onChangeText={(v) => setColumn(ci, v)} placeholder={t('editor.fields.columnN', { num: ci + 1 })} /></View>
+            <IconBtn icon="trash-outline" label={t('editor.fields.removeColumn')} danger disabled={columns.length <= 1} onPress={() => removeColumn(ci)} />
           </View>
         ))}
       </View>
       <Pressable onPress={addColumn} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8, paddingVertical: 8, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, cursor: 'pointer' as any }}>
         <Ionicons name="add" size={16} color={colors.primary} />
-        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add column</Text>
+        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.fields.addColumn')}</Text>
       </Pressable>
 
       <View style={{ height: SPACING.md }} />
-      <SectionLabel>Rows · {rows.length}</SectionLabel>
+      <SectionLabel>{t('editor.fields.rowsCount', { count: rows.length })}</SectionLabel>
       <View style={{ gap: 12 }}>
         {rows.map((row, ri) => (
           <View key={row.id} style={{ borderWidth: 1, borderColor: colors.borderCard, borderRadius: RADII.md, padding: 10, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>Row {ri + 1}</Text>
-              <IconBtn icon="trash-outline" label="Remove row" danger disabled={rows.length <= 1} onPress={() => removeRow(row.id)} />
+              <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }}>{t('editor.fields.rowN', { num: ri + 1 })}</Text>
+              <IconBtn icon="trash-outline" label={t('editor.fields.removeRow')} danger disabled={rows.length <= 1} onPress={() => removeRow(row.id)} />
             </View>
             {columns.map((col, ci) => (
-              <TextField key={ci} label={col || `Column ${ci + 1}`} value={row.cells[ci] ?? ''} onChangeText={(v) => setCell(row.id, ci, v)} />
+              <TextField key={ci} label={col || t('editor.fields.columnN', { num: ci + 1 })} value={row.cells[ci] ?? ''} onChangeText={(v) => setCell(row.id, ci, v)} />
             ))}
           </View>
         ))}
       </View>
       <Pressable onPress={addRow} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, paddingVertical: 9, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, cursor: 'pointer' as any }}>
         <Ionicons name="add" size={16} color={colors.primary} />
-        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add row</Text>
+        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.fields.addRow')}</Text>
       </Pressable>
     </View>
   );
@@ -230,10 +238,11 @@ function ComparisonFields({ block }: { block: any }) {
 
 // ─── item list (accordion/cardGrid/stepper/linkList) ───────────────────────────
 function ItemRow({ block, cfg, item, index, count }: { block: ContentBlock; cfg: ItemConfig; item: any; index: number; count: number }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const [open, setOpen] = useState(false);
-  const title = item.title ?? item.name ?? `${cfg.noun} ${index + 1}`;
+  const title = item.title ?? item.name ?? `${t(`editor.nouns.${cfg.noun}`)} ${index + 1}`;
   const set = (key: string, value: any) => dispatch([{ op: 'updateItem', block: block.id, item: item.id, patch: { [key]: value } }]);
 
   return (
@@ -244,13 +253,13 @@ function ItemRow({ block, cfg, item, index, count }: { block: ContentBlock; cfg:
           <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark, flex: 1 }} numberOfLines={1}>{title}</Text>
           <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textLight} />
         </Pressable>
-        <IconBtn icon="arrow-up" label="Move up" disabled={index === 0} onPress={() => dispatch([{ op: 'moveItem', block: block.id, item: item.id, to: index - 1 }])} />
-        <IconBtn icon="arrow-down" label="Move down" disabled={index === count - 1} onPress={() => dispatch([{ op: 'moveItem', block: block.id, item: item.id, to: index + 1 }])} />
-        <IconBtn icon="trash-outline" label="Delete" danger disabled={count <= 1} onPress={() => dispatch([{ op: 'removeItem', block: block.id, item: item.id }])} />
+        <IconBtn icon="arrow-up" label={t('editor.fields.moveUp')} disabled={index === 0} onPress={() => dispatch([{ op: 'moveItem', block: block.id, item: item.id, to: index - 1 }])} />
+        <IconBtn icon="arrow-down" label={t('editor.fields.moveDown')} disabled={index === count - 1} onPress={() => dispatch([{ op: 'moveItem', block: block.id, item: item.id, to: index + 1 }])} />
+        <IconBtn icon="trash-outline" label={t('editor.fields.delete')} danger disabled={count <= 1} onPress={() => dispatch([{ op: 'removeItem', block: block.id, item: item.id }])} />
       </View>
       {open ? (
         <View style={{ padding: 12, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.appBackgroundAlt }}>
-          {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={item[f.key]} onChange={(v) => set(f.key, v)} />)}
+          {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={item[f.key]} onChange={(v) => set(f.key, v)} blockType={block.type} />)}
         </View>
       ) : null}
     </View>
@@ -258,12 +267,13 @@ function ItemRow({ block, cfg, item, index, count }: { block: ContentBlock; cfg:
 }
 
 function ItemListEditor({ block, cfg }: { block: any; cfg: ItemConfig }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const items: any[] = block[cfg.arrayKey] ?? [];
   return (
     <View style={{ marginTop: SPACING.xs }}>
-      <SectionLabel>{cfg.noun === 'step' ? 'Steps' : 'Items'} · {items.length}</SectionLabel>
+      <SectionLabel>{cfg.noun === 'step' ? t('editor.fields.stepsCount', { count: items.length }) : t('editor.fields.itemsCount', { count: items.length })}</SectionLabel>
       <View style={{ gap: 8 }}>
         {items.map((it, i) => <ItemRow key={it.id} block={block} cfg={cfg} item={it} index={i} count={items.length} />)}
       </View>
@@ -272,7 +282,7 @@ function ItemListEditor({ block, cfg }: { block: any; cfg: ItemConfig }) {
         style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, paddingVertical: 9, borderRadius: RADII.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: hovered ? colors.primary : colors.border, cursor: 'pointer' as any })}
       >
         <Ionicons name="add" size={16} color={colors.primary} />
-        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Add {cfg.noun}</Text>
+        <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.fields.addItem', { noun: t(`editor.nouns.${cfg.noun}`) })}</Text>
       </Pressable>
     </View>
   );
@@ -280,6 +290,7 @@ function ItemListEditor({ block, cfg }: { block: any; cfg: ItemConfig }) {
 
 // ─── image (upload + AI alt text, on top of the url/alt/caption fields) ─────────
 function ImageFields({ block }: { block: any }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { user } = useAuth();
   const dispatch = useEditorStore((s) => s.dispatch);
@@ -288,7 +299,7 @@ function ImageFields({ block }: { block: any }) {
   const set = (patch: any) => dispatch([{ op: 'updateBlock', id: block.id, patch }]);
 
   const upload = async () => {
-    if (!user) { setErr('Sign in to upload images.'); return; }
+    if (!user) { setErr(t('editor.fields.image.signIn')); return; }
     const files = await pickFiles('image/*', false);
     if (!files.length) return;
     setBusy('upload'); setErr(null);
@@ -319,11 +330,11 @@ function ImageFields({ block }: { block: any }) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pressable onPress={busy ? undefined : upload} disabled={!!busy} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RADII.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.white, cursor: (busy ? 'default' : 'pointer') as any }}>
           {busy === 'upload' ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="cloud-upload-outline" size={15} color={colors.primary} />}
-          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{block.url ? 'Replace image' : 'Upload image'}</Text>
+          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{block.url ? t('editor.fields.image.replace') : t('editor.fields.image.upload')}</Text>
         </Pressable>
         <Pressable onPress={busy || !block.url ? undefined : suggest} disabled={!!busy || !block.url} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RADII.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.white, opacity: block.url ? 1 : 0.5, cursor: (busy || !block.url ? 'default' : 'pointer') as any }}>
           {busy === 'alt' ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="sparkles" size={15} color={colors.primary} />}
-          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Suggest alt text</Text>
+          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.primary }}>{t('editor.fields.image.suggestAlt')}</Text>
         </Pressable>
       </View>
       {err ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.error }}>{err}</Text> : null}
@@ -333,6 +344,7 @@ function ImageFields({ block }: { block: any }) {
 
 // ─── entry point ────────────────────────────────────────────────────────────────
 export function BlockFields({ block }: { block: ContentBlock }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const cfg = BLOCK_CONFIG[block.type];
@@ -343,13 +355,13 @@ export function BlockFields({ block }: { block: ContentBlock }) {
   return (
     <View>
       {cfg.special === 'image' ? <ImageFields block={block} /> : null}
-      {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={(block as any)[f.key]} onChange={(v) => setField(f.key, v)} />)}
+      {cfg.fields.map((f) => <FieldInput key={f.key} field={f} value={(block as any)[f.key]} onChange={(v) => setField(f.key, v)} blockType={block.type} />)}
       {cfg.special === 'resourceRefList' ? <ResourceRefFields block={block} /> : null}
       {cfg.special === 'comparisonTable' ? <ComparisonFields block={block} /> : null}
       {cfg.item ? <ItemListEditor block={block} cfg={cfg.item} /> : null}
       {block.type === 'recommendations' ? (
         <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textLight }}>
-          Automatically suggests related pages from this page’s tags. Nothing to set.
+          {t('editor.fields.recommendationsNote')}
         </Text>
       ) : null}
     </View>

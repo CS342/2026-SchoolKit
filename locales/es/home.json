@@ -1,0 +1,145 @@
+{
+  "home": {
+    "tabs": {
+      "forYou": "Para ti",
+      "library": "Biblioteca",
+      "stories": "Historias",
+      "profile": "Perfil"
+    },
+    "header": {
+      "welcomeBack": "Hola de nuevo,",
+      "greeting": "¡{{name}}!"
+    },
+    "sections": {
+      "yourProgress": "Tu progreso",
+      "supportTopics": "Tus temas de apoyo",
+      "supportTopicsNative": "Tus temas de apoyo",
+      "stories": "Historias",
+      "resources": "Recursos"
+    },
+    "progress": {
+      "a11y": "{{label}}, {{value}} de {{total}}, {{pct}} por ciento",
+      "percentComplete": "{{pct}}% completado",
+      "toGo": "Faltan {{count}}",
+      "allDone": "¡Todo listo!",
+      "puzzles": "Rompecabezas",
+      "knowledgeTree": "Árbol de conocimiento"
+    },
+    "status": {
+      "done": "Hecho",
+      "inProgress": "En progreso"
+    },
+    "continue": {
+      "eyebrowResume": "CONTINÚA DONDE LO DEJASTE",
+      "eyebrowStart": "EMPIEZA AQUÍ",
+      "start": "Empezar",
+      "a11yResume": "Continuar: {{title}}",
+      "a11yStart": "Empezar: {{title}}"
+    },
+    "view": {
+      "grid": "Vista de cuadrícula",
+      "list": "Vista de lista"
+    },
+    "empty": {
+      "titleHidden": "No hay temas disponibles ahora mismo",
+      "titleNone": "Aún no has seleccionado temas",
+      "subtitleHidden": "Los temas que elegiste no están disponibles por el momento. Vuelve pronto o elige otros temas en tu perfil.",
+      "subtitleNone": "Visita tu perfil para actualizar tus intereses y recibir apoyo personalizado."
+    },
+    "actions": {
+      "updateProfile": "Actualizar perfil",
+      "browseResources": "Explorar recursos",
+      "goToStories": "Ir a Historias"
+    },
+    "library": {
+      "title": "Biblioteca",
+      "subtitle": "Tus recursos, elementos guardados y descargas",
+      "searchPlaceholder": "Buscar recursos...",
+      "browseByTopic": "EXPLORAR POR TEMA",
+      "emptyAllTitle": "Empieza a explorar",
+      "emptyAllTitleFiltered": "No se encontraron resultados",
+      "emptyAllSubtitle": "Busca temas y materiales de apoyo",
+      "emptyAllSubtitleFiltered": "Prueba con otras palabras o quita el filtro"
+    },
+    "segment": {
+      "all": "Todos",
+      "saved": "Guardados",
+      "downloaded": "Descargados"
+    },
+    "recent": {
+      "title": "Búsquedas recientes",
+      "clear": "Borrar"
+    },
+    "resultsOne": "{{count}} recurso",
+    "resultsOther": "{{count}} recursos",
+    "filters": {
+      "clear": "Borrar",
+      "clearFilters": "Borrar filtros"
+    },
+    "sort": {
+      "label": "Ordenar",
+      "recommended": "Recomendado",
+      "az": "A–Z",
+      "category": "Categoría",
+      "sortByA11y": "Ordenar por {{label}}"
+    },
+    "emptySearchHint": "Prueba con otro término de búsqueda",
+    "saved": {
+      "emptyTitle": "Aún no has guardado nada",
+      "emptyTitleSearch": "No hay coincidencias en guardados",
+      "emptySubtitle": "Guarda recursos e historias para encontrarlos aquí rápidamente."
+    },
+    "downloaded": {
+      "emptyTitle": "Aún no hay descargas",
+      "emptyTitleSearch": "No hay descargas que coincidan",
+      "emptySubtitle": "Descarga recursos e historias para acceder a ellos sin conexión."
+    },
+    "knowledgeTree": {
+      "title": "Árbol de conocimiento",
+      "panelTitle": "Haz crecer tu árbol de conocimiento",
+      "panelSubtitle": "Explora conceptos en estas áreas. Cada tema que completas enciende una hoja del árbol.",
+      "explored": "{{lit}} de {{total}} temas explorados"
+    },
+    "topicDetail": {
+      "shareMessage": "Mira \"{{title}}\" en SchoolKit — un recurso para ayudar a estudiantes y familias a enfrentar la escuela durante el tratamiento del cáncer.",
+      "aboutTitle": "Sobre este tema",
+      "aboutBody": "Este es un recurso completo sobre \"{{title}}\". Aquí encontrarás información útil, estrategias y apoyo para enfrentar este aspecto de tu camino escolar.",
+      "comingSoonTitle": "Contenido próximamente",
+      "comingSoonBody": "Estamos creando recursos detallados para este tema. ¡Vuelve pronto!"
+    },
+    "recommend": {
+      "railHeader": "También te puede resultar útil",
+      "header": "También te puede resultar útil:",
+      "story": "Historia",
+      "openA11y": "Abrir {{title}}",
+      "readStoryA11y": "Leer historia: {{title}}",
+      "openResourceA11y": "Abrir recurso: {{title}}"
+    },
+    "bookmark": {
+      "add": "Guardar",
+      "remove": "Quitar de guardados"
+    },
+    "download": {
+      "action": "Descargar",
+      "remove": "Quitar descarga"
+    },
+    "tts": {
+      "read": "Leer en voz alta",
+      "pause": "Pausar lectura"
+    },
+    "tags": {
+      "title": "Etiquetas de tema",
+      "subtitle": "Selecciona las etiquetas que mejor describan tu experiencia escolar.",
+      "counter": "{{count}} de {{max}} etiquetas seleccionadas",
+      "clearAll": "Borrar todo"
+    },
+    "categories": {
+      "All": "Todo",
+      "School": "Escuela",
+      "Social": "Social",
+      "Health": "Salud",
+      "Family": "Familia",
+      "Designs": "Diseños"
+    }
+  }
+}

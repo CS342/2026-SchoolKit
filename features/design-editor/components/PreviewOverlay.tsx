@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import type { DesignObject, InteractiveComponentObject, StaticDesignObject } from '../types/document';
 import { PreviewObject } from './preview/PreviewObject';
@@ -15,6 +16,7 @@ interface PreviewOverlayProps {
 }
 
 export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
+  const { t } = useTranslation();
   const canvas = useEditorStore((s) => s.canvas);
   const objects = useEditorStore((s) => s.objects);
 
@@ -49,7 +51,7 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
         }}
       >
         <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
-          Press Escape to close
+          {t('design.modal.preview.pressEscape')}
         </span>
         <button
           onClick={onClose}
@@ -65,7 +67,7 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
             backdropFilter: 'blur(4px)',
           }}
         >
-          Close Preview
+          {t('design.modal.preview.closePreview')}
         </button>
       </div>
 
@@ -115,7 +117,7 @@ export function PreviewOverlay({ onClose }: PreviewOverlayProps) {
           flexShrink: 0,
         }}
       >
-        Interactive Preview — Click to interact
+        {t('design.modal.preview.interactiveHint')}
       </div>
     </div>
   );

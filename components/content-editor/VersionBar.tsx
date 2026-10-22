@@ -5,10 +5,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore } from '../../features/content/editor/store';
-import { audienceLabel, coverage } from '../../features/content/versions';
+import { audienceLabel, coverage, viewerCellLabel } from '../../features/content/versions';
 import type { Audience } from '../../features/content/audience';
 import type { PageStatus } from '../../features/content/editor/crud';
 import { AudienceChips } from './AudienceChips';
@@ -22,6 +23,7 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
   onAdd: (kind: AddVersionKind) => void;
   onRenameTopic: (name: string) => void;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const doc = useEditorStore((s) => s.doc);
   const setMeta = useEditorStore((s) => s.setMeta);
@@ -60,72 +62,76 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
             onChangeText={setName}
             onBlur={commitName}
             onSubmitEditing={commitName}
-            placeholder="Topic name"
+            placeholder={t('editor.versionBar.topicName')}
             placeholderTextColor={colors.inputPlaceholder}
-            accessibilityLabel="Topic name"
+            accessibilityLabel={t('editor.versionBar.topicName')}
             style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.textDark, width: 200, paddingVertical: 4, outlineStyle: 'none' as any }}
           />
         ) : (
-          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.textMuted, width: 200 }}>New topic</Text>
+          <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: colors.textMuted, width: 200 }}>{t('editor.versionBar.newTopic')}</Text>
         )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }} style={{ flex: 1 }}>
-          {tabs.map((t) => {
-            const dot = t.status === 'published' ? colors.success : colors.warningText;
+          {tabs.map((tab) => {
+            const dot = tab.status === 'published' ? colors.success : colors.warningText;
             return (
               <Pressable
-                key={t.id ?? 'new'}
-                onPress={() => (t.current ? setEditingAudience((e) => !e) : t.id && onSwitch(t.id))}
+                key={tab.id ?? 'new'}
+                onPress={() => (tab.current ? setEditingAudience((e) => !e) : tab.id && onSwitch(tab.id))}
                 accessibilityRole="tab"
-                accessibilityState={{ selected: t.current }}
-                accessibilityLabel={`${audienceLabel(t.audience)} version, ${t.status}${t.current ? ', editing — change audience' : ''}`}
+                accessibilityState={{ selected: tab.current }}
+                accessibilityLabel={t('editor.versionBar.tabLabel', {
+                  audience: audienceLabel(tab.audience),
+                  status: t(`editor.status.${tab.status}`),
+                  editing: tab.current ? t('editor.versionBar.editingSuffix') : '',
+                })}
                 style={({ hovered }: any) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 11, borderRadius: RADII.pill,
-                  borderWidth: 1.5, borderColor: t.current ? colors.primary : colors.borderCard,
-                  backgroundColor: t.current ? colors.primarySoft : hovered ? colors.appBackgroundAlt : colors.white,
+                  borderWidth: 1.5, borderColor: tab.current ? colors.primary : colors.borderCard,
+                  backgroundColor: tab.current ? colors.primarySoft : hovered ? colors.appBackgroundAlt : colors.white,
                   cursor: 'pointer' as any,
                 })}
               >
                 <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: dot }} />
-                <Text style={{ ...TYPOGRAPHY.caption, fontFamily: t.current ? 'Raleway_700Bold' : undefined, color: t.current ? colors.primary : colors.textDark }}>
-                  {audienceLabel(t.audience)}{t.id ? '' : ' (unsaved)'}
+                <Text style={{ ...TYPOGRAPHY.caption, fontFamily: tab.current ? 'Raleway_700Bold' : undefined, color: tab.current ? colors.primary : colors.textDark }}>
+                  {audienceLabel(tab.audience)}{tab.id ? '' : t('editor.versionBar.unsavedSuffix')}
                 </Text>
-                {t.current ? <Ionicons name={editingAudience ? 'chevron-up' : 'create-outline'} size={13} color={colors.primary} /> : null}
+                {tab.current ? <Ionicons name={editingAudience ? 'chevron-up' : 'create-outline'} size={13} color={colors.primary} /> : null}
               </Pressable>
             );
           })}
         </ScrollView>
 
         <View>
-          <BarButton icon="add" label="Add version" onPress={() => setMenu(menu === 'add' ? null : 'add')} active={menu === 'add'} />
+          <BarButton icon="add" label={t('editor.versionBar.addVersion')} onPress={() => setMenu(menu === 'add' ? null : 'add')} active={menu === 'add'} />
           {menu === 'add' ? (
             <Dropdown width={270}>
               {canAdd ? (
                 <>
-                  <MenuItem icon="copy-outline" title="Copy of this version" detail="Same content — then retarget and adapt it." onPress={() => { setMenu(null); onAdd('copy'); }} />
-                  <MenuItem icon="document-attach-outline" title="From file(s)…" detail="Convert your document for another audience." onPress={() => { setMenu(null); onAdd('file'); }} />
-                  <MenuItem icon="document-outline" title="Blank" detail="Start an empty version of this topic." onPress={() => { setMenu(null); onAdd('blank'); }} />
+                  <MenuItem icon="copy-outline" title={t('editor.versionBar.addCopyTitle')} detail={t('editor.versionBar.addCopyDetail')} onPress={() => { setMenu(null); onAdd('copy'); }} />
+                  <MenuItem icon="document-attach-outline" title={t('editor.versionBar.addFileTitle')} detail={t('editor.versionBar.addFileDetail')} onPress={() => { setMenu(null); onAdd('file'); }} />
+                  <MenuItem icon="document-outline" title={t('editor.versionBar.addBlankTitle')} detail={t('editor.versionBar.addBlankDetail')} onPress={() => { setMenu(null); onAdd('blank'); }} />
                 </>
               ) : (
-                <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, padding: 10 }}>Save this page first, then add versions of it for other audiences.</Text>
+                <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, padding: 10 }}>{t('editor.versionBar.addNeedsSave')}</Text>
               )}
             </Dropdown>
           ) : null}
         </View>
 
         <View>
-          <BarButton icon="people-outline" label="Who sees what" onPress={() => setMenu(menu === 'coverage' ? null : 'coverage')} active={menu === 'coverage'} />
+          <BarButton icon="people-outline" label={t('editor.versionBar.whoSeesWhat')} onPress={() => setMenu(menu === 'coverage' ? null : 'coverage')} active={menu === 'coverage'} />
           {menu === 'coverage' ? (
             <Dropdown width={340}>
               <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 4 }}>
-                The version each kind of reader gets (drafts included).
+                {t('editor.versionBar.coverageIntro')}
               </Text>
               {rows.map((r) => (
                 <View key={r.cell.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingHorizontal: 10 }}>
-                  <Text style={{ ...TYPOGRAPHY.caption, color: colors.textDark, flex: 1 }} numberOfLines={1}>{r.cell.label}</Text>
-                  {r.tie ? <Ionicons name="warning-outline" size={13} color={colors.warning} accessibilityLabel="Two versions match equally" /> : null}
+                  <Text style={{ ...TYPOGRAPHY.caption, color: colors.textDark, flex: 1 }} numberOfLines={1}>{viewerCellLabel(r.cell)}</Text>
+                  {r.tie ? <Ionicons name="warning-outline" size={13} color={colors.warning} accessibilityLabel={t('editor.versionBar.coverageTie')} /> : null}
                   <Text style={{ ...TYPOGRAPHY.caption, fontFamily: r.version ? 'Raleway_700Bold' : undefined, color: r.version ? (r.version.current ? colors.primary : colors.textDark) : colors.textLight }} numberOfLines={1}>
-                    {r.version ? audienceLabel(r.version.audience) : 'Hidden'}
+                    {r.version ? audienceLabel(r.version.audience) : t('editor.versionBar.coverageHidden')}
                   </Text>
                 </View>
               ))}

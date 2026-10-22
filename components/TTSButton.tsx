@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { COLORS } from '../constants/onboarding-theme';
 
 /**
@@ -23,11 +24,12 @@ export function TTSButton({
   activeColor?: string;
   style?: any;
 }) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[{ padding: 4 }, style]}
-      accessibilityLabel={isSpeaking ? 'Pause reading' : 'Read aloud'}
+      accessibilityLabel={isSpeaking ? t('home.tts.pause') : t('home.tts.read')}
       accessibilityRole="button"
     >
       {isLoading ? (

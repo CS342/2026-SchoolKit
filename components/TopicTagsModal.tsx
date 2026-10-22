@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { AppTheme } from "../constants/theme";
@@ -70,6 +71,7 @@ export function TopicTagsModal({
   maxTags,
   useModal = true,
 }: TopicTagsModalProps) {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(
     () => makeStyles(colors, isDark),
@@ -97,7 +99,7 @@ export function TopicTagsModal({
         ]}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Topic Tags</Text>
+          <Text style={styles.title}>{t('home.tags.title')}</Text>
           <View style={styles.headerRight}>
             {onClearAll && selectedTags.length > 0 && (
               <Pressable
@@ -105,19 +107,19 @@ export function TopicTagsModal({
                 style={styles.clearBtn}
                 hitSlop={10}
               >
-                <Text style={styles.clearBtnText}>Clear All</Text>
+                <Text style={styles.clearBtnText}>{t('home.tags.clearAll')}</Text>
               </Pressable>
             )}
             <Pressable onPress={onClose} hitSlop={10} style={styles.doneBtn}>
-              <Text style={styles.doneBtnText}>Done</Text>
+              <Text style={styles.doneBtnText}>{t('common.done')}</Text>
             </Pressable>
           </View>
         </View>
 
         <Text style={styles.subtitle}>
           {maxTags
-            ? `${selectedTags.length} of ${maxTags} tags selected`
-            : "Select tags that best describe your school experience."}
+            ? t('home.tags.counter', { count: selectedTags.length, max: maxTags })
+            : t('home.tags.subtitle')}
         </Text>
 
         <ScrollView

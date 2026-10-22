@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../../constants/onboarding-theme';
 import { ContentEditor } from '../../../components/content-editor';
@@ -28,6 +29,7 @@ async function loadTopicContext(topicId: string | null, currentId: string | null
 export default function ContentEditorRoute() {
   const { id, topic: topicParam } = useLocalSearchParams<{ id: string; topic?: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const [ready, setReady] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -68,7 +70,7 @@ export default function ContentEditorRoute() {
 
   const handleSave = async (status: PageStatus): Promise<boolean> => {
     const doc = useEditorStore.getState().doc;
-    if (!doc.title.trim()) { flash('error', 'Give the page a title before saving.'); return false; }
+    if (!doc.title.trim()) { flash('error', t('editor.toasts.saveNeedsTitle')); return false; }
     setSaving(true);
     const res = await saveContentPage(pageId, doc, status, topicId ?? undefined);
     if ('error' in res) { setSaving(false); flash('error', res.error); return false; }
@@ -84,7 +86,7 @@ export default function ContentEditorRoute() {
       if (!('error' in renamed)) await loadTopicContext(savedTopic, res.id);
     }
     setSaving(false);
-    flash('ok', status === 'published' ? 'Published.' : 'Saved as draft.');
+    flash('ok', status === 'published' ? t('editor.toasts.published') : t('editor.toasts.savedDraft'));
     return true;
   };
 
@@ -121,9 +123,9 @@ export default function ContentEditorRoute() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.appBackground, padding: 24 }}>
         <Ionicons name="document-outline" size={48} color={colors.textLight} />
-        <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginTop: 12 }}>This page doesn't exist</Text>
+        <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginTop: 12 }}>{t('editor.notFound.title')}</Text>
         <Pressable onPress={() => router.push('/(editor)/content-pages')} style={{ marginTop: 12 }}>
-          <Text style={{ color: colors.primary }}>Back to pages</Text>
+          <Text style={{ color: colors.primary }}>{t('editor.notFound.back')}</Text>
         </Pressable>
       </View>
     );

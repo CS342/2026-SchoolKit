@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity, Pressable, NativeSyntheticEvent, NativeScrollEvent, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, TYPOGRAPHY } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,17 +15,21 @@ interface CommunityNormsModalProps {
   onAgree?: (selected: string[]) => void;
 }
 
+// `id` is the stable value stored/selected (and persisted to the DB as a
+// rejected-norm), so it must stay in English. `key` selects the translated
+// title/desc for display only.
 const NORMS = [
-  { id: 'School Stories Only', desc: 'This is a school-focused community. Every story must be about a school experience — attending school during or after cancer treatment, keeping up with classes, navigating relationships with classmates or teachers, returning after time away, remote learning, IEPs or 504 plans, extracurriculars, or any other school-related challenge or success. Stories not connected to school will not be approved, no matter how meaningful. If your story touches on something outside of school, please connect it back to how it affected your school life.' },
-  { id: 'Be Kind and Supportive', desc: 'Share your authentic experiences, and if you respond to others, focus on encouragement and support. Treat everyone with compassion, empathy, and respect.' },
-  { id: 'No Medical Advice', desc: 'This is a place for peer support, sharing coping strategies, and finding comfort. It is not a substitute for professional medical care or counseling. Please consult your healthcare team for medical questions or treatments.' },
-  { id: "Protect Your Privacy (and Others')", desc: 'Do not share sensitive personal information like school names, addresses, phone numbers, or passwords. Respect the privacy of friends, teachers, and family by keeping them anonymous. Avoid sharing photos or videos that reveal identities without permission.' },
-  { id: "Respect Everyone's Journey", desc: "Everyone's experience with cancer and school is unique. Use inclusive, non-judgmental language, and avoid judging or comparing others' journeys." },
-  { id: 'Zero Tolerance for Bullying or Hate', desc: 'Harassment, hate speech, bullying, or inappropriate content will not be tolerated. Moderators review all stories; violations may result in removal or account suspension. If you see concerning content, please report it.' },
-  { id: 'Safe Language and Tone', desc: "Avoid triggering language or graphic medical details. Share what's helpful and safe for others to read." }
+  { id: 'School Stories Only', key: 'schoolStoriesOnly' },
+  { id: 'Be Kind and Supportive', key: 'beKind' },
+  { id: 'No Medical Advice', key: 'noMedicalAdvice' },
+  { id: "Protect Your Privacy (and Others')", key: 'protectPrivacy' },
+  { id: "Respect Everyone's Journey", key: 'respectJourney' },
+  { id: 'Zero Tolerance for Bullying or Hate', key: 'zeroTolerance' },
+  { id: 'Safe Language and Tone', key: 'safeLanguage' }
 ];
 
 export function CommunityNormsModal({ visible, onClose, mode, onAgree }: CommunityNormsModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
@@ -56,7 +61,7 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.container, { paddingTop: Platform.OS === 'android' ? insets.top : 0 }]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Community Norms</Text>
+          <Text style={styles.headerTitle}>{t('stories.communityNorms')}</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={24} color={colors.textDark} />
           </TouchableOpacity>
@@ -76,11 +81,11 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
         >
           <View style={styles.schoolBanner}>
             <Ionicons name="school-outline" size={18} color="#5C5C8A" style={{ marginRight: 8, marginTop: 1 }} />
-            <Text style={styles.schoolBannerText}>SchoolKit is exclusively for school-related stories. Posts that don't connect to school won't be approved.</Text>
+            <Text style={styles.schoolBannerText}>{t('stories.schoolBanner')}</Text>
           </View>
 
           {mode === 'select' && (
-            <Text style={styles.selectHint}>Select which norms this story violates:</Text>
+            <Text style={styles.selectHint}>{t('stories.selectViolationsHint')}</Text>
           )}
 
           {NORMS.map(norm => {
@@ -101,8 +106,8 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
                     />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.normTitle, isSelected && { color: colors.primary }]}>{norm.id}</Text>
-                    <Text style={styles.normText}>{norm.desc}</Text>
+                    <Text style={[styles.normTitle, isSelected && { color: colors.primary }]}>{t(`stories.norms.${norm.key}.title`)}</Text>
+                    <Text style={styles.normText}>{t(`stories.norms.${norm.key}.desc`)}</Text>
                   </View>
                 </View>
               </Pressable>
@@ -111,8 +116,8 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
 
           {mode === 'submit' && (
             <View style={styles.ackBox}>
-              <Text style={styles.ackTitle}>Disclaimer: Public & Moderated Space</Text>
-              <Text style={styles.ackText}>By submitting your story, you understand that anyone in the SchoolKit community can read it. To ensure a safe and supportive environment for everyone, all stories will be reviewed by a moderator before they appear in the feed.</Text>
+              <Text style={styles.ackTitle}>{t('stories.disclaimerTitle')}</Text>
+              <Text style={styles.ackText}>{t('stories.disclaimerText')}</Text>
             </View>
           )}
         </ScrollView>
@@ -120,18 +125,18 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           {mode === 'submit' ? (
             <PrimaryButton
-              title={hasScrolledToBottom ? "I Understand & Share My Story" : "Read the disclaimer to agree"}
-              onPress={() => onAgree?.([])} 
+              title={hasScrolledToBottom ? t('stories.submitBtnAgreed') : t('stories.submitBtnRead')}
+              onPress={() => onAgree?.([])}
               disabled={!hasScrolledToBottom}
             />
           ) : mode === 'select' ? (
-            <PrimaryButton 
-              title={`Reject Story (${selected.length} Selected)`} 
-              onPress={() => onAgree?.(selected)} 
+            <PrimaryButton
+              title={t('stories.rejectStoryCount', { count: selected.length })}
+              onPress={() => onAgree?.(selected)}
               disabled={selected.length === 0}
             />
           ) : (
-            <PrimaryButton title="Got It" onPress={onClose} />
+            <PrimaryButton title={t('stories.gotIt')} onPress={onClose} />
           )}
         </View>
       </View>

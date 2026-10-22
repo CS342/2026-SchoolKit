@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
@@ -23,6 +24,7 @@ import type { ThemeColors } from '../../constants/theme';
 
 export default function Step1Screen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data, updateName } = useOnboarding();
   const { isAnonymous, signOut } = useAuth();
   const { isWeb, isMobile } = useResponsive();
@@ -97,11 +99,11 @@ export default function Step1Screen() {
             </Animated.View>
 
             <Animated.Text style={[sharedStyles.pageTitle, titleStyle]}>
-              What's your name?
+              {t('onboarding.name.title')}
             </Animated.Text>
 
             <Animated.Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }, subtitleStyle]}>
-              Let's personalize your experience
+              {t('onboarding.name.subtitle')}
             </Animated.Text>
 
             <Animated.View style={[styles.inputContainer, isWebDesktop && { maxWidth: 480 }, inputStyle]}>
@@ -109,7 +111,7 @@ export default function Step1Screen() {
                 style={[styles.input, inputFocused && styles.inputFocused]}
                 value={name}
                 onChangeText={setName}
-                placeholder="Enter your name"
+                placeholder={t('onboarding.name.placeholder')}
                 placeholderTextColor={colors.inputPlaceholder}
                 autoFocus
                 onFocus={() => setInputFocused(true)}
@@ -121,7 +123,7 @@ export default function Step1Screen() {
             {isWebDesktop && (
               <Animated.View style={[{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }, buttonStyle]}>
                 <PrimaryButton
-                  title="Continue"
+                  title={t('common.continue')}
                   onPress={handleContinue}
                   disabled={!name.trim()}
                 />
@@ -133,7 +135,7 @@ export default function Step1Screen() {
         {!isWebDesktop && (
         <Animated.View style={[sharedStyles.buttonContainer, buttonStyle]}>
           <PrimaryButton
-            title="Continue"
+            title={t('common.continue')}
             onPress={handleContinue}
             disabled={!name.trim()}
           />

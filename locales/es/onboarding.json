@@ -1,0 +1,85 @@
+{
+  "onboarding": {
+    "frame": {
+      "headline": "Configuremos tu SchoolKit",
+      "subcopy": "Unas preguntas rápidas para adaptar todo a tus necesidades. Puedes cambiar cualquier respuesta más tarde.",
+      "stepOf": "Paso {{current}} de {{total}}",
+      "countOf": "{{current}} de {{total}}",
+      "changeLater": "Puedes cambiar o actualizar todo esto más tarde."
+    },
+    "labels": {
+      "name": "Tu nombre",
+      "language": "Idioma",
+      "role": "Sobre ti",
+      "grade": "Nivel escolar",
+      "journey": "Trayectoria escolar",
+      "topics": "Temas",
+      "voice": "Voz"
+    },
+    "name": {
+      "title": "¿Cómo te llamas?",
+      "subtitle": "Personalicemos tu experiencia",
+      "placeholder": "Escribe tu nombre"
+    },
+    "language": {
+      "title": "Idioma preferido",
+      "subtitle": "Elige el idioma en el que quieres usar la aplicación."
+    },
+    "role": {
+      "title": "Cuéntanos sobre ti",
+      "subtitle": "Elige la opción que mejor te describe",
+      "options": {
+        "student-elementary": "Estudiante (escuela primaria)",
+        "student-k8": "Estudiante (escuela intermedia)",
+        "student-hs": "Estudiante (escuela secundaria o más)",
+        "parent": "Padre / cuidador",
+        "staff": "Personal escolar"
+      }
+    },
+    "grade": {
+      "titleGuardian": "Selecciona el grado del niño",
+      "titleStudent": "¿En qué grado estás?",
+      "subtitleGuardian": "Adaptaremos los recursos a las necesidades del niño.",
+      "subtitleStudent": "Adaptaremos los recursos a tu situación.",
+      "options": {
+        "1": "1.er grado",
+        "2": "2.º grado",
+        "3": "3.er grado",
+        "4": "4.º grado",
+        "5": "5.º grado",
+        "6": "6.º grado",
+        "7": "7.º grado",
+        "8": "8.º grado",
+        "9": "9.º grado\n(primer año)",
+        "10": "10.º grado\n(segundo año)",
+        "11": "11.º grado\n(tercer año)",
+        "12": "12.º grado\n(cuarto año)",
+        "pre-k": "Pre-K/\nkínder",
+        "college": "Universidad",
+        "elementary": "Escuela\nprimaria (1-5)",
+        "middle-school": "Escuela\nintermedia (6-8)",
+        "high-school": "Escuela\nsecundaria (9-12)",
+        "high-school-up": "Más allá de\nla secundaria"
+      }
+    },
+    "journey": {
+      "titleStudent": "Tu trayectoria escolar",
+      "titleStaff": "La trayectoria escolar de tu estudiante",
+      "titleGuardian": "La trayectoria escolar de tu hijo",
+      "subtitle": "Todo camino es válido: estamos aquí para apoyar el tuyo.",
+      "selectAll": "Selecciona todas las que correspondan",
+      "options": {
+        "current-treatment": "Actualmente en la escuela",
+        "returning-after-treatment": "Tomando un descanso de la escuela",
+        "supporting-student": "Planeando regresar pronto a la escuela",
+        "special-needs": "Educación hospitalaria en casa"
+      }
+    },
+    "topics": {
+      "title": "¿Con qué te gustaría recibir apoyo?",
+      "subtitle": "Elige lo que te parezca mejor: siempre puedes explorar más adelante.",
+      "counterOne": "{{count}} tema seleccionado",
+      "counterOther": "{{count}} temas seleccionados"
+    }
+  }
+}

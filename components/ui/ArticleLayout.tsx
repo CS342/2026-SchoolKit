@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Platform, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Breadcrumb, Crumb } from './Breadcrumb';
@@ -46,6 +47,7 @@ const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: 20 } as any) 
  * Title and actions share one row. Web-only; native screens keep their own layout.
  */
 export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wide, children, contentStyle, onScroll }: ArticleLayoutProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { width } = useResponsive();
   const showToc = !!sections && sections.length >= 3 && width >= 920;
@@ -74,7 +76,7 @@ export function ArticleLayout({ breadcrumb, title, actions, sections, aside, wid
           <View style={styles.row}>
             {showToc ? (
               <View style={[styles.tocCol, STICKY]}>
-                <Text style={[styles.tocLabel, { color: colors.textLight }]}>On this page</Text>
+                <Text style={[styles.tocLabel, { color: colors.textLight }]}>{t('design.ui.onThisPage')}</Text>
                 {sections!.map((s) => (
                   <Pressable
                     key={s.id}

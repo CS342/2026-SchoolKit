@@ -10,6 +10,7 @@ import Animated, {
   withSequence,
   runOnJS,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { CHAPTER_BY_ID } from '../../constants/accomplishments';
 import PuzzlePiece from './PuzzlePiece';
@@ -18,6 +19,7 @@ const PIECE_DISPLAY_SIZE = 160;
 const AUTO_DISMISS_MS = 5000;
 
 export default function PieceRevealOverlay() {
+  const { t } = useTranslation();
   const { revealingPiece, dismissReveal } = useAccomplishments();
 
   // Animation values
@@ -128,12 +130,12 @@ export default function PieceRevealOverlay() {
 
         {/* Text */}
         <Animated.View style={[styles.textArea, pieceStyle]}>
-          <Text style={styles.foundText}>A piece found</Text>
+          <Text style={styles.foundText}>{t('journal.pieceFound')}</Text>
           <Text style={styles.pieceName}>{revealingPiece.name}</Text>
           <Text style={[styles.chapterName, { color: chapterColor }]}>
             {chapter.title}
           </Text>
-          <Text style={styles.tapHint}>Tap anywhere to continue</Text>
+          <Text style={styles.tapHint}>{t('journal.tapToContinue')}</Text>
         </Animated.View>
       </View>
     </View>

@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import i18n from '../lib/i18n';
 import { COLORS, TYPOGRAPHY, RADII } from '../constants/onboarding-theme';
 
 interface Props {
@@ -43,9 +44,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <View style={styles.iconContainer}>
               <Ionicons name="alert-circle-outline" size={48} color={COLORS.primary} />
             </View>
-            <Text style={styles.title}>Something went wrong</Text>
+            <Text style={styles.title}>{i18n.t('auth.errorBoundary.title')}</Text>
             <Text style={styles.message}>
-              An unexpected error occurred. Please try again.
+              {i18n.t('auth.errorBoundary.message')}
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -53,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
               activeOpacity={0.8}
             >
               <Ionicons name="refresh-outline" size={20} color={COLORS.white} />
-              <Text style={styles.retryText}>Try Again</Text>
+              <Text style={styles.retryText}>{i18n.t('auth.errorBoundary.retry')}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -1,0 +1,32 @@
+{
+  "common": {
+    "continue": "Continue",
+    "skipForNow": "Skip for now",
+    "getStarted": "Get Started",
+    "back": "Back",
+    "goBack": "Go back",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "cancel": "Cancel",
+    "done": "Done",
+    "next": "Next",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "remove": "Remove",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "search": "Search",
+    "seeAll": "See all",
+    "readMore": "Read more",
+    "share": "Share",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "add": "Add",
+    "submit": "Submit",
+    "signOut": "Sign out",
+    "error": "Something went wrong.",
+    "ok": "OK"
+  }
+}

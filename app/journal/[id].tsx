@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useJournal, PathData, JournalImage, JournalPage, MAX_PAGES, MAX_IMAGES_PER_PAGE } from "../../contexts/JournalContext";
@@ -141,6 +142,7 @@ function ImageItem({ image, index, isSelected, inputMode, onSelect, onMove, onMo
 }
 
 export default function NotebookScreen() {
+    const { t } = useTranslation();
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -234,9 +236,9 @@ export default function NotebookScreen() {
         updatedPages[currentPageIndex] = { textEntry, paths, images };
         updateNotebook(id, { pages: updatedPages });
         if (Platform.OS === 'web') {
-            window.alert("Your progress has been saved successfully.");
+            window.alert(t('journal.notebook.savedMessage'));
         } else {
-            Alert.alert("Saved", "Your progress has been saved successfully.");
+            Alert.alert(t('journal.notebook.savedTitle'), t('journal.notebook.savedMessage'));
         }
     };
 
@@ -362,16 +364,16 @@ export default function NotebookScreen() {
             saveNotebook("", [], []);
         };
         if (Platform.OS === 'web') {
-            if (window.confirm("Are you sure you want to clear everything on this page?")) {
+            if (window.confirm(t('journal.notebook.clearConfirm'))) {
                 doClear();
             }
         } else {
             Alert.alert(
-                "Clear Page",
-                "Are you sure you want to clear everything on this page?",
+                t('journal.notebook.clearPage'),
+                t('journal.notebook.clearConfirm'),
                 [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Clear", style: "destructive", onPress: doClear }
+                    { text: t('common.cancel'), style: "cancel" },
+                    { text: t('journal.notebook.clear'), style: "destructive", onPress: doClear }
                 ]
             );
         }
@@ -403,23 +405,23 @@ export default function NotebookScreen() {
         if (!id || !notebook) return;
         if (notebook.pages.length <= 1) {
             if (Platform.OS === 'web') {
-                window.alert("A notebook must have at least one page.");
+                window.alert(t('journal.notebook.minOnePage'));
             } else {
-                Alert.alert("Cannot Delete", "A notebook must have at least one page.");
+                Alert.alert(t('journal.notebook.cannotDeleteTitle'), t('journal.notebook.minOnePage'));
             }
             return;
         }
         if (Platform.OS === 'web') {
-            if (window.confirm(`Are you sure you want to delete page ${currentPageIndex + 1}? This cannot be undone.`)) {
+            if (window.confirm(t('journal.notebook.deletePageConfirm', { number: currentPageIndex + 1 }))) {
                 performDeletePage();
             }
         } else {
             Alert.alert(
-                "Delete Page",
-                `Are you sure you want to delete page ${currentPageIndex + 1}? This cannot be undone.`,
+                t('journal.notebook.deletePage'),
+                t('journal.notebook.deletePageConfirm', { number: currentPageIndex + 1 }),
                 [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: performDeletePage }
+                    { text: t('common.cancel'), style: "cancel" },
+                    { text: t('common.delete'), style: "destructive", onPress: performDeletePage }
                 ]
             );
         }
@@ -430,15 +432,15 @@ export default function NotebookScreen() {
             setShowPageMenu(prev => !prev);
         } else {
             Alert.alert(
-                "Page Options",
+                t('journal.notebook.pageOptions'),
                 undefined,
                 [
-                    { text: "Clear Page", onPress: handleClearPage },
+                    { text: t('journal.notebook.clearPage'), onPress: handleClearPage },
                     {
-                        text: "Delete Page", style: "destructive",
+                        text: t('journal.notebook.deletePage'), style: "destructive",
                         onPress: handleDeletePage
                     },
-                    { text: "Cancel", style: "cancel" }
+                    { text: t('common.cancel'), style: "cancel" }
                 ]
             );
         }
@@ -447,9 +449,9 @@ export default function NotebookScreen() {
     const handleInsertImage = async () => {
         if (images.length >= MAX_IMAGES_PER_PAGE) {
             if (Platform.OS === 'web') {
-                window.alert(`You can add up to ${MAX_IMAGES_PER_PAGE} images per page.`);
+                window.alert(t('journal.notebook.imageLimit', { count: MAX_IMAGES_PER_PAGE }));
             } else {
-                Alert.alert("Limit Reached", `You can add up to ${MAX_IMAGES_PER_PAGE} images per page.`);
+                Alert.alert(t('journal.limitReachedTitle'), t('journal.notebook.imageLimit', { count: MAX_IMAGES_PER_PAGE }));
             }
             return;
         }
@@ -457,9 +459,9 @@ export default function NotebookScreen() {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             if (Platform.OS === 'web') {
-                window.alert("Please allow access to your photo library to insert images.");
+                window.alert(t('journal.notebook.photoPermissionWeb'));
             } else {
-                Alert.alert("Permission Needed", "Please allow access to your photo library in Settings to insert images.");
+                Alert.alert(t('journal.notebook.photoPermissionTitle'), t('journal.notebook.photoPermissionNative'));
             }
             return;
         }
@@ -478,9 +480,9 @@ export default function NotebookScreen() {
                 const publicUrl = await uploadJournalImage(tempUri);
                 if (!publicUrl) {
                     if (Platform.OS === 'web') {
-                        window.alert("Failed to upload image. Please try again.");
+                        window.alert(t('journal.notebook.uploadFailed'));
                     } else {
-                        Alert.alert("Error", "Failed to upload image. Please try again.");
+                        Alert.alert(t('journal.errorTitle'), t('journal.notebook.uploadFailed'));
                     }
                     return;
                 }
@@ -497,24 +499,24 @@ export default function NotebookScreen() {
         } catch (e) {
             console.error('Failed to insert image', e);
             if (Platform.OS === 'web') {
-                window.alert("Failed to insert image. Please try again.");
+                window.alert(t('journal.notebook.insertFailed'));
             } else {
-                Alert.alert("Error", "Failed to insert image. Please try again.");
+                Alert.alert(t('journal.errorTitle'), t('journal.notebook.insertFailed'));
             }
         }
     };
 
     const handleSharePage = async () => {
         if (!notebook) return;
-        let content = `${notebook.title} — Page ${currentPageIndex + 1}\n\n`;
+        let content = `${t('journal.notebook.sharePageHeader', { title: notebook.title, number: currentPageIndex + 1 })}\n\n`;
         if (textEntry.trim()) {
             content += textEntry.trim() + "\n";
         }
         if (paths.length > 0) {
-            content += `\n[${paths.length} drawing stroke${paths.length !== 1 ? 's' : ''}]\n`;
+            content += "\n" + t(paths.length === 1 ? 'journal.export.strokesOne' : 'journal.export.strokesOther', { count: paths.length }) + "\n";
         }
         if (images.length > 0) {
-            content += `[${images.length} image${images.length !== 1 ? 's' : ''}]\n`;
+            content += t(images.length === 1 ? 'journal.export.imagesOne' : 'journal.export.imagesOther', { count: images.length }) + "\n";
         }
         try {
             await Share.share({ message: content });
@@ -534,9 +536,9 @@ export default function NotebookScreen() {
         if (!id || !notebook) return;
         if (notebook.pages.length >= MAX_PAGES) {
             if (Platform.OS === 'web') {
-                window.alert(`You can have up to ${MAX_PAGES} pages per notebook.`);
+                window.alert(t('journal.notebook.pageLimit', { count: MAX_PAGES }));
             } else {
-                Alert.alert("Limit Reached", `You can have up to ${MAX_PAGES} pages per notebook.`);
+                Alert.alert(t('journal.limitReachedTitle'), t('journal.notebook.pageLimit', { count: MAX_PAGES }));
             }
             return;
         }
@@ -579,9 +581,9 @@ export default function NotebookScreen() {
     if (!notebook) {
         return (
             <View style={[styles.container, { backgroundColor: colors.appBackground, justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ color: colors.textDark, fontSize: 18 }}>Notebook not found.</Text>
+                <Text style={{ color: colors.textDark, fontSize: 18 }}>{t('journal.notebook.notFound')}</Text>
                 <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, padding: 12, backgroundColor: colors.primary, borderRadius: 8 }}>
-                    <Text style={{ color: '#FFF' }}>Go Back</Text>
+                    <Text style={{ color: '#FFF' }}>{t('journal.notebook.goBack')}</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -601,7 +603,7 @@ export default function NotebookScreen() {
                 </TouchableOpacity>
                 <Text style={[appStyles.editHeaderTitle, { fontSize: 18 }]} numberOfLines={1}>{notebook.title}</Text>
                 <TouchableOpacity style={styles.saveBtn} onPress={handleManualSave}>
-                    <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
+                    <Text style={[styles.saveBtnText, { color: colors.primary }]}>{t('common.save')}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -677,11 +679,11 @@ export default function NotebookScreen() {
                                     <View style={[styles.dropdownMenu, { backgroundColor: colors.white, ...shadows.card }]}>
                                         <TouchableOpacity style={styles.dropdownItem} onPress={() => { setShowPageMenu(false); handleClearPage(); }}>
                                             <Ionicons name="document-outline" size={18} color={colors.textDark} />
-                                            <Text style={[styles.dropdownText, { color: colors.textDark }]}>Clear Page</Text>
+                                            <Text style={[styles.dropdownText, { color: colors.textDark }]}>{t('journal.notebook.clearPage')}</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={styles.dropdownItem} onPress={() => { setShowPageMenu(false); handleDeletePage(); }}>
                                             <Ionicons name="trash-outline" size={18} color="#E53935" />
-                                            <Text style={[styles.dropdownText, { color: '#E53935' }]}>Delete Page</Text>
+                                            <Text style={[styles.dropdownText, { color: '#E53935' }]}>{t('journal.notebook.deletePage')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </>
@@ -737,7 +739,7 @@ export default function NotebookScreen() {
                             onPress={handleInsertImage}
                         >
                             <Ionicons name="add" size={16} color="#FFF" />
-                            <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 14 }}>Insert Image</Text>
+                            <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 14 }}>{t('journal.notebook.insertImage')}</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -843,7 +845,7 @@ export default function NotebookScreen() {
                     <TextInput
                         style={[styles.textInput, { zIndex: 1 }]}
                         multiline
-                        placeholder={paths.length === 0 && images.length === 0 ? "Start typing or drawing..." : ""}
+                        placeholder={paths.length === 0 && images.length === 0 ? t('journal.notebook.placeholder') : ""}
                         placeholderTextColor="#AAA"
                         value={textEntry}
                         onChangeText={handleTextChange}
@@ -855,7 +857,7 @@ export default function NotebookScreen() {
                         <View style={[styles.writeHint, { zIndex: 4 }]} pointerEvents="none">
                             <Ionicons name="pencil" size={48} color={colors.textLight} style={{ opacity: 0.3 }} />
                             <Text style={[styles.writeOverlayText, { color: colors.textLight }]}>
-                                Drawing mode is active.
+                                {t('journal.notebook.drawingActive')}
                             </Text>
                         </View>
                     )}

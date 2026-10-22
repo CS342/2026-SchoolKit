@@ -12,6 +12,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { GRADIENTS, ANIMATION, TYPOGRAPHY } from '../constants/onboarding-theme';
 
@@ -41,6 +42,7 @@ function BouncingDot({ delay }: { delay: number }) {
 
 export default function LoadingScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const fadeAnim = useSharedValue(0);
   const scaleAnim = useSharedValue(0.9);
   const rotation = useSharedValue(0);
@@ -78,7 +80,7 @@ export default function LoadingScreen() {
             <Ionicons name="sparkles" size={48} color="#FFFFFF" />
           </Animated.View>
 
-          <Text style={styles.text}>Finding support that fits you...</Text>
+          <Text style={styles.text}>{t('auth.loading.text')}</Text>
 
           <View style={styles.dotsContainer}>
             <BouncingDot delay={0} />

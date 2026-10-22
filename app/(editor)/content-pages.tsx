@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator, Modal, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { shadow } from '../../constants/theme';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
@@ -20,10 +21,10 @@ import { NewPageModal } from '../../components/content-editor/NewPageModal';
 type StatusFilter = 'all' | PageStatus;
 type SortMode = 'updated' | 'title' | 'status';
 
-const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'updated', label: 'Recently updated' },
-  { value: 'title', label: 'Title A–Z' },
-  { value: 'status', label: 'Status' },
+const SORT_OPTIONS: { value: SortMode; tKey: string }[] = [
+  { value: 'updated', tKey: 'editor.contentList.sortUpdated' },
+  { value: 'title', tKey: 'editor.contentList.sortTitle' },
+  { value: 'status', tKey: 'editor.contentList.sortStatus' },
 ];
 
 /** What a topic is called in the list: its own name once it has versions, else its page's title. */
@@ -43,6 +44,7 @@ type DeleteTarget = { kind: 'page'; page: PageListItem } | { kind: 'topic'; topi
 
 export default function ContentPagesDashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const [topics, setTopics] = useState<TopicListItem[] | null>(null);
   const [showNew, setShowNew] = useState(false);
@@ -141,21 +143,26 @@ export default function ContentPagesDashboard() {
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 6 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{ ...TYPOGRAPHY.display, fontSize: 34, color: colors.textDark, letterSpacing: -0.8 }}>Content</Text>
+              <Text style={{ ...TYPOGRAPHY.display, fontSize: 34, color: colors.textDark, letterSpacing: -0.8 }}>{t('editor.contentList.title')}</Text>
               <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, marginTop: 4 }}>
                 {counts.total > 0
-                  ? `${counts.topics} ${counts.topics === 1 ? 'topic' : 'topics'}${counts.total > counts.topics ? ` · ${counts.total} versions` : ''} · ${counts.drafts} draft${counts.drafts === 1 ? '' : 's'} · ${counts.published} published`
-                  : 'Write and edit the guides that appear in the app.'}
+                  ? [
+                      counts.topics === 1 ? t('editor.contentList.topicOne', { count: counts.topics }) : t('editor.contentList.topicOther', { count: counts.topics }),
+                      ...(counts.total > counts.topics ? [t('editor.contentList.versionsCount', { count: counts.total })] : []),
+                      counts.drafts === 1 ? t('editor.contentList.draftOne', { count: counts.drafts }) : t('editor.contentList.draftOther', { count: counts.drafts }),
+                      t('editor.contentList.publishedCount', { count: counts.published }),
+                    ].join(' · ')
+                  : t('editor.contentList.summaryEmpty')}
               </Text>
             </View>
             <Pressable
               onPress={() => setShowNew(true)}
               accessibilityRole="button"
-              accessibilityLabel="New page"
+              accessibilityLabel={t('editor.contentList.newPage')}
               style={({ hovered }: any) => ([{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: 'pointer' as any, opacity: hovered ? 0.92 : 1 }, shadows.button])}
             >
               <Ionicons name="add" size={18} color="#fff" />
-              <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>New page</Text>
+              <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{t('editor.contentList.newPage')}</Text>
             </Pressable>
           </View>
 
@@ -167,12 +174,12 @@ export default function ContentPagesDashboard() {
                 <TextInput
                   value={search}
                   onChangeText={setSearch}
-                  placeholder="Search pages…"
+                  placeholder={t('editor.contentList.searchPlaceholder')}
                   placeholderTextColor={colors.inputPlaceholder}
                   style={[ui.searchInput, { color: colors.textDark }]}
                 />
                 {search.length > 0 && (
-                  <Pressable onPress={() => setSearch('')} accessibilityLabel="Clear search">
+                  <Pressable onPress={() => setSearch('')} accessibilityLabel={t('editor.common.clearSearch')}>
                     <Ionicons name="close-circle" size={16} color={colors.textLight} />
                   </Pressable>
                 )}
@@ -190,7 +197,7 @@ export default function ContentPagesDashboard() {
                       style={[ui.segmentBtn, active && { backgroundColor: colors.white, ...shadow({ shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 }) }]}
                     >
                       <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: active ? colors.primary : colors.textMuted }}>
-                        {s === 'all' ? 'All' : s === 'draft' ? 'Drafts' : 'Published'}
+                        {s === 'all' ? t('editor.contentList.filterAll') : s === 'draft' ? t('editor.contentList.filterDrafts') : t('editor.contentList.filterPublished')}
                       </Text>
                     </Pressable>
                   );
@@ -209,7 +216,7 @@ export default function ContentPagesDashboard() {
                       accessibilityState={{ selected: active }}
                       style={[ui.sortChip, active && { backgroundColor: colors.primarySoft }]}
                     >
-                      <Text style={{ ...TYPOGRAPHY.caption, color: active ? colors.primary : colors.textMuted }}>{opt.label}</Text>
+                      <Text style={{ ...TYPOGRAPHY.caption, color: active ? colors.primary : colors.textMuted }}>{t(opt.tKey)}</Text>
                     </Pressable>
                   );
                 })}
@@ -243,20 +250,20 @@ export default function ContentPagesDashboard() {
               <View style={{ width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, marginBottom: 16 }}>
                 <Ionicons name="documents-outline" size={30} color={colors.primary} />
               </View>
-              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>No pages yet</Text>
-              <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, textAlign: 'center' }}>Create your first content page to get started.</Text>
+              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>{t('editor.contentList.emptyTitle')}</Text>
+              <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, textAlign: 'center' }}>{t('editor.contentList.emptyBody')}</Text>
             </View>
           ) : visible.length === 0 ? (
             <View style={[ui.emptyCard, { borderColor: colors.borderCard, backgroundColor: colors.white }, shadows.small]}>
               <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.backgroundLighter, marginBottom: 14 }}>
                 <Ionicons name="search-outline" size={26} color={colors.textLight} />
               </View>
-              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>No pages match</Text>
-              <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, textAlign: 'center', marginBottom: hasFilter ? 18 : 0 }}>Try a different search or filter.</Text>
+              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>{t('editor.contentList.noMatchTitle')}</Text>
+              <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted, textAlign: 'center', marginBottom: hasFilter ? 18 : 0 }}>{t('editor.contentList.noMatchBody')}</Text>
               {hasFilter && (
                 <Pressable onPress={() => { setSearch(''); setStatusFilter('all'); }} style={ui.clearBtn}>
                   <Ionicons name="close-circle" size={15} color={colors.primary} />
-                  <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: colors.primary }}>Clear filters</Text>
+                  <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: colors.primary }}>{t('editor.contentList.clearFilters')}</Text>
                 </Pressable>
               )}
             </View>
@@ -315,17 +322,23 @@ export default function ContentPagesDashboard() {
             </View>
             {confirmDel?.kind === 'topic' ? (
               <>
-                <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>Delete this topic?</Text>
+                <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>{t('editor.contentList.deleteTopicTitle')}</Text>
                 <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted }}>
-                  “{confirmDel.topic.name}” and all {confirmDel.topic.versions.length} of its versions will be permanently removed
-                  {confirmDel.topic.versions.some((v) => v.status === 'published') ? ' and will disappear from the library' : ''}. This can’t be undone.
+                  {t('editor.contentList.deleteTopicBody', {
+                    name: confirmDel.topic.name,
+                    count: confirmDel.topic.versions.length,
+                    suffix: confirmDel.topic.versions.some((v) => v.status === 'published') ? t('editor.contentList.deleteLibrarySuffix') : '',
+                  })}
                 </Text>
               </>
             ) : (
               <>
-                <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>Delete this page?</Text>
+                <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>{t('editor.contentList.deletePageTitle')}</Text>
                 <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted }}>
-                  “{confirmDel?.page.title}” will be permanently removed{confirmDel?.page.status === 'published' ? ' and will disappear from the library' : ''}. This can’t be undone.
+                  {t('editor.contentList.deletePageBody', {
+                    title: confirmDel?.page.title,
+                    suffix: confirmDel?.page.status === 'published' ? t('editor.contentList.deleteLibrarySuffix') : '',
+                  })}
                 </Text>
               </>
             )}
@@ -337,11 +350,11 @@ export default function ContentPagesDashboard() {
             ) : null}
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
               <Pressable onPress={() => !deleting && setConfirmDel(null)} style={{ paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, cursor: 'pointer' as any }}>
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>Cancel</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>{t('common.cancel')}</Text>
               </Pressable>
               <Pressable onPress={doDelete} disabled={deleting} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.error, cursor: (deleting ? 'default' : 'pointer') as any }}>
                 {deleting ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="trash" size={15} color="#fff" />}
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{deleting ? t('editor.contentList.deleting') : t('common.delete')}</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -379,6 +392,7 @@ function TopicGroup({ topic, copied, onViewLive, onCopyLink, onDuplicateTopic, o
   onViewLive: () => void; onCopyLink: () => void; onDuplicateTopic: () => void; onDelete: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const anyPublished = topic.versions.some((v) => v.status === 'published');
   return (
@@ -390,14 +404,14 @@ function TopicGroup({ topic, copied, onViewLive, onCopyLink, onDuplicateTopic, o
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.textDark }} numberOfLines={1}>{topic.name}</Text>
           <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 3 }} numberOfLines={1}>
-            {topic.versions.length} versions · /page/{topic.slug} — each reader gets their version
+            {t('editor.contentList.topicMeta', { count: topic.versions.length, slug: topic.slug })}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-          {anyPublished && <RowAction icon="open-outline" label="View live (as you)" color={colors.textLight} onPress={onViewLive} />}
-          <RowAction icon={copied ? 'checkmark' : 'link-outline'} label={copied ? 'Link copied' : 'Copy topic link'} color={copied ? colors.success : colors.textLight} onPress={onCopyLink} />
-          <RowAction icon="copy-outline" label="Duplicate as a new topic (first version)" color={colors.textLight} onPress={onDuplicateTopic} />
-          <RowAction icon="trash-outline" label="Delete topic and all versions" color={colors.error} onPress={onDelete} />
+          {anyPublished && <RowAction icon="open-outline" label={t('editor.contentList.viewLiveAsYou')} color={colors.textLight} onPress={onViewLive} />}
+          <RowAction icon={copied ? 'checkmark' : 'link-outline'} label={copied ? t('editor.contentList.linkCopied') : t('editor.contentList.copyTopicLink')} color={copied ? colors.success : colors.textLight} onPress={onCopyLink} />
+          <RowAction icon="copy-outline" label={t('editor.contentList.duplicateTopic')} color={colors.textLight} onPress={onDuplicateTopic} />
+          <RowAction icon="trash-outline" label={t('editor.contentList.deleteTopicAll')} color={colors.error} onPress={onDelete} />
         </View>
       </View>
       <View style={{ gap: 8, paddingHorizontal: 12, paddingBottom: 12 }}>{children}</View>
@@ -411,6 +425,7 @@ function PageRow({ page, path, nested, busy, copied, onOpen, onToggleStatus, onV
   onOpen: () => void; onToggleStatus: () => void; onViewLive: () => void;
   onDuplicateAsVersion: () => void; onCopyLink: () => void; onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const published = page.status === 'published';
   let updated = '';
@@ -426,7 +441,7 @@ function PageRow({ page, path, nested, busy, copied, onOpen, onToggleStatus, onV
       <Pressable
         onPress={onOpen}
         accessibilityRole="button"
-        accessibilityLabel={`Edit ${page.title}`}
+        accessibilityLabel={t('editor.contentList.editPage', { title: page.title })}
         style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1, minWidth: 0, cursor: 'pointer' as any, opacity: hovered ? 0.72 : 1 })}
       >
         <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft }}>
@@ -447,14 +462,14 @@ function PageRow({ page, path, nested, busy, copied, onOpen, onToggleStatus, onV
               </View>
             ) : null}
             <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight }} numberOfLines={1}>
-              {[path, updated ? `Updated ${updated}` : ''].filter(Boolean).join('  ·  ')}
+              {[path, updated ? t('editor.contentList.updatedOn', { date: updated }) : ''].filter(Boolean).join('  ·  ')}
             </Text>
           </View>
         </View>
       </Pressable>
 
       <View style={[ui.statusPill, { backgroundColor: published ? colors.successBg : colors.warningBg }]}>
-        <Text style={{ ...TYPOGRAPHY.overline, color: published ? colors.successText : colors.warningText }}>{published ? 'Published' : 'Draft'}</Text>
+        <Text style={{ ...TYPOGRAPHY.overline, color: published ? colors.successText : colors.warningText }}>{published ? t('editor.status.published') : t('editor.status.draft')}</Text>
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
@@ -463,15 +478,15 @@ function PageRow({ page, path, nested, busy, copied, onOpen, onToggleStatus, onV
         ) : (
           <RowAction
             icon={published ? 'cloud-offline-outline' : 'cloud-upload-outline'}
-            label={published ? 'Unpublish' : 'Publish'}
+            label={published ? t('editor.contentList.unpublish') : t('editor.contentList.publish')}
             color={published ? colors.textLight : colors.success}
             onPress={onToggleStatus}
           />
         )}
-        {published && <RowAction icon="open-outline" label="View live page" color={colors.textLight} onPress={onViewLive} />}
-        <RowAction icon={copied ? 'checkmark' : 'link-outline'} label={copied ? 'Link copied' : 'Copy link'} color={copied ? colors.success : colors.textLight} onPress={onCopyLink} />
-        <RowAction icon="git-branch-outline" label="Duplicate as a new version (for another audience)" color={colors.textLight} onPress={onDuplicateAsVersion} disabled={busy} />
-        <RowAction icon="trash-outline" label="Delete page" color={colors.error} onPress={onDelete} disabled={busy} />
+        {published && <RowAction icon="open-outline" label={t('editor.contentList.viewLivePage')} color={colors.textLight} onPress={onViewLive} />}
+        <RowAction icon={copied ? 'checkmark' : 'link-outline'} label={copied ? t('editor.contentList.linkCopied') : t('editor.contentList.copyLink')} color={copied ? colors.success : colors.textLight} onPress={onCopyLink} />
+        <RowAction icon="git-branch-outline" label={t('editor.contentList.duplicateVersion')} color={colors.textLight} onPress={onDuplicateAsVersion} disabled={busy} />
+        <RowAction icon="trash-outline" label={t('editor.contentList.deletePage')} color={colors.error} onPress={onDelete} disabled={busy} />
       </View>
     </View>
   );

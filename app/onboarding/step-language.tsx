@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
@@ -18,6 +19,7 @@ const LANGUAGES = [
 
 export default function StepLanguageScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { updatePreferredLanguage, preferredLanguage } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, shadows, sharedStyles } = useTheme();
@@ -43,9 +45,9 @@ export default function StepLanguageScreen() {
               <Text style={styles.globeEmoji}>🌐</Text>
             </View>
 
-            <Text style={sharedStyles.pageTitle}>Preferred language</Text>
+            <Text style={sharedStyles.pageTitle}>{t('onboarding.language.title')}</Text>
             <Text style={[sharedStyles.pageSubtitle, { marginBottom: 32 }]}>
-              Choose the language you'd like to use the app in.
+              {t('onboarding.language.subtitle')}
             </Text>
 
             <View style={[styles.optionList, isWebDesktop && { maxWidth: 480, width: '100%' }]}>
@@ -75,14 +77,14 @@ export default function StepLanguageScreen() {
 
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32 }}>
-                <PrimaryButton title="Continue" onPress={handleContinue} />
+                <PrimaryButton title={t('common.continue')} onPress={handleContinue} />
               </View>
             )}
           </View>
 
           {!isWebDesktop && (
             <View style={sharedStyles.buttonContainer}>
-              <PrimaryButton title="Continue" onPress={handleContinue} />
+              <PrimaryButton title={t('common.continue')} onPress={handleContinue} />
               <View style={sharedStyles.skipPlaceholder} />
             </View>
           )}

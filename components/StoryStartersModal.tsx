@@ -10,17 +10,18 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { AppTheme } from "../constants/theme";
 import { COLORS, RADII, TYPOGRAPHY } from "../constants/onboarding-theme";
 
-const PROMPTS = [
-  "How did you navigate the first day back to school after diagnosis?",
-  "What advice would you give to a newly diagnosed AYA?",
-  "What is one thing you wish your teachers knew about cancer?",
-  "What was a small academic win you experienced this week?",
-  "How has your perspective on school changed since diagnosis?",
+const PROMPT_KEYS = [
+  "firstDayBack",
+  "adviceNewlyDiagnosed",
+  "wishTeachersKnew",
+  "academicWin",
+  "perspectiveChanged",
 ];
 
 interface StoryStartersModalProps {
@@ -34,6 +35,7 @@ export function StoryStartersModal({
   onClose,
   onSelectPrompt,
 }: StoryStartersModalProps) {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const insets = useSafeAreaInsets();
@@ -58,14 +60,14 @@ export function StoryStartersModal({
           ]}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Story Starters</Text>
+            <Text style={styles.title}>{t('stories.storyStarters')}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={COLORS.textLight} />
             </Pressable>
           </View>
 
           <Text style={styles.subtitle}>
-            Not sure where to begin? Choose a prompt to get started:
+            {t('stories.storyStartersSubtitle')}
           </Text>
 
           <ScrollView
@@ -73,7 +75,9 @@ export function StoryStartersModal({
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.optionsList}>
-              {PROMPTS.map((prompt, index) => (
+              {PROMPT_KEYS.map((promptKey, index) => {
+                const prompt = t(`stories.prompts.${promptKey}`);
+                return (
                 <Pressable
                   key={index}
                   style={styles.option}
@@ -89,7 +93,8 @@ export function StoryStartersModal({
                     color={COLORS.textLight}
                   />
                 </Pressable>
-              ))}
+                );
+              })}
             </View>
           </ScrollView>
         </View>

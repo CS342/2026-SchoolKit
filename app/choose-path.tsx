@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { DecorativeBackground } from '../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper } from '../components/AuthWebWrapper';
 import { PrimaryButton } from '../components/onboarding/PrimaryButton';
@@ -23,6 +24,7 @@ import type { ThemeColors } from '../constants/theme';
 
 export default function ChoosePathScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -45,7 +47,7 @@ export default function ChoosePathScreen() {
       await signInAnonymously();
       router.replace('/');
     } catch (err: any) {
-      showAlert('Error', err?.message || 'Something went wrong.');
+      showAlert(t('auth.errorTitle'), err?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -67,15 +69,15 @@ export default function ChoosePathScreen() {
               <View style={[sharedStyles.pageIconCircle, { width: 96, height: 96, borderRadius: 48 }]}>
                 <Ionicons name="sparkles-outline" size={52} color={colors.primary} />
               </View>
-              <Text style={sharedStyles.pageTitle}>Welcome to SchoolKit</Text>
+              <Text style={sharedStyles.pageTitle}>{t('auth.choosePath.title')}</Text>
               <Text style={[sharedStyles.pageSubtitle, { marginBottom: 32 }]}>
-                How would you like to continue?
+                {t('auth.choosePath.subtitle')}
               </Text>
             </View>
 
             <View style={styles.actions}>
               <PrimaryButton
-                title="Create Account"
+                title={t('auth.createAccount')}
                 icon="person-add-outline"
                 onPress={() => router.push('/auth')}
                 disabled={loading}
@@ -87,16 +89,16 @@ export default function ChoosePathScreen() {
                 activeOpacity={0.8}
                 disabled={loading}
                 accessibilityRole="button"
-                accessibilityLabel="Sign in"
+                accessibilityLabel={t('auth.signIn')}
                 accessibilityState={{ disabled: loading }}
               >
                 <Ionicons name="log-in-outline" size={20} color={colors.primary} style={styles.buttonIcon} />
-                <Text style={styles.secondaryButtonText}>Sign In</Text>
+                <Text style={styles.secondaryButtonText}>{t('auth.signIn')}</Text>
               </TouchableOpacity>
 
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
+                <Text style={styles.dividerText}>{t('auth.or')}</Text>
                 <View style={styles.dividerLine} />
               </View>
 
@@ -106,7 +108,7 @@ export default function ChoosePathScreen() {
                 activeOpacity={0.8}
                 disabled={loading}
                 accessibilityRole="button"
-                accessibilityLabel="Continue as guest"
+                accessibilityLabel={t('auth.continueAsGuestA11y')}
                 accessibilityState={{ disabled: loading }}
               >
                 {loading ? (
@@ -114,13 +116,13 @@ export default function ChoosePathScreen() {
                 ) : (
                   <>
                     <Ionicons name="person-outline" size={20} color={colors.textMuted} style={styles.buttonIcon} />
-                    <Text style={styles.guestButtonText}>Continue as Guest</Text>
+                    <Text style={styles.guestButtonText}>{t('auth.continueAsGuest')}</Text>
                   </>
                 )}
               </TouchableOpacity>
 
               <Text style={styles.guestWarningText}>
-                We won't remember your info and you have limited ability to interact with story posts.
+                {t('auth.guestWarning')}
               </Text>
             </View>
           </View>

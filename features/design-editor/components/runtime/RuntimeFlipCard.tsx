@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { InteractiveComponentObject, FlipCardConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
 
 export function RuntimeFlipCard({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
+  const { t } = useTranslation();
   const config = object.interactionConfig as FlipCardConfig;
   const [isFlipped, setIsFlipped] = useState(config.defaultSide === 'back');
   const animValue = useRef(new Animated.Value(config.defaultSide === 'back' ? 180 : 0)).current;
@@ -104,7 +106,7 @@ export function RuntimeFlipCard({ object, isDark = false }: { object: Interactiv
                   textTransform: 'uppercase',
                 }}
               >
-                Tap to flip
+                {t('design.runtime.tapToFlip')}
               </Text>
             </View>
           )}

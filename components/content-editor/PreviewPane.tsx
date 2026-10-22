@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import { ContentPage } from '../content-blocks';
@@ -20,6 +21,7 @@ function SegBtn({ active, icon, label, onPress }: { active: boolean; icon: strin
 }
 
 export function PreviewPane() {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const doc = useEditorStore((s) => s.doc);
   const [mode, setMode] = useState<'web' | 'mobile'>('web');
@@ -27,8 +29,8 @@ export function PreviewPane() {
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? colors.appBackground : colors.appBackgroundAlt }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.borderCard }}>
-        <SegBtn active={mode === 'web'} icon="desktop-outline" label="Web" onPress={() => setMode('web')} />
-        <SegBtn active={mode === 'mobile'} icon="phone-portrait-outline" label="Mobile" onPress={() => setMode('mobile')} />
+        <SegBtn active={mode === 'web'} icon="desktop-outline" label={t('editor.preview.web')} onPress={() => setMode('web')} />
+        <SegBtn active={mode === 'mobile'} icon="phone-portrait-outline" label={t('editor.preview.mobile')} onPress={() => setMode('mobile')} />
       </View>
 
       {mode === 'web' ? (

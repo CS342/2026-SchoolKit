@@ -1,0 +1,684 @@
+{
+  "design": {
+    "ui": {
+      "onThisPage": "On this page",
+      "statusApproved": "Approved",
+      "statusPending": "Pending review",
+      "statusRejected": "Needs edits",
+      "downloaded": "Downloaded"
+    },
+    "dashboard": {
+      "noDesignId": "No design ID",
+      "notFound": "Design not found",
+      "loadingDesign": "Loading design...",
+      "backToDesigns": "Back to designs",
+      "untitledDesign": "Untitled Design",
+      "backToProfile": "Back to Profile",
+      "myDesigns": "My Designs",
+      "subtitle": "Create and manage visual content",
+      "generateWithAI": "Generate with AI",
+      "newDesign": "New Design",
+      "loading": "Loading...",
+      "noDesignsYet": "No designs yet",
+      "emptyHint": "Create your first design to get started",
+      "aiGeneratedDesign": "AI Generated Design"
+    },
+    "view": {
+      "invalid": "Invalid design",
+      "notFound": "Design not found",
+      "loadFailed": "Failed to load design",
+      "loadingDesign": "Loading design...",
+      "shareMessage": "Check out \"{{title}}\" on SchoolKit"
+    },
+    "modal": {
+      "export": {
+        "title": "Export Design",
+        "description": "Download your design as an image",
+        "options": {
+          "png": {
+            "description": "High quality, transparent background support"
+          },
+          "jpeg": {
+            "description": "Smaller file size, no transparency"
+          }
+        }
+      },
+      "share": {
+        "title": "Share Design",
+        "description": "Anyone with the link can view this design",
+        "copied": "Copied!",
+        "copy": "Copy",
+        "revoking": "Revoking…",
+        "revokeLink": "Revoke Link",
+        "creating": "Creating…",
+        "createLink": "Create Share Link"
+      },
+      "publish": {
+        "title": "Publish as Resource",
+        "description": "Make this design available as an app resource for users",
+        "checkingStatus": "Checking status…",
+        "publishedBadge": "Published",
+        "publishedNote": "This design is live as a resource in the app. Update the fields below to change it.",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Brief description for users…",
+        "categoryLabel": "Category",
+        "iconLabel": "Icon",
+        "visibleToLabel": "Visible to",
+        "updating": "Updating…",
+        "publishing": "Publishing…",
+        "updateResource": "Update Resource",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "roles": {
+          "student-elementary": "Students (elementary)",
+          "student-k8": "Students (middle school)",
+          "student-hs": "Students (High School+)",
+          "parent": "Parents/Caregivers",
+          "staff": "School staff"
+        }
+      },
+      "preview": {
+        "pressEscape": "Press Escape to close",
+        "closePreview": "Close Preview",
+        "interactiveHint": "Interactive Preview — Click to interact"
+      },
+      "card": {
+        "justNow": "Just now",
+        "minutesAgo": "{{count}}m ago",
+        "hoursAgo": "{{count}}h ago",
+        "daysAgo": "{{count}}d ago",
+        "shared": "Shared",
+        "duplicate": "Duplicate",
+        "deleteConfirm": "Delete \"{{title}}\"?"
+      }
+    },
+    "runtime": {
+      "byAuthor": "by {{author}}",
+      "viewOnly": "View only",
+      "tapToFlip": "Tap to flip",
+      "tryAgain": "Try Again",
+      "optionLabel": "Option {{number}}: {{label}}",
+      "interactionLabels": {
+        "flip-card": "Flip Card",
+        "bottom-sheet": "Bottom Sheet",
+        "expandable": "Expandable",
+        "entrance": "Entrance",
+        "carousel": "Carousel",
+        "tabs": "Tabs",
+        "quiz": "Quiz",
+        "interactive": "Interactive"
+      }
+    },
+    "ai": {
+      "title": {
+        "generate": "Generate with AI",
+        "creating": "Creating Your Design",
+        "updating": "Updating Your Design",
+        "editWithAi": "Edit with AI",
+        "describe": "Describe Your Design"
+      },
+      "subtitle": {
+        "mode": "Choose how you want to create your design",
+        "generating": "AI is working its magic — this may take a moment",
+        "editDescribe": "Describe what you want to change",
+        "template": "Template: {{name}}",
+        "freestyle": "AI Freestyle — describe anything"
+      },
+      "freestyle": {
+        "title": "AI Freestyle",
+        "subtitle": "Describe anything and AI builds it from scratch",
+        "placeholder": "e.g. A step-by-step guide for returning to school after a cancer diagnosis"
+      },
+      "generateDesign": "Generate Design",
+      "updateDesign": "Update Design",
+      "orTemplate": "Or start from a template",
+      "tab": {
+        "structured": "Structured",
+        "describe": "Describe It"
+      },
+      "field": {
+        "title": "Title",
+        "titlePlaceholder": "e.g. Welcome to Science Class",
+        "subtitle": "Subtitle",
+        "subtitlePlaceholder": "e.g. Chapter 3: The Solar System",
+        "bodyText": "Body Text",
+        "bodyPlaceholder": "Additional content to include...",
+        "style": "Style",
+        "accentColor": "Accent Color"
+      },
+      "styleOptions": {
+        "Modern": "Modern",
+        "Playful": "Playful",
+        "Minimal": "Minimal",
+        "Bold": "Bold"
+      },
+      "promptPlaceholder": {
+        "create": "Describe the design you want...",
+        "edit": "Describe what you want to change..."
+      },
+      "examples": {
+        "returningGuide": "A step-by-step guide for returning to school after a cancer diagnosis",
+        "mythFact": "Myth vs fact flip cards about childhood cancer treatments",
+        "feelingsCheckin": "A feelings check-in card with emotions kids may experience during treatment",
+        "talkingToFriends": "Tips for talking to friends and classmates about your diagnosis"
+      },
+      "editExamples": {
+        "titleColor": "Change the title color to red",
+        "darkerBg": "Make the background darker",
+        "addSubtitle": "Add a subtitle below the title",
+        "removeFooter": "Remove the footer section"
+      },
+      "stepCounter": "Step {{current}} of {{total}}",
+      "tryAgain": "Try Again",
+      "generationSteps": {
+        "create": {
+          "understanding": "Understanding your request...",
+          "layout": "Designing layout...",
+          "styling": "Styling elements...",
+          "finalizing": "Finalizing design..."
+        },
+        "edit": {
+          "analyzing": "Analyzing your design...",
+          "applying": "Applying changes...",
+          "refining": "Refining layout...",
+          "finalizing": "Finalizing updates..."
+        }
+      },
+      "errors": {
+        "generationFailed": "Design generation failed",
+        "invalidStructure": "AI returned an invalid design structure.",
+        "generic": "Something went wrong"
+      }
+    },
+    "tools": {
+      "categories": {
+        "select": "Select",
+        "shapes": "Shapes",
+        "text": "Text",
+        "media": "Media",
+        "interactive": "Interactive",
+        "blocks": "Blocks",
+        "settings": "Settings"
+      },
+      "shapes": {
+        "rectangle": "Rectangle",
+        "ellipse": "Ellipse",
+        "star": "Star",
+        "triangle": "Triangle",
+        "line": "Line",
+        "arrow": "Arrow",
+        "icon": "Icon"
+      },
+      "interactive": {
+        "flip-card": {
+          "label": "Flip Card",
+          "desc": "Two-sided card with flip animation"
+        },
+        "bottom-sheet": {
+          "label": "Bottom Sheet",
+          "desc": "Slide-up panel with trigger button"
+        },
+        "expandable": {
+          "label": "Expandable",
+          "desc": "Collapsible content section"
+        },
+        "entrance": {
+          "label": "Entrance",
+          "desc": "Staggered entrance animations"
+        },
+        "carousel": {
+          "label": "Carousel",
+          "desc": "Swipeable multi-slide viewer"
+        },
+        "tabs": {
+          "label": "Tabs",
+          "desc": "Tabbed content switcher"
+        },
+        "quiz": {
+          "label": "Quiz",
+          "desc": "Multiple choice with feedback"
+        }
+      },
+      "blocks": {
+        "info-card": {
+          "label": "Info Card",
+          "desc": "Card with icon, title & body"
+        },
+        "stat-counter": {
+          "label": "Stat Counter",
+          "desc": "Large number with label"
+        },
+        "numbered-list": {
+          "label": "Numbered List",
+          "desc": "Ordered list with badges"
+        },
+        "quote-block": {
+          "label": "Quote Block",
+          "desc": "Styled quotation with attribution"
+        },
+        "cta-block": {
+          "label": "CTA Block",
+          "desc": "Call-to-action with button"
+        },
+        "header-section": {
+          "label": "Header Section",
+          "desc": "Full-width section header"
+        },
+        "icon-grid": {
+          "label": "Icon Grid",
+          "desc": "3×2 grid of icon circles"
+        },
+        "image-caption": {
+          "label": "Image + Caption",
+          "desc": "Placeholder with caption text"
+        }
+      },
+      "text": {
+        "addText": {
+          "label": "Add Text",
+          "hint": "Click canvas to place (T)"
+        },
+        "badge": {
+          "label": "Badge",
+          "hint": "Styled text label"
+        }
+      },
+      "media": {
+        "label": "Upload Image",
+        "hint": "Click to browse (I)"
+      },
+      "settings": {
+        "showGrid": "Show Grid",
+        "snapToGrid": "Snap to Grid",
+        "magneticSnap": "Magnetic Snap",
+        "gridSize": "Grid Size"
+      }
+    },
+    "interactive": {
+      "component": "Component",
+      "editContents": "Edit Contents",
+      "groups": "Groups ({{count}})",
+      "objectsCountOne": "{{count}} object",
+      "objectsCountOther": "{{count}} objects",
+      "groupsHint": "Use the tab bar above the canvas to add or remove {{items}}.",
+      "durationMs": "Duration (ms)",
+      "nouns": {
+        "slides": "slides",
+        "tabs": "tabs",
+        "sheets": "sheets"
+      },
+      "types": {
+        "flip-card": "Flip Card",
+        "bottom-sheet": "Bottom Sheet",
+        "expandable": "Expandable",
+        "entrance": "Entrance Animation",
+        "carousel": "Carousel",
+        "tabs": "Tabs",
+        "quiz": "Quiz",
+        "interactive": "Interactive"
+      },
+      "flip": {
+        "title": "Flip Settings",
+        "direction": "Direction",
+        "defaultSide": "Default Side"
+      },
+      "sheet": {
+        "title": "Sheet Settings",
+        "heightPercent": "Height %",
+        "backdropOpacity": "Backdrop Opacity",
+        "dismissOnBackdropTap": "Dismiss on backdrop tap"
+      },
+      "expand": {
+        "title": "Expand Settings",
+        "easing": "Easing",
+        "defaultExpanded": "Default expanded"
+      },
+      "entrance": {
+        "title": "Entrance Settings",
+        "animation": "Animation",
+        "trigger": "Trigger",
+        "stagger": "Stagger (ms)",
+        "springFriction": "Spring Friction",
+        "springTension": "Spring Tension"
+      },
+      "carousel": {
+        "title": "Carousel Settings",
+        "autoPlay": "Auto-play",
+        "interval": "Interval (ms)",
+        "pauseOnInteraction": "Pause on interaction",
+        "resumeDelay": "Resume Delay (ms)",
+        "showDots": "Show dots",
+        "showArrows": "Show arrows",
+        "transition": "Transition (ms)",
+        "navigationStyling": "Navigation Styling",
+        "arrowColor": "Arrow Color",
+        "arrowBg": "Arrow BG",
+        "activeDot": "Active Dot",
+        "inactiveDot": "Inactive Dot",
+        "dotPosition": "Dot Position"
+      },
+      "tabs": {
+        "title": "Tabs Settings",
+        "defaultTab": "Default Tab",
+        "position": "Position",
+        "tabStyle": "Tab Style"
+      },
+      "quiz": {
+        "title": "Quiz Settings",
+        "question": "Question",
+        "options": "Options",
+        "markCorrect": "Mark as correct",
+        "addOption": "+ Add option",
+        "showFeedback": "Show feedback",
+        "correctFeedback": "Correct Feedback",
+        "incorrectFeedback": "Incorrect Feedback",
+        "stylingTitle": "Quiz Styling",
+        "correctColor": "Correct Color",
+        "incorrectColor": "Incorrect Color",
+        "buttonColor": "Button Color",
+        "optionHighlight": "Option Highlight"
+      },
+      "options": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertical",
+        "front": "Front",
+        "back": "Back",
+        "ease": "Ease",
+        "ease-in": "Ease In",
+        "ease-out": "Ease Out",
+        "ease-in-out": "Ease In-Out",
+        "linear": "Linear",
+        "fade-in": "Fade In",
+        "slide-up": "Slide Up",
+        "scale-up": "Scale Up",
+        "bounce": "Bounce",
+        "on-load": "On Load",
+        "on-scroll": "On Scroll",
+        "top": "Top",
+        "bottom": "Bottom",
+        "underline": "Underline",
+        "pill": "Pill",
+        "boxed": "Boxed"
+      }
+    },
+    "editor": {
+      "backToDesigns": "Back to designs",
+      "canvas": "Canvas",
+      "aiGenerate": "AI Generate",
+      "publish": "Publish",
+      "preview": "Preview",
+      "export": "Export",
+      "zoomReset": "Reset",
+      "alignToCanvas": "Align to Canvas",
+      "alignObjects": "Align Objects",
+      "exitComponentTooltip": "Exit component (Escape)",
+      "removeGroupTooltip": "Remove {{label}}",
+      "addSlideTooltip": "Add slide",
+      "addTabTooltip": "Add tab",
+      "addSheetTooltip": "Add sheet",
+      "emptyState": "No objects yet",
+      "status": {
+        "saving": "Saving...",
+        "unsaved": "Unsaved",
+        "saved": "Saved"
+      },
+      "tooltip": {
+        "undo": "Undo (Cmd+Z)",
+        "redo": "Redo (Cmd+Shift+Z)",
+        "generateWithAI": "Generate with AI",
+        "save": "Save (Cmd+S)",
+        "shortcuts": "Keyboard shortcuts (?)",
+        "preview": "Preview (P)"
+      },
+      "menu": {
+        "cut": "Cut",
+        "copy": "Copy",
+        "paste": "Paste",
+        "duplicate": "Duplicate",
+        "bringToFront": "Bring to Front",
+        "sendToBack": "Send to Back",
+        "noActions": "No actions available"
+      },
+      "toast": {
+        "duplicatedOne": "Duplicated {{count}} object",
+        "duplicatedOther": "Duplicated {{count}} objects",
+        "movedToFront": "Moved to front",
+        "movedToBack": "Moved to back"
+      },
+      "panel": {
+        "properties": "Properties",
+        "layers": "Layers"
+      },
+      "align": {
+        "left": "Align Left",
+        "center": "Align Center",
+        "right": "Align Right",
+        "top": "Align Top",
+        "middle": "Align Middle",
+        "bottom": "Align Bottom"
+      },
+      "distribute": {
+        "horizontal": "Distribute Horizontally",
+        "vertical": "Distribute Vertically"
+      },
+      "layer": {
+        "unlock": "Unlock",
+        "lock": "Lock",
+        "unlockAria": "Unlock layer",
+        "lockAria": "Lock layer",
+        "hide": "Hide",
+        "show": "Show",
+        "hideAria": "Hide layer",
+        "showAria": "Show layer",
+        "moveUp": "Move up",
+        "moveUpAria": "Move layer up",
+        "moveDown": "Move down",
+        "moveDownAria": "Move layer down"
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "sections": {
+          "tools": "Tools",
+          "edit": "Edit",
+          "layers": "Layers",
+          "navigation": "Navigation"
+        },
+        "desc": {
+          "selectTool": "Select tool",
+          "rectangleTool": "Rectangle tool",
+          "ellipseTool": "Ellipse tool",
+          "textTool": "Text tool",
+          "lineTool": "Line tool",
+          "togglePreview": "Toggle preview",
+          "undo": "Undo",
+          "redo": "Redo",
+          "duplicate": "Duplicate",
+          "selectAll": "Select all",
+          "copy": "Copy",
+          "cut": "Cut",
+          "paste": "Paste",
+          "save": "Save",
+          "deleteSelected": "Delete selected",
+          "bringToFront": "Bring to front",
+          "sendToBack": "Send to back",
+          "editComponent": "Edit component",
+          "exitDeselect": "Exit / deselect",
+          "showShortcuts": "Show shortcuts"
+        }
+      }
+    },
+    "props": {
+      "colorNone": "none",
+      "colorPresets": "Color presets",
+      "tabDesign": "Design",
+      "tabCanvas": "Canvas",
+      "objectsSelected": "{{count}} objects selected",
+      "emptySelect": "Select an object to edit",
+      "canvasSize": "Canvas Size",
+      "width": "Width",
+      "height": "Height",
+      "background": "Background",
+      "color": "Color",
+      "backgroundGradient": "Background Gradient",
+      "enableGradient": "Enable gradient",
+      "type": "Type",
+      "angle": "Angle",
+      "start": "Start",
+      "end": "End",
+      "stop": "Stop {{n}}",
+      "addStop": "+ Add Stop",
+      "positionSize": "Position & Size",
+      "axisX": "X",
+      "axisY": "Y",
+      "axisW": "W",
+      "axisH": "H",
+      "rotation": "Rotation",
+      "opacity": "Opacity",
+      "accessibility": "Accessibility",
+      "a11yLabel": "A11y Label",
+      "a11yPlaceholder": "Screen reader label...",
+      "blendMode": "Blend Mode",
+      "mode": "Mode",
+      "gradient": "Gradient",
+      "preset": "Preset",
+      "shadow": "Shadow",
+      "enableShadow": "Enable shadow",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "blur": "Blur",
+      "blurRadius": "Blur Radius",
+      "entranceAnimation": "Entrance Animation",
+      "animateOnPreview": "Animate on preview",
+      "delayMs": "Delay (ms)",
+      "durationMs": "Duration (ms)",
+      "fillStroke": "Fill & Stroke",
+      "fill": "Fill",
+      "stroke": "Stroke",
+      "overriddenByGradient": "Overridden by gradient",
+      "cornerRadius": "Corner Radius",
+      "radius": "Radius",
+      "strokeStyle": "Stroke Style",
+      "dashPattern": "Dash Pattern",
+      "lineCap": "Line Cap",
+      "lineJoin": "Line Join",
+      "text": "Text",
+      "font": "Font",
+      "family": "Family",
+      "size": "Size",
+      "lineHeight": "Line Height",
+      "style": "Style",
+      "weight": "Weight",
+      "align": "Align",
+      "transform": "Transform",
+      "letterSpacing": "Letter Spacing",
+      "padding": "Padding",
+      "verticalAlign": "Vertical Align",
+      "fontVariant": "Font Variant",
+      "textDecoration": "Text Decoration",
+      "textColor": "Text Color",
+      "textOutline": "Text Outline",
+      "outlineColor": "Outline Color",
+      "outlineWidth": "Outline Width",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "line": "Line",
+      "star": "Star",
+      "points": "Points",
+      "innerRadius": "Inner Radius",
+      "arrow": "Arrow",
+      "pointerLength": "Pointer Length",
+      "pointerWidth": "Pointer Width",
+      "imageStyle": "Image Style",
+      "objectFit": "Object Fit",
+      "strokeWidthLabel": "Stroke Width",
+      "badgeText": "Badge Text",
+      "fontFamily": "Font Family",
+      "fontSize": "Font Size",
+      "icon": "Icon",
+      "ioniconName": "Ionicon Name",
+      "iconNamePlaceholder": "e.g. school-outline",
+      "filterIcons": "Filter common icons…",
+      "options": {
+        "solid": "Solid",
+        "dashed": "Dashed",
+        "dotted": "Dotted",
+        "dash-dot": "Dash-Dot",
+        "butt": "Butt",
+        "round": "Round",
+        "square": "Square",
+        "miter": "Miter",
+        "bevel": "Bevel",
+        "linear": "Linear",
+        "radial": "Radial",
+        "normal": "Normal",
+        "multiply": "Multiply",
+        "screen": "Screen",
+        "overlay": "Overlay",
+        "darken": "Darken",
+        "lighten": "Lighten",
+        "fade-in": "Fade In",
+        "slide-up": "Slide Up",
+        "slide-down": "Slide Down",
+        "scale-up": "Scale Up",
+        "bold": "Bold",
+        "italic": "Italic",
+        "boldItalic": "Bold Italic",
+        "weightAuto": "Auto",
+        "weight100": "100 Thin",
+        "weight200": "200 Extra Light",
+        "weight300": "300 Light",
+        "weight400": "400 Regular",
+        "weight500": "500 Medium",
+        "weight600": "600 Semi Bold",
+        "weight700": "700 Bold",
+        "weight800": "800 Extra Bold",
+        "weight900": "900 Black",
+        "left": "Left",
+        "center": "Center",
+        "right": "Right",
+        "justify": "Justify",
+        "none": "None",
+        "uppercase": "UPPERCASE",
+        "lowercase": "lowercase",
+        "capitalize": "Capitalize",
+        "top": "Top",
+        "middle": "Middle",
+        "bottom": "Bottom",
+        "small-caps": "Small Caps",
+        "cover": "Cover",
+        "contain": "Contain",
+        "fill": "Fill",
+        "custom": "Custom…"
+      },
+      "gradientPresets": {
+        "primaryButton": "Primary Button",
+        "welcomeHero": "Welcome Hero",
+        "authHeader": "Auth Header",
+        "loadingScreen": "Loading Screen",
+        "progressFill": "Progress Fill",
+        "screenBackground": "Screen Background",
+        "roleStudentK8": "Role: Student K-8",
+        "roleStudentHS": "Role: Student HS",
+        "roleParent": "Role: Parent",
+        "roleStaff": "Role: Staff",
+        "accentAmber": "Accent: Amber",
+        "accentCyan": "Accent: Cyan",
+        "accentViolet": "Accent: Violet",
+        "accentOrange": "Accent: Orange",
+        "accentEmerald": "Accent: Emerald",
+        "errorRed": "Error Red",
+        "infoBlue": "Info Blue"
+      },
+      "shadowPresets": {
+        "card": "Card (soft)",
+        "cardLarge": "Card Large",
+        "cardSelected": "Card Selected (purple glow)",
+        "button": "Button (strong purple)",
+        "small": "Small (purple)",
+        "header": "Header",
+        "iconCircle": "Icon Circle"
+      }
+    }
+  }
+}

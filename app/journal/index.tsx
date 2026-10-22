@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, Modal, TextInput, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useJournal, JournalNotebook } from '../../contexts/JournalContext';
@@ -10,6 +11,7 @@ import { useResponsive, gridColumns, CONTENT_WIDTH } from '../../hooks/useRespon
 import { RADII } from '../../constants/onboarding-theme';
 
 export default function JournalLibraryScreen() {
+    const { t } = useTranslation();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
@@ -29,17 +31,17 @@ export default function JournalLibraryScreen() {
         // On web, react-native Alert has no interactive buttons — use window.confirm.
         if (Platform.OS === 'web') {
             const ok = typeof window !== 'undefined'
-                ? window.confirm(`Are you sure you want to delete "${notebook.title}"? This cannot be undone.`)
+                ? window.confirm(t('journal.library.deleteMessage', { title: notebook.title }))
                 : false;
             if (ok) deleteNotebook(notebook.id);
             return;
         }
         Alert.alert(
-            "Delete Notebook",
-            `Are you sure you want to delete "${notebook.title}"? This cannot be undone.`,
+            t('journal.library.deleteTitle'),
+            t('journal.library.deleteMessage', { title: notebook.title }),
             [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", style: "destructive", onPress: () => deleteNotebook(notebook.id) }
+                { text: t('common.cancel'), style: "cancel" },
+                { text: t('common.delete'), style: "destructive", onPress: () => deleteNotebook(notebook.id) }
             ]
         );
     };
@@ -53,7 +55,7 @@ export default function JournalLibraryScreen() {
         if (!renameId) return;
         const trimmed = newName.trim();
         if (!trimmed) {
-            Alert.alert("Invalid Name", "Notebook title cannot be empty.");
+            Alert.alert(t('journal.library.invalidNameTitle'), t('journal.library.invalidNameMessage'));
             return;
         }
         updateNotebook(renameId, { title: trimmed.slice(0, 40) });
@@ -63,15 +65,15 @@ export default function JournalLibraryScreen() {
     const handleExport = async (notebook: JournalNotebook) => {
         let content = `${notebook.title}\n${'='.repeat(notebook.title.length)}\n\n`;
         notebook.pages.forEach((page, i) => {
-            content += `--- Page ${i + 1} ---\n`;
+            content += t('journal.export.pageHeader', { number: i + 1 }) + "\n";
             if (page.textEntry.trim()) {
                 content += page.textEntry.trim() + "\n";
             }
             if (page.paths.length > 0) {
-                content += `[${page.paths.length} drawing stroke${page.paths.length !== 1 ? 's' : ''}]\n`;
+                content += t(page.paths.length === 1 ? 'journal.export.strokesOne' : 'journal.export.strokesOther', { count: page.paths.length }) + "\n";
             }
             if (page.images.length > 0) {
-                content += `[${page.images.length} image${page.images.length !== 1 ? 's' : ''}]\n`;
+                content += t(page.images.length === 1 ? 'journal.export.imagesOne' : 'journal.export.imagesOther', { count: page.images.length }) + "\n";
             }
             content += "\n";
         });
@@ -97,7 +99,7 @@ export default function JournalLibraryScreen() {
                                 >
                                     <View style={styles.notebookInner}>
                                         <Ionicons name="add" size={48} color={colors.primary} />
-                                        <Text style={[styles.newText, { color: colors.primary }]}>New</Text>
+                                        <Text style={[styles.newText, { color: colors.primary }]}>{t('journal.library.new')}</Text>
                                     </View>
                                 </TouchableOpacity>
                             );
@@ -120,12 +122,12 @@ export default function JournalLibraryScreen() {
                                         onPress={() => {
                                             Alert.alert(
                                                 notebook.title,
-                                                "What would you like to do?",
+                                                t('journal.library.menuPrompt'),
                                                 [
-                                                    { text: "Rename", onPress: () => startRename(notebook) },
-                                                    { text: "Export", onPress: () => handleExport(notebook) },
-                                                    { text: "Delete", style: "destructive", onPress: () => handleDelete(notebook) },
-                                                    { text: "Cancel", style: "cancel" }
+                                                    { text: t('journal.library.rename'), onPress: () => startRename(notebook) },
+                                                    { text: t('journal.library.export'), onPress: () => handleExport(notebook) },
+                                                    { text: t('common.delete'), style: "destructive", onPress: () => handleDelete(notebook) },
+                                                    { text: t('common.cancel'), style: "cancel" }
                                                 ]
                                             );
                                         }}
@@ -182,21 +184,21 @@ export default function JournalLibraryScreen() {
                 <Modal visible={!!renameId} transparent animationType="fade">
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
-                            <Text style={[styles.modalTitle, { color: colors.textDark }]}>Rename Notebook</Text>
+                            <Text style={[styles.modalTitle, { color: colors.textDark }]}>{t('journal.library.renameTitle')}</Text>
                             <TextInput
                                 style={[styles.input, { borderColor: colors.borderCard, color: colors.textDark }]}
                                 value={newName}
                                 onChangeText={setNewName}
                                 autoFocus
-                                placeholder="Notebook Title"
+                                placeholder={t('journal.library.namePlaceholder')}
                                 maxLength={40}
                             />
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity style={styles.modalBtn} onPress={() => setRenameId(null)}>
-                                    <Text style={{ color: colors.textLight }}>Cancel</Text>
+                                    <Text style={{ color: colors.textLight }}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary, borderRadius: 8 }]} onPress={confirmRename}>
-                                    <Text style={{ color: "#FFF", fontWeight: "600" }}>Rename</Text>
+                                    <Text style={{ color: "#FFF", fontWeight: "600" }}>{t('journal.library.rename')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -231,7 +233,7 @@ export default function JournalLibraryScreen() {
                                 fontFamily: 'inherit',
                             }}
                         >
-                            ← Back
+                            {`← ${t('common.back')}`}
                         </button>
                         <h1
                             style={{
@@ -241,12 +243,12 @@ export default function JournalLibraryScreen() {
                                 margin: 0,
                             }}
                         >
-                            My Library
+                            {t('journal.library.title')}
                         </h1>
                         <p style={{ fontSize: 15, color: colors.textLight, margin: '4px 0 0' }}>
                             {notebooks.length === 0
-                                ? 'Start your first notebook'
-                                : `${notebooks.length} notebook${notebooks.length !== 1 ? 's' : ''}`}
+                                ? t('journal.library.startFirstNotebook')
+                                : t(notebooks.length === 1 ? 'journal.library.notebookCountOne' : 'journal.library.notebookCountOther', { count: notebooks.length })}
                         </p>
                     </div>
 
@@ -265,7 +267,7 @@ export default function JournalLibraryScreen() {
                             fontFamily: 'inherit',
                         }}
                     >
-                        + New notebook
+                        {`+ ${t('journal.library.newNotebook')}`}
                     </button>
                 </div>
 
@@ -301,7 +303,7 @@ export default function JournalLibraryScreen() {
                                 }}
                             >
                                 <Ionicons name="add-circle-outline" size={40} color={colors.primary} />
-                                <span style={{ fontSize: 15, fontWeight: 600 }}>New notebook</span>
+                                <span style={{ fontSize: 15, fontWeight: 600 }}>{t('journal.library.newNotebook')}</span>
                             </button>
 
                             {/* Notebook cards */}
@@ -387,8 +389,10 @@ export default function JournalLibraryScreen() {
                                                     {notebook.title}
                                                 </div>
                                                 <div style={{ fontSize: 13, color: colors.textLight, marginTop: 3 }}>
-                                                    {pageCount} page{pageCount !== 1 ? 's' : ''} · Edited{' '}
-                                                    {new Date(notebook.updatedAt).toLocaleDateString()}
+                                                    {t(pageCount === 1 ? 'journal.library.pagesMetaOne' : 'journal.library.pagesMetaOther', {
+                                                        count: pageCount,
+                                                        date: new Date(notebook.updatedAt).toLocaleDateString(),
+                                                    })}
                                                 </div>
                                             </div>
                                         </div>
@@ -399,7 +403,7 @@ export default function JournalLibraryScreen() {
                                                 e.stopPropagation();
                                                 setMenuOpenId(menuOpenId === notebook.id ? null : notebook.id);
                                             }}
-                                            aria-label="Notebook actions"
+                                            aria-label={t('journal.library.actionsAria')}
                                             style={{
                                                 position: 'absolute',
                                                 top: 8,
@@ -442,9 +446,9 @@ export default function JournalLibraryScreen() {
                                                     }}
                                                 >
                                                     {[
-                                                        { label: 'Rename', action: () => startRename(notebook) },
-                                                        { label: 'Export', action: () => handleExport(notebook) },
-                                                        { label: 'Delete', action: () => handleDelete(notebook), danger: true },
+                                                        { label: t('journal.library.rename'), action: () => startRename(notebook) },
+                                                        { label: t('journal.library.export'), action: () => handleExport(notebook) },
+                                                        { label: t('common.delete'), action: () => handleDelete(notebook), danger: true },
                                                     ].map((opt) => (
                                                         <button
                                                             key={opt.label}
@@ -488,7 +492,7 @@ export default function JournalLibraryScreen() {
                 <TouchableOpacity style={appStyles.editBackButton} onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color={colors.textDark} />
                 </TouchableOpacity>
-                <Text style={appStyles.editHeaderTitle}>My Library</Text>
+                <Text style={appStyles.editHeaderTitle}>{t('journal.library.title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -503,21 +507,21 @@ export default function JournalLibraryScreen() {
             <Modal visible={!!renameId} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
-                        <Text style={[styles.modalTitle, { color: colors.textDark }]}>Rename Notebook</Text>
+                        <Text style={[styles.modalTitle, { color: colors.textDark }]}>{t('journal.library.renameTitle')}</Text>
                         <TextInput
                             style={[styles.input, { borderColor: colors.borderCard, color: colors.textDark }]}
                             value={newName}
                             onChangeText={setNewName}
                             autoFocus
-                            placeholder="Notebook Title"
+                            placeholder={t('journal.library.namePlaceholder')}
                             maxLength={40}
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity style={styles.modalBtn} onPress={() => setRenameId(null)}>
-                                <Text style={{ color: colors.textLight }}>Cancel</Text>
+                                <Text style={{ color: colors.textLight }}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary, borderRadius: 8 }]} onPress={confirmRename}>
-                                <Text style={{ color: "#FFF", fontWeight: "600" }}>Rename</Text>
+                                <Text style={{ color: "#FFF", fontWeight: "600" }}>{t('journal.library.rename')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

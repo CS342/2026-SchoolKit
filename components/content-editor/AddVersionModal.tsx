@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { TYPOGRAPHY, RADII, SPACING } from '../../constants/onboarding-theme';
@@ -26,6 +27,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
   layoutLabel: string;
   onCreated: (pageId: string) => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const { user } = useAuth();
   const [audience, setAudience] = useState<Audience | undefined>(undefined);
@@ -80,7 +82,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
           {drop.dragging ? (
             <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, zIndex: 10, borderRadius: RADII.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.primary, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               <Ionicons name="cloud-upload-outline" size={30} color={colors.primary} />
-              <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.primary }}>Drop files to attach</Text>
+              <Text style={{ ...TYPOGRAPHY.bodyStrong, color: colors.primary }}>{t('editor.common.dropAttach')}</Text>
             </View>
           ) : null}
           <ScrollView contentContainerStyle={{ padding: SPACING.xxl }}>
@@ -88,10 +90,10 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
               <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft }}>
                 <Ionicons name="layers-outline" size={19} color={colors.primary} />
               </View>
-              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>Add a version from a file</Text>
+              <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark }}>{t('editor.addVersion.title')}</Text>
             </View>
             <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted, marginBottom: 16 }}>
-              Attach the document for this audience. AI converts it into a draft version of this topic, keeping your wording.
+              {t('editor.addVersion.subtitle')}
             </Text>
 
             <AttachmentBar
@@ -102,19 +104,19 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
               disabled={busy}
             />
             <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 6, marginBottom: 16 }}>
-              Attach or drag in PDFs, Word documents, text or images.
+              {t('editor.addVersion.attachHint')}
             </Text>
 
             <AudienceChips value={audience} onChange={(a) => { setAudience(a); setAudienceTouched(true); }} />
 
-            <ToggleRow label={`Match the layout of “${layoutLabel}”`} value={matchLayout} onValueChange={setMatchLayout} />
+            <ToggleRow label={t('editor.addVersion.matchLayout', { label: layoutLabel })} value={matchLayout} onValueChange={setMatchLayout} />
 
             <TextInput
               value={instructions}
               onChangeText={setInstructions}
               editable={!busy}
               multiline
-              placeholder="Optional instructions, e.g. “Keep it short — this is for younger students.”"
+              placeholder={t('editor.addVersion.instructionsPlaceholder')}
               placeholderTextColor={colors.inputPlaceholder}
               style={{ ...TYPOGRAPHY.bodySmall, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: colors.border, borderRadius: RADII.md, padding: 12, minHeight: 64, textAlignVertical: 'top', outlineStyle: 'none' as any }}
             />
@@ -128,7 +130,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 14, marginTop: 20 }}>
               <Pressable onPress={busy ? undefined : onClose} style={{ cursor: 'pointer' as any }}>
-                <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textMuted }}>Cancel</Text>
+                <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.textMuted }}>{t('common.cancel')}</Text>
               </Pressable>
               <Pressable
                 onPress={generate}
@@ -136,7 +138,7 @@ export function AddVersionModal({ visible, onClose, topicId, layoutDoc, layoutLa
                 style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: canGenerate ? colors.primary : colors.disabledButton, cursor: (canGenerate ? 'pointer' : 'default') as any }, canGenerate ? shadows.button : null]}
               >
                 {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="sparkles" size={16} color="#fff" />}
-                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{busy ? 'Converting…' : 'Create version'}</Text>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{busy ? t('editor.addVersion.converting') : t('editor.addVersion.create')}</Text>
               </Pressable>
             </View>
           </ScrollView>

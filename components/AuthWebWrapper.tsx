@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, Image } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '../hooks/useResponsive';
 import { useTheme } from '../contexts/ThemeContext';
@@ -10,6 +11,7 @@ interface StepInfo {
   current: number;
   total: number;
   label?: string;
+  labelKey?: OnboardingScreenKey;
 }
 
 interface AuthWebWrapperProps {
@@ -74,6 +76,7 @@ export function getOnboardingStep(
     current: idx >= 0 ? idx + 1 : 1,
     total: flow.length,
     label: ONBOARDING_LABELS[screen],
+    labelKey: screen,
   };
 }
 
@@ -99,6 +102,7 @@ export function getResumeRoute(data: OnboardingData) {
  * Wordmark + reassuring headline + horizontal progress stepper.
  */
 function BrandPanel({ step, narrow }: { step?: StepInfo; narrow: boolean }) {
+  const { t } = useTranslation();
   const { gradients } = useTheme();
   const s = useMemo(() => makeBrandStyles(), []);
   return (
@@ -127,10 +131,9 @@ function BrandPanel({ step, narrow }: { step?: StepInfo; narrow: boolean }) {
 
       {/* Welcoming headline */}
       <View style={s.headlineBlock}>
-        <Text style={s.headline}>Let's set up your SchoolKit</Text>
+        <Text style={s.headline}>{t('onboarding.frame.headline')}</Text>
         <Text style={s.subcopy}>
-          A few quick questions so we can tailor everything to you.
-          You can change any answer later.
+          {t('onboarding.frame.subcopy')}
         </Text>
       </View>
 
@@ -155,8 +158,8 @@ function BrandPanel({ step, narrow }: { step?: StepInfo; narrow: boolean }) {
             })}
           </View>
           <Text style={s.stepCaption}>
-            Step {step.current} of {step.total}
-            {step.label ? `  ·  ${step.label}` : ''}
+            {t('onboarding.frame.stepOf', { current: step.current, total: step.total })}
+            {step.labelKey ? `  ·  ${t(`onboarding.labels.${step.labelKey}`)}` : step.label ? `  ·  ${step.label}` : ''}
           </Text>
         </View>
       ) : (

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import type { Design } from '../../../lib/database.types';
 
@@ -9,7 +11,7 @@ interface DesignCardProps {
   onDelete: (id: string) => void;
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, t: TFunction): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
@@ -17,14 +19,15 @@ function formatDate(dateStr: string): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (minutes < 1) return t('design.modal.card.justNow');
+  if (minutes < 60) return t('design.modal.card.minutesAgo', { count: minutes });
+  if (hours < 24) return t('design.modal.card.hoursAgo', { count: hours });
+  if (days < 7) return t('design.modal.card.daysAgo', { count: days });
   return date.toLocaleDateString();
 }
 
 export function DesignCard({ design, onOpen, onDuplicate, onDelete }: DesignCardProps) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -107,7 +110,7 @@ export function DesignCard({ design, onOpen, onDuplicate, onDelete }: DesignCard
             gap: 6,
           }}
         >
-          <span>{formatDate(design.updated_at)}</span>
+          <span>{formatDate(design.updated_at, t)}</span>
           {design.is_shared && (
             <span
               style={{
@@ -119,7 +122,7 @@ export function DesignCard({ design, onOpen, onDuplicate, onDelete }: DesignCard
                 fontWeight: 500,
               }}
             >
-              Shared
+              {t('design.modal.card.shared')}
             </span>
           )}
         </div>
@@ -195,13 +198,13 @@ export function DesignCard({ design, onOpen, onDuplicate, onDelete }: DesignCard
                 (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
               }}
             >
-              Duplicate
+              {t('design.modal.card.duplicate')}
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(false);
-                if (window.confirm(`Delete "${design.title}"?`)) {
+                if (window.confirm(t('design.modal.card.deleteConfirm', { title: design.title }))) {
                   onDelete(design.id);
                 }
               }}
@@ -223,7 +226,7 @@ export function DesignCard({ design, onOpen, onDuplicate, onDelete }: DesignCard
                 (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
               }}
             >
-              Delete
+              {t('common.delete')}
             </button>
           </div>
         )}

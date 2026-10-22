@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useEditorStore } from '../store/editor-store';
 import { usePublish } from '../hooks/usePublish';
@@ -10,11 +11,11 @@ interface PublishModalProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'student-elementary', label: 'Students (elementary)' },
-  { value: 'student-k8', label: 'Students (middle school)' },
-  { value: 'student-hs', label: 'Students (High School+)' },
-  { value: 'parent', label: 'Parents/Caregivers' },
-  { value: 'staff', label: 'School staff' },
+  'student-elementary',
+  'student-k8',
+  'student-hs',
+  'parent',
+  'staff',
 ];
 
 const ICON_OPTIONS = [
@@ -31,6 +32,7 @@ const ICON_OPTIONS = [
 ];
 
 export function PublishModal({ visible, onClose }: PublishModalProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const designTitle = useEditorStore((s) => s.title);
   const { publish, unpublish, getPublishedResourceId, getPublishedResource } = usePublish();
@@ -137,7 +139,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
             margin: '0 0 4px',
           }}
         >
-          Publish as Resource
+          {t('design.modal.publish.title')}
         </h3>
         <p
           style={{
@@ -146,12 +148,12 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
             margin: '0 0 20px',
           }}
         >
-          Make this design available as an app resource for users
+          {t('design.modal.publish.description')}
         </p>
 
         {checking ? (
           <div style={{ textAlign: 'center', padding: 20, color: colors.textLight }}>
-            Checking status...
+            {t('design.modal.publish.checkingStatus')}
           </div>
         ) : (
           <>
@@ -173,10 +175,10 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                     marginBottom: 4,
                   }}
                 >
-                  Published
+                  {t('design.modal.publish.publishedBadge')}
                 </div>
                 <div style={{ fontSize: 13, color: '#047857' }}>
-                  This design is live as a resource in the app. Update the fields below to change it.
+                  {t('design.modal.publish.publishedNote')}
                 </div>
               </div>
             )}
@@ -192,7 +194,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   marginBottom: 4,
                 }}
               >
-                Title
+                {t('design.modal.publish.titleLabel')}
               </label>
               <input
                 value={title}
@@ -220,12 +222,12 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   marginBottom: 4,
                 }}
               >
-                Description
+                {t('design.modal.publish.descriptionLabel')}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description for users..."
+                placeholder={t('design.modal.publish.descriptionPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -251,7 +253,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   marginBottom: 4,
                 }}
               >
-                Category
+                {t('design.modal.publish.categoryLabel')}
               </label>
               <select
                 value={category}
@@ -284,7 +286,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   marginBottom: 4,
                 }}
               >
-                Icon
+                {t('design.modal.publish.iconLabel')}
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {ICON_OPTIONS.map((iconName) => (
@@ -324,15 +326,15 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   marginBottom: 4,
                 }}
               >
-                Visible to
+                {t('design.modal.publish.visibleToLabel')}
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {ROLE_OPTIONS.map((role) => {
-                  const isActive = targetRoles.includes(role.value);
+                  const isActive = targetRoles.includes(role);
                   return (
                     <button
-                      key={role.value}
-                      onClick={() => toggleRole(role.value)}
+                      key={role}
+                      onClick={() => toggleRole(role)}
                       style={{
                         padding: '6px 12px',
                         borderRadius: 8,
@@ -348,7 +350,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                         color: isActive ? colors.primary : colors.textDark,
                       }}
                     >
-                      {role.label}
+                      {t('design.modal.publish.roles.' + role)}
                     </button>
                   );
                 })}
@@ -375,11 +377,11 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
             >
               {loading
                 ? isPublished
-                  ? 'Updating...'
-                  : 'Publishing...'
+                  ? t('design.modal.publish.updating')
+                  : t('design.modal.publish.publishing')
                 : isPublished
-                  ? 'Update Resource'
-                  : 'Publish'}
+                  ? t('design.modal.publish.updateResource')
+                  : t('design.modal.publish.publish')}
             </button>
 
             {isPublished && (
@@ -399,7 +401,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   color: '#EF4444',
                 }}
               >
-                Unpublish
+                {t('design.modal.publish.unpublish')}
               </button>
             )}
           </>
@@ -424,7 +426,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
               color: colors.textDark,
             }}
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

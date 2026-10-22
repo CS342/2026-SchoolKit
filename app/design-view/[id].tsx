@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, Platform, ScrollView, TouchableOpacity, Share, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -71,6 +72,7 @@ function getContentWidth() {
 export default function DesignViewPage() {
   const { id, resourceId } = useLocalSearchParams<{ id: string; resourceId?: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [design, setDesign] = useState<DesignData | null>(null);
@@ -129,7 +131,7 @@ export default function DesignViewPage() {
   useEffect(() => {
     async function fetchDesign() {
       if (!id) {
-        setError('Invalid design');
+        setError(t('design.view.invalid'));
         setLoading(false);
         return;
       }
@@ -142,7 +144,7 @@ export default function DesignViewPage() {
           .single() as any;
 
         if (fetchError || !data) {
-          setError('Design not found');
+          setError(t('design.view.notFound'));
           setLoading(false);
           return;
         }
@@ -161,7 +163,7 @@ export default function DesignViewPage() {
           owner_name: profile?.name || 'SchoolKit',
         });
       } catch {
-        setError('Failed to load design');
+        setError(t('design.view.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -182,7 +184,7 @@ export default function DesignViewPage() {
       >
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={{ marginTop: 12, color: colors.textLight, fontSize: 14 }}>
-          Loading design...
+          {t('design.view.loadingDesign')}
         </Text>
       </View>
     );
@@ -209,10 +211,10 @@ export default function DesignViewPage() {
             marginBottom: 8,
           }}
         >
-          {error || 'Design not found'}
+          {error || t('design.view.notFound')}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ fontSize: 14, color: colors.primary }}>Go back</Text>
+          <Text style={{ fontSize: 14, color: colors.primary }}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -227,7 +229,7 @@ export default function DesignViewPage() {
     const handleShare = async () => {
       try {
         await Share.share({
-          message: `Check out "${design.title}" on SchoolKit`,
+          message: t('design.view.shareMessage', { title: design.title }),
         });
       } catch { }
     };
@@ -258,7 +260,7 @@ export default function DesignViewPage() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={{ padding: 4 }}
-            accessibilityLabel="Go back"
+            accessibilityLabel={t('common.goBack')}
           >
             <Ionicons name="arrow-back" size={28} color={colors.textDark} />
           </TouchableOpacity>
@@ -267,7 +269,7 @@ export default function DesignViewPage() {
             <TouchableOpacity
               onPress={handleShare}
               style={{ padding: 8 }}
-              accessibilityLabel="Share"
+              accessibilityLabel={t('common.share')}
             >
               <Ionicons name="share-outline" size={24} color={colors.textLight} />
             </TouchableOpacity>

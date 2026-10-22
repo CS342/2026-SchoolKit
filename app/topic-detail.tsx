@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { DownloadButton } from '../components/DownloadButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.err
 
 export default function TopicDetailScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { title, id } = useLocalSearchParams<{ title: string; id: string }>();
   const { colors, isDark, fontScale } = useTheme();
@@ -111,7 +113,7 @@ export default function TopicDetailScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out "${title}" on SchoolKit — a resource to help students and families navigate school during cancer treatment.`,
+        message: t('home.topicDetail.shareMessage', { title }),
       });
       fireEvent('resource_shared');
     } catch { }
@@ -137,10 +139,9 @@ export default function TopicDetailScreen() {
   const body = (
     <>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About this topic</Text>
+        <Text style={styles.sectionTitle}>{t('home.topicDetail.aboutTitle')}</Text>
         <Text style={styles.description}>
-          This is a comprehensive resource about "{title}". Here you'll find helpful information,
-          strategies, and support for navigating this aspect of your school journey.
+          {t('home.topicDetail.aboutBody', { title })}
         </Text>
       </View>
 
@@ -148,9 +149,9 @@ export default function TopicDetailScreen() {
         <View style={[styles.resourceIcon, { backgroundColor: withOpacity(color, 0.082), width: 64, height: 64, borderRadius: 32, marginBottom: 16 }]}>
           <Ionicons name="construct-outline" size={32} color={color} />
         </View>
-        <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Content Coming Soon</Text>
+        <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>{t('home.topicDetail.comingSoonTitle')}</Text>
         <Text style={[styles.description, { textAlign: 'center' }]}>
-          We're working on creating detailed resources for this topic. Check back soon!
+          {t('home.topicDetail.comingSoonBody')}
         </Text>
       </View>
     </>
@@ -161,7 +162,7 @@ export default function TopicDetailScreen() {
     return (
       <ArticleLayout
         breadcrumb={[
-          { label: 'Library', onPress: () => router.push('/(tabs)/bookmarks') },
+          { label: t('home.library.title'), onPress: () => router.push('/(tabs)/bookmarks') },
           { label: title },
         ]}
         title={titleNode}
@@ -174,12 +175,12 @@ export default function TopicDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: withOpacity(color, 0.03) }]}>
       <View style={[styles.header, { borderBottomColor: color, paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel={t('common.goBack')}>
           <Ionicons name="arrow-back" size={28} color={colors.textDark} />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel="Share">
+          <TouchableOpacity onPress={handleShare} style={styles.shareButton} accessibilityLabel={t('common.share')}>
             <Ionicons name="share-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
           <DownloadButton resourceId={resourceId} size={24} />

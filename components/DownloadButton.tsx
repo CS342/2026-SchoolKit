@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { COLORS } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -12,6 +13,7 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ resourceId, size = 24, color }: DownloadButtonProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const themeColor = color || colors.primary;
   const { isDownloaded, downloadResource, removeDownload } = useOnboarding();
@@ -46,7 +48,7 @@ export function DownloadButton({ resourceId, size = 24, color }: DownloadButtonP
       style={styles.button}
       activeOpacity={0.7}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-      accessibilityLabel={downloaded ? 'Remove download' : 'Download'}
+      accessibilityLabel={downloaded ? t('home.download.remove') : t('home.download.action')}
       accessibilityRole="button"
       accessibilityState={{ selected: downloaded }}
     >

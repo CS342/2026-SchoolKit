@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { COLORS } from '../constants/onboarding-theme';
@@ -13,6 +14,7 @@ interface BookmarkButtonProps {
 }
 
 export function BookmarkButton({ resourceId, size = 24, color }: BookmarkButtonProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const themeColor = color || colors.primary;
   const { isBookmarked, addBookmark, removeBookmark } = useOnboarding();
@@ -49,7 +51,7 @@ export function BookmarkButton({ resourceId, size = 24, color }: BookmarkButtonP
       style={styles.button}
       activeOpacity={0.7}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-      accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
+      accessibilityLabel={bookmarked ? t('home.bookmark.remove') : t('home.bookmark.add')}
       accessibilityRole="button"
       accessibilityState={{ selected: bookmarked }}
     >

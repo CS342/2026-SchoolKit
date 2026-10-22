@@ -30,6 +30,11 @@ export function useTTS() {
     }
   }, [playerStatus.isLoaded, playerStatus.didJustFinish, player]);
 
+  // A new clip loads at 1x — re-apply the chosen speed whenever one loads.
+  useEffect(() => {
+    if (playerStatus.isLoaded) player.setPlaybackRate(playbackRate);
+  }, [playerStatus.isLoaded, playbackRate, player]);
+
   const stop = useCallback(() => {
     player.pause();
     currentTextRef.current = null;

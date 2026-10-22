@@ -1,0 +1,145 @@
+{
+  "home": {
+    "tabs": {
+      "forYou": "For You",
+      "library": "Library",
+      "stories": "Stories",
+      "profile": "Profile"
+    },
+    "header": {
+      "welcomeBack": "Welcome back,",
+      "greeting": "{{name}}!"
+    },
+    "sections": {
+      "yourProgress": "Your progress",
+      "supportTopics": "Your support topics",
+      "supportTopicsNative": "Your Support Topics",
+      "stories": "Stories",
+      "resources": "Resources"
+    },
+    "progress": {
+      "a11y": "{{label}}, {{value}} of {{total}}, {{pct}} percent",
+      "percentComplete": "{{pct}}% complete",
+      "toGo": "{{count}} to go",
+      "allDone": "All done",
+      "puzzles": "Puzzles",
+      "knowledgeTree": "Knowledge Tree"
+    },
+    "status": {
+      "done": "Done",
+      "inProgress": "In progress"
+    },
+    "continue": {
+      "eyebrowResume": "PICK UP WHERE YOU LEFT OFF",
+      "eyebrowStart": "START HERE",
+      "start": "Start",
+      "a11yResume": "Continue: {{title}}",
+      "a11yStart": "Start: {{title}}"
+    },
+    "view": {
+      "grid": "Grid view",
+      "list": "List view"
+    },
+    "empty": {
+      "titleHidden": "No topics available right now",
+      "titleNone": "No topics selected yet",
+      "subtitleHidden": "The topics you picked aren't available at the moment. Check back soon, or choose different topics in your profile.",
+      "subtitleNone": "Visit your profile to update your interests and get personalized support."
+    },
+    "actions": {
+      "updateProfile": "Update Profile",
+      "browseResources": "Browse Resources",
+      "goToStories": "Go to Stories"
+    },
+    "library": {
+      "title": "Library",
+      "subtitle": "Your resources, saved items, and downloads",
+      "searchPlaceholder": "Search resources...",
+      "browseByTopic": "BROWSE BY TOPIC",
+      "emptyAllTitle": "Start exploring",
+      "emptyAllTitleFiltered": "No results found",
+      "emptyAllSubtitle": "Search for topics and support materials",
+      "emptyAllSubtitleFiltered": "Try different keywords or clear the filter"
+    },
+    "segment": {
+      "all": "All",
+      "saved": "Saved",
+      "downloaded": "Downloaded"
+    },
+    "recent": {
+      "title": "Recent Searches",
+      "clear": "Clear"
+    },
+    "resultsOne": "{{count}} resource",
+    "resultsOther": "{{count}} resources",
+    "filters": {
+      "clear": "Clear",
+      "clearFilters": "Clear filters"
+    },
+    "sort": {
+      "label": "Sort",
+      "recommended": "Recommended",
+      "az": "A–Z",
+      "category": "Category",
+      "sortByA11y": "Sort by {{label}}"
+    },
+    "emptySearchHint": "Try a different search term",
+    "saved": {
+      "emptyTitle": "Nothing saved yet",
+      "emptyTitleSearch": "No saved items match",
+      "emptySubtitle": "Bookmark resources and stories to find them here quickly."
+    },
+    "downloaded": {
+      "emptyTitle": "No downloads yet",
+      "emptyTitleSearch": "No downloads match",
+      "emptySubtitle": "Download resources and stories to access them offline."
+    },
+    "knowledgeTree": {
+      "title": "Knowledge Tree",
+      "panelTitle": "Grow your knowledge tree",
+      "panelSubtitle": "Explore concepts across these areas. Each topic you finish lights up a leaf on the tree.",
+      "explored": "{{lit}} of {{total}} topics explored"
+    },
+    "topicDetail": {
+      "shareMessage": "Check out \"{{title}}\" on SchoolKit — a resource to help students and families navigate school during cancer treatment.",
+      "aboutTitle": "About this topic",
+      "aboutBody": "This is a comprehensive resource about \"{{title}}\". Here you'll find helpful information, strategies, and support for navigating this aspect of your school journey.",
+      "comingSoonTitle": "Content Coming Soon",
+      "comingSoonBody": "We're working on creating detailed resources for this topic. Check back soon!"
+    },
+    "recommend": {
+      "railHeader": "You may also find helpful",
+      "header": "You may also find helpful:",
+      "story": "Story",
+      "openA11y": "Open {{title}}",
+      "readStoryA11y": "Read story: {{title}}",
+      "openResourceA11y": "Open resource: {{title}}"
+    },
+    "bookmark": {
+      "add": "Add bookmark",
+      "remove": "Remove bookmark"
+    },
+    "download": {
+      "action": "Download",
+      "remove": "Remove download"
+    },
+    "tts": {
+      "read": "Read aloud",
+      "pause": "Pause reading"
+    },
+    "tags": {
+      "title": "Topic Tags",
+      "subtitle": "Select tags that best describe your school experience.",
+      "counter": "{{count}} of {{max}} tags selected",
+      "clearAll": "Clear All"
+    },
+    "categories": {
+      "All": "All",
+      "School": "School",
+      "Social": "Social",
+      "Health": "Health",
+      "Family": "Family",
+      "Designs": "Designs"
+    }
+  }
+}

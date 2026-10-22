@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -17,6 +18,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 export function LayersPanel() {
+  const { t } = useTranslation();
   const objects = useEditorStore((s) => s.objects);
   const selectedIds = useEditorStore((s) => s.selectedIds);
   const setSelection = useEditorStore((s) => s.setSelection);
@@ -109,7 +111,7 @@ export function LayersPanel() {
           justifyContent: 'space-between',
         }}
       >
-        <span>Layers</span>
+        <span>{t('design.editor.panel.layers')}</span>
         <span
           style={{
             fontSize: 10,
@@ -236,8 +238,8 @@ export function LayersPanel() {
                     e.stopPropagation();
                     updateObject(obj.id, { locked: !obj.locked });
                   }}
-                  title={obj.locked ? 'Unlock' : 'Lock'}
-                  aria-label={obj.locked ? 'Unlock layer' : 'Lock layer'}
+                  title={obj.locked ? t('design.editor.layer.unlock') : t('design.editor.layer.lock')}
+                  aria-label={obj.locked ? t('design.editor.layer.unlockAria') : t('design.editor.layer.lockAria')}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -257,8 +259,8 @@ export function LayersPanel() {
                     e.stopPropagation();
                     updateObject(obj.id, { visible: !obj.visible });
                   }}
-                  title={obj.visible ? 'Hide' : 'Show'}
-                  aria-label={obj.visible ? 'Hide layer' : 'Show layer'}
+                  title={obj.visible ? t('design.editor.layer.hide') : t('design.editor.layer.show')}
+                  aria-label={obj.visible ? t('design.editor.layer.hideAria') : t('design.editor.layer.showAria')}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -281,8 +283,8 @@ export function LayersPanel() {
                     }
                   }}
                   disabled={realIndex >= objects.length - 1}
-                  title="Move up"
-                  aria-label="Move layer up"
+                  title={t('design.editor.layer.moveUp')}
+                  aria-label={t('design.editor.layer.moveUpAria')}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -305,8 +307,8 @@ export function LayersPanel() {
                     }
                   }}
                   disabled={realIndex <= 0}
-                  title="Move down"
-                  aria-label="Move layer down"
+                  title={t('design.editor.layer.moveDown')}
+                  aria-label={t('design.editor.layer.moveDownAria')}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -333,7 +335,7 @@ export function LayersPanel() {
               color: colors.textLight,
             }}
           >
-            No objects yet
+            {t('design.editor.emptyState')}
           </div>
         )}
       </div>

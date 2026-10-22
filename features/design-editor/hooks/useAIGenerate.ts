@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import i18n from '../../../lib/i18n';
 import { generateId } from '../utils/defaults';
 import { getTemplateSkeleton } from '../utils/ai-templates';
 import { supabase } from '../../../lib/supabase';
@@ -705,7 +706,7 @@ export function useAIGenerate(): UseAIGenerateReturn {
           // ".message" ("Edge Function returned a non-2xx status code").
           // The real error (rate limit, unauthorized, oversized prompt,
           // invalid AI output) lives in ".context", a Response we must read.
-          let message = fnError.message ?? 'Design generation failed';
+          let message = fnError.message ?? i18n.t('design.ai.errors.generationFailed');
           const context = (fnError as { context?: unknown }).context;
           if (context instanceof Response) {
             try {
@@ -726,13 +727,13 @@ export function useAIGenerate(): UseAIGenerateReturn {
         const raw = data as DesignDocument;
 
         if (!raw.canvas || !Array.isArray(raw.objects)) {
-          throw new Error('AI returned an invalid design structure.');
+          throw new Error(i18n.t('design.ai.errors.invalidStructure'));
         }
 
         return processAIDocument(raw);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Something went wrong';
+          err instanceof Error ? err.message : i18n.t('design.ai.errors.generic');
         setError(message);
         return null;
       } finally {

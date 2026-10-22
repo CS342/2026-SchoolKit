@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
   withSequence,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { DecorativeBackground } from '../../components/onboarding/DecorativeBackground';
 import { AuthWebWrapper, getOnboardingStep } from '../../components/AuthWebWrapper';
@@ -70,8 +71,10 @@ function GradeCell({
   onPress: () => void;
   index: number;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const label = t(`onboarding.grade.options.${grade.value}`);
   const scale = useSharedValue(1);
   const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
@@ -99,7 +102,7 @@ function GradeCell({
       onPress={handlePress}
       style={styles.gridCellWrapper}
       accessibilityRole="radio"
-      accessibilityLabel={grade.label.replace(/\n/g, ' ')}
+      accessibilityLabel={label.replace(/\n/g, ' ')}
       accessibilityState={{ selected: isSelected }}
     >
       <Animated.View
@@ -116,7 +119,7 @@ function GradeCell({
       >
         <Ionicons name={grade.icon} size={24} color={grade.color} />
         <Text style={[styles.gridCellLabel, isSelected && { color: grade.color, fontWeight: '700' }]}>
-          {grade.label}
+          {label}
         </Text>
       </Animated.View>
     </Pressable>
@@ -125,6 +128,7 @@ function GradeCell({
 
 export default function Step2bScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data, updateGradeLevel } = useOnboarding();
   const { isWeb, isMobile } = useResponsive();
   const { colors, gradients, sharedStyles } = useTheme();
@@ -169,9 +173,9 @@ export default function Step2bScreen() {
               <Ionicons name="ribbon-outline" size={isWebDesktop ? 56 : 48} color={colors.primary} />
             </View>
 
-            <Text style={sharedStyles.pageTitle}>{isParentOrStaff ? "Select child's grade" : 'What grade are you in?'}</Text>
+            <Text style={sharedStyles.pageTitle}>{isParentOrStaff ? t('onboarding.grade.titleGuardian') : t('onboarding.grade.titleStudent')}</Text>
             <Text style={[sharedStyles.pageSubtitle, { marginBottom: 24 }]}>
-              We'll tailor resources to fit {isParentOrStaff ? "the child's needs." : 'where you are.'}
+              {isParentOrStaff ? t('onboarding.grade.subtitleGuardian') : t('onboarding.grade.subtitleStudent')}
             </Text>
 
             <View style={styles.grid}>
@@ -189,12 +193,12 @@ export default function Step2bScreen() {
             {isWebDesktop && (
               <View style={{ maxWidth: 400, width: '100%', alignSelf: 'center', marginTop: 32, gap: 4 }}>
                 <PrimaryButton
-                  title="Continue"
+                  title={t('common.continue')}
                   onPress={handleContinue}
                   disabled={!selectedGrade}
                 />
                 <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-                  <Text style={sharedStyles.skipText}>Skip for now</Text>
+                  <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
                 </Pressable>
               </View>
             )}
@@ -204,12 +208,12 @@ export default function Step2bScreen() {
         {!isWebDesktop && (
         <View style={sharedStyles.buttonContainer}>
           <PrimaryButton
-            title="Continue"
+            title={t('common.continue')}
             onPress={handleContinue}
             disabled={!selectedGrade}
           />
           <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
-            <Text style={sharedStyles.skipText}>Skip for now</Text>
+            <Text style={sharedStyles.skipText}>{t('common.skipForNow')}</Text>
           </Pressable>
         </View>
         )}

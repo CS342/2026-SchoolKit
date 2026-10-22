@@ -22,6 +22,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,52 +33,21 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
-const FAQS = [
-  {
-    q: 'How do I change the reading voice?',
-    a: 'Go to Profile → Voice. You can preview and select from several different voices for your companion.',
-  },
-  {
-    q: 'How do I start a new profile / retake the survey?',
-    a: 'Go to Profile → Retake Survey. This will reset your role, topics, and preferences so you can go through setup again.',
-  },
-  {
-    q: 'How do I change my role?',
-    a: 'Go to Profile → Role. You can switch between Student, Parent/Caregiver, and School Staff at any time.',
-  },
-  {
-    q: 'How do I change my topics of interest?',
-    a: 'Go to Profile → Topics. You can add or remove topics and the app will tailor content to your selection.',
-  },
-  {
-    q: 'How do I bookmark a resource?',
-    a: 'Tap the bookmark icon on any resource card or detail page. Saved items appear in the Bookmarks tab.',
-  },
-  {
-    q: 'Can I use the app offline?',
-    a: 'Yes! Tap Download All in your Profile to save resources for offline access. Bookmarks and previously viewed content are also cached.',
-  },
-  {
-    q: 'How do I switch between light and dark mode?',
-    a: 'Go to Profile → Appearance. You can choose Light, Dark, or follow your device system setting.',
-  },
-  {
-    q: 'Who is SchoolKit for?',
-    a: 'SchoolKit supports young cancer survivors and their families, caregivers, and school staff as they navigate the return to school after treatment.',
-  },
-  {
-    q: 'How can I check my progress?',
-    a: 'Go to the Profile tab to see your completed topics, downloaded resources, and bookmarks. Your activity is saved automatically as you explore the app.',
-  },
-  {
-    q: 'How long will it take for my story to be approved?',
-    a: 'Stories are reviewed by our team before appearing in the community. This usually takes 1–3 days. You\'ll be able to see your story\'s status in the Stories tab.',
-  },
-  {
-    q: 'What is the Stories tab for?',
-    a: 'The Stories tab is a community space where users can share their own life experiences related to the school re-entry journey. You can post anonymously or with your name — it\'s up to you.',
-  },
-];
+// Stable keys for the FAQ list; the question/answer text lives in the `profile`
+// locale namespace (profile.faq.<key>.q / profile.faqHelp.<key>.a).
+const FAQ_KEYS = [
+  'voice',
+  'newProfile',
+  'role',
+  'topics',
+  'bookmark',
+  'offline',
+  'appearance',
+  'who',
+  'progress',
+  'storyTime',
+  'storiesTab',
+] as const;
 
 const MAX_CHARS = 300;
 
@@ -150,6 +120,7 @@ function FAQItem({
 
 export default function HelpSupportScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const insets = useSafeAreaInsets();
   const { data } = useOnboarding();
@@ -233,11 +204,11 @@ export default function HelpSupportScreen() {
   return (
     <View style={styles.container}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={appStyles.editHeaderTitle}>
-          {section === 'feedback' ? 'Share Feedback' : 'Frequently Asked Questions'}
+          {section === 'feedback' ? t('profile.shareFeedback') : t('profile.faqTitle')}
         </Text>
         <View style={{ width: 60 }} />
       </View>
@@ -251,10 +222,16 @@ export default function HelpSupportScreen() {
       >
         {/* FAQ Section — only shown when section=faq */}
         {section !== 'feedback' && <Animated.View style={faqStyle}>
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>FREQUENTLY ASKED QUESTIONS</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.faqSectionLabel')}</Text>
           <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
-            {FAQS.map((item, i) => (
-              <FAQItem key={i} item={item} index={i} colors={colors} shadows={shadows} />
+            {FAQ_KEYS.map((key, i) => (
+              <FAQItem
+                key={key}
+                item={{ q: t(`profile.faq.${key}.q`), a: t(`profile.faqHelp.${key}.a`) }}
+                index={i}
+                colors={colors}
+                shadows={shadows}
+              />
             ))}
           </View>
         </Animated.View>}
@@ -265,20 +242,20 @@ export default function HelpSupportScreen() {
           style={feedbackStyle}
           onLayout={(e) => { feedbackSectionY.current = e.nativeEvent.layout.y; }}
         >
-          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>SHARE YOUR FEEDBACK</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textLight }]}>{t('profile.shareFeedbackSection')}</Text>
           <View style={[styles.card, { backgroundColor: colors.white, ...shadows.card }]}>
             {submitted ? (
               <Animated.View style={[styles.thankYouInner, thankYouStyle]}>
                 <Ionicons name="checkmark-circle" size={44} color={colors.primary} />
-                <Text style={[styles.thankYouTitle, { color: colors.textDark }]}>Thank you!</Text>
+                <Text style={[styles.thankYouTitle, { color: colors.textDark }]}>{t('profile.thankYou')}</Text>
                 <Text style={[styles.thankYouBody, { color: colors.textLight }]}>
-                  We hope to add your suggestions to a future version of SchoolKit.
+                  {t('profile.thankYouBody')}
                 </Text>
               </Animated.View>
             ) : (
               <View style={styles.feedbackInner}>
                 <Text style={[styles.feedbackDescription, { color: colors.textLight }]}>
-                  Have a question or suggestion not covered above? Share it here. We collect responses to help shape future versions of SchoolKit — we won't be able to reply directly, but every submission is read and considered.
+                  {t('profile.feedbackDescriptionFull')}
                 </Text>
 
                 <TextInput
@@ -293,7 +270,7 @@ export default function HelpSupportScreen() {
                   ]}
                   value={feedbackText}
                   onChangeText={(t) => setFeedbackText(t.slice(0, MAX_CHARS))}
-                  placeholder="Type your question or suggestion..."
+                  placeholder={t('profile.feedbackPlaceholder')}
                   placeholderTextColor={colors.inputPlaceholder}
                   multiline
                   onFocus={() => setIsFocused(true)}
@@ -313,7 +290,7 @@ export default function HelpSupportScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitText}>Submit</Text>
+                    <Text style={styles.submitText}>{t('common.submit')}</Text>
                   )}
                 </TouchableOpacity>
               </View>

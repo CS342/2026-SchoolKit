@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import i18n from '../../../lib/i18n';
 
+// Step `key`s point at i18n messages resolved at render time (see `currentStep` below).
 const CREATE_STEPS = [
-  { label: 'Understanding your request...', duration: 3000, target: 25 },
-  { label: 'Designing layout...', duration: 5000, target: 50 },
-  { label: 'Styling elements...', duration: 7000, target: 75 },
-  { label: 'Finalizing design...', duration: Infinity, target: 92 },
+  { key: 'design.ai.generationSteps.create.understanding', duration: 3000, target: 25 },
+  { key: 'design.ai.generationSteps.create.layout', duration: 5000, target: 50 },
+  { key: 'design.ai.generationSteps.create.styling', duration: 7000, target: 75 },
+  { key: 'design.ai.generationSteps.create.finalizing', duration: Infinity, target: 92 },
 ] as const;
 
 const EDIT_STEPS = [
-  { label: 'Analyzing your design...', duration: 3000, target: 25 },
-  { label: 'Applying changes...', duration: 5000, target: 50 },
-  { label: 'Refining layout...', duration: 7000, target: 75 },
-  { label: 'Finalizing updates...', duration: Infinity, target: 92 },
+  { key: 'design.ai.generationSteps.edit.analyzing', duration: 3000, target: 25 },
+  { key: 'design.ai.generationSteps.edit.applying', duration: 5000, target: 50 },
+  { key: 'design.ai.generationSteps.edit.refining', duration: 7000, target: 75 },
+  { key: 'design.ai.generationSteps.edit.finalizing', duration: Infinity, target: 92 },
 ] as const;
 
 const TICK_INTERVAL = 80;
@@ -120,9 +122,10 @@ export function useGenerationProgress(isGenerating: boolean, isEditMode: boolean
     return cleanup;
   }, [cleanup]);
 
+  const stepKey = STEPS[stepIndex]?.key;
   return {
     currentStepIndex: stepIndex,
-    currentStep: STEPS[stepIndex]?.label ?? '',
+    currentStep: stepKey ? i18n.t(stepKey) : '',
     progress,
     isComplete,
     totalSteps: STEPS.length,

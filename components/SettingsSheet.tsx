@@ -24,12 +24,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
-import { VOICE_META, generateSpeech } from '../services/elevenLabs';
+import { VOICE_META, generateSpeech, voicesFor, voiceDescription, toVoiceLang, SHOW_VOICE_AVATARS, type VoiceLang } from '../services/elevenLabs';
 import { useResources } from '../hooks/useResources';
 import { ANIMATION, SPACING } from '../constants/onboarding-theme';
 import type { AppTheme } from '../constants/theme';
@@ -42,19 +43,21 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type SheetView = 'main' | 'voice' | 'appearance' | 'about' | 'faq' | 'feedback' | 'language';
 
-const FAQS = [
-  { q: 'How do I change the reading voice?', a: 'Go to Settings → Voice. You can preview and select from several different voices.' },
-  { q: 'How do I start a new profile / retake the survey?', a: 'Go to Settings → Retake Survey. This will reset your role, topics, and preferences.' },
-  { q: 'How do I change my role?', a: 'Go to Profile → Role. You can switch between Student, Parent/Caregiver, and School Staff at any time.' },
-  { q: 'How do I change my topics of interest?', a: 'Go to Profile → Topics. You can add or remove topics and the app will tailor content to your selection.' },
-  { q: 'How do I bookmark a resource?', a: 'Tap the bookmark icon on any resource card or detail page. Saved items appear in the Bookmarks tab.' },
-  { q: 'Can I use the app offline?', a: 'Yes! Tap Download All in Settings to save resources for offline access.' },
-  { q: 'How do I switch between light and dark mode?', a: 'Go to Settings → Appearance. You can choose Light, Dark, or follow your device system setting.' },
-  { q: 'Who is SchoolKit for?', a: 'SchoolKit supports young cancer survivors and their families, caregivers, and school staff as they navigate the return to school after treatment.' },
-  { q: 'How can I check my progress?', a: 'Go to the Profile tab to see your completed topics, downloaded resources, and bookmarks.' },
-  { q: 'How long will it take for my story to be approved?', a: 'Stories are reviewed by our team before appearing in the community. This usually takes 1–3 days.' },
-  { q: 'What is the Stories tab for?', a: 'The Stories tab is a community space where users can share their own life experiences related to the school re-entry journey.' },
-];
+// Stable keys for the FAQ list; the question/answer text lives in the `profile`
+// locale namespace (profile.faq.<key>.q / profile.faqSheet.<key>.a).
+const FAQ_KEYS = [
+  'voice',
+  'newProfile',
+  'role',
+  'topics',
+  'bookmark',
+  'offline',
+  'appearance',
+  'who',
+  'progress',
+  'storyTime',
+  'storiesTab',
+] as const;
 
 // ── Shared row component ───────────────────────────────────────────────────
 
@@ -104,6 +107,7 @@ function SheetRow({
 // ── Language view ──────────────────────────────────────────────────────────
 
 function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { t } = useTranslation();
   const { colors, shadows } = theme;
   const { preferredLanguage, updatePreferredLanguage } = useOnboarding();
 
@@ -118,10 +122,10 @@ function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>Language</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.language')}</Text>
         <View style={{ width: 32 }} />
       </View>
-      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>Choose your preferred language</Text>
+      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>{t('profile.chooseLanguage')}</Text>
       <View style={{ gap: 10, marginTop: 8 }}>
         {options.map((option) => {
           const isSelected = preferredLanguage === option.key;
@@ -150,12 +154,13 @@ function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
 // ── Appearance view ────────────────────────────────────────────────────────
 
 function AppearanceView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { t } = useTranslation();
   const { colors, shadows, themePreference, setThemePreference } = theme;
 
   const options = [
-    { key: 'system' as const, label: 'System', icon: 'phone-portrait-outline' as const, desc: 'Match device settings' },
-    { key: 'light' as const, label: 'Light', icon: 'sunny-outline' as const, desc: 'Always use light mode' },
-    { key: 'dark' as const, label: 'Dark', icon: 'moon-outline' as const, desc: 'Always use dark mode' },
+    { key: 'system' as const, label: t('profile.appearanceSystem'), icon: 'phone-portrait-outline' as const, desc: t('profile.appearanceSystemDesc') },
+    { key: 'light' as const, label: t('profile.appearanceLight'), icon: 'sunny-outline' as const, desc: t('profile.appearanceLightDesc') },
+    { key: 'dark' as const, label: t('profile.appearanceDark'), icon: 'moon-outline' as const, desc: t('profile.appearanceDarkDesc') },
   ];
 
   return (
@@ -164,10 +169,10 @@ function AppearanceView({ theme, onBack }: { theme: AppTheme; onBack: () => void
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>Appearance</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.appearance')}</Text>
         <View style={{ width: 32 }} />
       </View>
-      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>Choose your preferred theme</Text>
+      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>{t('profile.chooseTheme')}</Text>
       <View style={{ gap: 10, marginTop: 8 }}>
         {options.map((option) => {
           const isSelected = themePreference === option.key;
@@ -197,15 +202,19 @@ function AppearanceView({ theme, onBack }: { theme: AppTheme; onBack: () => void
 
 function VoiceView({
   theme,
+  lang,
   selectedVoice,
   onSelectVoice,
   onBack,
 }: {
   theme: AppTheme;
+  /** The app language — only guides who read it natively are offered. */
+  lang: VoiceLang;
   selectedVoice: string;
   onSelectVoice: (id: string) => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const { colors, shadows } = theme;
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);
@@ -234,10 +243,7 @@ function VoiceView({
       }
       setIsLoading(true);
       setPlayingVoiceId(voiceId);
-      const meta = Object.values(VOICE_META).find(v => v.id === voiceId);
-      const sampleText = meta?.accent === 'Spanish'
-        ? 'Hola, soy tu compañero de apoyo en SchoolKit.'
-        : 'The quick brown fox jumps over the lazy dog.';
+      const sampleText = t('auth.voice.sampleIntro', { name: VOICE_META[voiceId]?.name ?? '' });
       const uri = await generateSpeech(sampleText, voiceId);
       if (uri) {
         player.replace(uri);
@@ -252,15 +258,7 @@ function VoiceView({
     }
   };
 
-  const voicesByAccent = React.useMemo(() => {
-    const groups: Record<string, typeof VOICE_META[string][]> = {};
-    Object.values(VOICE_META).forEach((v) => {
-      const accent = v.accent || 'Other';
-      if (!groups[accent]) groups[accent] = [];
-      groups[accent].push(v);
-    });
-    return groups;
-  }, []);
+  const voices = React.useMemo(() => voicesFor(lang), [lang]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -268,55 +266,50 @@ function VoiceView({
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>Voice</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.voice')}</Text>
         <View style={{ width: 32 }} />
       </View>
-      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>Select a companion for your journey</Text>
+      <Text style={[styles.subSubtitle, { color: colors.textLight }]}>{t('profile.selectCompanion')}</Text>
       <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 8 }}>
-        {['Spanish', 'American', 'British', 'Australian'].map((accent) => {
-          const voices = voicesByAccent[accent];
-          if (!voices?.length) return null;
-          return (
-            <View key={accent}>
-              <Text style={[styles.accentLabel, { color: colors.textLight }]}>{accent}</Text>
-              <View style={{ gap: 10, marginBottom: 8 }}>
-                {voices.map((voice) => {
-                  const isSelected = selectedVoice === voice.id;
-                  const isPlaying = playingVoiceId === voice.id;
-                  return (
-                    <Pressable
-                      key={voice.id}
-                      style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
-                      onPress={() => onSelectVoice(voice.id)}
-                    >
-                      {voice.image ? (
-                        <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
-                      ) : (
-                        <View style={[styles.voiceAvatar, { backgroundColor: voice.color, alignItems: 'center', justifyContent: 'center' }]}>
-                          <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                        </View>
-                      )}
-                      <View style={styles.voiceInfo}>
-                        <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
-                        <Text style={[styles.voiceDesc, { color: colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voice.description}</Text>
-                      </View>
-                      <Pressable
-                        style={[styles.playButton, { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }]}
-                        onPress={(e) => { e.stopPropagation(); handlePlaySample(voice.id); }}
-                      >
-                        {isLoading && isPlaying ? (
-                          <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
-                        ) : (
-                          <Ionicons name={isPlaying ? 'stop' : 'play'} size={16} color={isPlaying ? '#FFFFFF' : colors.primary} />
-                        )}
-                      </Pressable>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })}
+        <View style={{ gap: 10, marginBottom: 8 }}>
+          {voices.map((voice) => {
+            const isSelected = selectedVoice === voice.id;
+            const isPlaying = playingVoiceId === voice.id;
+            return (
+              <Pressable
+                key={voice.id}
+                style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
+                onPress={() => onSelectVoice(voice.id)}
+                accessibilityRole="radio"
+                accessibilityLabel={`${voice.name}, ${t(`auth.voice.accents.${voice.accent}`)}`}
+                accessibilityState={{ selected: isSelected }}
+              >
+                {SHOW_VOICE_AVATARS && voice.image ? (
+                  <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
+                ) : (
+                  <View style={[styles.voiceAvatar, { backgroundColor: voice.color, alignItems: 'center', justifyContent: 'center' }]}>
+                    <Text style={styles.voiceInitial}>{voice.initial}</Text>
+                  </View>
+                )}
+                <View style={styles.voiceInfo}>
+                  <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
+                  <Text style={[styles.voiceDesc, { color: colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voiceDescription(voice, lang)}</Text>
+                  <Text style={[styles.voiceDesc, { color: colors.textLight, fontSize: 12, fontWeight: '600', marginTop: 2 }]}>{t(`auth.voice.accents.${voice.accent}`)}</Text>
+                </View>
+                <Pressable
+                  style={[styles.playButton, { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }]}
+                  onPress={(e) => { e.stopPropagation(); handlePlaySample(voice.id); }}
+                >
+                  {isLoading && isPlaying ? (
+                    <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
+                  ) : (
+                    <Ionicons name={isPlaying ? 'stop' : 'play'} size={16} color={isPlaying ? '#FFFFFF' : colors.primary} />
+                  )}
+                </Pressable>
+              </Pressable>
+            );
+          })}
+        </View>
       </ScrollView>
     </View>
   );
@@ -325,6 +318,7 @@ function VoiceView({
 // ── About view ────────────────────────────────────────────────────────────
 
 function AboutView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { t } = useTranslation();
   const { colors, shadows } = theme;
   return (
     <View style={{ flex: 1 }}>
@@ -332,7 +326,7 @@ function AboutView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>About SchoolKit</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.aboutTitle')}</Text>
         <View style={{ width: 32 }} />
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }}>
@@ -343,18 +337,18 @@ function AboutView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
         <Text style={[styles.subTitle, { color: colors.textDark, marginBottom: 20 }]}>SchoolKit</Text>
 
         <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card, width: '100%', padding: 16 }]}>
-          <Text style={[styles.cardLabel, { color: colors.textLight }]}>OUR MISSION</Text>
+          <Text style={[styles.cardLabel, { color: colors.textLight }]}>{t('profile.ourMission')}</Text>
           <Text style={[styles.cardBody, { color: colors.textDark }]}>
-            To facilitate a smoother transition from cancer treatment back to school in young cancer survivors and their support system in order to reduce anxiety, confusion, and feelings of isolation during reintegration
+            {t('profile.aboutMissionBodySheet')}
           </Text>
         </View>
 
         <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card, width: '100%', paddingHorizontal: 16 }]}>
-          <Text style={[styles.cardLabel, { color: colors.textLight, paddingTop: 16 }]}>WHO IT'S FOR</Text>
+          <Text style={[styles.cardLabel, { color: colors.textLight, paddingTop: 16 }]}>{t('profile.whoItsFor')}</Text>
           {[
-            { icon: 'school-outline' as const, label: 'Students', desc: 'Young cancer survivors navigating their return to school after treatment.' },
-            { icon: 'people-outline' as const, label: 'Parents & Caregivers', desc: 'Families supporting their child through the re-entry process.' },
-            { icon: 'briefcase-outline' as const, label: 'School Staff', desc: 'Teachers and staff creating an inclusive environment for returning students.' },
+            { icon: 'school-outline' as const, label: t('profile.whoStudents'), desc: t('profile.whoStudentsDesc') },
+            { icon: 'people-outline' as const, label: t('profile.whoParents'), desc: t('profile.whoParentsDesc') },
+            { icon: 'briefcase-outline' as const, label: t('profile.whoStaff'), desc: t('profile.whoStaffDesc') },
           ].map((item, i) => (
             <View key={item.label} style={[styles.whoRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderCard }]}>
               <View style={[styles.whoIcon, { backgroundColor: colors.primary + '15' }]}>
@@ -391,6 +385,7 @@ function FAQItem({ item, index, colors }: { item: { q: string; a: string }; inde
 }
 
 function FAQView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { t } = useTranslation();
   const { colors, shadows } = theme;
   return (
     <View style={{ flex: 1 }}>
@@ -398,13 +393,18 @@ function FAQView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>FAQ</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.faqShort')}</Text>
         <View style={{ width: 32 }} />
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-          {FAQS.map((item, i) => (
-            <FAQItem key={i} item={item} index={i} colors={colors} />
+          {FAQ_KEYS.map((key, i) => (
+            <FAQItem
+              key={key}
+              item={{ q: t(`profile.faq.${key}.q`), a: t(`profile.faqSheet.${key}.a`) }}
+              index={i}
+              colors={colors}
+            />
           ))}
         </View>
       </ScrollView>
@@ -417,6 +417,7 @@ function FAQView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
 const MAX_CHARS = 300;
 
 function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
+  const { t } = useTranslation();
   const { colors, shadows } = theme;
   const { data } = useOnboarding();
   const { user } = useAuth();
@@ -450,7 +451,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
-        <Text style={[styles.subTitle, { color: colors.textDark }]}>Share Feedback</Text>
+        <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.shareFeedback')}</Text>
         <View style={{ width: 32 }} />
       </View>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -458,29 +459,29 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
           {submitted ? (
             <View style={styles.thankYou}>
               <Ionicons name="checkmark-circle" size={44} color={colors.primary} />
-              <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>Thank you!</Text>
+              <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>{t('profile.thankYou')}</Text>
               <Text style={[styles.voiceDesc, { color: colors.textLight, textAlign: 'center', marginTop: 4 }]}>
-                We hope to add your suggestions to a future version of SchoolKit.
+                {t('profile.thankYouBody')}
               </Text>
             </View>
           ) : submitError ? (
             <View style={styles.thankYou}>
               <Ionicons name="alert-circle" size={44} color="#E74C3C" />
-              <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>Failed to send</Text>
+              <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>{t('profile.feedbackFailed')}</Text>
               <Text style={[styles.voiceDesc, { color: colors.textLight, textAlign: 'center', marginTop: 4 }]}>
-                Please check your connection and try again.
+                {t('profile.feedbackFailedBody')}
               </Text>
             </View>
           ) : (
             <View style={styles.feedbackInner}>
               <Text style={[styles.voiceDesc, { color: colors.textLight, marginBottom: 14, lineHeight: 20 }]}>
-                Have a question or suggestion? Share it here — every submission is read and considered.
+                {t('profile.feedbackDescriptionShort')}
               </Text>
               <TextInput
                 style={[styles.feedbackInput, { backgroundColor: colors.appBackground, borderColor: isFocused ? colors.primary : colors.borderCard, color: colors.textDark }]}
                 value={feedbackText}
-                onChangeText={(t) => setFeedbackText(t.slice(0, MAX_CHARS))}
-                placeholder="Type your question or suggestion..."
+                onChangeText={(text) => setFeedbackText(text.slice(0, MAX_CHARS))}
+                placeholder={t('profile.feedbackPlaceholder')}
                 placeholderTextColor={colors.inputPlaceholder}
                 multiline
                 onFocus={() => setIsFocused(true)}
@@ -495,7 +496,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
                 onPress={handleSubmit}
                 disabled={!feedbackText.trim() || isSubmitting}
               >
-                {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Submit</Text>}
+                {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>{t('common.submit')}</Text>}
               </Pressable>
             </View>
           )}
@@ -508,6 +509,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
 // ── Main settings sheet ────────────────────────────────────────────────────
 
 export function SettingsSheet() {
+  const { t } = useTranslation();
   const { isOpen, close } = useSettings();
   const router = useRouter();
   const theme = useTheme();
@@ -544,55 +546,55 @@ export function SettingsSheet() {
   const handleRetakeSurvey = () => {
     close();
     if (Platform.OS === 'web') {
-      if (!window.confirm('This will reset your profile. Are you sure?')) return;
+      if (!window.confirm(t('profile.retakeConfirm'))) return;
       resetOnboarding();
       router.replace('/onboarding/step1');
       return;
     }
-    Alert.alert('Retake Survey', 'This will reset your profile. Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Retake', style: 'destructive', onPress: () => { resetOnboarding(); router.replace('/onboarding/step1'); } },
+    Alert.alert(t('profile.retakeSurvey'), t('profile.retakeConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('profile.retakeAction'), style: 'destructive', onPress: () => { resetOnboarding(); router.replace('/onboarding/step1'); } },
     ]);
   };
 
   const handleDownloadAll = () => {
     if (allDownloaded) {
       if (Platform.OS === 'web') {
-        window.alert('Already Downloaded\nAll resources are already available offline.');
+        window.alert(`${t('profile.alreadyDownloaded')}\n${t('profile.alreadyDownloadedBody')}`);
       } else {
-        Alert.alert('Already Downloaded', 'All resources are already available offline.');
+        Alert.alert(t('profile.alreadyDownloaded'), t('profile.alreadyDownloadedBody'));
       }
     } else if (Platform.OS === 'web') {
-      if (!window.confirm('Download All Resources\nThis will save all resources for offline access.')) return;
-      downloadAllResources(libraryIds).then(() => { window.alert('Success\nAll resources are now available offline!'); });
+      if (!window.confirm(`${t('profile.downloadAllTitle')}\n${t('profile.downloadAllBody')}`)) return;
+      downloadAllResources(libraryIds).then(() => { window.alert(`${t('profile.downloadSuccessTitle')}\n${t('profile.downloadSuccessBody')}`); });
     } else {
-      Alert.alert('Download All Resources', 'This will save all resources for offline access.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Download All', onPress: async () => { await downloadAllResources(libraryIds); Alert.alert('Success', 'All resources are now available offline!'); } },
+      Alert.alert(t('profile.downloadAllTitle'), t('profile.downloadAllBody'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.downloadAll'), onPress: async () => { await downloadAllResources(libraryIds); Alert.alert(t('profile.downloadSuccessTitle'), t('profile.downloadSuccessBody')); } },
       ]);
     }
   };
 
   const handleSignOut = async () => {
     if (Platform.OS === 'web') {
-      if (!window.confirm('Are you sure you want to sign out?')) return;
+      if (!window.confirm(t('profile.signOutConfirm'))) return;
       try { await signOut(); close(); router.replace('/welcome'); }
-      catch (err: any) { window.alert(err.message || 'Sign out failed.'); }
+      catch (err: any) { window.alert(err.message || t('profile.signOutFailedBody')); }
     } else {
-      Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('profile.signOut'), t('profile.signOutConfirm'), [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sign Out', style: 'destructive', onPress: async () => {
+          text: t('profile.signOut'), style: 'destructive', onPress: async () => {
             try { await signOut(); close(); router.replace('/welcome'); }
-            catch (err: any) { Alert.alert('Sign Out Failed', err.message || 'Something went wrong.'); }
+            catch (err: any) { Alert.alert(t('profile.signOutFailed'), err.message || t('common.error')); }
           },
         },
       ]);
     }
   };
 
-  const appearanceLabel = theme.themePreference === 'system' ? 'System' : theme.themePreference === 'light' ? 'Light' : 'Dark';
-  const voiceName = Object.values(VOICE_META).find(m => m.id === selectedVoice)?.name || 'Peter';
+  const appearanceLabel = theme.themePreference === 'system' ? t('profile.appearanceSystem') : theme.themePreference === 'light' ? t('profile.appearanceLight') : t('profile.appearanceDark');
+  const voiceName = VOICE_META[selectedVoice]?.name ?? '';
   const languageLabel = preferredLanguage === 'english' ? 'English' : 'Español';
 
   const isWeb = Platform.OS === 'web';
@@ -613,24 +615,24 @@ export function SettingsSheet() {
 
           {currentView === 'main' && (
             <>
-              <Text style={[styles.sheetTitle, { color: colors.textDark }]}>Settings</Text>
+              <Text style={[styles.sheetTitle, { color: colors.textDark }]}>{t('profile.settings')}</Text>
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
                 <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-                  <SheetRow icon="moon-outline" label="Appearance" value={appearanceLabel} onPress={() => setCurrentView('appearance')} theme={theme} />
-                  <SheetRow icon="language-outline" label="Language" value={languageLabel} onPress={() => setCurrentView('language')} theme={theme} />
-                  <SheetRow icon="mic-outline" label="Voice" value={voiceName} onPress={() => setCurrentView('voice')} theme={theme} />
+                  <SheetRow icon="moon-outline" label={t('profile.appearance')} value={appearanceLabel} onPress={() => setCurrentView('appearance')} theme={theme} />
+                  <SheetRow icon="language-outline" label={t('profile.language')} value={languageLabel} onPress={() => setCurrentView('language')} theme={theme} />
+                  <SheetRow icon="mic-outline" label={t('profile.voice')} value={voiceName} onPress={() => setCurrentView('voice')} theme={theme} />
                   {Platform.OS === 'web' && isAdmin && (
-                    <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
+                    <SheetRow icon="color-palette-outline" label={t('profile.designEditor')} value={t('profile.designEditorValue')} onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
                   )}
                   {/* Content Pages now lives as a top-level admin tab in the left sidebar (PersistentSidebar). */}
-                  <SheetRow icon="cloud-download-outline" label="Download All" value={allDownloaded ? 'All saved' : `${savedCount}/${libraryIds.length}`} onPress={handleDownloadAll} theme={theme} />
-                  <SheetRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
-                  <SheetRow icon="information-circle-outline" label="About SchoolKit" onPress={() => setCurrentView('about')} theme={theme} />
-                  <SheetRow icon="help-circle-outline" label="Frequently Asked Questions" onPress={() => setCurrentView('faq')} theme={theme} />
-                  <SheetRow icon="chatbubble-ellipses-outline" label="Share Feedback" onPress={() => setCurrentView('feedback')} isLast theme={theme} />
+                  <SheetRow icon="cloud-download-outline" label={t('profile.downloadAll')} value={allDownloaded ? t('profile.allSaved') : `${savedCount}/${libraryIds.length}`} onPress={handleDownloadAll} theme={theme} />
+                  <SheetRow icon="refresh-outline" label={t('profile.retakeSurvey')} onPress={handleRetakeSurvey} theme={theme} />
+                  <SheetRow icon="information-circle-outline" label={t('profile.aboutTitle')} onPress={() => setCurrentView('about')} theme={theme} />
+                  <SheetRow icon="help-circle-outline" label={t('profile.faqTitle')} onPress={() => setCurrentView('faq')} theme={theme} />
+                  <SheetRow icon="chatbubble-ellipses-outline" label={t('profile.shareFeedback')} onPress={() => setCurrentView('feedback')} isLast theme={theme} />
                 </View>
                 <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-                  <SheetRow icon="log-out-outline" label="Sign Out" onPress={handleSignOut} tint={colors.error} isLast theme={theme} />
+                  <SheetRow icon="log-out-outline" label={t('profile.signOut')} onPress={handleSignOut} tint={colors.error} isLast theme={theme} />
                 </View>
               </ScrollView>
             </>
@@ -646,6 +648,7 @@ export function SettingsSheet() {
             <View style={{ flex: 1 }}>
               <VoiceView
                 theme={theme}
+                lang={toVoiceLang(preferredLanguage)}
                 selectedVoice={selectedVoice}
                 onSelectVoice={(id) => { updateVoice(id); }}
                 onBack={() => setCurrentView('main')}
@@ -790,15 +793,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,
-  },
-  accentLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 16,
-    marginLeft: 4,
   },
   voiceCard: {
     flexDirection: 'row',

@@ -10,17 +10,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding, SchoolStatus } from '../contexts/OnboardingContext';
 import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
-const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus; label: string }[] = [
-  { value: 'current-treatment', label: 'Currently in school' },
-  { value: 'returning-after-treatment', label: 'Taking a break from school' },
-  { value: 'supporting-student', label: 'Planning to return to school soon' },
-  { value: 'special-needs', label: 'Home hospital education' },
+const SCHOOL_STATUS_OPTIONS: { value: SchoolStatus }[] = [
+  { value: 'current-treatment' },
+  { value: 'returning-after-treatment' },
+  { value: 'supporting-student' },
+  { value: 'special-needs' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
@@ -43,6 +44,7 @@ function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; i
 
 export default function EditSchoolStatusScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { data, updateSchoolStatuses } = useOnboarding();
   const { colors, appStyles } = useTheme();
@@ -64,27 +66,29 @@ export default function EditSchoolStatusScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => router.back()} style={appStyles.editBackButton} accessibilityRole="button" accessibilityLabel={t('common.goBack')}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={appStyles.editHeaderTitle}>Edit School Status</Text>
-        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel="Save">
-          <Text style={appStyles.editSaveText}>Save</Text>
+        <Text style={appStyles.editHeaderTitle}>{t('profile.editSchoolStatus')}</Text>
+        <TouchableOpacity onPress={handleSave} style={appStyles.editSaveButton} accessibilityRole="button" accessibilityLabel={t('common.save')}>
+          <Text style={appStyles.editSaveText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={appStyles.editScrollContent}>
         <ContentColumn width="reading">
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select all that apply</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('profile.selectAllApply')}</Text>
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
-            {selectedStatuses.length} status{selectedStatuses.length !== 1 ? 'es' : ''} selected
+            {selectedStatuses.length === 1
+              ? t('profile.statusCountOne', { count: selectedStatuses.length })
+              : t('profile.statusCountOther', { count: selectedStatuses.length })}
           </Text>
 
           <View style={styles.cardsContainer}>
             {SCHOOL_STATUS_OPTIONS.map((option, index) => (
               <AnimatedCardWrapper key={option.value} index={index}>
                 <SelectableCard
-                  title={option.label}
+                  title={t(`profile.statusOptions.${option.value}`)}
                   selected={selectedStatuses.includes(option.value)}
                   onPress={() => toggleStatus(option.value)}
                   multiSelect={true}

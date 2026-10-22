@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Rect, Ellipse, Text, Image as KonvaImage, Line, Star, Arrow, Group } from 'react-konva';
 import type { DesignDocument, DesignObject, GradientConfig, ShadowConfig, InteractiveComponentObject, StaticDesignObject } from '../types/document';
 
@@ -325,6 +326,7 @@ function ReadOnlyImage({
 // ─── Main Viewer ──────────────────────────────────────────────
 
 export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
+  const { t } = useTranslation();
   const [zoom, setZoom] = useState(1);
 
   // Auto-fit zoom to viewport
@@ -372,7 +374,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
           <div style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>
             {title}
           </div>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>by {author}</div>
+          <div style={{ fontSize: 13, color: '#6B7280' }}>{t('design.runtime.byAuthor', { author })}</div>
         </div>
         <div
           style={{
@@ -384,7 +386,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
             fontWeight: 500,
           }}
         >
-          View only
+          {t('design.runtime.viewOnly')}
         </div>
       </div>
 

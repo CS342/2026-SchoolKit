@@ -11,8 +11,8 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { getRoleDisplayName, getSchoolStatusText } from '../../utils/profile';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
 import { useResources, matchesSavedTopic } from '../../hooks/useResources';
@@ -20,6 +20,7 @@ import { type Resource } from '../../constants/resources';
 import { useResponsive, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { TOTAL_PIECES } from '../../constants/accomplishments';
+import { SHOW_KNOWLEDGE_TREE, SHOW_PUZZLES } from '../../constants/features';
 import {
   TYPOGRAPHY,
   SIZING,
@@ -85,6 +86,7 @@ function ProgressStat({
   colors: ThemeColors;
   style?: any;
 }) {
+  const { t } = useTranslation();
   const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   const remaining = Math.max(0, total - value);
   const reduceMotion = useReducedMotion();
@@ -97,7 +99,7 @@ function ProgressStat({
   const fillStyle = useAnimatedStyle(() => ({ width: `${grow.value}%` }));
 
   return (
-    <Card onPress={onPress} accessibilityLabel={`${label}, ${value} of ${total}, ${pct} percent`} style={style}>
+    <Card onPress={onPress} accessibilityLabel={t('home.progress.a11y', { label, value, total, pct })} style={style}>
       <View style={progressStyles.headerRow}>
         <View style={[progressStyles.chip, { backgroundColor: color }]}>
           <Ionicons name={icon} size={18} color="#FFFFFF" />
@@ -113,9 +115,9 @@ function ProgressStat({
         <Animated.View style={[progressStyles.fill, { backgroundColor: color }, fillStyle]} />
       </View>
       <View style={progressStyles.metaRow}>
-        <Text style={[progressStyles.pctText, { color }]}>{pct}% complete</Text>
+        <Text style={[progressStyles.pctText, { color }]}>{t('home.progress.percentComplete', { pct })}</Text>
         <Text style={[progressStyles.toGo, { color: remaining > 0 ? colors.textMuted : '#10B981' }]}>
-          {remaining > 0 ? `${remaining} to go` : 'All done'}
+          {remaining > 0 ? t('home.progress.toGo', { count: remaining }) : t('home.progress.allDone')}
         </Text>
       </View>
     </Card>
@@ -129,15 +131,16 @@ type TopicStatusKind = 'done' | 'started' | 'new';
  * real progress to show) plus a chevron that signals the row opens a page.
  */
 function TopicStatus({ status, colors }: { status: TopicStatusKind; colors: ThemeColors }) {
+  const { t } = useTranslation();
   return (
     <View style={progressStyles.trailing}>
       {status === 'done' ? (
         <View style={progressStyles.statusWrap}>
           <Ionicons name="checkmark-circle" size={15} color="#10B981" />
-          <Text style={[progressStyles.statusText, { color: '#10B981' }]}>Done</Text>
+          <Text style={[progressStyles.statusText, { color: '#10B981' }]}>{t('home.status.done')}</Text>
         </View>
       ) : status === 'started' ? (
-        <Text style={[progressStyles.statusText, { color: '#DE9A2E' }]}>In progress</Text>
+        <Text style={[progressStyles.statusText, { color: '#DE9A2E' }]}>{t('home.status.inProgress')}</Text>
       ) : null}
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </View>
@@ -160,10 +163,11 @@ function ContinueCard({
   colors: ThemeColors;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Card
       onPress={onPress}
-      accessibilityLabel={`${resumed ? 'Continue' : 'Start'}: ${resource.title}`}
+      accessibilityLabel={resumed ? t('home.continue.a11yResume', { title: resource.title }) : t('home.continue.a11yStart', { title: resource.title })}
       style={{ borderColor: resource.color + '55' }}
     >
       <View style={continueStyles.row}>
@@ -172,14 +176,14 @@ function ContinueCard({
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[continueStyles.eyebrow, { color: resource.color }]}>
-            {resumed ? 'PICK UP WHERE YOU LEFT OFF' : 'START HERE'}
+            {resumed ? t('home.continue.eyebrowResume') : t('home.continue.eyebrowStart')}
           </Text>
           <Text style={[continueStyles.title, { color: colors.textDark }]} numberOfLines={2}>
             {resource.title}
           </Text>
         </View>
         <View style={[continueStyles.cta, { backgroundColor: resource.color }]}>
-          <Text style={continueStyles.ctaText}>{resumed ? 'Continue' : 'Start'}</Text>
+          <Text style={continueStyles.ctaText}>{resumed ? t('common.continue') : t('home.continue.start')}</Text>
           <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
         </View>
       </View>
@@ -189,6 +193,7 @@ function ContinueCard({
 
 export default function ForYouScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data } = useOnboarding();
   const insets = useSafeAreaInsets();
 
@@ -211,6 +216,7 @@ export default function ForYouScreen() {
     [treeResources, isResourceFullyViewed]
   );
   const hasTreeTotal = treeResources.length > 0;
+  const showTreeStat = SHOW_KNOWLEDGE_TREE && hasTreeTotal;
 
   // ── "Continue where you left off" ─────────────────────────────────────────
   // Prefer a topic that's started but unfinished; otherwise the first unopened
@@ -228,10 +234,10 @@ export default function ForYouScreen() {
   const visibleTopics = topicResources;
   // Empty state: distinguish "never picked topics" from "picked topics are all hidden".
   const topicsAllHidden = data.topics.length > 0 && visibleTopics.length === 0;
-  const emptyTitle = topicsAllHidden ? 'No topics available right now' : 'No topics selected yet';
+  const emptyTitle = topicsAllHidden ? t('home.empty.titleHidden') : t('home.empty.titleNone');
   const emptySubtitle = topicsAllHidden
-    ? "The topics you picked aren't available at the moment. Check back soon, or choose different topics in your profile."
-    : 'Visit your profile to update your interests and get personalized support.';
+    ? t('home.empty.subtitleHidden')
+    : t('home.empty.subtitleNone');
   const continueItem = useMemo(() => {
     const inProgress = topicResources.find(
       r => openedResourceIds.has(r.id) && !isResourceFullyViewed(r.id)
@@ -274,8 +280,8 @@ export default function ForYouScreen() {
     <View style={styles.container}>
       <Animated.View style={headerStyle}>
         <ScreenHeader
-          eyebrow="Welcome back,"
-          title={`${data.name}!`}
+          eyebrow={t('home.header.welcomeBack')}
+          title={t('home.header.greeting', { name: data.name })}
           left={
             <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
               {data.profilePicture && data.profilePicture.startsWith('icon:') ? (
@@ -311,22 +317,25 @@ export default function ForYouScreen() {
                 />
               </FadeSlideIn>
             )}
+            {(SHOW_PUZZLES || showTreeStat) && (
             <FadeSlideIn delay={continueItem ? 110 : 40}>
-              <Text style={styles.sectionTitle}>Your progress</Text>
+              <Text style={styles.sectionTitle}>{t('home.sections.yourProgress')}</Text>
               <View style={styles.progressRow}>
-                <ProgressStat
-                  label="Puzzles"
-                  icon="extension-puzzle"
-                  color="#F59E0B"
-                  value={puzzlesEarned}
-                  total={TOTAL_PIECES}
-                  onPress={() => router.push('/accomplishments' as any)}
-                  colors={colors}
-                  style={styles.progressCard}
-                />
-                {hasTreeTotal && (
+                {SHOW_PUZZLES && (
                   <ProgressStat
-                    label="Knowledge Tree"
+                    label={t('home.progress.puzzles')}
+                    icon="extension-puzzle"
+                    color="#F59E0B"
+                    value={puzzlesEarned}
+                    total={TOTAL_PIECES}
+                    onPress={() => router.push('/accomplishments' as any)}
+                    colors={colors}
+                    style={styles.progressCard}
+                  />
+                )}
+                {showTreeStat && (
+                  <ProgressStat
+                    label={t('home.progress.knowledgeTree')}
                     icon="leaf"
                     color="#10B981"
                     value={treeLit}
@@ -338,14 +347,15 @@ export default function ForYouScreen() {
                 )}
               </View>
             </FadeSlideIn>
+            )}
 
             <FadeSlideIn delay={continueItem ? 170 : 100}>
               <View style={styles.topicsHeaderRow}>
-                <Text style={styles.sectionTitleInline}>Your support topics</Text>
+                <Text style={styles.sectionTitleInline}>{t('home.sections.supportTopics')}</Text>
                 <View style={[styles.segment, { backgroundColor: colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Grid view"
+                    accessibilityLabel={t('home.view.grid')}
                     onPress={() => setViewMode('grid')}
                     style={[styles.segBtn, viewMode === 'grid' && { backgroundColor: colors.white }]}
                   >
@@ -353,7 +363,7 @@ export default function ForYouScreen() {
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="List view"
+                    accessibilityLabel={t('home.view.list')}
                     onPress={() => setViewMode('list')}
                     style={[styles.segBtn, viewMode === 'list' && { backgroundColor: colors.white }]}
                   >
@@ -406,7 +416,7 @@ export default function ForYouScreen() {
                   {emptySubtitle}
                 </Text>
                 <PrimaryButton
-                  title="Update Profile"
+                  title={t('home.actions.updateProfile')}
                   onPress={() => router.push('/(tabs)/profile')}
                 />
               </View>
@@ -415,7 +425,7 @@ export default function ForYouScreen() {
         ) : (
           // ── Native (mobile) — unchanged ────────────────────────────────────
           <>
-            <Text style={styles.sectionTitle}>Your Support Topics</Text>
+            <Text style={styles.sectionTitle}>{t('home.sections.supportTopicsNative')}</Text>
 
             {visibleTopics.length > 0 ? (
               <View style={styles.topicsContainer}>
@@ -441,7 +451,7 @@ export default function ForYouScreen() {
                   {emptySubtitle}
                 </Text>
                 <PrimaryButton
-                  title="Update Profile"
+                  title={t('home.actions.updateProfile')}
                   onPress={() => router.push('/(tabs)/profile')}
                 />
               </View>
