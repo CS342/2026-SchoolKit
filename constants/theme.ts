@@ -87,6 +87,12 @@ export const COLORS_LIGHT = {
   success: '#3E9E77',
   warning: '#E29B3E',
   infoBg: '#E9F3F9',
+  // ── solid fills that carry white text/icons (buttons, pills, avatars) ──
+  // Same as the base color in light; deeper in dark so white stays readable.
+  primaryFill: '#6B5AD6',
+  tealFill: '#3C9A8D',
+  successFill: '#3E9E77',
+  destructiveFill: '#E06666',
 };
 
 export const COLORS_DARK = {
@@ -136,6 +142,11 @@ export const COLORS_DARK = {
   success: '#5CBB92',
   warning: '#E0B058',
   infoBg: '#122430',
+  // ── solid fills that carry white text/icons (white ≥ 4.4:1 on each) ──
+  primaryFill: '#7462D8',
+  tealFill: '#2F8578',
+  successFill: '#2F8A63',
+  destructiveFill: '#C94F4F',
 };
 
 export type ThemeColors = typeof COLORS_LIGHT;
@@ -151,8 +162,8 @@ export const GRADIENTS_LIGHT = {
 };
 
 export const GRADIENTS_DARK = {
-  primaryButton: ['#A99BF6', '#9282EE', '#7E6CDC'] as const,
-  authHeader: ['#9A8CF2', '#8877F0', '#7462D8'] as const,
+  primaryButton: ['#7866E0', '#7060D6', '#6552C8'] as const,
+  authHeader: ['#7866E0', '#6E5CD8', '#5D4BC0'] as const,
   progressFill: ['#9A8CF2', '#A99BF6'] as const,
   screenBackground: ['#211C33', '#191622', '#1E1A2C'] as const,
   disabledButton: ['#2E2842', '#28233C'] as const,

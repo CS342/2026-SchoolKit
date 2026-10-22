@@ -46,8 +46,8 @@ export function Button({
   const pressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, damping: 18, stiffness: 220 }).start();
 
   const solidBg =
-    variant === 'secondary' ? colors.teal :
-    variant === 'destructive' ? colors.destructive :
+    variant === 'secondary' ? colors.tealFill :
+    variant === 'destructive' ? colors.destructiveFill :
     'transparent';
   const fgColor =
     variant === 'primary' || variant === 'secondary' || variant === 'destructive' ? '#FFFFFF' :

@@ -147,7 +147,7 @@ function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         mobileStyles.container,
         {
           paddingBottom: Math.max(insets.bottom, 12),
-          backgroundColor: isDark ? 'rgba(28,28,46,0.95)' : 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: isDark ? 'rgba(34,30,48,0.95)' : 'rgba(255, 255, 255, 0.92)',
           borderTopColor: colors.border,
           ...shadows.card,
         },

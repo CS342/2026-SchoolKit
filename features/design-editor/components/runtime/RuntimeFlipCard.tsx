@@ -62,9 +62,9 @@ export function RuntimeFlipCard({ object, isDark = false }: { object: Interactiv
         width: object.width,
         height: object.height,
         // Card shadow (SHADOWS.card pattern from onboarding-theme)
-        shadowColor: '#2D2D44',
+        shadowColor: isDark ? '#000' : '#2D2D44',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
+        shadowOpacity: isDark ? 0.3 : 0.08,
         shadowRadius: 12,
         elevation: 4,
       }}
@@ -101,7 +101,12 @@ export function RuntimeFlipCard({ object, isDark = false }: { object: Interactiv
                 style={{
                   fontSize: 12,
                   fontWeight: '600',
-                  color: 'rgba(255,255,255,0.55)',
+                  color: 'rgba(255,255,255,0.9)',
+                  backgroundColor: 'rgba(0,0,0,0.35)',
+                  paddingHorizontal: 10,
+                  paddingVertical: 3,
+                  borderRadius: 10,
+                  overflow: 'hidden',
                   letterSpacing: 0.5,
                   textTransform: 'uppercase',
                 }}

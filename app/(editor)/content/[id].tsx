@@ -154,7 +154,7 @@ export default function ContentEditorRoute() {
         />
       ) : null}
       {notice ? (
-        <View style={[{ position: 'absolute', bottom: 24, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 18, borderRadius: RADII.pill, backgroundColor: notice.kind === 'ok' ? colors.success : colors.error }, shadows.cardLarge]}>
+        <View style={[{ position: 'absolute', bottom: 24, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 18, borderRadius: RADII.pill, backgroundColor: notice.kind === 'ok' ? colors.successFill : colors.destructiveFill }, shadows.cardLarge]}>
           <Ionicons name={notice.kind === 'ok' ? 'checkmark-circle' : 'alert-circle'} size={17} color="#fff" />
           <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: '#fff' }}>{notice.text}</Text>
         </View>

@@ -159,7 +159,7 @@ export default function ContentPagesDashboard() {
               onPress={() => setShowNew(true)}
               accessibilityRole="button"
               accessibilityLabel={t('editor.contentList.newPage')}
-              style={({ hovered }: any) => ([{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: 'pointer' as any, opacity: hovered ? 0.92 : 1 }, shadows.button])}
+              style={({ hovered }: any) => ([{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADII.button, backgroundColor: colors.primaryFill, cursor: 'pointer' as any, opacity: hovered ? 0.92 : 1 }, shadows.button])}
             >
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{t('editor.contentList.newPage')}</Text>
@@ -352,7 +352,7 @@ export default function ContentPagesDashboard() {
               <Pressable onPress={() => !deleting && setConfirmDel(null)} style={{ paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, cursor: 'pointer' as any }}>
                 <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>{t('common.cancel')}</Text>
               </Pressable>
-              <Pressable onPress={doDelete} disabled={deleting} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.error, cursor: (deleting ? 'default' : 'pointer') as any }}>
+              <Pressable onPress={doDelete} disabled={deleting} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.destructiveFill, cursor: (deleting ? 'default' : 'pointer') as any }}>
                 {deleting ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="trash" size={15} color="#fff" />}
                 <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{deleting ? t('editor.contentList.deleting') : t('common.delete')}</Text>
               </Pressable>

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, Pressable, Switch, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from '../ui/AppIcon';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
@@ -79,7 +80,7 @@ export function ChipMultiSelect<T extends string>({ label, options, value, onCha
               style={{
                 paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADII.pill, borderWidth: 1.5,
                 borderColor: on ? colors.primary : colors.border,
-                backgroundColor: on ? colors.primary : colors.inputBackground,
+                backgroundColor: on ? colors.primaryFill : colors.inputBackground,
                 cursor: 'pointer' as any,
               }}
             >
@@ -138,6 +139,12 @@ export const ICON_SET = [
   'call-outline', 'mail-outline', 'globe-outline', 'link-outline', 'search-outline', 'information-circle-outline',
   'bulb-outline', 'compass-outline', 'flag-outline', 'trophy-outline', 'leaf-outline', 'balloon-outline',
   'musical-notes-outline', 'game-controller-outline', 'football-outline', 'brush-outline', 'camera-outline', 'headset-outline',
+  // Material Community Icons (more specific symbols), rendered via AppIcon.
+  'mci:home-heart', 'mci:hand-heart', 'mci:account-heart', 'mci:heart-pulse', 'mci:head-heart', 'mci:book-heart',
+  'mci:stethoscope', 'mci:hospital-box', 'mci:thermometer', 'mci:bandage', 'mci:meditation', 'mci:emoticon-happy',
+  'mci:account-school', 'mci:school-outline', 'mci:book-open-page-variant', 'mci:lightbulb-on', 'mci:chat-question', 'mci:forum',
+  'mci:account-group', 'mci:account-voice', 'mci:human-greeting-variant', 'mci:scale-balance', 'mci:piggy-bank', 'mci:cash-multiple',
+  'mci:calendar-heart', 'mci:map-marker-path', 'mci:star-shooting', 'mci:party-popper',
 ];
 
 /** Icon picker. With `allowNone`, the field can be cleared — `value` is then undefined
@@ -163,8 +170,8 @@ export function IconField({ value, onChange, allowNone }: { value: string | unde
           borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 8, cursor: 'pointer' as any,
         }}
       >
-        <Ionicons name={(value ?? 'remove-circle-outline') as any} size={22} color={value ? colors.primary : colors.textLight} />
-        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value ? value.replace('-outline', '') : t('editor.icon.none')}</Text>
+        <AppIcon name={value ?? 'remove-circle-outline'} size={22} color={value ? colors.primary : colors.textLight} />
+        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value ? value.replace(/^mci:/, '').replace('-outline', '') : t('editor.icon.none')}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.textLight} />
       </Pressable>
 
@@ -195,7 +202,7 @@ export function IconField({ value, onChange, allowNone }: { value: string | unde
                     onPress={() => { onChange(icon); setOpen(false); }}
                     style={{ width: 52, height: 52, borderRadius: RADII.md, alignItems: 'center', justifyContent: 'center', backgroundColor: sel ? colors.primarySoft : colors.appBackgroundAlt, borderWidth: sel ? 1.5 : 1, borderColor: sel ? colors.primary : colors.border, cursor: 'pointer' as any }}
                   >
-                    <Ionicons name={icon as any} size={22} color={sel ? colors.primary : colors.textMuted} />
+                    <AppIcon name={icon} size={22} color={sel ? colors.primary : colors.textMuted} />
                   </Pressable>
                 );
               })}

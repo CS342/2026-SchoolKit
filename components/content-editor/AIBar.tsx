@@ -161,7 +161,7 @@ export function AIBar() {
           <Pressable
             onPress={confirm}
             disabled={busy}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 16, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: (busy ? 'default' : 'pointer') as any }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 16, borderRadius: RADII.button, backgroundColor: colors.primaryFill, cursor: (busy ? 'default' : 'pointer') as any }}
           >
             {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={15} color="#fff" />}
             <Text style={{ ...TYPOGRAPHY.button, fontSize: 14, color: '#fff' }}>{t('editor.ai.applyChange')}</Text>
@@ -230,7 +230,7 @@ export function AIBar() {
           onPress={run}
           disabled={!canSend}
           accessibilityLabel={t('editor.ai.send')}
-          style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? colors.primary : colors.disabledButton, cursor: (canSend ? 'pointer' : 'default') as any }}
+          style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? colors.primaryFill : colors.disabledButton, cursor: (canSend ? 'pointer' : 'default') as any }}
         >
           {busy ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
         </Pressable>

@@ -23,7 +23,8 @@ import {
 import { REGISTRY } from '../../features/content/registry';
 import { hostnameOf } from '../../features/content/links';
 import { useBlockCtx, BlockCtx } from './context';
-import { safeIcon, Markdown } from './util';
+import { Markdown } from './util';
+import { AppIcon } from '../ui/AppIcon';
 import { BUBBLE_SIZE } from './styles';
 
 const IS_WEB = Platform.OS === 'web';
@@ -41,7 +42,7 @@ export function HeroTitle({ block }: { block: HeroBlock }) {
     <View>
       {block.eyebrow ? (
         <View style={[styles.eyebrowPill, { backgroundColor: eyebrowHex + '18' }]}>
-          {block.eyebrowIcon ? <Ionicons name={safeIcon(block.eyebrowIcon)} size={14} color={eyebrowHex} /> : null}
+          {block.eyebrowIcon ? <AppIcon name={block.eyebrowIcon} size={14} color={eyebrowHex} /> : null}
           <Text style={[styles.eyebrowText, { color: eyebrowHex }]}>{block.eyebrow}</Text>
         </View>
       ) : null}
@@ -75,7 +76,7 @@ export function CalloutBlock({ block }: { block: CalloutT }) {
   return (
     <View style={[styles.callout, { marginBottom: 0, backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.card]}>
       <View style={[styles.calloutIcon, { backgroundColor: iconBg }]}>
-        <Ionicons name={safeIcon(block.icon)} size={22} color={iconFg} />
+        <AppIcon name={block.icon} size={22} color={iconFg} />
       </View>
       <Text style={[styles.calloutText, { color: colors.textDark }]}>{block.text}</Text>
     </View>
@@ -95,7 +96,7 @@ function AccordionRow({ item, expanded, onToggle }: { item: AccordionItem; expan
     <View style={[styles.costCard, { backgroundColor: colors.white, borderColor: expanded ? hex + '55' : colors.borderCard }]}>
       <TouchableOpacity activeOpacity={0.85} onPress={onToggle} style={[styles.costHeader, IS_WEB && styles.pointer]}>
         <View style={[styles.costIconCircle, { backgroundColor: hex + '1A' }]}>
-          <Ionicons name={safeIcon(item.icon)} size={22} color={hex} />
+          <AppIcon name={item.icon} size={22} color={hex} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.costTitle, { color: colors.textDark }]}>{item.title}</Text>
@@ -147,7 +148,7 @@ export function CardGridBlock({ block }: { block: CardGridT }) {
           const card = (
             <View style={[styles.teamCard, web && styles.teamCardWeb, web && { height: '100%' }, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.small]}>
               <View style={[styles.teamIconCircle, { backgroundColor: hex + '18' }]}>
-                <Ionicons name={safeIcon(m.icon)} size={26} color={hex} />
+                <AppIcon name={m.icon} size={26} color={hex} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.teamRole, { color: colors.textDark }]}>{m.title}</Text>
@@ -205,7 +206,7 @@ function MapBubble({ step, index, onPress }: { step: StepperT['steps'][number]; 
           <View style={[styles.bubbleNumber, { backgroundColor: hex }]}>
             <Text style={styles.bubbleNumberText}>{index + 1}</Text>
           </View>
-          <Ionicons name={safeIcon(step.icon)} size={30} color={hex} style={{ marginBottom: 8 }} />
+          <AppIcon name={step.icon} size={30} color={hex} style={{ marginBottom: 8 }} />
           <Text style={[styles.bubbleText, { color: hex }]} numberOfLines={3}>{step.title}</Text>
         </View>
       </TouchableOpacity>
@@ -243,7 +244,7 @@ export function StepperBlock({ block }: { block: StepperT }) {
                     <View style={[styles.stepBadge, { backgroundColor: hex }]}>
                       <Text style={styles.stepBadgeText}>{index + 1}</Text>
                     </View>
-                    <Ionicons name={safeIcon(step.icon)} size={26} color={hex} />
+                    <AppIcon name={step.icon} size={26} color={hex} />
                   </View>
                   <Text style={[styles.stepLabel, { color: hex }]} numberOfLines={2}>{step.title}</Text>
                 </TouchableOpacity>
@@ -281,7 +282,7 @@ export function LinkListBlock({ block }: { block: LinkListT }) {
                 <TouchableOpacity activeOpacity={0.85}>
                   <View style={[styles.orgCard, web && styles.orgCardWeb, { backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.small]}>
                     <View style={[styles.orgIconCircle, { backgroundColor: hex + '18' }]}>
-                      <Ionicons name={safeIcon(org.icon)} size={24} color={hex} />
+                      <AppIcon name={org.icon} size={24} color={hex} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.orgName, { color: colors.textDark }]}>{org.name}</Text>
@@ -393,7 +394,7 @@ export function ResourceRefListBlock({ block }: { block: RefListT }) {
                   </View>
                 ) : null}
                 <View style={[styles.refIconCircle, { backgroundColor: r.color + '1A' }]}>
-                  <Ionicons name={safeIcon(r.icon)} size={22} color={r.color} />
+                  <AppIcon name={r.icon} size={22} color={r.color} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.refTitle, { color: colors.textDark }]}>{r.title}</Text>
@@ -502,7 +503,7 @@ export function StatGridBlock({ block }: { block: StatGridT }) {
           return (
             <View key={s.id} style={web ? styles.gridCol : undefined}>
               <View style={[{ padding: 18, borderRadius: 16, borderWidth: 1, alignItems: 'center', backgroundColor: colors.white, borderColor: colors.borderCard }, shadows.small, web && { height: '100%' }]}>
-                {s.icon ? <Ionicons name={safeIcon(s.icon)} size={24} color={hex} style={{ marginBottom: 6 }} /> : null}
+                {s.icon ? <AppIcon name={s.icon} size={24} color={hex} style={{ marginBottom: 6 }} /> : null}
                 <Text style={{ fontSize: 28, fontFamily: 'Raleway_800ExtraBold', color: hex, textAlign: 'center' }}>{s.value}</Text>
                 <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 2 }}>{s.label}</Text>
               </View>
@@ -599,7 +600,7 @@ export function TabsBlock({ block }: { block: TabsT }) {
               onPress={() => setActive(t.id)}
               style={[{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: on ? colors.primary : colors.borderCard, backgroundColor: on ? colors.primarySoft : colors.white }, IS_WEB && { cursor: 'pointer' } as any]}
             >
-              {t.icon ? <Ionicons name={safeIcon(t.icon)} size={15} color={on ? colors.primary : colors.textMuted} /> : null}
+              {t.icon ? <AppIcon name={t.icon} size={15} color={on ? colors.primary : colors.textMuted} /> : null}
               <Text style={{ fontSize: 14, fontFamily: 'Raleway_700Bold', color: on ? colors.primary : colors.textMuted }}>{t.label}</Text>
             </TouchableOpacity>
           );
@@ -646,7 +647,7 @@ function FlipCard({ item, height, onOpen, onMeasure }: {
       style={[{ minHeight: height, flex: 1, padding: FLIP_PAD, borderRadius: 16, borderWidth: 1, backgroundColor: hex + '14', borderColor: hex + '44', alignItems: 'center', justifyContent: 'center' }, shadows.small, IS_WEB && { cursor: 'pointer' } as any]}
     >
       <View onLayout={(e: LayoutChangeEvent) => onMeasure(item.id, Math.ceil(e.nativeEvent.layout.height))} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
-        {item.icon ? <Ionicons name={safeIcon(item.icon)} size={26} color={hex} style={{ marginBottom: 8 }} /> : null}
+        {item.icon ? <AppIcon name={item.icon} size={26} color={hex} style={{ marginBottom: 8 }} /> : null}
         <Text style={{ fontSize: 16, lineHeight: 22, fontFamily: 'Raleway_700Bold', color: colors.textDark, textAlign: 'center' }}>{item.front}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10 }}>
           <Ionicons name="sync-outline" size={13} color={hex} />

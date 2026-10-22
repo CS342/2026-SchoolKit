@@ -27,6 +27,10 @@ const ADMIN_NAV_ITEMS: NavItemDef[] = [
   { labelKey: 'auth.nav.content', path: '/content-pages', activeIcon: 'create', inactiveIcon: 'create-outline' },
 ];
 
+const FEEDBACK_ITEM: NavItemDef = {
+  labelKey: 'auth.nav.feedback', path: '/help-support?section=feedback', activeIcon: 'chatbubble-ellipses', inactiveIcon: 'chatbubble-ellipses-outline',
+};
+
 function NavItem({ labelKey, path, activeIcon, inactiveIcon, isFocused }: {
   labelKey: string; path: string;
   activeIcon: keyof typeof Ionicons.glyphMap;
@@ -112,6 +116,12 @@ export function PersistentSidebar() {
           />
         ))}
       </View>
+
+      {/* Feedback — pinned to the bottom so testers always have a way to reach it.
+          Also available from Settings → Share Feedback. */}
+      <View style={styles.footer}>
+        <NavItem {...FEEDBACK_ITEM} isFocused={isActive('/help-support')} />
+      </View>
     </View>
   );
 }
@@ -122,6 +132,10 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     paddingTop: 24,
     paddingHorizontal: 12,
+  },
+  footer: {
+    marginTop: 'auto',
+    paddingBottom: 20,
   },
   brand: {
     flexDirection: 'row',

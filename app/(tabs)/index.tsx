@@ -29,6 +29,7 @@ import {
 } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../constants/theme';
+import { AppIcon } from '../../components/ui/AppIcon';
 
 // Gap between topic cards in the web dashboard grid.
 const WEB_TOPIC_GAP = SPACING.lg;
@@ -116,7 +117,7 @@ function ProgressStat({
       </View>
       <View style={progressStyles.metaRow}>
         <Text style={[progressStyles.pctText, { color }]}>{t('home.progress.percentComplete', { pct })}</Text>
-        <Text style={[progressStyles.toGo, { color: remaining > 0 ? colors.textMuted : '#10B981' }]}>
+        <Text style={[progressStyles.toGo, { color: remaining > 0 ? colors.textMuted : colors.successText }]}>
           {remaining > 0 ? t('home.progress.toGo', { count: remaining }) : t('home.progress.allDone')}
         </Text>
       </View>
@@ -136,11 +137,11 @@ function TopicStatus({ status, colors }: { status: TopicStatusKind; colors: Them
     <View style={progressStyles.trailing}>
       {status === 'done' ? (
         <View style={progressStyles.statusWrap}>
-          <Ionicons name="checkmark-circle" size={15} color="#10B981" />
-          <Text style={[progressStyles.statusText, { color: '#10B981' }]}>{t('home.status.done')}</Text>
+          <Ionicons name="checkmark-circle" size={15} color={colors.successText} />
+          <Text style={[progressStyles.statusText, { color: colors.successText }]}>{t('home.status.done')}</Text>
         </View>
       ) : status === 'started' ? (
-        <Text style={[progressStyles.statusText, { color: '#DE9A2E' }]}>{t('home.status.inProgress')}</Text>
+        <Text style={[progressStyles.statusText, { color: colors.warningText }]}>{t('home.status.inProgress')}</Text>
       ) : null}
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </View>
@@ -172,7 +173,7 @@ function ContinueCard({
     >
       <View style={continueStyles.row}>
         <View style={[continueStyles.chip, { backgroundColor: resource.color }]}>
-          <Ionicons name={resource.icon as keyof typeof Ionicons.glyphMap} size={24} color="#FFFFFF" />
+          <AppIcon name={resource.icon} size={24} color="#FFFFFF" />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[continueStyles.eyebrow, { color: resource.color }]}>
@@ -275,25 +276,31 @@ export default function ForYouScreen() {
   };
 
   const styles = useMemo(() => makeStyles(colors, isWeb), [colors, isWeb]);
+  // No name yet (skipped onboarding, or still loading): greet without a dangling "Name!".
+  const hasName = !!data.name?.trim();
 
   return (
     <View style={styles.container}>
       <Animated.View style={headerStyle}>
         <ScreenHeader
-          eyebrow={t('home.header.welcomeBack')}
-          title={t('home.header.greeting', { name: data.name })}
+          eyebrow={hasName ? t('home.header.welcomeBack') : undefined}
+          title={hasName ? t('home.header.greeting', { name: data.name.trim() }) : t('home.header.welcomeNoName')}
           left={
-            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.primaryFill }]}>
               {data.profilePicture && data.profilePicture.startsWith('icon:') ? (
                 data.profilePicture === 'icon:initial' || !data.profilePicture.replace('icon:', '')
-                  ? <Text style={[styles.avatarInitial, { color: '#FFFFFF' }]}>{data.name.charAt(0).toUpperCase()}</Text>
+                  ? (hasName
+                    ? <Text style={[styles.avatarInitial, { color: '#FFFFFF' }]}>{data.name.trim().charAt(0).toUpperCase()}</Text>
+                    : <Ionicons name="person" size={22} color="#FFFFFF" />)
                   : <Ionicons name={data.profilePicture.replace('icon:', '') as any} size={22} color="#FFFFFF" />
               ) : data.profilePicture ? (
                 <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
-              ) : (
+              ) : hasName ? (
                 <Text style={[styles.avatarInitial, { color: '#FFFFFF' }]}>
-                  {data.name.charAt(0).toUpperCase()}
+                  {data.name.trim().charAt(0).toUpperCase()}
                 </Text>
+              ) : (
+                <Ionicons name="person" size={22} color="#FFFFFF" />
               )}
             </View>
           }

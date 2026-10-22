@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { COLORS } from '../constants/onboarding-theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * Reusable TTS button that shows play/pause/loading states.
@@ -12,8 +12,8 @@ export function TTSButton({
   isLoading,
   onPress,
   size = 24,
-  color = COLORS.textMuted,
-  activeColor = COLORS.primary,
+  color,
+  activeColor,
   style,
 }: {
   isSpeaking: boolean;
@@ -25,6 +25,9 @@ export function TTSButton({
   style?: any;
 }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const idleColor = color ?? colors.textMuted;
+  const onColor = activeColor ?? colors.primary;
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -33,12 +36,12 @@ export function TTSButton({
       accessibilityRole="button"
     >
       {isLoading ? (
-        <ActivityIndicator size="small" color={activeColor} />
+        <ActivityIndicator size="small" color={onColor} />
       ) : (
         <Ionicons
           name={isSpeaking ? 'pause-circle' : 'volume-high'}
           size={size}
-          color={isSpeaking ? activeColor : color}
+          color={isSpeaking ? onColor : idleColor}
         />
       )}
     </TouchableOpacity>

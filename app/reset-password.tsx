@@ -248,7 +248,7 @@ export default function ResetPasswordScreen() {
                     />
                     {loading && (
                       <View style={styles.loadingOverlay}>
-                        <ActivityIndicator color="#FFFFFF" />
+                        <ActivityIndicator color={colors.primary} />
                       </View>
                     )}
                   </View>

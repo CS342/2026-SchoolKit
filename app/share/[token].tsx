@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
+import { useTheme } from '../../contexts/ThemeContext';
 import type { DesignDocument } from '../../features/design-editor/types/document';
 
 // Dynamically import ReadOnlyViewer only on web (uses Konva/Canvas API)
@@ -26,6 +27,7 @@ interface SharedDesign {
 
 export default function ShareViewerPage() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { token } = useLocalSearchParams<{ token: string }>();
   const [design, setDesign] = useState<SharedDesign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,9 +74,10 @@ export default function ShareViewerPage() {
           justifyContent: 'center',
           alignItems: 'center',
           padding: 20,
+          backgroundColor: colors.appBackground,
         }}
       >
-        <Text style={{ fontSize: 16, textAlign: 'center', color: '#666' }}>
+        <Text style={{ fontSize: 16, textAlign: 'center', color: colors.textMuted }}>
           {t('stories.share.webOnly')}
         </Text>
       </View>
@@ -88,11 +91,11 @@ export default function ShareViewerPage() {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#F3F4F6',
+          backgroundColor: colors.appBackground,
         }}
       >
-        <ActivityIndicator size="large" color="#7B68EE" />
-        <Text style={{ marginTop: 12, color: '#6B7280', fontSize: 14 }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 12, color: colors.textMuted, fontSize: 14 }}>
           {t('stories.share.loading')}
         </Text>
       </View>
@@ -106,7 +109,7 @@ export default function ShareViewerPage() {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#F3F4F6',
+          backgroundColor: colors.appBackground,
         }}
       >
         <Text
@@ -122,13 +125,13 @@ export default function ShareViewerPage() {
           style={{
             fontSize: 18,
             fontWeight: '600',
-            color: '#111',
+            color: colors.textDark,
             marginBottom: 8,
           }}
         >
           {error || t('stories.share.notFound')}
         </Text>
-        <Text style={{ fontSize: 14, color: '#6B7280' }}>
+        <Text style={{ fontSize: 14, color: colors.textMuted }}>
           {t('stories.share.mayHaveExpired')}
         </Text>
       </View>

@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, LayoutAnimation, UIManager, Platform, Animated, StyleSheet } from 'react-native';
 import type { InteractiveComponentObject, ExpandableConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
-import { COLORS, SHADOW_SPECS, RADII, BORDERS } from '../../../../constants/onboarding-theme';
-import { shadow } from '../../../../constants/theme';
+import { SHADOW_SPECS, RADII, BORDERS } from '../../../../constants/onboarding-theme';
+import { shadow, COLORS_LIGHT, COLORS_DARK } from '../../../../constants/theme';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -12,6 +12,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export function RuntimeExpandable({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as ExpandableConfig;
+  const palette = isDark ? COLORS_DARK : COLORS_LIGHT;
   const [isExpanded, setIsExpanded] = useState(config.defaultExpanded);
   const chevronRotation = useRef(new Animated.Value(config.defaultExpanded ? 1 : 0)).current;
 
@@ -73,8 +74,8 @@ export function RuntimeExpandable({ object, isDark = false }: { object: Interact
         borderRadius: RADII.card,
         borderWidth: BORDERS.card,
         overflow: 'hidden',
-        backgroundColor: isDark ? '#1C1C2E' : COLORS.white,
-        borderColor: isExpanded ? COLORS.primary + '50' : (isDark ? '#2A2A42' : COLORS.borderCard),
+        backgroundColor: palette.white,
+        borderColor: isExpanded ? palette.primary + '50' : palette.borderCard,
         ...shadow({ ...SHADOW_SPECS.card, shadowColor: isDark ? '#000' : SHADOW_SPECS.card.shadowColor }),
       }}
     >
@@ -98,7 +99,7 @@ export function RuntimeExpandable({ object, isDark = false }: { object: Interact
             <Text
               style={{
                 fontSize: 14,
-                color: isExpanded ? COLORS.primary : COLORS.textLight,
+                color: isExpanded ? palette.primary : palette.textLight,
               }}
             >
               ▼
@@ -113,7 +114,7 @@ export function RuntimeExpandable({ object, isDark = false }: { object: Interact
           <View
             style={{
               height: StyleSheet.hairlineWidth,
-              backgroundColor: isDark ? '#2A2A42' : COLORS.borderCard,
+              backgroundColor: palette.borderCard,
               marginHorizontal: 16,
             }}
           />

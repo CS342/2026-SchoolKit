@@ -131,6 +131,7 @@ export default function HelpSupportScreen() {
   const [isFocused, setIsFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -183,18 +184,22 @@ export default function HelpSupportScreen() {
   const handleSubmit = async () => {
     if (!feedbackText.trim() || isSubmitting) return;
     setIsSubmitting(true);
+    setSubmitError(false);
     try {
-      await supabase.from('user_questions').insert({
+      // supabase-js reports failures (RLS, no session, offline) via `error`, not by throwing.
+      const { error } = await supabase.from('user_questions').insert({
         user_id: user?.id ?? null,
         question: feedbackText.trim(),
         role: data.role ?? null,
       });
-    } catch {
-      // Fail silently — feedback collection is best-effort
-    } finally {
-      setIsSubmitting(false);
+      if (error) throw error;
       setFeedbackText('');
       setSubmitted(true);
+    } catch {
+      // Keep the text so the user can retry.
+      setSubmitError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -277,20 +282,29 @@ export default function HelpSupportScreen() {
                   onBlur={() => setIsFocused(false)}
                   textAlignVertical="top"
                 />
-                <Text style={[styles.charCount, { color: feedbackText.length >= MAX_CHARS ? colors.error : colors.indicatorInactive }]}>
+                <Text style={[styles.charCount, { color: feedbackText.length >= MAX_CHARS ? colors.error : colors.textLight }]}>
                   {feedbackText.length}/{MAX_CHARS}
                 </Text>
 
+                {submitError ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 12 }}>
+                    <Ionicons name="alert-circle" size={16} color={colors.error} style={{ marginTop: 1 }} />
+                    <Text style={{ flex: 1, fontSize: 14, color: colors.error }}>
+                      {t('profile.feedbackFailed')}. {t('profile.feedbackFailedBody')}
+                    </Text>
+                  </View>
+                ) : null}
+
                 <TouchableOpacity
-                  style={[styles.submitButton, { backgroundColor: canSubmit ? colors.primary : colors.indicatorInactive }]}
+                  style={[styles.submitButton, { backgroundColor: canSubmit ? colors.primaryFill : colors.disabledButton }]}
                   onPress={handleSubmit}
                   disabled={!canSubmit}
                   activeOpacity={0.8}
                 >
                   {isSubmitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={colors.primary} />
                   ) : (
-                    <Text style={styles.submitText}>{t('common.submit')}</Text>
+                    <Text style={[styles.submitText, !canSubmit && { color: colors.disabledText }]}>{t('common.submit')}</Text>
                   )}
                 </TouchableOpacity>
               </View>

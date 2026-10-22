@@ -18,13 +18,13 @@ function getShadowStyle(shadow?: ShadowConfig | null) {
   };
 }
 
-function getGradientProps(gradient: GradientConfig) {
+function getGradientProps(gradient: GradientConfig, isDark = false) {
   const angle = gradient.angle ?? 0;
   const rad = ((angle - 90) * Math.PI) / 180;
   const dx = Math.cos(rad) * 0.5;
   const dy = Math.sin(rad) * 0.5;
   return {
-    colors: gradient.colors as [string, string, ...string[]],
+    colors: gradient.colors.map((c) => getThemeAwareColor(c, isDark)) as [string, string, ...string[]],
     start: { x: 0.5 - dx, y: 0.5 - dy },
     end: { x: 0.5 + dx, y: 0.5 + dy },
   };
@@ -92,7 +92,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
       };
 
       if (object.gradient) {
-        const gp = getGradientProps(object.gradient);
+        const gp = getGradientProps(object.gradient, isDark);
         return (
           <View style={{ ...baseStyle, overflow: 'hidden' }} {...a11y}>
             <LinearGradient
@@ -126,7 +126,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
       };
 
       if (object.gradient) {
-        const gp = getGradientProps(object.gradient);
+        const gp = getGradientProps(object.gradient, isDark);
         return (
           <View style={{ ...baseStyle, overflow: 'hidden' }} {...a11y}>
             <LinearGradient
@@ -276,7 +276,7 @@ export function RuntimeObject({ object, parentWidth, isDark = false }: { object:
       };
 
       if (object.gradient) {
-        const gp = getGradientProps(object.gradient);
+        const gp = getGradientProps(object.gradient, isDark);
         return (
           <View style={badgeStyle} {...a11y}>
             <LinearGradient colors={gp.colors} start={gp.start} end={gp.end} style={StyleSheet.absoluteFill} />

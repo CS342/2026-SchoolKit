@@ -115,7 +115,7 @@ export function ReportCommentModal({ visible, onClose, onSubmit }: ReportComment
               <TextInput
                 style={styles.textInput}
                 placeholder={t('stories.reportTellMore')}
-                placeholderTextColor={colors.textLight + '80'}
+                placeholderTextColor={colors.inputPlaceholder}
                 value={details}
                 onChangeText={setDetails}
                 multiline
@@ -210,9 +210,9 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: RADII.card,
-    backgroundColor: isDark ? c.backgroundLight : c.appBackground,
+    backgroundColor: isDark ? c.white : c.appBackground,
     borderWidth: 1.5,
-    borderColor: isDark ? c.borderCard : 'transparent',
+    borderColor: isDark ? c.borderPurple : 'transparent',
   },
   optionSelected: {
     borderColor: c.primary,
@@ -223,7 +223,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: isDark ? c.borderCard : c.border,
+    borderColor: isDark ? c.textLight : c.border,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -235,7 +235,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: c.primary,
+    backgroundColor: c.primaryFill,
   },
   optionText: {
     fontSize: 15,
@@ -247,7 +247,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: isDark ? c.backgroundLight : c.appBackground,
+    backgroundColor: isDark ? c.white : c.appBackground,
     borderRadius: RADII.card,
     padding: 16,
     fontSize: 15,
@@ -256,7 +256,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     marginTop: 4,
     marginBottom: 20,
     borderWidth: 1.5,
-    borderColor: isDark ? c.borderCard : c.border,
+    borderColor: isDark ? c.borderPurple : c.border,
   },
   footer: {
     marginTop: 16,

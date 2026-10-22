@@ -155,6 +155,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: c.primary,
+    backgroundColor: c.primaryFill,
   },
 });

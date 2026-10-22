@@ -199,8 +199,8 @@ function StackedCard({
     <TouchableOpacity activeOpacity={0.9} onPress={handlePress}>
       <Animated.View style={[styles.stackedCardShadow, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
         <View style={[styles.stackedCard, { backgroundColor: isDark ? color + "CC" : color, borderColor: color }]}>
-          {isMyth && <Text style={[styles.stackedMythLabel, { color: isDark ? colors.white : colors.textDark }]}>MYTH</Text>}
-          <Text style={[styles.stackedCardText, { color: isDark ? colors.white : colors.textDark }]} numberOfLines={2}>{displayTitle}</Text>
+          {isMyth && <Text style={[styles.stackedMythLabel, { color: "#2C2A3A" }]}>MYTH</Text>}
+          <Text style={[styles.stackedCardText, { color: "#2C2A3A" }]} numberOfLines={2}>{displayTitle}</Text>
           <View style={styles.cardLinesBottom}>
             <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.4)" }]} />
             <View style={[styles.cardLine, { backgroundColor: "rgba(255,255,255,0.3)" }]} />
@@ -414,7 +414,7 @@ function ExpandedCardModal({
                   </>
                 )}
                 <View style={styles.expandedFrontContent}>
-                  <Text style={[styles.expandedFrontTitle, { color: isDark ? colors.white : colors.textDark }]}>{displayTitle}</Text>
+                  <Text style={[styles.expandedFrontTitle, { color: "#2C2A3A" }]}>{displayTitle}</Text>
                 </View>
               </View>
               <View style={styles.expandedCardLines}>
@@ -774,7 +774,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
   speakerButton: { padding: 8 },
   factBigText: { fontSize: 34, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase" },
   mythBadge: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
-  mythBadgeText: { fontSize: 13, fontWeight: "700", color: c.white, letterSpacing: 3, textTransform: "uppercase" },
+  mythBadgeText: { fontSize: 13, fontWeight: "700", color: "#2C2A3A", letterSpacing: 3, textTransform: "uppercase" },
   mythImage: { position: "absolute", top: "50%", left: "50%", marginTop: -120, marginLeft: -120, width: 240, height: 240, zIndex: 20 },
   backHeadline: { fontSize: 28, fontWeight: "800", textAlign: "left", marginBottom: 12, letterSpacing: -0.5, lineHeight: 34 },
   backDivider: { height: 2, width: "40%", borderRadius: 1, marginBottom: 20 },

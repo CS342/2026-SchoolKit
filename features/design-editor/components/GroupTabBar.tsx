@@ -13,7 +13,7 @@ export function GroupTabBar() {
   const addGroup = useEditorStore((s) => s.addGroup);
   const removeGroup = useEditorStore((s) => s.removeGroup);
   const objects = useEditorStore((s) => s.objects);
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   if (!editingComponentId) return null;
 
@@ -70,7 +70,8 @@ export function GroupTabBar() {
         display: 'flex',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: 'rgba(255,255,255,0.95)',
+        backgroundColor: isDark ? colors.white : 'rgba(255,255,255,0.95)',
+        border: isDark ? `1px solid ${colors.borderCard}` : 'none',
         borderRadius: 10,
         padding: '4px 6px',
         boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
@@ -123,7 +124,7 @@ export function GroupTabBar() {
                 padding: canRemove ? '6px 24px 6px 14px' : '6px 14px',
                 borderRadius: 6,
                 border: 'none',
-                backgroundColor: isActive ? colors.primary : 'transparent',
+                backgroundColor: isActive ? colors.primaryFill : 'transparent',
                 color: isActive ? '#fff' : colors.textDark,
                 cursor: 'pointer',
                 fontSize: 12,
@@ -146,7 +147,7 @@ export function GroupTabBar() {
                   height: 16,
                   borderRadius: 8,
                   border: 'none',
-                  backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)',
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.3)' : colors.borderCard,
                   color: isActive ? '#fff' : colors.textLight,
                   cursor: 'pointer',
                   fontSize: 10,

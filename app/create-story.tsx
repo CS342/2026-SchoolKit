@@ -27,7 +27,6 @@ import { StoryStartersModal } from '../components/StoryStartersModal';
 import { TopicTagsModal } from '../components/TopicTagsModal';
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from '../components/StoryCard';
 import {
-  COLORS,
   TYPOGRAPHY,
   SPACING,
   RADII,
@@ -269,14 +268,14 @@ export default function CreateStoryScreen() {
                   {storyTags.map(tag => {
                     const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
                     return (
-                      <View key={tag} style={[styles.tagBadge, { backgroundColor: color.bg }]}>
-                        <Text style={[styles.tagText, { color: color.text }]}>{tag}</Text>
+                      <View key={tag} style={[styles.tagBadge, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
+                        <Text style={[styles.tagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
                         <Pressable 
                           onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
                           hitSlop={8}
                           style={{ marginLeft: 4 }}
                         >
-                          <Ionicons name="close-circle" size={18} color={color.text} />
+                          <Ionicons name="close-circle" size={18} color={isDark ? color.bg : color.text} />
                         </Pressable>
                       </View>
                     );
@@ -321,7 +320,7 @@ export default function CreateStoryScreen() {
               <Ionicons
                 name={postAnonymously ? 'eye-off' : 'eye'}
                 size={20}
-                color={postAnonymously ? colors.primary : COLORS.textLight}
+                color={postAnonymously ? colors.primary : colors.textLight}
               />
               <View style={{ flex: 1 }}>
                 <Text style={styles.anonymousLabel}>{t('stories.postAnonymously')}</Text>
@@ -335,7 +334,7 @@ export default function CreateStoryScreen() {
             <Switch
               value={postAnonymously}
               onValueChange={setPostAnonymously}
-              trackColor={{ false: COLORS.borderCard, true: colors.primary }}
+              trackColor={{ false: colors.indicatorInactive, true: colors.primary }}
               thumbColor="#FFFFFF"
               disabled={isExhausted}
             />
@@ -424,7 +423,7 @@ export default function CreateStoryScreen() {
                     ? t(storyTags.length === 1 ? 'stories.tagsSelectedOne' : 'stories.tagsSelectedOther', { count: storyTags.length })
                     : t('stories.selectTopicTags')}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color={COLORS.textLight} />
+                <Ionicons name="chevron-down" size={20} color={colors.textLight} />
               </Pressable>
 
               {storyTags.length > 0 && (
@@ -432,15 +431,15 @@ export default function CreateStoryScreen() {
                   {storyTags.map((tag) => {
                     const color = TAG_COLORS[tag] ?? DEFAULT_TAG_COLOR;
                     return (
-                      <View key={tag} style={[styles.selectedTagChip, { backgroundColor: color.bg }]}>
-                        <Text style={[styles.selectedTagText, { color: color.text }]}>{tag}</Text>
+                      <View key={tag} style={[styles.selectedTagChip, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
+                        <Text style={[styles.selectedTagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
                         {!isExhausted && (
                           <Pressable
                             onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
                             hitSlop={8}
                             style={{ marginLeft: 4 }}
                           >
-                            <Ionicons name="close-circle" size={16} color={color.text} />
+                            <Ionicons name="close-circle" size={16} color={isDark ? color.bg : color.text} />
                           </Pressable>
                         )}
                       </View>
@@ -641,7 +640,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
     lookingForPreview: {
       marginTop: 16,
       padding: 12,
-      backgroundColor: isDark ? c.backgroundLight : '#F0F0F7',
+      backgroundColor: isDark ? c.backgroundLight : c.appBackgroundAlt,
       borderRadius: 12,
     },
     lookingForText: {
@@ -684,7 +683,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       justifyContent: 'flex-end',
     },
     settingsModalContent: {
-      backgroundColor: isDark ? c.background : c.white,
+      backgroundColor: c.white,
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
       paddingTop: 24,
@@ -839,7 +838,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
       justifyContent: 'center',
     },
     primaryBtn: {
-      backgroundColor: c.primary,
+      backgroundColor: c.primaryFill,
     },
     primaryBtnDisabled: {
       backgroundColor: c.borderCard,
@@ -847,7 +846,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
     primaryBtnText: {
       fontSize: 16,
       fontWeight: '700',
-      color: c.white,
+      color: '#FFFFFF',
     },
     primaryBtnTextDisabled: {
       color: c.textLight,
@@ -855,21 +854,21 @@ const makeStyles = (c: any, isDark: boolean, fontScale = 1) => {
     deleteBtn: {
       backgroundColor: isDark ? c.appBackground : c.white,
       borderWidth: 1.5,
-      borderColor: '#E53935',
+      borderColor: c.destructive,
     },
     deleteBtnText: {
       fontSize: 16,
       fontWeight: '700',
-      color: '#E53935',
+      color: c.destructive,
     },
     deleteBtnSolid: {
-      backgroundColor: '#E53935',
+      backgroundColor: c.destructiveFill,
       borderWidth: 0,
     },
     deleteBtnTextSolid: {
       fontSize: 16,
       fontWeight: '700',
-      color: c.white,
+      color: '#FFFFFF',
     },
     topicReminder: {
       flexDirection: 'row',

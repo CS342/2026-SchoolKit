@@ -27,7 +27,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 import { generateSpeech, resolveVoice } from "../services/elevenLabs";
-import { COLORS, TYPOGRAPHY } from "../constants/onboarding-theme";
+import { TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "../components/StoryCard";
 import { ReportStoryModal } from "../components/ReportStoryModal";
 import { ReportCommentModal } from "../components/ReportCommentModal";
@@ -251,7 +251,7 @@ function CommentItem({
         <Ionicons
           name={isLiked ? "heart" : "heart-outline"}
           size={14}
-          color={isLiked ? "#E53935" : colors.textLight}
+          color={isLiked ? colors.destructive : colors.textLight}
         />
         {comment.like_count > 0 && (
           <Text style={[styles.likeCount, isLiked && styles.likeCountActive]}>
@@ -302,7 +302,7 @@ const makeCommentStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, 
       color: c.textLight,
     },
     likeCountActive: {
-      color: "#E53935",
+      color: c.destructive,
     },
   });
 };
@@ -802,7 +802,7 @@ export default function StoryDetailScreen() {
           <TextInput
             style={styles.commentInput}
             placeholder={t('stories.commentPlaceholder')}
-            placeholderTextColor={COLORS.inputPlaceholder}
+            placeholderTextColor={colors.inputPlaceholder}
             value={commentText}
             onChangeText={setCommentText}
             multiline
@@ -819,7 +819,7 @@ export default function StoryDetailScreen() {
               <Ionicons
                 name="send"
                 size={22}
-                color={commentText.trim() ? colors.primary : COLORS.textLight}
+                color={commentText.trim() ? colors.primary : colors.textLight}
               />
             )}
           </TouchableOpacity>
@@ -832,7 +832,7 @@ export default function StoryDetailScreen() {
             <Ionicons
               name={postAnonymously ? "eye-off" : "eye-off-outline"}
               size={13}
-              color={postAnonymously ? colors.primary : COLORS.textLight}
+              color={postAnonymously ? colors.primary : colors.textLight}
             />
             <Text style={[styles.anonToggleText, postAnonymously && { color: colors.primary }]}>
               {postAnonymously ? t('stories.postingAnonymously') : t('stories.postAnonymously')}
@@ -983,21 +983,21 @@ export default function StoryDetailScreen() {
                 {isLoadingAudio ? (
                   <ActivityIndicator
                     size="small"
-                    color={isSpeaking ? COLORS.white : colors.primary}
+                    color={isSpeaking ? "#FFFFFF" : colors.primary}
                     style={{ marginRight: 6 }}
                   />
                 ) : (
                   <Ionicons
                     name={isSpeaking ? "pause" : "play"}
                     size={16}
-                    color={isSpeaking ? COLORS.white : colors.primary}
+                    color={isSpeaking ? "#FFFFFF" : colors.primary}
                     style={{ marginRight: 6 }}
                   />
                 )}
                 <Text
                   style={[
                     styles.listenBtnText,
-                    isSpeaking && { color: COLORS.white },
+                    isSpeaking && { color: "#FFFFFF" },
                   ]}
                 >
                   {isLoadingAudio
@@ -1070,12 +1070,12 @@ export default function StoryDetailScreen() {
                 <View style={[styles.previousVersionContainer, { backgroundColor: isDark ? colors.borderCard : colors.appBackgroundAlt, borderColor: colors.borderCard }]}>
                   <Text style={styles.previousVersionTitleText}>{t('stories.originalSubmittedVersion')}</Text>
                   {story.previous_title && (
-                    <Text style={[styles.storyTitle, { fontSize: 18, color: COLORS.textLight, marginBottom: 8 }]}>
+                    <Text style={[styles.storyTitle, { fontSize: 18, color: colors.textLight, marginBottom: 8 }]}>
                       {story.previous_title}
                     </Text>
                   )}
                   {story.previous_body && (
-                    <Text style={[styles.storyBody, { color: COLORS.textMuted }]}>
+                    <Text style={[styles.storyBody, { color: colors.textMuted }]}>
                       {story.previous_body}
                     </Text>
                   )}
@@ -1120,11 +1120,11 @@ export default function StoryDetailScreen() {
                       <Ionicons
                         name={liked ? "heart" : "heart-outline"}
                         size={24}
-                        color={liked ? "#E53935" : COLORS.textLight}
+                        color={liked ? colors.destructive : colors.textLight}
                       />
                     </RNAnimated.View>
                     <Text
-                      style={[styles.actionText, liked && { color: "#E53935" }]}
+                      style={[styles.actionText, liked && { color: colors.destructive }]}
                     >
                       {story.like_count}
                     </Text>
@@ -1139,7 +1139,7 @@ export default function StoryDetailScreen() {
                     <Ionicons
                       name="chatbubble-outline"
                       size={22}
-                      color={COLORS.textLight}
+                      color={colors.textLight}
                     />
                     <Text style={styles.actionText}>{comments.length}</Text>
                   </TouchableOpacity>
@@ -1159,7 +1159,7 @@ export default function StoryDetailScreen() {
                         <Ionicons
                           name={isStoryReported(id || "") ? "flag" : "flag-outline"}
                           size={22}
-                          color={isStoryReported(id || "") ? colors.error : COLORS.textLight}
+                          color={isStoryReported(id || "") ? colors.error : colors.textLight}
                         />
                       </TouchableOpacity>
                       {isModeratorMode && isStoryReported(id || "") && (
@@ -1188,7 +1188,7 @@ export default function StoryDetailScreen() {
                       <Ionicons
                         name={downloaded ? "checkmark-circle" : "download-outline"}
                         size={24}
-                        color={downloaded ? colors.primary : COLORS.textLight}
+                        color={downloaded ? colors.primary : colors.textLight}
                       />
                     </RNAnimated.View>
                   </TouchableOpacity>
@@ -1202,7 +1202,7 @@ export default function StoryDetailScreen() {
                       <Ionicons
                         name={bookmarked ? "bookmark" : "bookmark-outline"}
                         size={24}
-                        color={bookmarked ? colors.primary : COLORS.textLight}
+                        color={bookmarked ? colors.primary : colors.textLight}
                       />
                     </RNAnimated.View>
                   </TouchableOpacity>
@@ -1353,7 +1353,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     },
     meta: {
       fontSize: fs(12),
-      color: COLORS.textLight,
+      color: c.textLight,
       fontWeight: "400",
       marginBottom: 10,
     },
@@ -1374,7 +1374,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     previousVersionTitleText: {
       fontSize: fs(12),
       fontWeight: '600',
-      color: COLORS.textLight,
+      color: c.textLight,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
       marginBottom: 12,
@@ -1433,7 +1433,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       borderRadius: 100,
     },
     listenBtnPlaying: {
-      backgroundColor: c.primary,
+      backgroundColor: c.primaryFill,
     },
     listenBtnText: {
       fontSize: fs(14),
@@ -1483,7 +1483,7 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
     actionText: {
       fontSize: fs(14),
       fontWeight: "500",
-      color: COLORS.textLight,
+      color: c.textLight,
     },
     commentsHeader: {
       flexDirection: 'row',
@@ -1559,18 +1559,18 @@ const makeStyles = (c: typeof import("../constants/theme").COLORS_LIGHT, _isDark
       paddingHorizontal: 10,
       paddingVertical: 5,
       borderRadius: 100,
-      backgroundColor: COLORS.appBackground,
+      backgroundColor: c.appBackground,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: c.borderCard,
     },
     anonToggleActive: {
-      backgroundColor: COLORS.primary + "12",
-      borderColor: COLORS.primary + "40",
+      backgroundColor: c.primary + "12",
+      borderColor: c.primary + "40",
     },
     anonToggleText: {
       fontSize: fs(12),
       fontWeight: "500",
-      color: COLORS.textLight,
+      color: c.textLight,
     },
     guestCommentWrapper: {
       backgroundColor: c.white,

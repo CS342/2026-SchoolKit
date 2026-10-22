@@ -205,15 +205,15 @@ export default function StoriesScreen() {
               {isModerator && (
                 <Pressable
                   onPress={() => setIsModeratorMode((v) => !v)}
-                  style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primaryFill, borderColor: colors.primary }]}
                   hitSlop={8}
                 >
                   <Ionicons
                     name={isModeratorMode ? "shield" : "shield-outline"}
                     size={17}
-                    color={isModeratorMode ? colors.white : colors.textLight}
+                    color={isModeratorMode ? '#FFFFFF' : colors.textLight}
                   />
-                  {!isModeratorMode && pendingCount > 0 && <View style={[styles.modDot, { backgroundColor: colors.error, borderColor: colors.white }]} />}
+                  {!isModeratorMode && pendingCount > 0 && <View style={[styles.modDot, { backgroundColor: colors.destructiveFill, borderColor: colors.white }]} />}
                 </Pressable>
               )}
               <Pressable onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
@@ -273,11 +273,11 @@ export default function StoriesScreen() {
                       return (
                         <Pressable
                           key={tag}
-                          style={[styles.webTagPill, { backgroundColor: tc.bg }]}
+                          style={[styles.webTagPill, { backgroundColor: isDark ? tc.text + '30' : tc.bg }]}
                           onPress={() => setSelectedTags((p) => p.filter((t) => t !== tag))}
                         >
-                          <Text style={[styles.webTagPillText, { color: tc.text }]}>{tag}</Text>
-                          <Ionicons name="close" size={12} color={tc.text} />
+                          <Text style={[styles.webTagPillText, { color: isDark ? tc.bg : tc.text }]}>{tag}</Text>
+                          <Ionicons name="close" size={12} color={isDark ? tc.bg : tc.text} />
                         </Pressable>
                       );
                     })}
@@ -334,7 +334,7 @@ export default function StoriesScreen() {
                 <View style={[styles.rejectedBanner, { borderRadius: 12, marginBottom: 12, backgroundColor: colors.error + "0D", borderColor: colors.error + "25" }]}>
                   <Pressable style={styles.rejectedBannerContent} onPress={() => router.push("/rejected-stories" as any)}>
                     <View style={styles.rejectedBannerLeft}>
-                      <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
+                      <View style={[styles.rejectedDot, { backgroundColor: colors.destructiveFill }]} />
                       <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
                         {t(rejectedCount === 1 ? 'stories.needsRevisionOne' : 'stories.needsRevisionOther', { count: rejectedCount })}
                       </Text>
@@ -389,14 +389,14 @@ export default function StoriesScreen() {
                     {t('stories.shareCardBody')}
                   </Text>
                   {isAnonymous ? (
-                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/auth" as any)}>
-                      <Ionicons name="lock-closed-outline" size={15} color={colors.white} />
-                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>{t('stories.signInToShare')}</Text>
+                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primaryFill }]} onPress={() => router.push("/auth" as any)}>
+                      <Ionicons name="lock-closed-outline" size={15} color="#FFFFFF" />
+                      <Text style={styles.webShareBtnText}>{t('stories.signInToShare')}</Text>
                     </Pressable>
                   ) : (
-                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-story" as any)}>
-                      <Ionicons name="create-outline" size={15} color={colors.white} />
-                      <Text style={[styles.webShareBtnText, { color: colors.white }]}>{t('stories.writeAStory')}</Text>
+                    <Pressable style={[styles.webShareBtn, { backgroundColor: colors.primaryFill }]} onPress={() => router.push("/create-story" as any)}>
+                      <Ionicons name="create-outline" size={15} color="#FFFFFF" />
+                      <Text style={styles.webShareBtnText}>{t('stories.writeAStory')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -464,17 +464,17 @@ export default function StoriesScreen() {
             {isModerator && (
               <Pressable
                 onPress={() => setIsModeratorMode((v) => !v)}
-                style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primaryFill, borderColor: colors.primary }]}
                 hitSlop={8}
               >
                 <Ionicons
                   name={isModeratorMode ? "shield" : "shield-outline"}
                   size={17}
-                  color={isModeratorMode ? colors.white : colors.textLight}
+                  color={isModeratorMode ? '#FFFFFF' : colors.textLight}
                 />
                 {/* Pending dot — only when mod mode is off */}
                 {!isModeratorMode && pendingCount > 0 && (
-                  <View style={[styles.modDot, { backgroundColor: colors.error, borderColor: colors.white }]} />
+                  <View style={[styles.modDot, { backgroundColor: colors.destructiveFill, borderColor: colors.white }]} />
                 )}
               </Pressable>
             )}
@@ -558,8 +558,8 @@ export default function StoriesScreen() {
                 end={{ x: 1, y: 0 }}
                 style={[styles.chip, styles.chipActive]}
               >
-                <Ionicons name="options" size={16} color={colors.white} />
-                <Text style={[styles.chipText, { color: colors.white }, styles.chipTextActive]}>
+                <Ionicons name="options" size={16} color="#FFFFFF" />
+                <Text style={[styles.chipText, styles.chipTextActive]}>
                   {t('stories.filter')}
                 </Text>
                 <View
@@ -607,13 +607,13 @@ export default function StoriesScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.chipText, { color: colors.white }]}>
+                  <Text style={[styles.chipText, { color: '#FFFFFF' }]}>
                     {tag}
                   </Text>
                   <Ionicons
                     name="close"
                     size={14}
-                    color={colors.white}
+                    color="#FFFFFF"
                     style={{ marginLeft: 4 }}
                   />
                 </View>
@@ -650,10 +650,10 @@ export default function StoriesScreen() {
                 <Ionicons
                   name={option.icon}
                   size={16}
-                  color={isActive ? colors.white : colors.textMuted}
+                  color={isActive ? '#FFFFFF' : colors.textMuted}
                 />
                 <Text
-                  style={[styles.chipText, { color: isActive ? colors.white : colors.textMuted }, isActive && styles.chipTextActive]}
+                  style={[styles.chipText, { color: isActive ? '#FFFFFF' : colors.textMuted }, isActive && styles.chipTextActive]}
                 >
                   {option.label}
                 </Text>
@@ -679,7 +679,7 @@ export default function StoriesScreen() {
                     <View
                       style={[
                         styles.modDot,
-                        { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.error, borderColor: colors.white },
+                        { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.destructiveFill, borderColor: colors.white },
                       ]}
                     />
                   )}
@@ -697,7 +697,7 @@ export default function StoriesScreen() {
                   <View
                     style={[
                       styles.modDot,
-                      { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.error, borderColor: colors.white },
+                      { position: "absolute", top: 0, left: 0, right: undefined, zIndex: 10, backgroundColor: colors.destructiveFill, borderColor: colors.white },
                     ]}
                   />
                 )}
@@ -751,7 +751,7 @@ export default function StoriesScreen() {
             onPress={() => router.push("/rejected-stories" as any)}
           >
             <View style={styles.rejectedBannerLeft}>
-              <View style={[styles.rejectedDot, { backgroundColor: colors.error }]} />
+              <View style={[styles.rejectedDot, { backgroundColor: colors.destructiveFill }]} />
               <Text style={[styles.rejectedBannerText, { color: colors.error }]}>
                 {t(rejectedCount === 1 ? 'stories.needsRevisionOne' : 'stories.needsRevisionOther', { count: rejectedCount })}
               </Text>
@@ -881,7 +881,7 @@ export default function StoriesScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.fabGradient}
           >
-            <Ionicons name="add" size={28} color={colors.white} />
+            <Ionicons name="add" size={28} color="#FFFFFF" />
           </LinearGradient>
         </Pressable>
       )}
@@ -949,7 +949,7 @@ const makeStyles = (
       justifyContent: "center",
     },
     modBtnActive: {
-      backgroundColor: c.primary,
+      backgroundColor: c.primaryFill,
       borderColor: c.primary,
     },
     modDot: {
@@ -959,7 +959,7 @@ const makeStyles = (
       width: 9,
       height: 9,
       borderRadius: 5,
-      backgroundColor: c.error,
+      backgroundColor: c.destructiveFill,
       borderWidth: 1.5,
       borderColor: c.white,
     },
@@ -1039,7 +1039,7 @@ const makeStyles = (
       color: c.textMuted,
     },
     chipTextActive: {
-      color: c.white,
+      color: '#FFFFFF',
     },
     filterBadge: {
       position: "absolute",
@@ -1189,7 +1189,7 @@ const makeStyles = (
       width: 7,
       height: 7,
       borderRadius: 4,
-      backgroundColor: c.error,
+      backgroundColor: c.destructiveFill,
     },
     rejectedBannerText: {
       fontSize: fs(13),
@@ -1393,14 +1393,14 @@ const makeStyles = (
       alignItems: "center" as const,
       justifyContent: "center" as const,
       gap: 8,
-      backgroundColor: c.primary,
+      backgroundColor: c.primaryFill,
       paddingVertical: 10,
       borderRadius: 100,
     },
     webShareBtnText: {
       fontSize: fs(16),
       fontWeight: "700" as const,
-      color: c.white,
+      color: '#FFFFFF',
     },
     webNormLine: {
       fontSize: fs(13),

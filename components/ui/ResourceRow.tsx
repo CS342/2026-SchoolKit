@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ViewStyle, Pressable, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from './AppIcon';
 import { Card } from './Card';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
 
 interface ResourceRowProps {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  /** Ionicons name or `mci:<name>` (see AppIcon). */
+  icon: string;
   /** Per-item data color for the icon chip (intentionally not themed). */
   color: string;
   category?: string;
@@ -58,7 +60,7 @@ export function ResourceRow({ title, icon, color, category, description, onPress
           ]}
         >
           <View style={[styles.iconChip, { backgroundColor: color }]}>
-            <Ionicons name={icon} size={18} color="#FFFFFF" />
+            <AppIcon name={icon} size={18} color="#FFFFFF" />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.title, { color: colors.textDark }]} numberOfLines={3}>{title}</Text>

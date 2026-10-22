@@ -225,6 +225,8 @@ export default function DesignViewPage() {
     const scale = viewportWidth / design.doc.canvas.width;
     const scaledHeight = design.doc.canvas.height * scale;
     const webHasInteractive = design.doc.objects.some((o: any) => o.type === 'interactive');
+    // Static (Konva) designs are theme-mapped; interactive HTML previews aren't, so they keep the authored canvas.
+    const staticCanvasBg = getThemeAwareColor(design.doc.canvas.background, isDark);
 
     const handleShare = async () => {
       try {
@@ -250,7 +252,7 @@ export default function DesignViewPage() {
             backgroundColor: isDark ? colors.appBackground : colors.white,
             borderBottomWidth: 3,
             borderBottomColor: colors.primary,
-            shadowColor: COLORS.shadow,
+            shadowColor: colors.shadow,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: isDark ? 0.3 : 0.1,
             shadowRadius: 12,
@@ -319,7 +321,7 @@ export default function DesignViewPage() {
           </ScrollView>
         ) : (
           <ScrollView
-            style={{ flex: 1, backgroundColor: design.doc.canvas.background }}
+            style={{ flex: 1, backgroundColor: staticCanvasBg }}
             onScroll={handleScroll}
             scrollEventThrottle={100}
             onLayout={(e) => setLayoutHeight(e.nativeEvent.layout.height)}
@@ -341,12 +343,12 @@ export default function DesignViewPage() {
                   y={0}
                   width={design.doc.canvas.width}
                   height={design.doc.canvas.height}
-                  fill={design.doc.canvas.background}
+                  fill={staticCanvasBg}
                 />
                 {design.doc.objects
                   .filter((o: any) => o.visible)
                   .map((obj: any) => (
-                    <ReadOnlyObjectComponent key={obj.id} object={obj} />
+                    <ReadOnlyObjectComponent key={obj.id} object={obj} isDark={isDark} />
                   ))}
               </Layer>
             </Stage>

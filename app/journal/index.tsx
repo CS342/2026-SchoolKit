@@ -15,7 +15,7 @@ export default function JournalLibraryScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const theme = useTheme();
-    const { colors, appStyles, shadows } = theme;
+    const { colors, appStyles, shadows, isDark } = theme;
     const { notebooks, deleteNotebook, updateNotebook } = useJournal();
     const { width } = useResponsive();
     const [renameId, setRenameId] = React.useState<string | null>(null);
@@ -152,8 +152,8 @@ export default function JournalLibraryScreen() {
                     ))}
                 </View>
                 {/* The visual shelf block */}
-                <View style={[styles.shelfPlank, { backgroundColor: '#D4B895' }]}>
-                    <View style={[styles.shelfEdge, { backgroundColor: '#C0A07B' }]} />
+                <View style={[styles.shelfPlank, { backgroundColor: isDark ? '#6B5A45' : '#D4B895' }]}>
+                    <View style={[styles.shelfEdge, { backgroundColor: isDark ? '#574937' : '#C0A07B' }]} />
                 </View>
             </View>
         );
@@ -191,13 +191,14 @@ export default function JournalLibraryScreen() {
                                 onChangeText={setNewName}
                                 autoFocus
                                 placeholder={t('journal.library.namePlaceholder')}
+                                placeholderTextColor={colors.inputPlaceholder}
                                 maxLength={40}
                             />
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity style={styles.modalBtn} onPress={() => setRenameId(null)}>
                                     <Text style={{ color: colors.textLight }}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary, borderRadius: 8 }]} onPress={confirmRename}>
+                                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primaryFill, borderRadius: 8 }]} onPress={confirmRename}>
                                     <Text style={{ color: "#FFF", fontWeight: "600" }}>{t('journal.library.rename')}</Text>
                                 </TouchableOpacity>
                             </View>
@@ -255,7 +256,7 @@ export default function JournalLibraryScreen() {
                     <button
                         onClick={() => router.push('/journal/create')}
                         style={{
-                            backgroundColor: colors.primary,
+                            backgroundColor: colors.primaryFill,
                             color: '#fff',
                             border: 'none',
                             borderRadius: 12,
@@ -467,7 +468,7 @@ export default function JournalLibraryScreen() {
                                                                 cursor: 'pointer',
                                                                 fontSize: 14,
                                                                 fontFamily: 'inherit',
-                                                                color: opt.danger ? '#D9534F' : colors.textDark,
+                                                                color: opt.danger ? colors.destructive : colors.textDark,
                                                             }}
                                                         >
                                                             {opt.label}
@@ -514,13 +515,14 @@ export default function JournalLibraryScreen() {
                             onChangeText={setNewName}
                             autoFocus
                             placeholder={t('journal.library.namePlaceholder')}
+                            placeholderTextColor={colors.inputPlaceholder}
                             maxLength={40}
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity style={styles.modalBtn} onPress={() => setRenameId(null)}>
                                 <Text style={{ color: colors.textLight }}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary, borderRadius: 8 }]} onPress={confirmRename}>
+                            <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primaryFill, borderRadius: 8 }]} onPress={confirmRename}>
                                 <Text style={{ color: "#FFF", fontWeight: "600" }}>{t('journal.library.rename')}</Text>
                             </TouchableOpacity>
                         </View>

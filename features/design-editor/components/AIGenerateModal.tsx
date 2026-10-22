@@ -382,7 +382,7 @@ export function AIGenerateModal({
                   style={{
                     ...btnBase,
                     padding: '10px 22px',
-                    backgroundColor: prompt.trim() ? colors.primary : colors.borderCard,
+                    backgroundColor: prompt.trim() ? colors.primaryFill : colors.borderCard,
                     color: prompt.trim() ? '#fff' : colors.textLight,
                     fontSize: 14,
                   }}
@@ -539,7 +539,7 @@ export function AIGenerateModal({
                         height: '100%',
                         width: `${Math.min(progress, 100)}%`,
                         borderRadius: 4,
-                        backgroundColor: colors.primary,
+                        backgroundColor: colors.primaryFill,
                         backgroundImage: `linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)`,
                         backgroundSize: '200% 100%',
                         animation: 'shimmer 1.8s ease-in-out infinite',
@@ -687,7 +687,7 @@ export function AIGenerateModal({
                               backgroundColor: c,
                               border:
                                 accentColor === c
-                                  ? '2px solid #111'
+                                  ? `2px solid ${colors.textDark}`
                                   : '2px solid transparent',
                               cursor: 'pointer',
                               outline:
@@ -758,8 +758,8 @@ export function AIGenerateModal({
                   marginTop: 14,
                   padding: '10px 14px',
                   borderRadius: 10,
-                  backgroundColor: '#FEF2F2',
-                  color: '#DC2626',
+                  backgroundColor: isDark ? colors.coralSoft : '#FEF2F2',
+                  color: isDark ? colors.destructive : '#DC2626',
                   fontSize: 13,
                   display: 'flex',
                   alignItems: 'center',
@@ -773,7 +773,7 @@ export function AIGenerateModal({
                     ...btnBase,
                     padding: '4px 12px',
                     fontSize: 12,
-                    backgroundColor: '#DC2626',
+                    backgroundColor: isDark ? colors.destructiveFill : '#DC2626',
                     color: '#fff',
                   }}
                 >
@@ -812,7 +812,7 @@ export function AIGenerateModal({
                   style={{
                     ...btnBase,
                     padding: '10px 24px',
-                    backgroundColor: canGenerate ? colors.primary : colors.borderCard,
+                    backgroundColor: canGenerate ? colors.primaryFill : colors.borderCard,
                     color: canGenerate ? '#fff' : colors.textLight,
                   }}
                 >

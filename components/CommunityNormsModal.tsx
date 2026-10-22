@@ -80,7 +80,7 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
           scrollEventThrottle={16}
         >
           <View style={styles.schoolBanner}>
-            <Ionicons name="school-outline" size={18} color="#5C5C8A" style={{ marginRight: 8, marginTop: 1 }} />
+            <Ionicons name="school-outline" size={18} color={isDark ? colors.textMuted : "#5C5C8A"} style={{ marginRight: 8, marginTop: 1 }} />
             <Text style={styles.schoolBannerText}>{t('stories.schoolBanner')}</Text>
           </View>
 
@@ -179,7 +179,7 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
   schoolBannerText: {
     flex: 1,
     fontSize: 13,
-    color: isDark ? '#A1A1AA' : '#5C5C8A',
+    color: isDark ? c.textMuted : '#5C5C8A',
     lineHeight: 19,
     fontWeight: '500',
   },

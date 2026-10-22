@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Modal, 
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeColors } from '../../constants/theme';
 import { BlockStyles, CARD_HEIGHT_FRONT, CARD_HEIGHT_BACK, FONT_STEPS } from './styles';
-import { safeIcon } from './util';
+import { AppIcon } from '../ui/AppIcon';
 import { ResolvedStep } from './context';
 
 export function StepModal({
@@ -56,6 +56,8 @@ export function StepModal({
   if (!step) return null;
 
   const color = step.colorHex;
+  // The front is a solid fill under white text; dark-mode primary is too light for that.
+  const frontFill = color === colors.primary ? colors.primaryFill : color;
   const frontRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
   const backRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
   const frontOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 0] });
@@ -71,9 +73,9 @@ export function StepModal({
       <Animated.View style={[styles.modalContainer, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
         {/* Front */}
         <Animated.View style={[styles.modalCardShadow, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity, height: cardHeight }]}>
-          <View style={[styles.modalCard, { height: '100%', backgroundColor: color, borderColor: color }]}>
+          <View style={[styles.modalCard, { height: '100%', backgroundColor: frontFill, borderColor: frontFill }]}>
             <View style={styles.frontInner}>
-              <Ionicons name={safeIcon(step.icon)} size={56} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
+              <AppIcon name={step.icon} size={56} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
               <Text style={styles.frontTitle}>{step.title}</Text>
             </View>
           </View>
@@ -85,7 +87,7 @@ export function StepModal({
             <View style={styles.backInner}>
               <View style={styles.backHeader}>
                 <View style={[styles.backIconCircle, { backgroundColor: color + '20' }]}>
-                  <Ionicons name={safeIcon(step.icon)} size={22} color={color} />
+                  <AppIcon name={step.icon} size={22} color={color} />
                 </View>
                 <Text style={[styles.backTitle, { color }]}>{step.title}</Text>
                 <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerBtn} disabled={isLoadingAudio}>

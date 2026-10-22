@@ -47,7 +47,16 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 background-color: #FAF8FC;
+                color-scheme: light;
                 overflow-x: hidden;
+              }
+
+              /* Dark fallback before JS runs (InnerLayout then syncs to the in-app theme) */
+              @media (prefers-color-scheme: dark) {
+                body {
+                  background-color: #191622;
+                  color-scheme: dark;
+                }
               }
 
               #root {
@@ -70,16 +79,24 @@ export default function Root({ children }: { children: React.ReactNode }) {
               }
 
               ::-webkit-scrollbar-track {
-                background: #F4F1F9;
+                background: var(--sk-scroll-track, #F4F1F9);
               }
 
               ::-webkit-scrollbar-thumb {
-                background: #C9C1E4;
+                background: var(--sk-scroll-thumb, #C9C1E4);
                 border-radius: 4px;
               }
 
               ::-webkit-scrollbar-thumb:hover {
-                background: #6B5AD6;
+                background: var(--sk-scroll-thumb-hover, #6B5AD6);
+              }
+
+              @media (prefers-color-scheme: dark) {
+                :root {
+                  --sk-scroll-track: #2A2539;
+                  --sk-scroll-thumb: #3E3854;
+                  --sk-scroll-thumb-hover: #9A8CF2;
+                }
               }
             `,
           }}

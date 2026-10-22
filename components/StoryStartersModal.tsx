@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { AppTheme } from "../constants/theme";
-import { COLORS, RADII, TYPOGRAPHY } from "../constants/onboarding-theme";
+import { RADII, TYPOGRAPHY } from "../constants/onboarding-theme";
 
 const PROMPT_KEYS = [
   "firstDayBack",
@@ -62,7 +62,7 @@ export function StoryStartersModal({
           <View style={styles.header}>
             <Text style={styles.title}>{t('stories.storyStarters')}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
-              <Ionicons name="close" size={24} color={COLORS.textLight} />
+              <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>
 
@@ -90,7 +90,7 @@ export function StoryStartersModal({
                   <Ionicons
                     name="chevron-forward"
                     size={16}
-                    color={COLORS.textLight}
+                    color={colors.textLight}
                   />
                 </Pressable>
                 );
@@ -147,8 +147,8 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     padding: 16,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: isDark ? c.borderCard : "#E5E5EA",
-    backgroundColor: isDark ? c.backgroundLight : c.appBackground,
+    borderColor: isDark ? c.borderPurple : c.border,
+    backgroundColor: isDark ? c.white : c.appBackground,
   },
   optionText: {
     flex: 1,

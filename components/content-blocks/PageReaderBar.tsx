@@ -46,7 +46,7 @@ export function PageReaderBar({ reader }: { reader: PageReader }) {
           disabled={isLoading}
           accessibilityRole="button"
           accessibilityLabel={isPlaying ? t('editor.blocksUi.pause') : error ? t('common.retry') : t('editor.blocksUi.play')}
-          style={[st.playBtn, { backgroundColor: colors.primary }, IS_WEB && ({ cursor: 'pointer' } as any)]}
+          style={[st.playBtn, { backgroundColor: colors.primaryFill }, IS_WEB && ({ cursor: 'pointer' } as any)]}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />

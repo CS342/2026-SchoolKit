@@ -41,6 +41,9 @@ type InputMode = "type" | "write" | "erase" | "image";
 
 const DRAW_COLORS = ["#000000", "#E53935", "#1E88E5", "#43A047", "#FB8C00", "#8E24AA", "#757575"];
 const STROKE_WIDTHS = [2, 4, 8];
+// Journal paper is always white (not themed), so text and controls drawn on it
+// use a fixed ink rather than theme text colors.
+const PAPER_INK = "#2C2A3A";
 
 const getJournalImagesDir = () => {
     return new Directory(Paths.document, "journal-images");
@@ -582,7 +585,7 @@ export default function NotebookScreen() {
         return (
             <View style={[styles.container, { backgroundColor: colors.appBackground, justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={{ color: colors.textDark, fontSize: 18 }}>{t('journal.notebook.notFound')}</Text>
-                <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, padding: 12, backgroundColor: colors.primary, borderRadius: 8 }}>
+                <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, padding: 12, backgroundColor: colors.primaryFill, borderRadius: 8 }}>
                     <Text style={{ color: '#FFF' }}>{t('journal.notebook.goBack')}</Text>
                 </TouchableOpacity>
             </View>
@@ -632,27 +635,27 @@ export default function NotebookScreen() {
                         )}
                     </View>
 
-                    <View style={styles.toolbarCenter}>
+                    <View style={[styles.toolbarCenter, { backgroundColor: colors.inputBackground }]}>
                         <TouchableOpacity
-                            style={[styles.modeBtn, inputMode === "type" && { backgroundColor: colors.primary }]}
+                            style={[styles.modeBtn, inputMode === "type" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => setInputMode("type")}
                         >
                             <Ionicons name="text-outline" size={18} color={inputMode === "type" ? "#FFF" : colors.textLight} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.modeBtn, inputMode === "write" && { backgroundColor: colors.primary }]}
+                            style={[styles.modeBtn, inputMode === "write" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => setInputMode("write")}
                         >
                             <Ionicons name="pencil-outline" size={18} color={inputMode === "write" ? "#FFF" : colors.textLight} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.modeBtn, inputMode === "erase" && { backgroundColor: colors.primary }]}
+                            style={[styles.modeBtn, inputMode === "erase" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => setInputMode("erase")}
                         >
                             <MaterialCommunityIcons name="eraser" size={18} color={inputMode === "erase" ? "#FFF" : colors.textLight} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.modeBtn, inputMode === "image" && { backgroundColor: colors.primary }]}
+                            style={[styles.modeBtn, inputMode === "image" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => {
                                 if (inputMode === "image") {
                                     handleInsertImage();
@@ -682,8 +685,8 @@ export default function NotebookScreen() {
                                             <Text style={[styles.dropdownText, { color: colors.textDark }]}>{t('journal.notebook.clearPage')}</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={styles.dropdownItem} onPress={() => { setShowPageMenu(false); handleDeletePage(); }}>
-                                            <Ionicons name="trash-outline" size={18} color="#E53935" />
-                                            <Text style={[styles.dropdownText, { color: '#E53935' }]}>{t('journal.notebook.deletePage')}</Text>
+                                            <Ionicons name="trash-outline" size={18} color={colors.destructive} />
+                                            <Text style={[styles.dropdownText, { color: colors.destructive }]}>{t('journal.notebook.deletePage')}</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </>
@@ -705,7 +708,7 @@ export default function NotebookScreen() {
                                         key={c}
                                         style={[
                                             styles.colorDot,
-                                            { backgroundColor: c },
+                                            { backgroundColor: c, borderWidth: 1, borderColor: colors.border },
                                             drawColor === c && { borderWidth: 2.5, borderColor: colors.primary },
                                         ]}
                                         onPress={() => setDrawColor(c)}
@@ -719,6 +722,7 @@ export default function NotebookScreen() {
                                         key={sw}
                                         style={[
                                             styles.strokeOption,
+                                            { borderColor: colors.border },
                                             strokeWidth === sw && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
                                         ]}
                                         onPress={() => setStrokeWidth(sw)}
@@ -735,7 +739,7 @@ export default function NotebookScreen() {
                 {inputMode === "image" && (
                     <View style={[styles.drawToolbar, { backgroundColor: colors.white, ...shadows.card }]}>
                         <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.primary, borderRadius: 16 }}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.primaryFill, borderRadius: 16 }}
                             onPress={handleInsertImage}
                         >
                             <Ionicons name="add" size={16} color="#FFF" />
@@ -795,7 +799,7 @@ export default function NotebookScreen() {
                                     setSelectedImageIndex(null);
                                     handleImagesChange(filtered);
                                 }}
-                                primaryColor={colors.primary}
+                                primaryColor={colors.primaryFill}
                             />
                         ))}
                     </View>
@@ -843,7 +847,7 @@ export default function NotebookScreen() {
 
                     {/* Always show the text layer */}
                     <TextInput
-                        style={[styles.textInput, { zIndex: 1 }]}
+                        style={[styles.textInput, { zIndex: 1, color: PAPER_INK }]}
                         multiline
                         placeholder={paths.length === 0 && images.length === 0 ? t('journal.notebook.placeholder') : ""}
                         placeholderTextColor="#AAA"
@@ -870,7 +874,7 @@ export default function NotebookScreen() {
                                 onPress={handleUndo}
                                 disabled={undoStackRef.current.length === 0}
                             >
-                                <Ionicons name="arrow-undo" size={20} color={colors.textDark} />
+                                <Ionicons name="arrow-undo" size={20} color={PAPER_INK} />
                             </TouchableOpacity>
                             <View style={{ width: 1, height: 20, backgroundColor: 'rgba(0,0,0,0.1)' }} />
                             <TouchableOpacity
@@ -878,7 +882,7 @@ export default function NotebookScreen() {
                                 onPress={handleRedo}
                                 disabled={redoStackRef.current.length === 0}
                             >
-                                <Ionicons name="arrow-redo" size={20} color={colors.textDark} />
+                                <Ionicons name="arrow-redo" size={20} color={PAPER_INK} />
                             </TouchableOpacity>
                         </View>
                     )}
@@ -900,7 +904,7 @@ const styles = StyleSheet.create({
     pageArrow: { padding: 6 },
     pageIndicator: { fontSize: 14, fontWeight: "700", minWidth: 36, textAlign: "center" },
     toolbarIconBtn: { padding: 6 },
-    toolbarCenter: { flexDirection: "row", backgroundColor: "#F0F0F4", borderRadius: 20, padding: 3, gap: 1 },
+    toolbarCenter: { flexDirection: "row", borderRadius: 20, padding: 3, gap: 1 },
     modeBtn: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 16 },
     canvasArea: { flex: 1, position: "relative", overflow: 'hidden' },
     // @ts-ignore web-only fixed positioning
@@ -924,6 +928,6 @@ const styles = StyleSheet.create({
     colorDot: { width: 24, height: 24, borderRadius: 12 },
     drawDivider: { width: 1, height: 20, borderRadius: 1 },
     strokeRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    strokeOption: { width: 36, height: 28, borderRadius: 6, borderWidth: 1, borderColor: "#E0E0E0", justifyContent: "center", alignItems: "center" },
+    strokeOption: { width: 36, height: 28, borderRadius: 6, borderWidth: 1, justifyContent: "center", alignItems: "center" },
     strokePreview: { width: 20, borderRadius: 2 },
 });

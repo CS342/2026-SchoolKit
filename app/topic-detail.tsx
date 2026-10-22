@@ -12,7 +12,6 @@ import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ContentColumn, ArticleLayout } from '../components/ui';
 
-const TOPIC_COLORS = [COLORS.primary, COLORS.studentK8, COLORS.staff, COLORS.error];
 
 export default function TopicDetailScreen() {
   const router = useRouter();
@@ -108,7 +107,8 @@ export default function TopicDetailScreen() {
   };
 
   const colorIndex = Math.abs(title?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0);
-  const color = TOPIC_COLORS[colorIndex % TOPIC_COLORS.length];
+  const topicColors = [colors.primary, colors.studentK8, colors.staff, colors.error];
+  const color = topicColors[colorIndex % topicColors.length];
 
   const handleShare = async () => {
     try {

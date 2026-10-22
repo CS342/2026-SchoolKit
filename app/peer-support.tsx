@@ -271,7 +271,7 @@ function PersonIcon({
         style={styles.personIconPressable}
       >
         <PersonSilhouette color={topic.color} styles={styles} />
-        <Text style={[styles.personIconLabel, { color: topic.color }]} numberOfLines={2}>
+        <Text style={styles.personIconLabel} numberOfLines={2}>
           {topic.title}
         </Text>
       </Pressable>
@@ -537,7 +537,7 @@ function BottomSheet({
             </TouchableOpacity>
             {sheetPlayerStatus.isLoaded && (
               <TouchableOpacity onPress={toggleSheetPlaybackRate} style={styles.sheetActionButton} accessibilityLabel="Change speed">
-                <Text style={{ fontSize: 12, fontWeight: '700', color: topic.color }}>{sheetPlaybackRate}x</Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>{sheetPlaybackRate}x</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7} style={styles.sheetActionButton}>
@@ -550,7 +550,7 @@ function BottomSheet({
 
           <View style={[styles.sheetTitleBadge, { backgroundColor: withOpacity(topic.color, 0.15) }]}>
             <Ionicons name={topic.icon as any} size={22} color={topic.color} style={{ marginRight: 10 }} />
-            <Text style={[styles.sheetTitleText, { color: topic.color }]} numberOfLines={2}>
+            <Text style={[styles.sheetTitleText, { color: colors.textDark }]} numberOfLines={2}>
               {topic.fullTitle}
             </Text>
           </View>
@@ -896,6 +896,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
   personIconContainer: { position: "absolute", width: LABEL_WIDTH, alignItems: "center" },
   personIconPressable: { alignItems: "center" },
   personIconLabel: {
+    color: c.textDark,
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center",

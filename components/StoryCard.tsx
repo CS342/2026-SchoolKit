@@ -332,7 +332,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
           <View style={styles.actionLeft}>
             <TouchableOpacity style={styles.actionItem} onPress={handleLike} hitSlop={10} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={liked ? t('stories.a11yUnlike') : t('stories.a11yLike')}>
               <RNAnimated.View style={{ transform: [{ scale: likeScale }] }}>
-                <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? '#E53935' : colors.textLight} />
+                <Ionicons name={liked ? "heart" : "heart-outline"} size={28} color={liked ? colors.destructive : colors.textLight} />
               </RNAnimated.View>
               <Text style={[styles.actionText, liked && styles.actionTextLiked]}>
                 {story.like_count || 0}
@@ -363,7 +363,7 @@ export function StoryCard({ story, index, allowModeration = false, showAuthorSta
             <Text style={styles.modRejectText}>{t('stories.reject')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.modButton, styles.modApprove]} onPress={(e) => { e.stopPropagation(); approveStory(story.id).catch(() => showModError(t('stories.approveFailed'), t)); }}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={colors.white} />
+            <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
             <Text style={styles.modApproveText}>{t('stories.approve')}</Text>
           </TouchableOpacity>
         </View>
@@ -408,7 +408,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } as any : {}),
   },
   myStoryCard: {
-    backgroundColor: c.primarySoft,
+    backgroundColor: isDark ? c.tabActiveBg : c.primarySoft,
   },
   modBanner: {
     backgroundColor: c.warningBg,
@@ -548,7 +548,7 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     color: c.textLight,
   },
   actionTextLiked: {
-    color: '#E53935',
+    color: c.destructive,
   },
   modActions: {
     flexDirection: 'row',
@@ -578,14 +578,14 @@ function makeCardStyles(c: AppTheme['colors'], isDark: boolean, fontScale = 1) {
     fontSize: 13,
   },
   modApprove: {
-    borderColor: c.primary,
-    backgroundColor: c.primary,
+    borderColor: c.primaryFill,
+    backgroundColor: c.primaryFill,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 6,
   },
   modApproveText: {
-    color: c.white,
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 13,
   },

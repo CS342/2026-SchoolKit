@@ -2,13 +2,11 @@
 // wrapper (ports the finances fade+slide), and a minimal markdown renderer.
 import React, { useRef, useEffect } from 'react';
 import { Animated, Text, View, TextStyle, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
-const GLYPHS = (Ionicons as any).glyphMap as Record<string, number>;
+import { isValidIconName } from '../ui/AppIcon';
 
 /** Return the icon name if valid, else a neutral fallback — the AI can't crash a page with a bad icon. */
 export function safeIcon(name?: string): any {
-  if (name && GLYPHS && name in GLYPHS) return name;
+  if (isValidIconName(name)) return name;
   return 'ellipse-outline';
 }
 

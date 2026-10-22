@@ -103,6 +103,7 @@ function HoverButton({
   hoverBg: string;
   title?: string;
 }) {
+  const { colors } = useTheme();
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -111,6 +112,7 @@ function HoverButton({
       onMouseLeave={() => setHovered(false)}
       title={title}
       style={{
+        color: colors.textDark,
         ...style,
         backgroundColor: hovered ? hoverBg : (style.backgroundColor || 'transparent'),
         border: 'none',
@@ -239,7 +241,7 @@ function TextFlyout({
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: 10,
-          backgroundColor: colors.primary,
+          backgroundColor: colors.primaryFill,
           color: '#fff',
           fontWeight: 700,
           flexShrink: 0,
@@ -486,7 +488,7 @@ function SettingsFlyout({ colors }: { colors: any }) {
               height: 24,
               borderRadius: 12,
               border: 'none',
-              backgroundColor: tog.value ? colors.primary : colors.borderCard,
+              backgroundColor: tog.value ? colors.primaryFill : colors.borderCard,
               position: 'relative',
               cursor: 'pointer',
               transition: 'background-color 0.2s',

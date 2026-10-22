@@ -40,6 +40,7 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import { useResponsive, CONTENT_WIDTH } from "../../hooks/useResponsive";
 import type { AppTheme, ThemeColors, ThemeShadows } from "../../constants/theme";
+import { AppIcon } from "../../components/ui/AppIcon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -163,12 +164,13 @@ function WebStatCard({
       onPress={onPress}
       style={({ pressed }) => [
         styles.webStatCard,
+        { borderColor: colors.border },
         shadows.card,
         pressed && { transform: [{ scale: 0.98 }] },
       ]}
     >
       <LinearGradient
-        colors={isDark ? ['rgba(28,28,46,0.9)', glassTint] : ['rgba(255,255,255,0.9)', glassTint]}
+        colors={isDark ? ['rgba(34,30,48,0.9)', glassTint] : ['rgba(255,255,255,0.9)', glassTint]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.webStatGlass}
@@ -333,7 +335,7 @@ export default function ProfileScreen() {
                       onPress={async () => { await updateProfilePicture(opt.key); setShowIconPicker(false); }}
                       style={[styles.iconPickerItem, isSelected && { borderColor: colors.primary, borderWidth: 2.5 }, { backgroundColor: colors.backgroundLight }]}
                     >
-                      <View style={[styles.iconPickerCircle, { backgroundColor: colors.primary }]}>
+                      <View style={[styles.iconPickerCircle, { backgroundColor: colors.primaryFill }]}>
                         {opt.icon ? (
                           <Ionicons name={opt.icon} size={32} color="#FFFFFF" />
                         ) : (
@@ -362,10 +364,10 @@ export default function ProfileScreen() {
                   <View style={styles.webIdentity}>
                     <Pressable onPress={() => setShowIconPicker(true)}>
                       <Animated.View style={avatarStyle}>
-                        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                        <View style={[styles.avatar, { backgroundColor: colors.primaryFill }]}>
                           {renderAvatarInner()}
                         </View>
-                        <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                        <View style={[styles.cameraBadge, { backgroundColor: colors.primaryFill, borderColor: colors.appBackground }]}>
                           <Ionicons name="pencil" size={13} color="#FFFFFF" />
                         </View>
                       </Animated.View>
@@ -421,7 +423,7 @@ export default function ProfileScreen() {
                       <View style={styles.webTopicsWrap}>
                         {selectedTopics.map((topic) => (
                           <View key={topic.label} style={[styles.webTopicChip, { backgroundColor: colors.backgroundLight }]}>
-                            <Ionicons name={topic.icon as any} size={13} color={topic.color} />
+                            <AppIcon name={topic.icon} size={13} color={topic.color} />
                             <Text style={[styles.webTopicChipText, { color: colors.textDark }]} numberOfLines={1}>{topic.label}</Text>
                           </View>
                         ))}
@@ -479,17 +481,18 @@ export default function ProfileScreen() {
                     style={({ pressed }) => [
                       styles.journalWidget,
                       styles.webCard,
+                      { borderColor: colors.border },
                       shadows.card,
                       pressed && { transform: [{ scale: 0.98 }] }
                     ]}
                   >
                     <LinearGradient
-                      colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                      colors={isDark ? ['rgba(34,30,48,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={styles.journalGlass}
                     >
-                      <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow, shadowColor: colors.shadow }]}>
+                      <View style={[styles.journalIconContainer, { backgroundColor: colors.primaryFill, ...styles.iconGlow, shadowColor: colors.shadow }]}>
                         <Ionicons name="journal" size={28} color="#FFFFFF" />
                       </View>
                       <View style={styles.journalInfo}>
@@ -506,7 +509,7 @@ export default function ProfileScreen() {
             </View>
 
             <Animated.View style={[styles.footer, styles.webFooter, footerStyle]}>
-              <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+              <Text style={[styles.footerText, { color: colors.textLight }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
             </Animated.View>
           </View>
         ) : (
@@ -520,10 +523,10 @@ export default function ProfileScreen() {
             <View style={styles.identity}>
               <Pressable onPress={() => setShowIconPicker(true)}>
                 <Animated.View style={avatarStyle}>
-                  <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                  <View style={[styles.avatar, { backgroundColor: colors.primaryFill }]}>
                     {renderAvatarInner()}
                   </View>
-                  <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.appBackground }]}>
+                  <View style={[styles.cameraBadge, { backgroundColor: colors.primaryFill, borderColor: colors.appBackground }]}>
                     <Ionicons name="pencil" size={13} color="#FFFFFF" />
                   </View>
                 </Animated.View>
@@ -581,13 +584,14 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/knowledge-tree' as any)}
                 style={({ pressed }) => [
                   styles.journalWidget,
+                  { borderColor: colors.border },
                   { marginBottom: 16 },
                   shadows.card,
                   pressed && { transform: [{ scale: 0.98 }] }
                 ]}
               >
                 <LinearGradient
-                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
+                  colors={isDark ? ['rgba(34,30,48,0.9)', 'rgba(16, 185, 129, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(16, 185, 129, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
@@ -611,13 +615,14 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/accomplishments' as any)}
                 style={({ pressed }) => [
                   styles.journalWidget,
+                  { borderColor: colors.border },
                   { marginBottom: 24 },
                   shadows.card,
                   pressed && { transform: [{ scale: 0.98 }] }
                 ]}
               >
                 <LinearGradient
-                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
+                  colors={isDark ? ['rgba(34,30,48,0.9)', 'rgba(245, 158, 11, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(245, 158, 11, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
@@ -645,19 +650,20 @@ export default function ProfileScreen() {
                 onPress={() => router.push("/journal")}
                 style={({ pressed }) => [
                   styles.journalWidget,
+                  { borderColor: colors.border },
                   shadows.card,
                   pressed && { transform: [{ scale: 0.98 }] }
                 ]}
               >
                 <LinearGradient
-                  colors={isDark ? ['rgba(28,28,46,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
+                  colors={isDark ? ['rgba(34,30,48,0.9)', 'rgba(123, 104, 238, 0.15)'] : ['rgba(255,255,255,0.9)', 'rgba(123, 104, 238, 0.15)']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.journalGlass}
                 >
 
 
-                  <View style={[styles.journalIconContainer, { backgroundColor: colors.primary, ...styles.iconGlow, shadowColor: colors.shadow }]}>
+                  <View style={[styles.journalIconContainer, { backgroundColor: colors.primaryFill, ...styles.iconGlow, shadowColor: colors.shadow }]}>
                     <Ionicons name="journal" size={28} color="#FFFFFF" />
                   </View>
                   <View style={styles.journalInfo}>
@@ -671,7 +677,7 @@ export default function ProfileScreen() {
             </AnimatedSection>
 
             <Animated.View style={[styles.footer, footerStyle]}>
-              <Text style={[styles.footerText, { color: colors.indicatorInactive }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+              <Text style={[styles.footerText, { color: colors.textLight }]}>SchoolKit v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
             </Animated.View>
           </>
         )}

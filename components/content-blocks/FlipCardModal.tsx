@@ -8,7 +8,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Modal, 
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useBlockCtx, FlipDeck } from './context';
-import { safeIcon, Markdown } from './util';
+import { Markdown } from './util';
+import { AppIcon } from '../ui/AppIcon';
 import { md } from '../../features/content/registry';
 
 const IS_WEB = Platform.OS === 'web';
@@ -111,7 +112,7 @@ export function FlipCardModal({ deck, onClose, audio }: { deck: FlipDeck | null;
 
   const front = (
     <View style={[st.face, st.frontFace, { backgroundColor: hex + '1F', borderColor: hex + '66' }]}>
-      {card.icon ? <Ionicons name={safeIcon(card.icon)} size={40} color={hex} style={{ marginBottom: 14 }} /> : null}
+      {card.icon ? <AppIcon name={card.icon} size={40} color={hex} style={{ marginBottom: 14 }} /> : null}
       <Text style={[st.frontText, { color: colors.textDark }]}>{card.front}</Text>
       <View style={st.hintRow}>
         <Ionicons name="sync-outline" size={14} color={colors.textLight} />
@@ -125,7 +126,7 @@ export function FlipCardModal({ deck, onClose, audio }: { deck: FlipDeck | null;
       <View style={st.backHeader}>
         {card.icon ? (
           <View style={[st.backIcon, { backgroundColor: hex + '22' }]}>
-            <Ionicons name={safeIcon(card.icon)} size={18} color={hex} />
+            <AppIcon name={card.icon} size={18} color={hex} />
           </View>
         ) : null}
         <Text style={[st.backTitle, { color: hex }]}>{card.front}</Text>

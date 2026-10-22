@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useEffect } from 'react';
+import { View, Platform } from 'react-native';
 import { useFonts, Raleway_400Regular, Raleway_500Medium, Raleway_600SemiBold, Raleway_700Bold, Raleway_800ExtraBold, Raleway_400Regular_Italic } from '@expo-google-fonts/raleway';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, usePathname, DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from 'expo-router';
@@ -33,6 +34,19 @@ function InnerLayout() {
     (p) => pathname === p || pathname === `${p}/`,
   ) || pathname.startsWith('/share/');
   const hideSidebar = isWelcomePage || isChoosePage || isOnboardingPage || isAuthPage || isEditorPage || isStandalonePage;
+
+  // Web: keep the document background, native form controls and scrollbars in
+  // sync with the in-app theme (which can override the OS preference).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const root = document.documentElement;
+    document.body.style.backgroundColor = colors.appBackground;
+    root.style.colorScheme = isDark ? 'dark' : 'light';
+    document.body.style.colorScheme = isDark ? 'dark' : 'light';
+    root.style.setProperty('--sk-scroll-track', colors.inputBackground);
+    root.style.setProperty('--sk-scroll-thumb', colors.indicatorInactive);
+    root.style.setProperty('--sk-scroll-thumb-hover', colors.primary);
+  }, [isDark, colors]);
 
   const navigationTheme = isDark
     ? {

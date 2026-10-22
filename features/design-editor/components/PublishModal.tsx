@@ -162,8 +162,8 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                 style={{
                   padding: 16,
                   borderRadius: 10,
-                  backgroundColor: '#ECFDF5',
-                  border: '1px solid #A7F3D0',
+                  backgroundColor: colors.successBg,
+                  border: `1px solid ${colors.success}55`,
                   marginBottom: 16,
                 }}
               >
@@ -171,13 +171,13 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: '#065F46',
+                    color: colors.successText,
                     marginBottom: 4,
                   }}
                 >
                   {t('design.modal.publish.publishedBadge')}
                 </div>
-                <div style={{ fontSize: 13, color: '#047857' }}>
+                <div style={{ fontSize: 13, color: colors.successText }}>
                   {t('design.modal.publish.publishedNote')}
                 </div>
               </div>
@@ -206,6 +206,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   border: `1px solid ${colors.borderCard}`,
                   fontSize: 14,
                   color: colors.textDark,
+                  backgroundColor: colors.appBackground,
                   boxSizing: 'border-box',
                 }}
               />
@@ -235,6 +236,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   border: `1px solid ${colors.borderCard}`,
                   fontSize: 14,
                   color: colors.textDark,
+                  backgroundColor: colors.appBackground,
                   minHeight: 60,
                   resize: 'vertical',
                   boxSizing: 'border-box',
@@ -265,6 +267,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                   border: `1px solid ${colors.borderCard}`,
                   fontSize: 14,
                   color: colors.textDark,
+                  backgroundColor: colors.appBackground,
                 }}
               >
                 {RESOURCE_CATEGORIES.map((cat) => (
@@ -368,7 +371,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
                 backgroundColor:
                   loading || !title.trim()
                     ? colors.textLight
-                    : colors.primary,
+                    : colors.primaryFill,
                 color: '#fff',
                 fontSize: 14,
                 fontWeight: 600,

@@ -3,13 +3,14 @@ import { View, TouchableOpacity, Animated, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { InteractiveComponentObject, BottomSheetConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
-import { COLORS, SHADOWS } from '../../../../constants/onboarding-theme';
+import { COLORS_LIGHT, COLORS_DARK } from '../../../../constants/theme';
 
 export function RuntimeBottomSheet({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const { t } = useTranslation();
   const config = object.interactionConfig as BottomSheetConfig;
   const [openSheetIndex, setOpenSheetIndex] = useState<number | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const palette = isDark ? COLORS_DARK : COLORS_LIGHT;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
   const triggerGroup = object.groups.find((g) => g.role === 'trigger');
@@ -142,7 +143,7 @@ export function RuntimeBottomSheet({ object, isDark = false }: { object: Interac
             transform: [{ translateY }],
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            backgroundColor: isDark ? '#1C1C2E' : COLORS.white,
+            backgroundColor: palette.white,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -4 },
             shadowOpacity: isDark ? 0.3 : 0.1,
@@ -158,7 +159,7 @@ export function RuntimeBottomSheet({ object, isDark = false }: { object: Interac
                 width: 40,
                 height: 4,
                 borderRadius: 2,
-                backgroundColor: isDark ? '#3A3A52' : COLORS.borderCard,
+                backgroundColor: isDark ? palette.indicatorInactive : palette.borderCard,
               }}
             />
           </View>
@@ -180,7 +181,7 @@ export function RuntimeBottomSheet({ object, isDark = false }: { object: Interac
                     width: i === openSheetIndex ? 16 : 6,
                     height: 6,
                     borderRadius: 3,
-                    backgroundColor: i === openSheetIndex ? '#7B68EE' : '#E5E7EB',
+                    backgroundColor: i === openSheetIndex ? palette.primary : palette.indicatorInactive,
                   }}
                 />
               ))}
@@ -202,7 +203,7 @@ export function RuntimeBottomSheet({ object, isDark = false }: { object: Interac
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderRadius: 20,
-                backgroundColor: '#7B68EE',
+                backgroundColor: palette.primaryFill,
               }}
             >
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>

@@ -20,7 +20,7 @@ export function WebContainer({
   centerContent = true
 }: WebContainerProps) {
   const { isWeb, isDesktop, isTablet } = useResponsive();
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
 
   // On native mobile, render directly
   if (!isWeb || !centerContent) {
@@ -33,7 +33,7 @@ export function WebContainer({
   if (hasSidebar) {
     return (
       <View style={[styles.sidebarContent, {
-        backgroundColor: isDark ? '#121220' : '#F8F5FF',
+        backgroundColor: colors.appBackground,
       }]}>
         {children}
       </View>
@@ -43,12 +43,12 @@ export function WebContainer({
   // Web at mobile width (no sidebar): center with max-width
   return (
     <View style={[styles.webWrapper, {
-      backgroundColor: isDark ? '#121220' : '#F8F5FF',
+      backgroundColor: colors.appBackground,
     }]}>
       <View style={[
         styles.webContainer,
         { maxWidth },
-        { backgroundColor: isDark ? '#1C1C2E' : '#FFFFFF' },
+        { backgroundColor: colors.white },
       ]}>
         {children}
       </View>

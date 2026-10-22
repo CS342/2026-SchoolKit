@@ -75,7 +75,7 @@ export default function CreateNotebookScreen() {
                     >
                         <Text style={[styles.coverText, { color: cover.textColor }]}>{t('journal.create.journalTitleSample')}</Text>
                         {selectedCover.id === cover.id && (
-                            <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                            <View style={[styles.checkmark, { backgroundColor: colors.primaryFill }]}>
                                 <Ionicons name="checkmark" size={16} color="#FFF" />
                             </View>
                         )}
@@ -85,7 +85,7 @@ export default function CreateNotebookScreen() {
             </ScrollView>
 
             <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: colors.primary }]}
+                style={[styles.nextButton, { backgroundColor: colors.primaryFill }]}
                 onPress={() => setStep("paper")}
             >
                 <Text style={styles.nextButtonText}>{t('common.next')}</Text>
@@ -134,7 +134,7 @@ export default function CreateNotebookScreen() {
                         )}
 
                         {selectedPaper.id === paper.id && (
-                            <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                            <View style={[styles.checkmark, { backgroundColor: colors.primaryFill }]}>
                                 <Ionicons name="checkmark" size={16} color="#FFF" />
                             </View>
                         )}
@@ -156,7 +156,7 @@ export default function CreateNotebookScreen() {
 
                 <View style={{ flex: 1, marginLeft: 8 }}>
                     <TouchableOpacity
-                        style={[styles.nextButton, { backgroundColor: colors.primary, marginTop: 0 }]}
+                        style={[styles.nextButton, { backgroundColor: colors.primaryFill, marginTop: 0 }]}
                         onPress={() => setStep("title")}
                     >
                         <Text style={styles.nextButtonText}>{t('common.next')}</Text>
@@ -197,7 +197,7 @@ export default function CreateNotebookScreen() {
 
                 <View style={{ flex: 1, marginLeft: 8 }}>
                     <TouchableOpacity
-                        style={[styles.nextButton, { backgroundColor: colors.primary, marginTop: 0 }]}
+                        style={[styles.nextButton, { backgroundColor: colors.primaryFill, marginTop: 0 }]}
                         onPress={handleCreate}
                     >
                         <Text style={styles.nextButtonText}>{t('journal.create.start')}</Text>

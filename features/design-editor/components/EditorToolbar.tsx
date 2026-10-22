@@ -358,7 +358,7 @@ export function EditorToolbar({ onSave, onShare, onExport, onPublish, onPreview,
         style={{
           padding: '6px 14px',
           borderRadius: 8,
-          backgroundColor: colors.primary,
+          backgroundColor: colors.primaryFill,
           border: 'none',
           cursor: 'pointer',
           fontSize: 13,

@@ -343,7 +343,7 @@ function BottomSheet({
         >
           {/* Drag handle */}
           <View {...panResponder.panHandlers} style={sheetStyles.handleArea}>
-            <View style={sheetStyles.handle} />
+            <View style={[sheetStyles.handle, { backgroundColor: colors.indicatorInactive }]} />
           </View>
 
           {/* Header row */}
@@ -375,14 +375,14 @@ function BottomSheet({
             />
             {isAudioLoaded && (
               <TouchableOpacity onPress={togglePlaybackRate} style={{ padding: 6 }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.textLight }}>{playbackRate}x</Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textLight }}>{playbackRate}x</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? section.color : '#9CA3AF' }}>Aa</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleDismiss} style={{ padding: 4 }}>
-              <Ionicons name="close" size={24} color={COLORS.textLight} />
+              <Ionicons name="close" size={24} color={colors.textLight} />
             </TouchableOpacity>
           </View>
 
@@ -694,7 +694,6 @@ const videoStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    ...SHADOWS.card,
   },
   background: {
     ...StyleSheet.absoluteFill,
@@ -734,7 +733,6 @@ const videoStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
-    ...SHADOWS.small,
   },
   label: {
     fontSize: 17,
@@ -758,9 +756,9 @@ function PersonFigure({ scale, offsetTop }: { scale: number; offsetTop: number }
 }
 
 function VideoPlaceholder() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, shadows } = useTheme();
   return (
-    <View style={[videoStyles.card, { backgroundColor: isDark ? colors.backgroundLight : VIDEO_ACCENT + "15", borderColor: isDark ? colors.borderCard : VIDEO_ACCENT + "50" }]}>
+    <View style={[videoStyles.card, shadows.card, { backgroundColor: isDark ? colors.backgroundLight : VIDEO_ACCENT + "15", borderColor: isDark ? colors.borderCard : VIDEO_ACCENT + "50" }]}>
       <View style={[videoStyles.background, { backgroundColor: isDark ? colors.backgroundLight : VIDEO_ACCENT + "15" }]} />
       <View style={videoStyles.inner}>
         <View style={videoStyles.peopleRow}>
@@ -768,8 +766,8 @@ function VideoPlaceholder() {
           <PersonFigure scale={1} offsetTop={0} />
           <PersonFigure scale={0.8} offsetTop={10} />
         </View>
-        <View style={videoStyles.playCircle}>
-          <Ionicons name="play" size={18} color={colors.white} style={{ marginLeft: 2 }} />
+        <View style={[videoStyles.playCircle, shadows.small]}>
+          <Ionicons name="play" size={18} color="#FFFFFF" style={{ marginLeft: 2 }} />
         </View>
         <Text style={[videoStyles.label, { color: colors.textDark }]}>Patient Video</Text>
         <Text style={[videoStyles.sublabel, { color: colors.textLight }]}>Coming Soon</Text>

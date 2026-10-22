@@ -14,3 +14,4 @@ export type { Crumb } from './Breadcrumb';
 export { ArticleLayout } from './ArticleLayout';
 export type { ArticleSection } from './ArticleLayout';
 export { ResourceRow } from './ResourceRow';
+export { AppIcon, isValidIconName } from './AppIcon';

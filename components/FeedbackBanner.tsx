@@ -31,7 +31,7 @@ export function FeedbackBanner({
   autoDismissTime = 4000,
   style,
 }: FeedbackBannerProps) {
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (visible && autoDismissTime > 0) {
@@ -46,32 +46,32 @@ export function FeedbackBanner({
     switch (type) {
       case 'success':
         return {
-          bg: isDark ? '#1a332a' : '#E8F5E9',
-          border: isDark ? '#059669' : '#C8E6C9',
-          icon: isDark ? '#6ee7a0' : '#2E7D32',
-          text: isDark ? '#6ee7a0' : '#1B5E20',
+          bg: colors.successBg,
+          border: colors.success + '40',
+          icon: colors.successText,
+          text: colors.successText,
         };
       case 'warning':
         return {
-          bg: isDark ? '#332a1a' : '#FFF3E0',
-          border: isDark ? '#D97706' : '#FFE0B2',
-          icon: isDark ? '#f5c862' : '#EF6C00',
-          text: isDark ? '#f5c862' : '#E65100',
+          bg: colors.warningBg,
+          border: colors.warning + '40',
+          icon: colors.warningText,
+          text: colors.warningText,
         };
       case 'error':
         return {
-          bg: isDark ? '#331a1a' : '#FFEBEE',
-          border: isDark ? '#DC2626' : '#FFCDD2',
-          icon: isDark ? '#f87171' : '#C62828',
-          text: isDark ? '#f87171' : '#B71C1C',
+          bg: colors.coralSoft,
+          border: colors.destructive + '40',
+          icon: colors.destructive,
+          text: colors.textDark,
         };
       case 'info':
       default:
         return {
-          bg: isDark ? '#1e1b4b' : '#E8EAF6',
-          border: isDark ? '#4338ca' : '#C5CAE9',
-          icon: isDark ? '#818cf8' : '#283593',
-          text: isDark ? '#818cf8' : '#1A237E',
+          bg: colors.infoBg,
+          border: colors.info + '40',
+          icon: colors.info,
+          text: colors.textDark,
         };
     }
   };

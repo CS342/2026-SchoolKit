@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { AppTheme } from "../constants/theme";
-import { COLORS, RADII, TYPOGRAPHY } from "../constants/onboarding-theme";
+import { RADII, TYPOGRAPHY } from "../constants/onboarding-theme";
 import { TAG_COLORS, DEFAULT_TAG_COLOR } from "./StoryCard";
 
 export const TOPIC_TAGS = [
@@ -136,7 +136,7 @@ export function TopicTagsModal({
                   key={tag}
                   style={[
                     styles.option,
-                    { backgroundColor: colorInfo.bg, borderColor: 'transparent' },
+                    { backgroundColor: isDark ? colorInfo.text + '30' : colorInfo.bg, borderColor: 'transparent' },
                     isSelected && { backgroundColor: colorInfo.text },
                     isDisabled && styles.optionDisabled,
                   ]}
@@ -145,8 +145,8 @@ export function TopicTagsModal({
                   <Text
                     style={[
                       styles.optionText,
-                      { color: colorInfo.text },
-                      isSelected && { color: COLORS.white },
+                      { color: isDark ? colorInfo.bg : colorInfo.text },
+                      isSelected && { color: '#FFFFFF' },
                     ]}
                   >
                     {tag}
@@ -155,13 +155,13 @@ export function TopicTagsModal({
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color={COLORS.white}
+                      color="#FFFFFF"
                     />
                   ) : (
                     <Ionicons
                       name="ellipse-outline"
                       size={24}
-                      color={colorInfo.text}
+                      color={isDark ? colorInfo.bg : colorInfo.text}
                     />
                   )}
                 </Pressable>
@@ -266,7 +266,7 @@ function makeStyles(c: AppTheme["colors"], isDark: boolean) {
       padding: 16,
       borderRadius: 12,
       borderWidth: 1.5,
-      borderColor: isDark ? c.borderCard : "#E5E5EA",
+      borderColor: isDark ? c.borderCard : c.border,
       backgroundColor: isDark ? c.backgroundLight : c.white,
     },
     optionText: {
@@ -277,7 +277,7 @@ function makeStyles(c: AppTheme["colors"], isDark: boolean) {
     },
     optionDisabled: {
       opacity: 0.5,
-      backgroundColor: isDark ? c.appBackground : "#F8F8FA",
+      backgroundColor: isDark ? c.appBackground : c.appBackgroundAlt,
     },
   });
 }

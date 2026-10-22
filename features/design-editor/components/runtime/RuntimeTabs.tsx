@@ -2,12 +2,14 @@ import React, { useState, useRef } from 'react';
 import { View, TouchableOpacity, Text, Animated } from 'react-native';
 import type { InteractiveComponentObject, TabsConfig } from '../../types/document';
 import { RuntimeObject } from './RuntimeObject';
+import { COLORS_LIGHT, COLORS_DARK } from '../../../../constants/theme';
 
 export function RuntimeTabs({ object, isDark = false }: { object: InteractiveComponentObject; isDark?: boolean }) {
   const config = object.interactionConfig as TabsConfig;
   const tabGroups = object.groups.filter((g) => g.role.startsWith('tab-'));
   const [activeTab, setActiveTab] = useState(config.defaultTab);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const palette = isDark ? COLORS_DARK : COLORS_LIGHT;
 
   const switchTab = (i: number) => {
     if (i === activeTab) return;
@@ -27,7 +29,7 @@ export function RuntimeTabs({ object, isDark = false }: { object: InteractiveCom
       style={{
         flexDirection: 'row',
         borderBottomWidth: config.tabStyle === 'underline' ? 1 : 0,
-        borderBottomColor: '#E8E8F0',
+        borderBottomColor: palette.borderCard,
         gap: config.tabStyle === 'pill' ? 6 : 0,
         padding: config.tabStyle === 'pill' ? 4 : 0,
       }}
@@ -44,14 +46,14 @@ export function RuntimeTabs({ object, isDark = false }: { object: InteractiveCom
               paddingHorizontal: 12,
               alignItems: 'center',
               borderBottomWidth: config.tabStyle === 'underline' ? 2 : 0,
-              borderBottomColor: config.tabStyle === 'underline' && isActive ? '#7B68EE' : 'transparent',
+              borderBottomColor: config.tabStyle === 'underline' && isActive ? palette.primary : 'transparent',
               borderRadius: config.tabStyle === 'pill' ? 8 : config.tabStyle === 'boxed' ? 0 : 0,
               backgroundColor:
                 config.tabStyle === 'pill'
-                  ? isActive ? '#7B68EE' : (isDark ? '#2A2A42' : '#F3F4F6')
-                  : config.tabStyle === 'boxed' && isActive ? (isDark ? '#2E2A50' : '#F0EBFF') : 'transparent',
+                  ? isActive ? palette.primaryFill : palette.appBackgroundAlt
+                  : config.tabStyle === 'boxed' && isActive ? palette.primarySoft : 'transparent',
               borderWidth: config.tabStyle === 'boxed' ? 1 : 0,
-              borderColor: config.tabStyle === 'boxed' && isActive ? '#7B68EE' : '#E8E8F0',
+              borderColor: config.tabStyle === 'boxed' && isActive ? palette.primary : palette.borderCard,
             }}
           >
             <Text
@@ -60,7 +62,7 @@ export function RuntimeTabs({ object, isDark = false }: { object: InteractiveCom
                 fontWeight: '600',
                 color:
                   config.tabStyle === 'pill' && isActive ? '#fff'
-                  : isActive ? '#7B68EE' : '#8E8EA8',
+                  : isActive ? palette.primary : palette.textLight,
               }}
             >
               {group.label}

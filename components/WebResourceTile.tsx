@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from './ui/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -51,6 +51,7 @@ export function WebResourceTile({
           {
             backgroundColor: isDark ? colors.backgroundLight : colors.white,
             borderColor: colors.borderCard,
+            shadowColor: isDark ? colors.shadow : '#7B68EE',
             width: tileSize,
             height: tileSize,
           },
@@ -62,13 +63,13 @@ export function WebResourceTile({
           end={{ x: 1, y: 1 }}
           style={[styles.iconCircle, { shadowColor: colors.shadow }]}
         >
-          <Ionicons name={icon as any} size={32} color="#FFF" />
+          <AppIcon name={icon} size={32} color="#FFF" />
         </LinearGradient>
         <Text style={[styles.title, { color: colors.textDark }]} numberOfLines={2}>
           {title}
         </Text>
         {category && (
-          <View style={[styles.badge, { backgroundColor: withOpacity(color, 0.1) }]}>
+          <View style={[styles.badge, { backgroundColor: isDark ? color + '33' : withOpacity(color, 0.1) }]}>
             <Text style={[styles.badgeText, { color }]}>{category}</Text>
           </View>
         )}

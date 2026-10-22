@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from './ui/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -100,7 +101,7 @@ export function ResourceCard({
           end={{ x: 1, y: 1 }}
           style={styles.iconCircle}
         >
-          <Ionicons name={icon as any} size={SIZING.iconRole} color="#FFF" />
+          <AppIcon name={icon} size={SIZING.iconRole} color="#FFF" />
         </LinearGradient>
 
         {category ? (

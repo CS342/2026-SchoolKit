@@ -3,6 +3,7 @@ import { Stage, Layer, Rect, Group, Text, Ellipse, Image as KonvaImage, Line } f
 import Konva from 'konva';
 import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '../store/editor-store';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { CanvasObject } from './CanvasObject';
 import { SelectionTransformer } from './SelectionTransformer';
 import {
@@ -28,6 +29,7 @@ interface EditorCanvasProps {
 
 export function EditorCanvas({ stageRef }: EditorCanvasProps) {
   const { t } = useTranslation();
+  const { colors, isDark } = useTheme();
   const canvas = useEditorStore((s) => s.canvas);
   const objects = useEditorStore((s) => s.objects);
   const selectedIds = useEditorStore((s) => s.selectedIds);
@@ -330,7 +332,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
     flex: 1,
     minHeight: 0,
     overflow: 'auto',
-    backgroundColor: '#E8E8E8',
+    backgroundColor: isDark ? colors.appBackground : '#E8E8E8',
     position: 'relative',
     cursor:
       activeTool === 'select'
@@ -555,7 +557,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
               userSelect: 'none',
             }}
             onMouseEnter={(e) => {
-              if (!isDraggingHandle) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.06)';
+              if (!isDraggingHandle) e.currentTarget.style.backgroundColor = colors.borderCard;
             }}
             onMouseLeave={(e) => {
               if (!isDraggingHandle) e.currentTarget.style.backgroundColor = 'transparent';
@@ -567,7 +569,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
                 width: 36,
                 height: 4,
                 borderRadius: 2,
-                backgroundColor: isDraggingHandle ? '#6366F1' : '#AAA',
+                backgroundColor: isDraggingHandle ? '#6366F1' : colors.textLight,
                 transition: isDraggingHandle ? 'none' : 'background-color 0.15s',
               }}
             />
@@ -579,7 +581,7 @@ export function EditorCanvas({ stageRef }: EditorCanvasProps) {
           style={{
             marginTop: 6,
             fontSize: 11,
-            color: '#999',
+            color: colors.textLight,
             userSelect: 'none',
           }}
         >

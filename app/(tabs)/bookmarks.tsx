@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
-import { ScreenHeader, ResourceRow } from "../../components/ui";
+import { ScreenHeader, ResourceRow, AppIcon } from "../../components/ui";
 import { BookmarkButton } from '../../components/BookmarkButton';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,12 +68,13 @@ function sortResources(list: Resource[], mode: SortMode): Resource[] {
 const RECENT_SEARCHES_KEY = '@schoolkit_recent_searches';
 const MAX_RECENT_SEARCHES = 5;
 
-const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+// AppIcon names: Ionicons, or `mci:` for Material Community Icons.
+const CATEGORY_ICONS: Record<string, string> = {
   All: 'apps-outline',
-  School: 'school-outline',
-  Social: 'people-outline',
-  Health: 'medical-outline',
-  Family: 'home-outline',
+  School: 'mci:school-outline',
+  Social: 'chatbubbles-outline',
+  Health: 'mci:heart-pulse',
+  Family: 'mci:home-heart',
   Designs: 'color-palette-outline',
 };
 
@@ -429,8 +430,8 @@ export default function LibraryScreen() {
                   const categoryLabel = t(`home.categories.${category}`, { defaultValue: category });
                   const chipContent = (
                     <>
-                      <Ionicons name={iconName} size={20} color={isActive ? colors.white : colors.textMuted} />
-                      <Text style={[styles.filterChipText, { color: isActive ? colors.white : colors.textMuted }]}>
+                      <AppIcon name={iconName} size={20} color={isActive ? '#FFFFFF' : colors.textMuted} />
+                      <Text style={[styles.filterChipText, { color: isActive ? '#FFFFFF' : colors.textMuted }]}>
                         {categoryLabel}
                       </Text>
                     </>
@@ -915,12 +916,12 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isWebDesktop = false) =>
       width: 40,
       height: 40,
       borderRadius: 12,
-      backgroundColor: c.backgroundLighter,
+      backgroundColor: c.border,
     },
     skeletonLine: {
       height: 14,
       borderRadius: 7,
-      backgroundColor: c.backgroundLighter,
+      backgroundColor: c.border,
     },
     filtersContent: {
       paddingVertical: 4,

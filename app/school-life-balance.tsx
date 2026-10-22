@@ -291,7 +291,7 @@ function GridCard({
         <Animated.View style={[styles.gridCardWrapper, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
             <TouchableOpacity activeOpacity={0.9} onPress={handlePress} style={{ flex: 1 }}>
                 <View style={[styles.gridCard, { backgroundColor: color, borderColor: color, shadowColor: color }]}>
-                    <Ionicons name={item.icon as any} size={30} color="rgba(255,255,255,0.95)" style={{ marginBottom: 10 }} />
+                    <Ionicons name={item.icon as any} size={30} color="rgba(44,42,58,0.85)" style={{ marginBottom: 10 }} />
                     <Text style={styles.gridCardText} numberOfLines={3}>{item.front}</Text>
                 </View>
             </TouchableOpacity>
@@ -382,7 +382,7 @@ function ExpandedCardModal({
                 <Animated.View style={[styles.expandedCardShadow, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity, height: cardHeight }]}>
                     <View style={[styles.expandedCard, { height: "100%", backgroundColor: color, borderColor: color }]}>
                         <View style={styles.expandedCardInnerFront}>
-                            <Ionicons name={item.icon as any} size={48} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
+                            <Ionicons name={item.icon as any} size={48} color="rgba(44,42,58,0.85)" style={{ marginBottom: 16 }} />
                             <Text style={styles.expandedFrontTitle}>{item.front}</Text>
                             <Text style={styles.flipHint}>Flip for tips →</Text>
                         </View>
@@ -499,7 +499,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                 <Animated.View style={[handoutStyles.sheet, { transform: [{ translateY: slideAnim }], backgroundColor: isDark ? colors.backgroundLight : colors.white }]}>
                     {/* Handle bar */}
                     <View style={handoutStyles.handleArea}>
-                        <View style={handoutStyles.handle} />
+                        <View style={[handoutStyles.handle, { backgroundColor: colors.indicatorInactive }]} />
                     </View>
 
                     {/* Header */}
@@ -509,7 +509,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                         </View>
                         <Text style={[handoutStyles.title, { color: handout.color }]}>{handout.title}</Text>
                         <TouchableOpacity onPress={handleClose} style={handoutStyles.closeBtn}>
-                            <Ionicons name="close" size={22} color={COLORS.textLight} />
+                            <Ionicons name="close" size={22} color={colors.textLight} />
                         </TouchableOpacity>
                     </View>
 
@@ -550,12 +550,12 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                                                         : { borderColor: handout.color },
                                                 ]}>
                                                     {checked && (
-                                                        <Ionicons name="checkmark" size={12} color={colors.white} />
+                                                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                                                     )}
                                                 </View>
                                                 <Text style={[
                                                     handoutStyles.itemText,
-                                                    { color: isDark ? colors.textMuted : COLORS.textMuted },
+                                                    { color: colors.textMuted },
                                                     checked && [handoutStyles.itemTextChecked, { color: colors.textLight }],
                                                 ]}>{item}</Text>
                                             </TouchableOpacity>
@@ -568,7 +568,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                         {handout.disclaimer && (
                             <View style={[handoutStyles.disclaimerBox, { borderColor: handout.color + "50", backgroundColor: handout.color + "0D" }]}>
                                 <Ionicons name="information-circle-outline" size={18} color={handout.color} style={{ marginRight: 8, marginTop: 1 }} />
-                                <Text style={[handoutStyles.disclaimerText, { color: COLORS.textMuted }]}>{handout.disclaimer}</Text>
+                                <Text style={[handoutStyles.disclaimerText, { color: colors.textMuted }]}>{handout.disclaimer}</Text>
                             </View>
                         )}
                     </ScrollView>
@@ -973,7 +973,7 @@ const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
             elevation: 8,
         },
         gridCardText: {
-            color: c.white,
+            color: "#2C2A3A",
             fontSize: fs(15),
             fontWeight: "700",
             textAlign: "center",
@@ -988,8 +988,8 @@ const makeStyles = (c: any, isDark: boolean, fontScale: number) => {
         expandedCardBackSide: { position: "absolute", top: 0, left: 0, right: 0 },
         expandedCard: { width: "100%", borderRadius: 32, padding: 24, borderWidth: 1, overflow: "hidden" },
         expandedCardInnerFront: { flex: 1, justifyContent: "center", alignItems: "center" },
-        expandedFrontTitle: { color: c.white, fontSize: fs(28), fontWeight: "900", textAlign: "center", lineHeight: fs(36) },
-        flipHint: { color: "rgba(255,255,255,0.7)", fontSize: fs(14), fontWeight: "700", marginTop: 24 },
+        expandedFrontTitle: { color: "#2C2A3A", fontSize: fs(28), fontWeight: "900", textAlign: "center", lineHeight: fs(36) },
+        flipHint: { color: "rgba(44,42,58,0.65)", fontSize: fs(14), fontWeight: "700", marginTop: 24 },
         expandedCardInner: { flex: 1 },
         factHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
         factBigText: { fontSize: fs(14), fontWeight: "900", textTransform: "uppercase", letterSpacing: 1.5 },

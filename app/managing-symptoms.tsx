@@ -406,7 +406,7 @@ function BodyDiagram({
                                 elevation: 5, zIndex: 10,
                             }}
                         >
-                            <Ionicons name={area.icon as any} size={20} color={colors.white} />
+                            <Ionicons name={area.icon as any} size={20} color="#FFFFFF" />
                         </TouchableOpacity>
 
                         {/* Label */}
@@ -510,7 +510,7 @@ function ExpandedCardModal({
                     <View style={[styles.card, { height: "100%", backgroundColor: color, borderColor: color }]}>
                         <View style={styles.frontInner}>
                             <View style={[styles.frontIconCircle, { backgroundColor: "rgba(255,255,255,0.25)" }]}>
-                                <Ionicons name={area.icon as any} size={36} color={colors.white} />
+                                <Ionicons name={area.icon as any} size={36} color="#FFFFFF" />
                             </View>
                             <Text style={styles.frontTitle}>{area.label}</Text>
                             <Text style={styles.flipHint}>Flip for details →</Text>
@@ -647,7 +647,7 @@ function TipAccordion({ tip, styles }: { tip: GeneralTip; styles: any }) {
                     <View style={[styles.sectionBox, { backgroundColor: isDark ? PAGE_COLOR + "15" : PAGE_COLOR + "08", borderColor: PAGE_COLOR + "25" }]}>
                         <View style={styles.sectionLabelRow}>
                             <Ionicons name="eye-outline" size={13} color={PAGE_COLOR} />
-                            <Text style={[styles.sectionLabel, { color: PAGE_COLOR }]}>What you might notice</Text>
+                            <Text style={[styles.sectionLabel, { color: isDark ? "#818CF8" : PAGE_COLOR }]}>What you might notice</Text>
                         </View>
                         {tip.notice.map((item, i) => (
                             <View key={i} style={styles.bulletRow}>
@@ -845,7 +845,7 @@ export default function ManagingSymptomsScreen() {
         <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }] }}>
             <Text style={styles.pageTitle}>
                 Tips for{" "}
-                <Text style={{ color: PAGE_COLOR }}>Managing Symptoms</Text>
+                <Text style={{ color: isDark ? "#818CF8" : PAGE_COLOR }}>Managing Symptoms</Text>
             </Text>
         </Animated.View>
     );
@@ -901,7 +901,7 @@ export default function ManagingSymptomsScreen() {
             {/* General Tips */}
             <View nativeID="symptoms-tips" style={[styles.generalTipsSection, { borderColor: colors.borderCard }]}>
                 <View style={[styles.generalTipsHeader, { backgroundColor: PAGE_COLOR }]}>
-                    <Ionicons name="sparkles" size={18} color={colors.white} />
+                    <Ionicons name="sparkles" size={18} color="#FFFFFF" />
                     <Text style={styles.generalTipsTitle}>General Tips & Considerations</Text>
                 </View>
                 <View style={[styles.generalTipsBody, { backgroundColor: isDark ? colors.backgroundLight : colors.white }]}>
@@ -1057,7 +1057,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         },
         calloutText: {
             fontSize: fs(14),
-            color: isDark ? "#A5A5A5" : "#7F1D1D",
+            color: isDark ? c.textMuted : "#7F1D1D",
             lineHeight: fs(21),
             fontWeight: "500",
         },
@@ -1095,7 +1095,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         generalTipsTitle: {
             fontSize: fs(15),
             fontWeight: "700",
-            color: c.white,
+            color: "#FFFFFF",
         },
         generalTipsBody: {
             padding: 12,
@@ -1193,7 +1193,7 @@ function makeStyles(c: any, isDark: boolean, fontScale: number) {
         frontTitle: {
             fontSize: fs(22),
             fontWeight: "800",
-            color: c.white,
+            color: "#FFFFFF",
             textAlign: "center",
             letterSpacing: -0.3,
         },

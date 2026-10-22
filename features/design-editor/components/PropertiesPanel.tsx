@@ -309,7 +309,7 @@ function ColorInput({
                 backgroundColor: preset,
                 border: value?.toUpperCase() === preset.toUpperCase()
                   ? `2px solid ${colors.primary}`
-                  : `1px solid rgba(0,0,0,0.08)`,
+                  : `1px solid ${colors.borderCard}`,
                 cursor: 'pointer',
                 padding: 0,
                 flexShrink: 0,
@@ -1060,6 +1060,8 @@ function GradientSection({
   onUpdate: (changes: Partial<DesignObject>) => void;
 }) {
   const { t } = useTranslation();
+  // Named `theme` because the handlers below declare a local `colors` (gradient stops).
+  const { colors: theme } = useTheme();
   const enabled = !!gradient;
   return (
     <Section title={t('design.props.gradient')}>
@@ -1133,7 +1135,7 @@ function GradientSection({
                     width: 28,
                     height: 28,
                     borderRadius: 6,
-                    border: '1px solid #E8E8F0',
+                    border: `1px solid ${theme.borderCard}`,
                     backgroundColor: 'transparent',
                     cursor: 'pointer',
                     fontSize: 14,
@@ -1156,22 +1158,22 @@ function GradientSection({
               style={{
                 width: '100%',
                 padding: '5px 0',
-                border: '1px dashed #E8E8F0',
+                border: `1px dashed ${theme.borderCard}`,
                 borderRadius: 6,
                 backgroundColor: 'transparent',
                 cursor: 'pointer',
                 fontSize: 11,
-                color: '#8E8EA8',
+                color: theme.textLight,
                 marginTop: 4,
                 transition: 'background-color 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.backgroundColor = '#F8F8FC';
-                (e.target as HTMLElement).style.color = '#6B6B85';
+                (e.target as HTMLElement).style.backgroundColor = theme.backgroundLight;
+                (e.target as HTMLElement).style.color = theme.textMuted;
               }}
               onMouseLeave={(e) => {
                 (e.target as HTMLElement).style.backgroundColor = 'transparent';
-                (e.target as HTMLElement).style.color = '#8E8EA8';
+                (e.target as HTMLElement).style.color = theme.textLight;
               }}
             >
               {t('design.props.addStop')}

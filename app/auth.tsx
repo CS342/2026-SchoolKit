@@ -439,7 +439,7 @@ export default function AuthScreen() {
               />
               {loading && (
                 <View style={styles.loadingOverlay}>
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={colors.primary} />
                 </View>
               )}
             </View>

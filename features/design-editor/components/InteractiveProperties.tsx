@@ -575,6 +575,7 @@ function CarouselProperties({
   onUpdate: (c: Record<string, unknown>) => void;
 }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   return (
     <Section title={t('design.interactive.carousel.title')}>
       <div style={{ marginBottom: 8 }}>
@@ -641,7 +642,7 @@ function CarouselProperties({
       {/* Arrow & Dot Styling */}
       {(config.showArrows || config.showDots) && (
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8EA8', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: colors.textLight, marginBottom: 8 }}>
             {t('design.interactive.carousel.navigationStyling')}
           </div>
           {config.showArrows && (

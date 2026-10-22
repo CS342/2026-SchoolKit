@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Rect, Ellipse, Text, Image as KonvaImage, Line, Star, Arrow, Group } from 'react-konva';
 import type { DesignDocument, DesignObject, GradientConfig, ShadowConfig, InteractiveComponentObject, StaticDesignObject } from '../types/document';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { getThemeAwareColor } from '../utils/theme-mapper';
 
 interface ReadOnlyViewerProps {
   doc: DesignDocument;
@@ -11,7 +13,7 @@ interface ReadOnlyViewerProps {
 
 // ─── Konva Gradient Helpers ────────────────────────────────────
 
-function getLinearGradientProps(gradient: GradientConfig, width: number, height: number) {
+function getLinearGradientProps(gradient: GradientConfig, width: number, height: number, isDark = false) {
   const angle = gradient.angle ?? 0;
   const rad = ((angle - 90) * Math.PI) / 180;
   const dx = Math.cos(rad) * 0.5;
@@ -19,25 +21,25 @@ function getLinearGradientProps(gradient: GradientConfig, width: number, height:
   return {
     fillLinearGradientStartPoint: { x: (0.5 - dx) * width, y: (0.5 - dy) * height },
     fillLinearGradientEndPoint: { x: (0.5 + dx) * width, y: (0.5 + dy) * height },
-    fillLinearGradientColorStops: gradient.colors.flatMap((c, i) => [i / (gradient.colors.length - 1), c]),
+    fillLinearGradientColorStops: gradient.colors.flatMap((c, i) => [i / (gradient.colors.length - 1), getThemeAwareColor(c, isDark)]),
   };
 }
 
-function getRadialGradientProps(gradient: GradientConfig, width: number, height: number) {
+function getRadialGradientProps(gradient: GradientConfig, width: number, height: number, isDark = false) {
   const r = Math.max(width, height) / 2;
   return {
     fillRadialGradientStartPoint: { x: width / 2, y: height / 2 },
     fillRadialGradientStartRadius: 0,
     fillRadialGradientEndPoint: { x: width / 2, y: height / 2 },
     fillRadialGradientEndRadius: r,
-    fillRadialGradientColorStops: gradient.colors.flatMap((c, i) => [i / (gradient.colors.length - 1), c]),
+    fillRadialGradientColorStops: gradient.colors.flatMap((c, i) => [i / (gradient.colors.length - 1), getThemeAwareColor(c, isDark)]),
   };
 }
 
-function getGradientFillProps(gradient: GradientConfig | null | undefined, width: number, height: number) {
+function getGradientFillProps(gradient: GradientConfig | null | undefined, width: number, height: number, isDark = false) {
   if (!gradient) return {};
-  if (gradient.type === 'radial') return getRadialGradientProps(gradient, width, height);
-  return getLinearGradientProps(gradient, width, height);
+  if (gradient.type === 'radial') return getRadialGradientProps(gradient, width, height, isDark);
+  return getLinearGradientProps(gradient, width, height, isDark);
 }
 
 // ─── Konva Shadow Helpers ──────────────────────────────────────
@@ -89,7 +91,9 @@ function applyTextTransform(text: string, transform?: string): string {
 
 // ─── Component ────────────────────────────────────────────────
 
-export function ReadOnlyObject({ object }: { object: DesignObject }) {
+export function ReadOnlyObject({ object, isDark = false }: { object: DesignObject; isDark?: boolean }) {
+  // Map design colors for dark mode; leave unset colors unset so Konva draws nothing.
+  const tc = (c: string | undefined) => (c ? getThemeAwareColor(c, isDark) : c);
   const commonProps = {
     x: object.x,
     y: object.y,
@@ -101,15 +105,15 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
   switch (object.type) {
     case 'rect': {
       const gradientProps = object.gradient
-        ? { ...getGradientFillProps(object.gradient, object.width, object.height) }
-        : { fill: object.fill };
+        ? { ...getGradientFillProps(object.gradient, object.width, object.height, isDark) }
+        : { fill: tc(object.fill) };
       return (
         <Rect
           {...commonProps}
           width={object.width}
           height={object.height}
           {...gradientProps}
-          stroke={object.stroke || undefined}
+          stroke={tc(object.stroke) || undefined}
           strokeWidth={object.strokeWidth}
           cornerRadius={object.cornerRadius}
           {...getShadowProps(object.shadow)}
@@ -118,15 +122,15 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
     }
     case 'ellipse': {
       const gradientProps = object.gradient
-        ? { ...getGradientFillProps(object.gradient, object.width, object.height) }
-        : { fill: object.fill };
+        ? { ...getGradientFillProps(object.gradient, object.width, object.height, isDark) }
+        : { fill: tc(object.fill) };
       return (
         <Ellipse
           {...commonProps}
           radiusX={object.width / 2}
           radiusY={object.height / 2}
           {...gradientProps}
-          stroke={object.stroke || undefined}
+          stroke={tc(object.stroke) || undefined}
           strokeWidth={object.strokeWidth}
           {...getShadowProps(object.shadow)}
         />
@@ -141,7 +145,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
           fontSize={object.fontSize}
           fontFamily={object.fontFamily}
           fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
-          fill={object.fill}
+          fill={tc(object.fill)}
           align={object.align}
           width={object.width}
           lineHeight={object.lineHeight}
@@ -156,7 +160,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
         <Line
           {...commonProps}
           points={object.points}
-          stroke={object.stroke}
+          stroke={tc(object.stroke)}
           strokeWidth={object.strokeWidth}
           lineCap={object.lineCap}
           lineJoin={object.lineJoin}
@@ -165,8 +169,8 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
     case 'star': {
       const outerRadius = Math.min(object.width, object.height) / 2;
       const gradientProps = object.gradient
-        ? { ...getGradientFillProps(object.gradient, object.width, object.height) }
-        : { fill: object.fill };
+        ? { ...getGradientFillProps(object.gradient, object.width, object.height, isDark) }
+        : { fill: tc(object.fill) };
       return (
         <Star
           {...commonProps}
@@ -174,7 +178,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
           innerRadius={outerRadius * object.innerRadius}
           outerRadius={outerRadius}
           {...gradientProps}
-          stroke={object.stroke || undefined}
+          stroke={tc(object.stroke) || undefined}
           strokeWidth={object.strokeWidth}
           {...getShadowProps(object.shadow)}
         />
@@ -183,15 +187,15 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
     case 'triangle': {
       const triPoints = [object.width / 2, 0, object.width, object.height, 0, object.height];
       const gradientProps = object.gradient
-        ? { ...getGradientFillProps(object.gradient, object.width, object.height) }
-        : { fill: object.fill };
+        ? { ...getGradientFillProps(object.gradient, object.width, object.height, isDark) }
+        : { fill: tc(object.fill) };
       return (
         <Line
           {...commonProps}
           points={triPoints}
           closed
           {...gradientProps}
-          stroke={object.stroke || undefined}
+          stroke={tc(object.stroke) || undefined}
           strokeWidth={object.strokeWidth}
           {...getShadowProps(object.shadow)}
         />
@@ -202,17 +206,17 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
         <Arrow
           {...commonProps}
           points={object.points}
-          stroke={object.stroke}
+          stroke={tc(object.stroke)}
           strokeWidth={object.strokeWidth}
           pointerLength={object.pointerLength}
           pointerWidth={object.pointerWidth}
-          fill={object.fill}
+          fill={tc(object.fill)}
         />
       );
     case 'badge': {
       const gradientProps = object.gradient
-        ? { ...getGradientFillProps(object.gradient, object.width, object.height) }
-        : { fill: object.fill };
+        ? { ...getGradientFillProps(object.gradient, object.width, object.height, isDark) }
+        : { fill: tc(object.fill) };
       return (
         <Group {...commonProps} width={object.width} height={object.height}>
           <Rect
@@ -231,7 +235,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
             fontSize={object.fontSize}
             fontFamily={object.fontFamily}
             fontStyle={buildKonvaFontStyle(object.fontStyle, object.fontWeight)}
-            fill={object.textColor}
+            fill={tc(object.textColor)}
             align="center"
             verticalAlign="middle"
           />
@@ -239,7 +243,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
       );
     }
     case 'interactive':
-      return <ReadOnlyInteractive object={object} />;
+      return <ReadOnlyInteractive object={object} isDark={isDark} />;
     default:
       return null;
   }
@@ -247,7 +251,7 @@ export function ReadOnlyObject({ object }: { object: DesignObject }) {
 
 // ─── Interactive: render children statically ───────────────────
 
-function ReadOnlyInteractive({ object }: { object: InteractiveComponentObject }) {
+function ReadOnlyInteractive({ object, isDark }: { object: InteractiveComponentObject; isDark: boolean }) {
   // For read-only view, render visible children as static objects.
   // For flip-cards, show "front" group only. For others, show all children.
   const children = object.children ?? [];
@@ -279,7 +283,7 @@ function ReadOnlyInteractive({ object }: { object: InteractiveComponentObject })
       {filteredChildren
         .filter(c => c.visible !== false)
         .map(child => (
-          <ReadOnlyObject key={child.id} object={child as DesignObject} />
+          <ReadOnlyObject key={child.id} object={child as DesignObject} isDark={isDark} />
         ))}
     </Group>
   );
@@ -327,6 +331,7 @@ function ReadOnlyImage({
 
 export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
   const { t } = useTranslation();
+  const { colors, isDark } = useTheme();
   const [zoom, setZoom] = useState(1);
 
   // Auto-fit zoom to viewport
@@ -342,7 +347,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: colors.appBackground,
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
@@ -351,8 +356,8 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
       <div
         style={{
           padding: '16px 32px',
-          backgroundColor: '#fff',
-          borderBottom: '1px solid #E5E7EB',
+          backgroundColor: colors.white,
+          borderBottom: `1px solid ${colors.borderCard}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -362,7 +367,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
           <div
             style={{
               fontSize: 11,
-              color: '#7B68EE',
+              color: colors.primary,
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: 0.8,
@@ -371,18 +376,18 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
           >
             SchoolKit
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: colors.textDark }}>
             {title}
           </div>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>{t('design.runtime.byAuthor', { author })}</div>
+          <div style={{ fontSize: 13, color: colors.textLight }}>{t('design.runtime.byAuthor', { author })}</div>
         </div>
         <div
           style={{
             padding: '6px 14px',
             borderRadius: 8,
-            backgroundColor: '#F3F4F6',
+            backgroundColor: colors.appBackgroundAlt,
             fontSize: 12,
-            color: '#6B7280',
+            color: colors.textMuted,
             fontWeight: 500,
           }}
         >
@@ -405,7 +410,7 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
           scaleX={zoom}
           scaleY={zoom}
           style={{
-            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+            boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : '0 4px 24px rgba(0,0,0,0.12)',
             borderRadius: 4,
           }}
         >
@@ -415,13 +420,13 @@ export function ReadOnlyViewer({ doc, title, author }: ReadOnlyViewerProps) {
               y={0}
               width={doc.canvas.width}
               height={doc.canvas.height}
-              fill={doc.canvas.backgroundGradient ? undefined : doc.canvas.background}
-              {...(doc.canvas.backgroundGradient ? getGradientFillProps(doc.canvas.backgroundGradient, doc.canvas.width, doc.canvas.height) : {})}
+              fill={doc.canvas.backgroundGradient ? undefined : getThemeAwareColor(doc.canvas.background, isDark)}
+              {...(doc.canvas.backgroundGradient ? getGradientFillProps(doc.canvas.backgroundGradient, doc.canvas.width, doc.canvas.height, isDark) : {})}
             />
             {doc.objects
               .filter((o) => o.visible)
               .map((obj) => (
-                <ReadOnlyObject key={obj.id} object={obj} />
+                <ReadOnlyObject key={obj.id} object={obj} isDark={isDark} />
               ))}
           </Layer>
         </Stage>

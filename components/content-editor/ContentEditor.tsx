@@ -94,7 +94,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
         <Pressable
           onPress={() => onSave(status)}
           disabled={saving}
-          style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 9, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: dirty || saving ? colors.primary : colors.disabledButton, opacity: hovered && !saving ? 0.92 : 1, cursor: (saving ? 'default' : 'pointer') as any })}
+          style={({ hovered }: any) => ({ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 9, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: dirty || saving ? colors.primaryFill : colors.disabledButton, opacity: hovered && !saving ? 0.92 : 1, cursor: (saving ? 'default' : 'pointer') as any })}
         >
           <Ionicons name={saving ? 'sync' : 'checkmark'} size={16} color="#fff" />
           <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{saving ? t('editor.topbar.saving') : dirty ? t('common.save') : t('editor.topbar.saved')}</Text>
@@ -157,7 +157,7 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchV
               >
                 <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.error }}>{t('editor.leavePrompt.discard')}</Text>
               </Pressable>
-              <Pressable onPress={saveThenLeave} disabled={savingForLeave} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: (savingForLeave ? 'default' : 'pointer') as any }}>
+              <Pressable onPress={saveThenLeave} disabled={savingForLeave} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.primaryFill, cursor: (savingForLeave ? 'default' : 'pointer') as any }}>
                 {savingForLeave ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={16} color="#fff" />}
                 <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{savingForLeave ? t('editor.topbar.saving') : t('editor.leavePrompt.saveContinue')}</Text>
               </Pressable>

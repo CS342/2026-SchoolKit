@@ -92,6 +92,7 @@ export function LayersPanel() {
       style={{
         width: 240,
         backgroundColor: colors.white,
+        color: colors.textDark,
         borderLeft: `1px solid ${colors.borderCard}`,
         display: 'flex',
         flexDirection: 'column',

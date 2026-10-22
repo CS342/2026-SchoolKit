@@ -1,5 +1,18 @@
 import { COLORS_LIGHT, COLORS_DARK } from '../../../constants/theme';
 
+// Current light-palette surface/text/border tokens → their dark counterparts.
+// Built from the theme so designs authored with today's tokens remap too.
+const TOKEN_KEYS = [
+  'appBackground', 'appBackgroundAlt', 'backgroundLighter', 'backgroundLight',
+  'textDark', 'textMuted', 'textLight', 'border', 'borderPurple',
+  'tealSoft', 'coralSoft', 'amberSoft', 'successBg', 'infoBg',
+] as const;
+const CURRENT_TOKEN_MAP: Record<string, string> = {};
+for (const key of TOKEN_KEYS) {
+  const light = COLORS_LIGHT[key].toLowerCase();
+  if (!(light in CURRENT_TOKEN_MAP)) CURRENT_TOKEN_MAP[light] = COLORS_DARK[key];
+}
+
 /**
  * Utility to map common "light mode" colors to their dark mode equivalents
  * specifically for dynamically generated design documents.
@@ -44,6 +57,11 @@ export function getThemeAwareColor(color: string | undefined, isDark: boolean): 
   // Input backgrounds
   if (normalized === '#f8f5ff') {
     return COLORS_DARK.inputBackground;
+  }
+
+  // Current palette tokens
+  if (normalized in CURRENT_TOKEN_MAP) {
+    return CURRENT_TOKEN_MAP[normalized];
   }
 
   return color;

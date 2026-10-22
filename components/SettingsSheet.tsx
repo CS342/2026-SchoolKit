@@ -23,14 +23,15 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
-import { VOICE_META, generateSpeech, voicesFor, voiceDescription, toVoiceLang, SHOW_VOICE_AVATARS, type VoiceLang } from '../services/elevenLabs';
+import { VOICE_META, toVoiceLang, type VoiceLang } from '../services/elevenLabs';
+import { VoicePicker } from './VoicePicker';
+import { useVoiceSample } from '../hooks/useVoiceSample';
 import { useResources } from '../hooks/useResources';
 import { ANIMATION, SPACING } from '../constants/onboarding-theme';
 import type { AppTheme } from '../constants/theme';
@@ -135,7 +136,7 @@ function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
               style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
               onPress={() => updatePreferredLanguage(option.key)}
             >
-              <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center' }]}>
+              <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primaryFill : colors.backgroundLight, alignItems: 'center', justifyContent: 'center' }]}>
                 <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
               </View>
               <View style={styles.voiceInfo}>
@@ -182,7 +183,7 @@ function AppearanceView({ theme, onBack }: { theme: AppTheme; onBack: () => void
               style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
               onPress={() => setThemePreference(option.key)}
             >
-              <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primary : colors.backgroundLight, alignItems: 'center', justifyContent: 'center' }]}>
+              <View style={[styles.voiceAvatar, { backgroundColor: isSelected ? colors.primaryFill : colors.backgroundLight, alignItems: 'center', justifyContent: 'center' }]}>
                 <Ionicons name={option.icon} size={20} color={isSelected ? '#FFFFFF' : colors.primary} />
               </View>
               <View style={styles.voiceInfo}>
@@ -215,50 +216,8 @@ function VoiceView({
   onBack: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors, shadows } = theme;
-  const player = useAudioPlayer();
-  const playerStatus = useAudioPlayerStatus(player);
-  const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  useEffect(() => {
-    if (playerStatus.isLoaded && playerStatus.didJustFinish) {
-      setPlayingVoiceId(null);
-    }
-  }, [playerStatus.didJustFinish, playerStatus.isLoaded]);
-
-  // Stop audio when leaving VoiceView
-  useEffect(() => {
-    return () => {
-      player.pause();
-    };
-  }, [player]);
-
-  const handlePlaySample = async (voiceId: string) => {
-    try {
-      if (playingVoiceId === voiceId) {
-        player.pause();
-        setPlayingVoiceId(null);
-        return;
-      }
-      setIsLoading(true);
-      setPlayingVoiceId(voiceId);
-      const sampleText = t('auth.voice.sampleIntro', { name: VOICE_META[voiceId]?.name ?? '' });
-      const uri = await generateSpeech(sampleText, voiceId);
-      if (uri) {
-        player.replace(uri);
-        player.play();
-      } else {
-        setPlayingVoiceId(null);
-      }
-    } catch {
-      setPlayingVoiceId(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const voices = React.useMemo(() => voicesFor(lang), [lang]);
+  const { colors } = theme;
+  const sample = useVoiceSample();
 
   return (
     <View style={{ flex: 1 }}>
@@ -271,45 +230,7 @@ function VoiceView({
       </View>
       <Text style={[styles.subSubtitle, { color: colors.textLight }]}>{t('profile.selectCompanion')}</Text>
       <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 8 }}>
-        <View style={{ gap: 10, marginBottom: 8 }}>
-          {voices.map((voice) => {
-            const isSelected = selectedVoice === voice.id;
-            const isPlaying = playingVoiceId === voice.id;
-            return (
-              <Pressable
-                key={voice.id}
-                style={[styles.voiceCard, { backgroundColor: colors.white, borderColor: isSelected ? colors.primary : 'transparent' }, shadows.card, isSelected && { backgroundColor: colors.backgroundLight }]}
-                onPress={() => onSelectVoice(voice.id)}
-                accessibilityRole="radio"
-                accessibilityLabel={`${voice.name}, ${t(`auth.voice.accents.${voice.accent}`)}`}
-                accessibilityState={{ selected: isSelected }}
-              >
-                {SHOW_VOICE_AVATARS && voice.image ? (
-                  <Image source={voice.image} style={[styles.voiceAvatar, { backgroundColor: colors.backgroundLight }]} />
-                ) : (
-                  <View style={[styles.voiceAvatar, { backgroundColor: voice.color, alignItems: 'center', justifyContent: 'center' }]}>
-                    <Text style={styles.voiceInitial}>{voice.initial}</Text>
-                  </View>
-                )}
-                <View style={styles.voiceInfo}>
-                  <Text style={[styles.voiceName, { color: isSelected ? colors.primary : colors.textDark }]}>{voice.name}</Text>
-                  <Text style={[styles.voiceDesc, { color: colors.textLight, opacity: isSelected ? 0.8 : 1 }]}>{voiceDescription(voice, lang)}</Text>
-                  <Text style={[styles.voiceDesc, { color: colors.textLight, fontSize: 12, fontWeight: '600', marginTop: 2 }]}>{t(`auth.voice.accents.${voice.accent}`)}</Text>
-                </View>
-                <Pressable
-                  style={[styles.playButton, { backgroundColor: isPlaying ? colors.primary : colors.backgroundLight }]}
-                  onPress={(e) => { e.stopPropagation(); handlePlaySample(voice.id); }}
-                >
-                  {isLoading && isPlaying ? (
-                    <ActivityIndicator size="small" color={isPlaying ? '#FFFFFF' : colors.primary} />
-                  ) : (
-                    <Ionicons name={isPlaying ? 'stop' : 'play'} size={16} color={isPlaying ? '#FFFFFF' : colors.primary} />
-                  )}
-                </Pressable>
-              </Pressable>
-            );
-          })}
-        </View>
+        <VoicePicker lang={lang} selectedVoice={selectedVoice} onSelect={onSelectVoice} sample={sample} />
       </ScrollView>
     </View>
   );
@@ -466,7 +387,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
             </View>
           ) : submitError ? (
             <View style={styles.thankYou}>
-              <Ionicons name="alert-circle" size={44} color="#E74C3C" />
+              <Ionicons name="alert-circle" size={44} color={colors.error} />
               <Text style={[styles.voiceName, { color: colors.textDark, marginTop: 8 }]}>{t('profile.feedbackFailed')}</Text>
               <Text style={[styles.voiceDesc, { color: colors.textLight, textAlign: 'center', marginTop: 4 }]}>
                 {t('profile.feedbackFailedBody')}
@@ -488,15 +409,15 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
                 onBlur={() => setIsFocused(false)}
                 textAlignVertical="top"
               />
-              <Text style={[styles.charCount, { color: feedbackText.length >= MAX_CHARS ? colors.error : colors.indicatorInactive }]}>
+              <Text style={[styles.charCount, { color: feedbackText.length >= MAX_CHARS ? colors.error : colors.textLight }]}>
                 {feedbackText.length}/{MAX_CHARS}
               </Text>
               <Pressable
-                style={[styles.submitButton, { backgroundColor: feedbackText.trim().length > 0 && !isSubmitting ? colors.primary : colors.indicatorInactive }]}
+                style={[styles.submitButton, { backgroundColor: feedbackText.trim().length > 0 && !isSubmitting ? colors.primaryFill : colors.disabledButton }]}
                 onPress={handleSubmit}
                 disabled={!feedbackText.trim() || isSubmitting}
               >
-                {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>{t('common.submit')}</Text>}
+                {isSubmitting ? <ActivityIndicator color={colors.primary} /> : <Text style={[styles.submitText, !feedbackText.trim() && { color: colors.disabledText }]}>{t('common.submit')}</Text>}
               </Pressable>
             </View>
           )}
@@ -632,7 +553,7 @@ export function SettingsSheet() {
                   <SheetRow icon="chatbubble-ellipses-outline" label={t('profile.shareFeedback')} onPress={() => setCurrentView('feedback')} isLast theme={theme} />
                 </View>
                 <View style={[styles.groupCard, { backgroundColor: colors.white, ...shadows.card }]}>
-                  <SheetRow icon="log-out-outline" label={t('profile.signOut')} onPress={handleSignOut} tint={colors.error} isLast theme={theme} />
+                  <SheetRow icon="log-out-outline" label={t('profile.signOut')} onPress={handleSignOut} tint={colors.destructiveFill} isLast theme={theme} />
                 </View>
               </ScrollView>
             </>

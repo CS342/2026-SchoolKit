@@ -8,7 +8,8 @@
     },
     "header": {
       "welcomeBack": "Welcome back,",
-      "greeting": "{{name}}!"
+      "greeting": "{{name}}!",
+      "welcomeNoName": "Welcome back!"
     },
     "sections": {
       "yourProgress": "Your progress",

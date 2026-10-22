@@ -118,11 +118,14 @@ const TIP_CARDS: TipCard[] = [
 
 const CARD_HEIGHT_FRONT = 280;
 const CARD_HEIGHT_BACK = 460;
+// Fallback before the carousel measures itself; real width comes from onLayout so the
+// card fits the reading column on desktop instead of the whole window.
 const STORY_CARD_WIDTH = SCREEN_WIDTH * 0.78;
+const storyCardWidthFor = (listWidth: number) => Math.min(listWidth * 0.86, 520);
 const STORY_CARD_MARGIN = 10;
 
 // ─── Story Flippable Card ─────────────────────────────────────────────────────
-function StoryFlipCard({ story, isDark, colors, styles }: { story: StoryData, isDark: boolean, colors: ThemeColors, styles: any }) {
+function StoryFlipCard({ story, isDark, colors, styles, cardWidth = STORY_CARD_WIDTH }: { story: StoryData, isDark: boolean, colors: ThemeColors, styles: any, cardWidth?: number }) {
     const [flipped, setFlipped] = useState(false);
     const flipAnim = useRef(new Animated.Value(0)).current;
 
@@ -142,12 +145,13 @@ function StoryFlipCard({ story, isDark, colors, styles }: { story: StoryData, is
     const backOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0, 1] });
 
     return (
-        <TouchableOpacity activeOpacity={0.95} onPress={handleFlip} style={{ width: STORY_CARD_WIDTH, marginHorizontal: STORY_CARD_MARGIN }}>
+        <TouchableOpacity activeOpacity={0.95} onPress={handleFlip} style={{ width: cardWidth, marginHorizontal: STORY_CARD_MARGIN }}>
             <View style={{ height: 260 }}>
                 {/* Front */}
                 <Animated.View
                     style={[
                         styles.storyCard,
+                        { width: cardWidth },
                         { backgroundColor: isDark ? story.color + 'CC' : story.color, borderColor: story.color + "60" },
                         { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
                         { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity },
@@ -161,6 +165,7 @@ function StoryFlipCard({ story, isDark, colors, styles }: { story: StoryData, is
                 <Animated.View
                     style={[
                         styles.storyCard,
+                        { width: cardWidth },
                         { backgroundColor: isDark ? colors.backgroundLight : story.color + "12", borderColor: story.color + "60" },
                         { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
                         { transform: [{ perspective: 1000 }, { rotateY: backRotate }], opacity: backOpacity, backfaceVisibility: "hidden" },
@@ -223,7 +228,7 @@ function MapBubble({
         >
             <TouchableOpacity activeOpacity={0.85} onPress={handlePress}>
                 <View style={[styles.bubble, { backgroundColor: card.color + "18", borderColor: card.color + "50" }]}>
-                    <Text style={[styles.bubbleText, { color: card.color }]} numberOfLines={3}>
+                    <Text style={styles.bubbleText} numberOfLines={3}>
                         {card.front}
                     </Text>
                 </View>
@@ -343,7 +348,7 @@ function ExpandedCardModal({
                     <Animated.View style={[styles.modalCardShadow, { transform: [{ perspective: 1000 }, { rotateY: frontRotate }], opacity: frontOpacity, height: cardHeight }]}>
                         <View style={[styles.modalCard, { height: "100%", backgroundColor: color, borderColor: color }]}>
                             <View style={styles.frontInner}>
-                                <Ionicons name={card.icon as any} size={56} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
+                                <Ionicons name={card.icon as any} size={56} color="rgba(44,42,58,0.85)" style={{ marginBottom: 16 }} />
                                 <Text style={styles.frontTitle}>{card.front}</Text>
                             </View>
                         </View>
@@ -357,13 +362,13 @@ function ExpandedCardModal({
                                     <View style={[styles.backIconCircle, { backgroundColor: color + "20" }]}>
                                         <Ionicons name={card.icon as any} size={22} color={color} />
                                     </View>
-                                    <Text style={[styles.backTitle, { color }]}>{card.front}</Text>
+                                    <Text style={[styles.backTitle, { color: colors.textDark }]}>{card.front}</Text>
                                     <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerBtn} disabled={isLoadingAudio}>
                                         {isLoadingAudio ? <ActivityIndicator size="small" color={color} /> : <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={26} color={isSpeaking ? colors.error : colors.textDark} />}
                                     </TouchableOpacity>
                                     {isAudioLoaded && (
                                         <TouchableOpacity onPress={onTogglePlaybackRate} style={styles.speakerBtn}>
-                                            <Text style={{ fontSize: 12, fontWeight: '700', color }}>{playbackRate}x</Text>
+                                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>{playbackRate}x</Text>
                                         </TouchableOpacity>
                                     )}
                                     <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
@@ -508,6 +513,7 @@ export default function FindingSupportScreen() {
 
     const storyScrollRef = useRef<FlatList>(null);
     const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+    const [storyCardWidth, setStoryCardWidth] = useState(STORY_CARD_WIDTH);
 
     const actionsNode = (
         <>
@@ -540,8 +546,8 @@ export default function FindingSupportScreen() {
             <Animated.View nativeID="support-stories" style={{ opacity: storiesFade, transform: [{ translateY: storiesSlide }] }}>
                 <Text style={[styles.sectionTitle, { color: colors.textDark }]}>Making New Friends: Shining Examples</Text>
                 <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>Real stories from young people who found their way.</Text>
-                <FlatList ref={storyScrollRef} data={STORIES} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }} snapToInterval={STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2} decelerationRate="fast" renderItem={({ item }) => <StoryFlipCard story={item} isDark={isDark} colors={colors} styles={styles} />} onMomentumScrollEnd={(e) => {
-                    const idx = Math.round(e.nativeEvent.contentOffset.x / (STORY_CARD_WIDTH + STORY_CARD_MARGIN * 2));
+                <FlatList ref={storyScrollRef} data={STORIES} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }} onLayout={(e) => setStoryCardWidth(storyCardWidthFor(e.nativeEvent.layout.width))} snapToInterval={storyCardWidth + STORY_CARD_MARGIN * 2} decelerationRate="fast" extraData={storyCardWidth} renderItem={({ item }) => <StoryFlipCard story={item} isDark={isDark} colors={colors} styles={styles} cardWidth={storyCardWidth} />} onMomentumScrollEnd={(e) => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / (storyCardWidth + STORY_CARD_MARGIN * 2));
                     setActiveStoryIndex(idx);
                 }} />
                 <View style={styles.dotsRow}>
@@ -648,15 +654,15 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     sourceText: { ...TYPOGRAPHY.caption, fontStyle: "italic", textAlign: "center", marginTop: 6 },
     storyCard: { width: STORY_CARD_WIDTH, borderRadius: 24, borderWidth: 2, padding: 20, height: 260, justifyContent: "center", alignItems: "center", backfaceVisibility: "hidden" },
     storyEmoji: { fontSize: 40, marginBottom: 12 },
-    storyFrontTitle: { fontSize: 18, fontWeight: "700", color: c.white, textAlign: "center", lineHeight: 24 },
-    storyTapHint: { fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: "500", marginTop: 10 },
+    storyFrontTitle: { fontSize: 18, fontWeight: "700", color: "#2C2A3A", textAlign: "center", lineHeight: 24 },
+    storyTapHint: { fontSize: 12, color: "rgba(44,42,58,0.6)", fontWeight: "500", marginTop: 10 },
     storyText: { fontSize: 14, fontWeight: "400", lineHeight: 22, fontStyle: "italic" },
     pathContainer: { paddingBottom: 10 },
     bubbleWrapper: { width: BUBBLE_SIZE },
     bubbleLeft: { alignSelf: "flex-start", marginLeft: 140 },
     bubbleRight: { alignSelf: "flex-end", marginRight: 140 },
     bubble: { width: BUBBLE_SIZE, height: BUBBLE_SIZE, borderRadius: BUBBLE_SIZE / 2, borderWidth: 2.5, alignItems: "center", justifyContent: "center", padding: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
-    bubbleText: { fontSize: 14, fontWeight: "700", textAlign: "center", lineHeight: 16, letterSpacing: -0.2 },
+    bubbleText: { color: c.textDark, fontSize: 14, fontWeight: "700", textAlign: "center", lineHeight: 16, letterSpacing: -0.2 },
     connectorWrapper: { height: 20, justifyContent: "center" },
     connectorLeft: { alignItems: "flex-end", marginRight: 30 + BUBBLE_SIZE / 2 },
     connectorRight: { alignItems: "flex-start", marginLeft: 30 + BUBBLE_SIZE / 2 },
@@ -668,7 +674,7 @@ const makeStyles = (c: ThemeColors, s: ThemeShadows, isDark: boolean) => StyleSh
     modalCard: { width: "100%", borderRadius: 32, borderWidth: 4, overflow: "hidden", backfaceVisibility: "hidden" },
     backSide: { position: "absolute", top: 0, left: 0, right: 0 },
     frontInner: { flex: 1, padding: 32, alignItems: "center", justifyContent: "center" },
-    frontTitle: { fontSize: 26, fontWeight: "700", color: c.white, textAlign: "center", lineHeight: 34, letterSpacing: -0.5 },
+    frontTitle: { fontSize: 26, fontWeight: "700", color: "#2C2A3A", textAlign: "center", lineHeight: 34, letterSpacing: -0.5 },
     backInner: { padding: 24, flex: 1, overflow: "hidden" },
     backHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
     backIconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },

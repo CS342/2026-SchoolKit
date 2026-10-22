@@ -12,6 +12,7 @@ import Animated, {
 import { ANIMATION, TYPOGRAPHY, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { ThemeColors } from '../../constants/theme';
+import { AppIcon } from '../ui/AppIcon';
 
 interface SelectableCardProps {
   title: string;
@@ -20,7 +21,8 @@ interface SelectableCardProps {
   onPress: () => void;
   multiSelect?: boolean;
   color?: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  /** Ionicons name or `mci:<name>` (see AppIcon). */
+  icon?: string;
   index?: number;
 }
 
@@ -79,7 +81,7 @@ export function SelectableCard({
         style={[
           styles.card,
           selected && {
-            backgroundColor: color + '08',
+            backgroundColor: color + '14',
             borderColor: color,
             borderWidth: BORDERS.cardSelected,
             ...shadows.cardSelected,
@@ -89,8 +91,8 @@ export function SelectableCard({
         ]}
       >
         {icon && (
-          <View style={[styles.iconCircle, { backgroundColor: color + '15' }]}>
-            <Ionicons name={icon} size={22} color={color} />
+          <View style={[styles.iconCircle, { backgroundColor: color }]}>
+            <AppIcon name={icon} size={24} color="#FFFFFF" />
           </View>
         )}
         <View style={styles.textContainer}>
@@ -145,7 +147,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   iconCircle: {
     width: SIZING.circleCard,
     height: SIZING.circleCard,
-    borderRadius: SIZING.circleCard / 2,
+    borderRadius: RADII.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,

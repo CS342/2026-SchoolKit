@@ -13,7 +13,7 @@ import { useEditorStore } from '../../features/content/editor/store';
 function SegBtn({ active, icon, label, onPress }: { active: boolean; icon: string; label: string; onPress: () => void }) {
   const { colors } = useTheme();
   return (
-    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderRadius: RADII.pill, backgroundColor: active ? colors.primary : 'transparent', cursor: 'pointer' as any }}>
+    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderRadius: RADII.pill, backgroundColor: active ? colors.primaryFill : 'transparent', cursor: 'pointer' as any }}>
       <Ionicons name={icon as any} size={15} color={active ? '#fff' : colors.textMuted} />
       <Text style={{ ...TYPOGRAPHY.caption, fontFamily: 'Raleway_700Bold', color: active ? '#fff' : colors.textMuted }}>{label}</Text>
     </Pressable>

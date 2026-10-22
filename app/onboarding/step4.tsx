@@ -181,7 +181,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   counterPillActive: {
-    backgroundColor: c.primary,
+    backgroundColor: c.primaryFill,
   },
   counterPillInactive: {
     backgroundColor: c.border,
@@ -191,7 +191,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     fontWeight: '700',
   },
   counterTextActive: {
-    color: c.white,
+    color: '#FFFFFF',
   },
   counterTextInactive: {
     color: c.textLight,

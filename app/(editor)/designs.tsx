@@ -118,7 +118,7 @@ export default function DesignsDashboard() {
           <button
             onClick={handleCreate}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.primaryFill,
               color: '#fff',
               border: 'none',
               borderRadius: 12,
@@ -176,7 +176,7 @@ export default function DesignsDashboard() {
             <button
               onClick={handleCreate}
               style={{
-                backgroundColor: colors.primary,
+                backgroundColor: colors.primaryFill,
                 color: '#fff',
                 border: 'none',
                 borderRadius: 10,

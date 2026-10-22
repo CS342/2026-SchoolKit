@@ -8,7 +8,7 @@ import type { Resource } from '../constants/resources';
 import { useResources } from '../hooks/useResources';
 import { COLORS, TYPOGRAPHY, RADII } from '../constants/onboarding-theme';
 import { AppTheme } from '../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon } from './ui/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface RecommendationListProps {
@@ -105,21 +105,27 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
             const resource = !isStory ? (rec.item as Resource) : null;
             const label = isStory ? t('home.recommend.story') : resource!.category;
             const tint = isStory ? colors.primary : resource!.color;
-            const icon = isStory ? 'book-outline' : (resource!.icon as any);
+            const badge = isStory ? colors.primaryFill : resource!.color;
+            const icon = isStory ? 'book' : resource!.icon;
             const title = isStory ? story!.title : resource!.title;
             return (
               <Pressable
                 key={`${rec.type}-${rec.item.id}`}
-                style={[styles.railCard, { backgroundColor: colors.white, borderColor: colors.borderCard }]}
+                style={({ hovered }: any) => [
+                  styles.railCard,
+                  { backgroundColor: tint + (hovered ? '1F' : '12'), borderColor: tint + '40' },
+                ]}
                 onPress={() => router.push((isStory ? `/story-detail?id=${story!.id}` : resource!.route) as any)}
                 accessibilityRole="button"
                 accessibilityLabel={t('home.recommend.openA11y', { title })}
               >
-                <View style={styles.cardHeader}>
-                  <Ionicons name={icon} size={14} color={tint} style={styles.icon} />
-                  <Text style={[styles.cardType, { color: tint }]}>{label}</Text>
+                <View style={[styles.railBadge, { backgroundColor: badge }]}>
+                  <AppIcon name={icon} size={20} color="#FFFFFF" />
                 </View>
-                <Text style={[styles.railTitle, { color: colors.textDark }]} numberOfLines={2}>{title}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardType, { color: tint, fontSize: 11, marginBottom: 2 }]}>{label}</Text>
+                  <Text style={[styles.railTitle, { color: colors.textDark }]} numberOfLines={2}>{title}</Text>
+                </View>
               </Pressable>
             );
           })}
@@ -156,7 +162,9 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
                 accessibilityLabel={t('home.recommend.readStoryA11y', { title: story.title })}
               >
                 <View style={styles.cardHeader}>
-                  <Ionicons name="book-outline" size={16} color={COLORS.primary} style={styles.icon} />
+                  <View style={[styles.badge, { backgroundColor: colors.primaryFill }]}>
+                    <AppIcon name="book" size={16} color="#FFFFFF" />
+                  </View>
                   <Text style={styles.cardType}>{t('home.recommend.story')}</Text>
                 </View>
                 <Text style={styles.cardTitle} numberOfLines={2}>{story.title}</Text>
@@ -173,13 +181,15 @@ export function RecommendationList({ currentId, currentTags, excludeIds, variant
             return (
               <Pressable
                 key={`resource-${resource.id}`}
-                style={styles.card}
+                style={[styles.card, { borderColor: resource.color + '40', backgroundColor: isDark ? colors.white : resource.color + '0D' }]}
                 onPress={() => router.push(resource.route as any)}
                 accessibilityRole="button"
                 accessibilityLabel={t('home.recommend.openResourceA11y', { title: resource.title })}
               >
                 <View style={styles.cardHeader}>
-                  <Ionicons name={resource.icon as any} size={16} color={resource.color} style={styles.icon} />
+                  <View style={[styles.badge, { backgroundColor: resource.color }]}>
+                    <AppIcon name={resource.icon} size={16} color="#FFFFFF" />
+                  </View>
                   <Text style={[styles.cardType, { color: resource.color }]}>{resource.category}</Text>
                 </View>
                 <Text style={styles.cardTitle} numberOfLines={2}>{resource.title}</Text>
@@ -238,8 +248,20 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     alignItems: 'center',
     marginBottom: 8,
   },
-  icon: {
-    marginRight: 6,
+  badge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  railBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardType: {
     fontSize: 12,
@@ -274,7 +296,10 @@ function makeStyles(c: AppTheme['colors'], isDark: boolean) {
     marginBottom: 10,
   },
   railCard: {
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 12,
   },
