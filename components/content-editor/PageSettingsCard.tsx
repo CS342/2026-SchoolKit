@@ -10,7 +10,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore } from '../../features/content/editor/store';
 import type { ColorToken } from '../../features/content/types';
-import { TextField, ColorSwatches } from './primitives';
+import { TextField, ColorSwatches, ChipSingleSelect } from './primitives';
+import { CONTENT_LANGUAGES } from '../../features/content/audience';
 import { AudienceChips } from './AudienceChips';
 import { ALL_RESOURCES } from '../../constants/resources';
 import { replacedBuiltInId } from '../../hooks/useResources';
@@ -37,6 +38,14 @@ export function PageSettingsCard() {
           <TextField label={t('editor.settings.categoryLabel')} placeholder={t('editor.settings.categoryPlaceholder')} value={doc.category ?? ''} onChangeText={(val) => setMeta({ category: val })} />
           <TextField label={t('editor.settings.tagsLabel')} placeholder={t('editor.settings.tagsPlaceholder')} value={tagStr} onChangeText={(val) => { setTagStr(val); setMeta({ tags: val.split(',').map((x) => x.trim()).filter(Boolean) }); }} />
           <AudienceChips value={doc.audience} onChange={(audience) => setMeta({ audience })} />
+          <ChipSingleSelect
+            label={t('editor.settings.languageLabel')}
+            options={CONTENT_LANGUAGES.map((l) => ({ value: l, label: t(`editor.language.${l}`) }))}
+            value={doc.language ?? 'en'}
+            // English is the default; store it as "no language" so older pages stay identical.
+            onChange={(l) => setMeta({ language: l === 'en' ? undefined : l })}
+            hint={t('editor.settings.languageHint')}
+          />
           <LibraryListingNote title={doc.title} resourceId={doc.resourceId} />
         </View>
       ) : null}

@@ -15,7 +15,7 @@ import {
   listTopics, deleteContentPage, deleteTopic, setPageStatus, duplicateContentPage,
   PageListItem, PageStatus, TopicListItem,
 } from '../../features/content/editor/crud';
-import { audienceLabel } from '../../features/content/versions';
+import { versionLabel } from '../../features/content/versions';
 import { NewPageModal } from '../../components/content-editor/NewPageModal';
 
 type StatusFilter = 'all' | PageStatus;
@@ -453,7 +453,7 @@ function PageRow({ page, path, nested, busy, copied, onOpen, onToggleStatus, onV
             {showAudience ? (
               <View style={[ui.catPill, { backgroundColor: colors.primarySoft, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                 <Ionicons name="people-outline" size={11} color={colors.primary} />
-                <Text style={{ ...TYPOGRAPHY.caption, fontSize: 11, fontFamily: 'Raleway_700Bold', color: colors.primary }} numberOfLines={1}>{audienceLabel(page.audience)}</Text>
+                <Text style={{ ...TYPOGRAPHY.caption, fontSize: 11, fontFamily: 'Raleway_700Bold', color: colors.primary }} numberOfLines={1}>{versionLabel(page)}</Text>
               </View>
             ) : null}
             {page.category ? (

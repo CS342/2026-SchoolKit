@@ -1,4 +1,4 @@
-import type { Audience } from '../features/content/audience';
+import type { Audience, ContentLanguage } from '../features/content/audience';
 
 export interface Resource {
   id: string;
@@ -14,6 +14,8 @@ export interface Resource {
   designOnly?: boolean;
   /** Who this is for (see features/content/audience.ts). Missing = everyone. */
   audience?: Audience;
+  /** The language of the version shown (content pages). Missing = English. */
+  language?: ContentLanguage;
   /** Backed by a published editor page. Set when such a page replaces a built-in guide
    *  (same id, so bookmarks keep working) — it stays listed even while built-ins are hidden. */
   fromContentPage?: boolean;

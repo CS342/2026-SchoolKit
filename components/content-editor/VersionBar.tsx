@@ -1,7 +1,8 @@
 // Versions of the topic being edited, under the editor's topbar: the topic name, one tab
-// per version (its audience + draft/published), the current version's audience, "Add
-// version", and "Who sees what" (which version each kind of reader gets). The page being
-// edited is shown with its live, possibly unsaved, audience. Web-only editor.
+// per version (its audience, language + draft/published), the current version's audience,
+// "Add version", and "Who sees what" (which version each kind of reader gets, per
+// language). The page being edited is shown with its live, possibly unsaved, audience and
+// language. Web-only editor.
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,14 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../constants/onboarding-theme';
 import { useEditorStore } from '../../features/content/editor/store';
-import { audienceLabel, coverage, viewerCellLabel } from '../../features/content/versions';
-import type { Audience } from '../../features/content/audience';
+import { audienceLabel, coverage, versionLabel, versionLanguage, viewerCellLabel } from '../../features/content/versions';
+import { CONTENT_LANGUAGES, type Audience, type ContentLanguage } from '../../features/content/audience';
 import type { PageStatus } from '../../features/content/editor/crud';
 import { AudienceChips } from './AudienceChips';
 
-export type AddVersionKind = 'copy' | 'file' | 'blank';
+export type AddVersionKind = 'copy' | 'file' | 'translate' | 'blank';
 
-type Tab = { id: string | null; audience?: Audience; status: PageStatus; current: boolean };
+type Tab = { id: string | null; audience?: Audience; language?: ContentLanguage; status: PageStatus; current: boolean };
 
 export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
   onSwitch: (pageId: string) => void;
@@ -29,20 +30,21 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
   const setMeta = useEditorStore((s) => s.setMeta);
   const { topic, versions, currentId } = useEditorStore((s) => s.topicCtx);
   const [menu, setMenu] = useState<'add' | 'coverage' | null>(null);
+  const [coverageLanguage, setCoverageLanguage] = useState<ContentLanguage>('en');
   const [editingAudience, setEditingAudience] = useState(false);
   const [name, setName] = useState(topic?.name ?? '');
   useEffect(() => { setName(topic?.name ?? ''); }, [topic?.id, topic?.name]);
 
   const tabs = useMemo<Tab[]>(() => {
     const saved: Tab[] = versions.map((v) => (v.id === currentId
-      ? { id: v.id, audience: doc.audience, status: v.status, current: true }
-      : { id: v.id, audience: v.audience, status: v.status, current: false }));
+      ? { id: v.id, audience: doc.audience, language: doc.language, status: v.status, current: true }
+      : { id: v.id, audience: v.audience, language: v.language, status: v.status, current: false }));
     // A new, unsaved version of an existing topic.
-    if (!currentId) saved.push({ id: null, audience: doc.audience, status: 'draft', current: true });
+    if (!currentId) saved.push({ id: null, audience: doc.audience, language: doc.language, status: 'draft', current: true });
     return saved;
-  }, [versions, currentId, doc.audience]);
+  }, [versions, currentId, doc.audience, doc.language]);
 
-  const rows = useMemo(() => coverage(tabs), [tabs]);
+  const rows = useMemo(() => coverage(tabs, coverageLanguage), [tabs, coverageLanguage]);
   // Adding a version needs a saved topic to add it to.
   const canAdd = !!topic && !!currentId;
 
@@ -81,7 +83,7 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: tab.current }}
                 accessibilityLabel={t('editor.versionBar.tabLabel', {
-                  audience: audienceLabel(tab.audience),
+                  audience: versionLabel(tab),
                   status: t(`editor.status.${tab.status}`),
                   editing: tab.current ? t('editor.versionBar.editingSuffix') : '',
                 })}
@@ -93,6 +95,7 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
                 })}
               >
                 <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: dot }} />
+                {versionLanguage(tab) !== 'en' ? <LanguageBadge language={versionLanguage(tab)} /> : null}
                 <Text style={{ ...TYPOGRAPHY.caption, fontFamily: tab.current ? 'Raleway_700Bold' : undefined, color: tab.current ? colors.primary : colors.textDark }}>
                   {audienceLabel(tab.audience)}{tab.id ? '' : t('editor.versionBar.unsavedSuffix')}
                 </Text>
@@ -110,6 +113,7 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
                 <>
                   <MenuItem icon="copy-outline" title={t('editor.versionBar.addCopyTitle')} detail={t('editor.versionBar.addCopyDetail')} onPress={() => { setMenu(null); onAdd('copy'); }} />
                   <MenuItem icon="document-attach-outline" title={t('editor.versionBar.addFileTitle')} detail={t('editor.versionBar.addFileDetail')} onPress={() => { setMenu(null); onAdd('file'); }} />
+                  <MenuItem icon="language-outline" title={t('editor.versionBar.addTranslateTitle')} detail={t('editor.versionBar.addTranslateDetail')} onPress={() => { setMenu(null); onAdd('translate'); }} />
                   <MenuItem icon="document-outline" title={t('editor.versionBar.addBlankTitle')} detail={t('editor.versionBar.addBlankDetail')} onPress={() => { setMenu(null); onAdd('blank'); }} />
                 </>
               ) : (
@@ -126,15 +130,36 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
               <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 4 }}>
                 {t('editor.versionBar.coverageIntro')}
               </Text>
-              {rows.map((r) => (
-                <View key={r.cell.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingHorizontal: 10 }}>
-                  <Text style={{ ...TYPOGRAPHY.caption, color: colors.textDark, flex: 1 }} numberOfLines={1}>{viewerCellLabel(r.cell)}</Text>
-                  {r.tie ? <Ionicons name="warning-outline" size={13} color={colors.warning} accessibilityLabel={t('editor.versionBar.coverageTie')} /> : null}
-                  <Text style={{ ...TYPOGRAPHY.caption, fontFamily: r.version ? 'Raleway_700Bold' : undefined, color: r.version ? (r.version.current ? colors.primary : colors.textDark) : colors.textLight }} numberOfLines={1}>
-                    {r.version ? audienceLabel(r.version.audience) : t('editor.versionBar.coverageHidden')}
-                  </Text>
-                </View>
-              ))}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingBottom: 6 }}>
+                <Text style={{ ...TYPOGRAPHY.caption, color: colors.textMuted }}>{t('editor.versionBar.coverageLanguage')}</Text>
+                {CONTENT_LANGUAGES.map((lang) => {
+                  const on = lang === coverageLanguage;
+                  return (
+                    <Pressable
+                      key={lang}
+                      onPress={() => setCoverageLanguage(lang)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: RADII.pill, borderWidth: 1.5, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primaryFill : 'transparent', cursor: 'pointer' as any }}
+                    >
+                      <Text style={{ ...TYPOGRAPHY.caption, color: on ? '#fff' : colors.textDark }}>{t(`editor.language.${lang}`)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {rows.map((r) => {
+                // A Spanish reader shown an English version: there's no Spanish one for them.
+                const fallback = !!r.version && versionLanguage(r.version) !== coverageLanguage;
+                return (
+                  <View key={r.cell.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingHorizontal: 10 }}>
+                    <Text style={{ ...TYPOGRAPHY.caption, color: colors.textDark, flex: 1 }} numberOfLines={1}>{viewerCellLabel(r.cell)}</Text>
+                    {r.tie ? <Ionicons name="warning-outline" size={13} color={colors.warning} accessibilityLabel={t('editor.versionBar.coverageTie')} /> : null}
+                    <Text style={{ ...TYPOGRAPHY.caption, fontFamily: r.version && !fallback ? 'Raleway_700Bold' : undefined, color: !r.version || fallback ? colors.textLight : r.version.current ? colors.primary : colors.textDark }} numberOfLines={1}>
+                      {!r.version ? t('editor.versionBar.coverageHidden') : fallback ? `${t('editor.versionBar.coverageFallback')} · ${audienceLabel(r.version.audience)}` : audienceLabel(r.version.audience)}
+                    </Text>
+                  </View>
+                );
+              })}
             </Dropdown>
           ) : null}
         </View>
@@ -145,6 +170,15 @@ export function VersionBar({ onSwitch, onAdd, onRenameTopic }: {
           <AudienceChips value={doc.audience} onChange={(audience) => setMeta({ audience })} />
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function LanguageBadge({ language }: { language: ContentLanguage }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ paddingHorizontal: 5, paddingVertical: 1, borderRadius: 5, backgroundColor: colors.infoBg }}>
+      <Text style={{ fontSize: 10, fontFamily: 'Raleway_700Bold', letterSpacing: 0.5, color: colors.info }}>{language.toUpperCase()}</Text>
     </View>
   );
 }

@@ -10,13 +10,14 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { TYPOGRAPHY, RADII } from '../../../constants/onboarding-theme';
 import { ContentEditor } from '../../../components/content-editor';
 import { AddVersionModal } from '../../../components/content-editor/AddVersionModal';
+import { TranslateVersionModal } from '../../../components/content-editor/TranslateVersionModal';
 import type { AddVersionKind } from '../../../components/content-editor/VersionBar';
 import { useEditorStore, loadDoc, takeGenerationNotices } from '../../../features/content/editor/store';
 import { newPageDoc } from '../../../features/content/editor/templates';
 import {
   loadContentPage, saveContentPage, duplicateContentPage, getTopic, listTopicVersions, renameTopic, PageStatus,
 } from '../../../features/content/editor/crud';
-import { audienceLabel } from '../../../features/content/versions';
+import { audienceLabel, versionLanguage } from '../../../features/content/versions';
 
 /** Load a topic and its versions into the editor store (for the version bar + checks). */
 async function loadTopicContext(topicId: string | null, currentId: string | null) {
@@ -38,6 +39,7 @@ export default function ContentEditorRoute() {
   const [initialStatus, setInitialStatus] = useState<PageStatus>('draft');
   const [saving, setSaving] = useState(false);
   const [showAddFromFile, setShowAddFromFile] = useState(false);
+  const [showTranslate, setShowTranslate] = useState(false);
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function ContentEditorRoute() {
     (async () => {
       setReady(false);
       setShowAddFromFile(false);
+      setShowTranslate(false);
       if (!id || id === 'new') {
         loadDoc(newPageDoc());
         const t = topicParam ?? null;
@@ -94,6 +97,7 @@ export default function ContentEditorRoute() {
     if (!topicId || !pageId) return;
     if (kind === 'blank') { router.push(`/(editor)/content/new?topic=${topicId}`); return; }
     if (kind === 'file') { setShowAddFromFile(true); return; }
+    if (kind === 'translate') { setShowTranslate(true); return; }
     const res = await duplicateContentPage(pageId, { asVersion: true });
     if ('error' in res) { flash('error', res.error); return; }
     router.push(`/(editor)/content/${res.id}`);
@@ -151,6 +155,20 @@ export default function ContentEditorRoute() {
           layoutDoc={useEditorStore.getState().doc}
           layoutLabel={audienceLabel(useEditorStore.getState().doc.audience)}
           onCreated={(vid) => { setShowAddFromFile(false); router.push(`/(editor)/content/${vid}`); }}
+        />
+      ) : null}
+      {topicId && pageId && showTranslate ? (
+        <TranslateVersionModal
+          visible
+          onClose={() => setShowTranslate(false)}
+          sourcePageId={pageId}
+          sourceLabel={audienceLabel(useEditorStore.getState().doc.audience)}
+          blockedReason={
+            versionLanguage(useEditorStore.getState().doc) !== 'en' ? t('editor.translate.notFromEnglish')
+              : useEditorStore.getState().dirty ? t('editor.translate.saveFirst')
+                : undefined
+          }
+          onCreated={(vid) => { setShowTranslate(false); router.push(`/(editor)/content/${vid}`); }}
         />
       ) : null}
       {notice ? (

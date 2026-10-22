@@ -3,14 +3,22 @@
 //
 // Readers get exactly one version per topic: the most specific one that matches them.
 // A version with no audience is universal and acts as the fallback for everyone else.
+//
+// Versions also have a language (missing = English). Language is a preference, not a
+// filter: a Spanish reader gets the best Spanish version meant for them, else the best
+// English one. English readers never get a Spanish version.
 import type { UserRole } from '../../lib/database.types';
 import i18n from '../../lib/i18n';
-import { ADULT_ROLES, bandsApplyTo, gradeToAgeBand, isVisibleTo, parseAudience, type AgeBand, type Audience, type AudienceViewer } from './audience';
+import { ADULT_ROLES, bandsApplyTo, gradeToAgeBand, isVisibleTo, parseAudience, type AgeBand, type Audience, type AudienceViewer, type ContentLanguage } from './audience';
 import type { Notice } from './lint';
 
 export interface VersionLike {
   audience?: Audience;
+  language?: ContentLanguage;
 }
+
+/** The language a version is written in (missing = English). */
+export const versionLanguage = (v: VersionLike): ContentLanguage => v.language ?? 'en';
 
 const constraintCount = (a?: Audience): number =>
   (a?.roles?.length ? 1 : 0) + (a?.ageBands?.length ? 1 : 0);
@@ -31,11 +39,14 @@ function matchScore(a: Audience | undefined, viewer: AudienceViewer): number {
  * Pass versions in creation order — that order is the final tie-break.
  */
 export function rankVersions<T extends VersionLike>(versions: T[], viewer: AudienceViewer): T[] {
-  return versions
+  const ranked = (lang: ContentLanguage) => versions
     .map((v, i) => ({ v, i, score: matchScore(v.audience, viewer), c: constraintCount(v.audience) }))
-    .filter(({ v }) => isVisibleTo(v.audience, viewer))
+    .filter(({ v }) => versionLanguage(v) === lang && isVisibleTo(v.audience, viewer))
     .sort((a, b) => b.score - a.score || a.c - b.c || a.i - b.i)
     .map(({ v }) => v);
+  const lang = viewer.language ?? 'en';
+  const own = ranked(lang);
+  return own.length || lang === 'en' ? own : ranked('en');
 }
 
 /** The version this viewer reads, or null when no version is meant for them. */
@@ -44,11 +55,15 @@ export function pickVersion<T extends VersionLike>(versions: T[], viewer: Audien
 }
 
 /** The least-targeted version (universal if there is one) — what a direct link opens
- *  for a viewer no version is meant for. */
-export function fallbackVersion<T extends VersionLike>(versions: T[]): T | null {
-  let best: T | null = null;
-  for (const v of versions) if (!best || constraintCount(v.audience) < constraintCount(best.audience)) best = v;
-  return best;
+ *  for a viewer no version is meant for. Prefers the viewer's language, then English. */
+export function fallbackVersion<T extends VersionLike>(versions: T[], language: ContentLanguage = 'en'): T | null {
+  const leastTargeted = (pool: T[]) => {
+    let best: T | null = null;
+    for (const v of pool) if (!best || constraintCount(v.audience) < constraintCount(best.audience)) best = v;
+    return best;
+  };
+  const inLang = (lang: ContentLanguage) => versions.filter((v) => versionLanguage(v) === lang);
+  return leastTargeted(inLang(language)) ?? leastTargeted(inLang('en')) ?? leastTargeted(versions);
 }
 
 export interface TopicGroup<T> {
@@ -67,7 +82,7 @@ export function resolveTopics<T extends VersionLike & { topic_id: string }>(rows
   for (const r of rows) groups.set(r.topic_id, [...(groups.get(r.topic_id) ?? []), r]);
   return [...groups].map(([topicId, versions]) => {
     const chosen = pickVersion(versions, viewer);
-    return { topicId, versions, chosen, shown: chosen ?? fallbackVersion(versions)! };
+    return { topicId, versions, chosen, shown: chosen ?? fallbackVersion(versions, viewer.language)! };
   });
 }
 
@@ -94,6 +109,13 @@ export function audienceLabel(audience: Audience | undefined): string {
   const adultRoles = roles.filter((r) => ADULT_ROLES.includes(r)).map((r) => rolePlural(r)).join(' + ');
   const adults = adultRoles && bandPart ? `${adultRoles} · ${bandPart}` : adultRoles;
   return [students, adults].filter(Boolean).join(' + ') || i18n.t('editor.audienceLabel.everyone');
+}
+
+/** A version's display label: its audience, plus its language when not English
+ *  ("Parents · Elementary · Spanish"). */
+export function versionLabel(v: VersionLike): string {
+  const audience = audienceLabel(v.audience);
+  return versionLanguage(v) === 'en' ? audience : `${audience} · ${i18n.t(`editor.language.${versionLanguage(v)}`)}`;
 }
 
 // ─── Coverage ────────────────────────────────────────────────────────────────
@@ -138,9 +160,11 @@ export interface CoverageRow<T> {
   tiedWith: T | null;
 }
 
-export function coverage<T extends VersionLike>(versions: T[]): CoverageRow<T>[] {
+/** The version each kind of reader gets. With `language: 'es'`, what Spanish readers
+ *  get — which may be an English version they fall back to (check versionLanguage). */
+export function coverage<T extends VersionLike>(versions: T[], language: ContentLanguage = 'en'): CoverageRow<T>[] {
   return VIEWER_CELLS.map((cell) => {
-    const ranked = rankVersions(versions, cell.viewer);
+    const ranked = rankVersions(versions, { ...cell.viewer, language });
     const [a, b] = ranked;
     const tie = !!a && !!b
       && matchScore(a.audience, cell.viewer) === matchScore(b.audience, cell.viewer)
@@ -154,9 +178,12 @@ export function coverage<T extends VersionLike>(versions: T[]): CoverageRow<T>[]
  * readers aren't flagged: a page meant for one audience is a normal thing to make.
  */
 export function tieNotices<T extends VersionLike & { id: string; title?: string }>(versions: T[]): Notice[] {
-  const name = (x: T) => `“${audienceLabel(x.audience)}”`;
+  const name = (x: T) => `“${versionLabel(x)}”`;
   const byPair = new Map<string, { a: T; b: T; cells: string[] }>();
-  for (const row of coverage(versions)) {
+  // Spanish rows count only where a Spanish version is shown — a Spanish reader falling
+  // back to English hits the same English tie already reported.
+  const rows = [...coverage(versions), ...coverage(versions, 'es').filter((r) => r.version && versionLanguage(r.version) === 'es')];
+  for (const row of rows) {
     if (!row.tie || !row.version || !row.tiedWith) continue;
     const key = `${row.version.id}|${row.tiedWith.id}`;
     const entry = byPair.get(key) ?? { a: row.version, b: row.tiedWith, cells: [] };

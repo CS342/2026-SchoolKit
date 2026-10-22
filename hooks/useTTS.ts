@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { generateSpeech } from '../services/elevenLabs';
+import { generateSpeech, type VoiceLang } from '../services/elevenLabs';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 
@@ -10,9 +10,12 @@ import { useAccomplishments } from '../contexts/AccomplishmentContext';
  * Usage:
  *   const { isSpeaking, isLoading, speak } = useTTS();
  *   <Pressable onPress={() => speak("Hello world")}>
+ *
+ * Pass `language` when the text may not be in the app's language (a content page's).
  */
-export function useTTS() {
-  const { selectedVoice } = useOnboarding();
+export function useTTS(language?: VoiceLang) {
+  const { selectedVoice: appVoice, voiceFor } = useOnboarding();
+  const selectedVoice = language ? voiceFor(language) : appVoice;
   const { fireEvent } = useAccomplishments();
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);

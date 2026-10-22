@@ -8,7 +8,7 @@ import { supabase } from '../../../lib/supabase';
 import { nanoid } from 'nanoid/non-secure';
 import type { ContentDoc } from '../types';
 import { parseContentDoc } from '../validate';
-import { parseAudience, type Audience } from '../audience';
+import { parseAudience, parseLanguage, type Audience, type ContentLanguage } from '../audience';
 import { collectContentImagePaths, deleteContentImages } from '../uploads';
 
 export type PageStatus = 'draft' | 'published';
@@ -21,6 +21,7 @@ export interface PageListItem {
   status: PageStatus;
   category: string | null;
   audience?: Audience;
+  language?: ContentLanguage;
   created_at: string;
   updated_at: string;
 }
@@ -40,8 +41,8 @@ export function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 }
 
-const PAGE_LIST_COLUMNS = 'id,topic_id,slug,title,status,category,created_at,updated_at,audience:doc->audience';
-const toListItem = (row: any): PageListItem => ({ ...row, audience: parseAudience(row.audience) });
+const PAGE_LIST_COLUMNS = 'id,topic_id,slug,title,status,category,created_at,updated_at,audience:doc->audience,language:doc->language';
+const toListItem = (row: any): PageListItem => ({ ...row, audience: parseAudience(row.audience), language: parseLanguage(row.language) });
 
 export async function listContentPages(): Promise<PageListItem[]> {
   const { data, error } = await supabase

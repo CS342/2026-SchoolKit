@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useEventListener } from 'expo';
 import { useAudioPlayer, useAudioPlayerStatus, type AudioStatus } from 'expo-audio';
-import { generateSpeech } from '../services/elevenLabs';
+import { generateSpeech, type VoiceLang } from '../services/elevenLabs';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { useAccomplishments } from '../contexts/AccomplishmentContext';
 import type { SpeechSegment } from '../features/content/speech';
@@ -17,8 +17,10 @@ const RATES = [1.0, 1.25, 1.5, 2.0];
  *   const reader = usePageReader(docSpeechSegments(doc));
  *   <Pressable onPress={reader.toggle}>
  */
-export function usePageReader(segments: SpeechSegment[]) {
-  const { selectedVoice } = useOnboarding();
+export function usePageReader(segments: SpeechSegment[], language?: VoiceLang) {
+  const { selectedVoice: appVoice, voiceFor } = useOnboarding();
+  // Read the page in its own language: a Spanish reader may be shown an English page.
+  const selectedVoice = language ? voiceFor(language) : appVoice;
   const { fireEvent } = useAccomplishments();
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { ALL_RESOURCES, type Resource } from '../constants/resources';
-import { parseAudience, type AudienceViewer } from '../features/content/audience';
+import { parseAudience, parseLanguage, type AudienceViewer } from '../features/content/audience';
 import { resolveTopics, type TopicGroup } from '../features/content/versions';
 import { useAudienceFilter, useAudienceViewer, isListable } from './useAudienceFilter';
 
@@ -42,6 +42,7 @@ function contentPageToResource(row: any): Resource {
     route: `/page/${row.slug}`,
     designOnly: false,
     audience: parseAudience(doc.audience),
+    language: parseLanguage(doc.language),
   };
 }
 
@@ -81,7 +82,7 @@ export function replacedBuiltInId(versions: { title?: string; doc?: any }[]): st
 
 function buildLibrary(resourceRows: any[], pageRows: any[], viewer: AudienceViewer): Resource[] {
   const topics = resolveTopics(
-    pageRows.map((p) => ({ ...p, topic_id: p.topic_id ?? p.id, audience: parseAudience(p.doc?.audience) })),
+    pageRows.map((p) => ({ ...p, topic_id: p.topic_id ?? p.id, audience: parseAudience(p.doc?.audience), language: parseLanguage(p.doc?.language) })),
     viewer,
   );
 

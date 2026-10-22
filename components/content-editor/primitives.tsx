@@ -94,6 +94,41 @@ export function ChipMultiSelect<T extends string>({ label, options, value, onCha
   );
 }
 
+/** One choice from a few chips (same look as ChipMultiSelect). */
+export function ChipSingleSelect<T extends string>({ label, options, value, onChange, hint }: {
+  label?: string; options: { value: T; label: string }[]; value: T; onChange: (v: T) => void; hint?: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ marginBottom: SPACING.md }}>
+      {label ? <SectionLabel>{label}</SectionLabel> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }} accessibilityRole="radiogroup">
+        {options.map((o) => {
+          const on = value === o.value;
+          return (
+            <Pressable
+              key={o.value}
+              onPress={() => onChange(o.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={o.label}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADII.pill, borderWidth: 1.5,
+                borderColor: on ? colors.primary : colors.border,
+                backgroundColor: on ? colors.primaryFill : colors.inputBackground,
+                cursor: 'pointer' as any,
+              }}
+            >
+              <Text style={{ ...TYPOGRAPHY.caption, color: on ? '#fff' : colors.textDark }}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {hint ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 6 }}>{hint}</Text> : null}
+    </View>
+  );
+}
+
 export function ColorSwatches({ value, onChange }: { value: ColorToken; onChange: (t: ColorToken) => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();

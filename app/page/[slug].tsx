@@ -15,7 +15,7 @@ import { useAccomplishments } from '../../contexts/AccomplishmentContext';
 import { ContentPage } from '../../components/content-blocks';
 import { FIXTURE_DOCS } from '../../features/content/fixtures';
 import { parseContentDoc } from '../../features/content/validate';
-import { parseAudience } from '../../features/content/audience';
+import { parseAudience, parseLanguage } from '../../features/content/audience';
 import { pickVersion, fallbackVersion } from '../../features/content/versions';
 import { useAudienceViewer } from '../../hooks/useAudienceFilter';
 import { replacedBuiltInId } from '../../hooks/useResources';
@@ -31,6 +31,9 @@ export default function ContentPageRoute() {
   const { fireResourceOpened, fireResourceScrolledToEnd } = useAccomplishments();
   const [loading, setLoading] = useState(true);
   const [doc, setDoc] = useState<ContentDoc | null>(null);
+  // The reader asked for a language this topic has no version in yet (the page shown is
+  // the English fallback) — ContentPage says so.
+  const [languageFallback, setLanguageFallback] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +42,7 @@ export default function ContentPageRoute() {
       let raw: unknown = null;
       // The id bookmarks, downloads and progress use — the same one the library card has.
       let resourceId: string | undefined;
+      let fellBack = false;
       if (slug) {
         try {
           const published = () => supabase.from('content_pages').select('*').eq('status', 'published');
@@ -59,11 +63,12 @@ export default function ContentPageRoute() {
           topicId = topicId ?? exact?.topic_id ?? exact?.id;
           if (topicId) {
             const { data } = await published().eq('topic_id', topicId).order('created_at', { ascending: true });
-            const versions = ((data ?? []) as Row[]).map((r) => ({ ...r, audience: parseAudience(r.doc?.audience) }));
-            const all = versions.length ? versions : exact ? [{ ...exact, audience: undefined }] : [];
-            const chosen = exact ?? pickVersion(all, viewer) ?? fallbackVersion(all);
+            const versions = ((data ?? []) as Row[]).map((r) => ({ ...r, audience: parseAudience(r.doc?.audience), language: parseLanguage(r.doc?.language) }));
+            const all = versions.length ? versions : exact ? [{ ...exact, audience: undefined, language: parseLanguage(exact.doc?.language) }] : [];
+            const chosen = exact ?? pickVersion(all, viewer) ?? fallbackVersion(all, viewer.language);
             if (chosen) {
               raw = chosen.doc;
+              fellBack = !exact && (viewer.language ?? 'en') !== (parseLanguage(chosen.doc?.language) ?? 'en');
               resourceId = replacedBuiltInId(all) ?? chosen.doc?.resourceId ?? `cp_${topicId}`;
             }
           }
@@ -76,6 +81,7 @@ export default function ContentPageRoute() {
       if (parsed?.warnings.length) console.warn(`[content:${slug}]`, parsed.warnings.join('; '));
       if (!cancelled) {
         setDoc(parsed?.doc ? { ...parsed.doc, resourceId: resourceId ?? parsed.doc.resourceId } : null);
+        setLanguageFallback(fellBack);
         setLoading(false);
       }
     })();
@@ -115,6 +121,7 @@ export default function ContentPageRoute() {
   return (
     <ContentPage
       doc={doc}
+      languageFallback={languageFallback}
       onReachEnd={() => { if (doc.resourceId) fireResourceScrolledToEnd(doc.resourceId); }}
     />
   );

@@ -24,7 +24,7 @@ const MIN_SOURCE_WORDS = 4;
 const MIN_INVENTED_WORDS = 8;
 
 /** Block fields that are settings, not reader-visible text. */
-const NON_TEXT_KEYS = new Set([
+export const NON_TEXT_KEYS = new Set([
   'id', 'type', 'icon', 'eyebrowIcon', 'eyebrowColor', 'color', 'tone', 'accent', 'url', 'href',
   'resourceIds', 'ranked', 'variant', 'layout', 'style', 'align', 'size', 'kind',
   'display', // a link's domain label ("acco.org")

@@ -20,6 +20,24 @@ export interface AudienceViewer {
   role: UserRole | null;
   /** A grade value from the onboarding grade lists; '' when not chosen yet. */
   gradeLevel: string;
+  /** The reader's language. Missing = English. Language is a preference, not a filter:
+   *  see rankVersions in ./versions. */
+  language?: ContentLanguage;
+}
+
+/** The language a page version is written in. A version without one is English. */
+export type ContentLanguage = 'en' | 'es';
+
+export const CONTENT_LANGUAGES: ContentLanguage[] = ['en', 'es'];
+
+/** Clean untrusted input (doc JSONB): a known language, else undefined (= English). */
+export function parseLanguage(input: unknown): ContentLanguage | undefined {
+  return input === 'en' || input === 'es' ? input : undefined;
+}
+
+/** The app's stored language preference ('english' | 'spanish') as a content language. */
+export function toContentLanguage(preference: string | null | undefined): ContentLanguage {
+  return preference === 'spanish' || preference === 'es' ? 'es' : 'en';
 }
 
 export const AUDIENCE_ROLES: { value: UserRole; label: string }[] = [

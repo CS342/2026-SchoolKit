@@ -132,7 +132,11 @@
       "addNeedsSave": "Guarda esta página primero y luego agrega versiones para otros públicos.",
       "coverageIntro": "La versión que recibe cada tipo de lector (incluye borradores).",
       "coverageTie": "Dos versiones coinciden por igual",
-      "coverageHidden": "Oculta"
+      "coverageHidden": "Oculta",
+      "addTranslateTitle": "Traducción desde archivo…",
+      "addTranslateDetail": "Convierte el archivo de un traductor en una versión en español de esta.",
+      "coverageLanguage": "Lectores que usan",
+      "coverageFallback": "Inglés (aún sin español)"
     },
     "settings": {
       "header": "AJUSTES DE LA PÁGINA",
@@ -143,7 +147,9 @@
       "tagsLabel": "Etiquetas (separadas por comas)",
       "tagsPlaceholder": "escuela, apoyo, regreso a clases",
       "libraryReplaced": "En la biblioteca, esta página ocupa el lugar de la guía integrada “{{title}}”. Los marcadores y las descargas de esa guía abren esta página.",
-      "libraryOwnCard": "Una vez publicada, esta página tendrá su propia tarjeta en la biblioteca."
+      "libraryOwnCard": "Una vez publicada, esta página tendrá su propia tarjeta en la biblioteca.",
+      "languageLabel": "Idioma",
+      "languageHint": "Quienes usan la app en este idioma reciben esta versión."
     },
     "preview": {
       "web": "Web",
@@ -474,6 +480,42 @@
       "referenceNoNameFix": "Selecciona el bloque e ingresa el título de la fuente, o quítala.",
       "tableRowEmpty": "{{name}}: la fila {{num}} está vacía.",
       "tableRowEmptyFix": "Selecciona el bloque y completa la fila, o quítala."
+    },
+    "language": {
+      "en": "Inglés",
+      "es": "Español"
+    },
+    "translate": {
+      "title": "Versión en español desde una traducción",
+      "subtitle": "Adjunta el archivo del traductor para “{{label}}”. Cada texto de esta página se empareja con su traducción en el archivo, y el diseño, las imágenes y los enlaces se copian tal cual. La IA no traduce nada.",
+      "attachHint": "Archivos de Word, PDF o texto. Si adjuntas varios, se leen en orden como una sola traducción.",
+      "saveFirst": "Primero guarda los cambios de esta versión: la traducción se empareja con la página guardada.",
+      "notFromEnglish": "Las traducciones se hacen a partir de una versión en inglés. Cambia a la versión en inglés de este tema para agregar una.",
+      "create": "Crear versión en español",
+      "working": "Emparejando la traducción…",
+      "needsText": "Adjunta un archivo con el texto de la traducción.",
+      "notices": {
+        "untranslated": "No se encontró traducción en {{file}} para {{text}}; todavía muestra el texto en inglés.",
+        "untranslatedMore": "{{count}} textos más todavía muestran inglés.",
+        "untranslatedFix": "Escribe aquí el texto en español, o agrégalo al archivo y vuelve a crear la versión.",
+        "notInFile": "Este texto no está en {{file}} palabra por palabra: {{text}}",
+        "notInFileFix": "Compáralo con el archivo del traductor y corrígelo aquí.",
+        "lostLink": "Falta aquí un enlace del texto en inglés: {{text}}",
+        "lostLinkFix": "Vuelve a poner el enlace en las palabras en español correspondientes.",
+        "unused": "{{count}} oraciones de {{file}} no están en la página: {{shown}}{{more}}",
+        "andMore": " (y {{count}} más)",
+        "unusedFix": "Busca dónde va cada una y agrégala, o revisa que el archivo corresponda a esta versión."
+      },
+      "stale": {
+        "changed": "La versión en inglés cambió después de hacer esta traducción: {{text}}",
+        "changedMore": "{{count}} textos más en inglés cambiaron desde que se hizo esta traducción.",
+        "changedFix": "Actualiza el español para que coincida y guarda.",
+        "removed": "Se eliminaron {{count}} textos en inglés desde que se hizo esta traducción.",
+        "removedFix": "Quita el texto en español que ya no tiene original en inglés.",
+        "sourceGone": "La versión en inglés de la que se tradujo ya no existe.",
+        "sourceGoneFix": "Revisa que esta versión siga correspondiendo a la página en inglés que ven los lectores.",
+      "markUpToDate": "Marcar la traducción como actualizada"
+      }
     }
   }
 }

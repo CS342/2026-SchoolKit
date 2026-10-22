@@ -132,7 +132,11 @@
       "addNeedsSave": "Save this page first, then add versions of it for other audiences.",
       "coverageIntro": "The version each kind of reader gets (drafts included).",
       "coverageTie": "Two versions match equally",
-      "coverageHidden": "Hidden"
+      "coverageHidden": "Hidden",
+      "addTranslateTitle": "Translation from file…",
+      "addTranslateDetail": "Turn a translator's file into a Spanish version of this one.",
+      "coverageLanguage": "Readers who use",
+      "coverageFallback": "English (no Spanish yet)"
     },
     "settings": {
       "header": "PAGE SETTINGS",
@@ -143,7 +147,9 @@
       "tagsLabel": "Tags (comma separated)",
       "tagsPlaceholder": "school, support, back to school",
       "libraryReplaced": "In the Library, this page takes the place of the built-in guide “{{title}}”. Bookmarks and downloads of that guide open this page.",
-      "libraryOwnCard": "Once published, this page gets its own card in the Library."
+      "libraryOwnCard": "Once published, this page gets its own card in the Library.",
+      "languageLabel": "Language",
+      "languageHint": "Readers who use the app in this language get this version."
     },
     "preview": {
       "web": "Web",
@@ -474,6 +480,42 @@
       "referenceNoNameFix": "Select the block and enter the source’s title, or remove it.",
       "tableRowEmpty": "{{name}}: row {{num}} is empty.",
       "tableRowEmptyFix": "Select the block and fill in the row, or remove it."
+    },
+    "language": {
+      "en": "English",
+      "es": "Spanish"
+    },
+    "translate": {
+      "title": "Spanish version from a translation",
+      "subtitle": "Attach the translator's file for “{{label}}”. Each text on this page is matched to its translation in the file, and the layout, images and links are copied as they are. Nothing is translated by AI.",
+      "attachHint": "Word, PDF or text files. Several files are read in order, as one translation.",
+      "saveFirst": "Save your changes to this version first — the translation is matched against the saved page.",
+      "notFromEnglish": "Translations are made from an English version. Switch to the English version of this topic to add one.",
+      "create": "Create Spanish version",
+      "working": "Matching the translation…",
+      "needsText": "Attach a file with the translation text.",
+      "notices": {
+        "untranslated": "No translation found in {{file}} for {{text}} — it still shows the English text.",
+        "untranslatedMore": "{{count}} more texts still show English.",
+        "untranslatedFix": "Type the Spanish here, or add it to the file and make the version again.",
+        "notInFile": "This text isn’t in {{file}} word for word: {{text}}",
+        "notInFileFix": "Check it against the translator’s file and correct it here.",
+        "lostLink": "A link from the English text is missing here: {{text}}",
+        "lostLinkFix": "Add the link back to the matching Spanish words.",
+        "unused": "{{count}} sentences from {{file}} aren’t on the page: {{shown}}{{more}}",
+        "andMore": " (and {{count}} more)",
+        "unusedFix": "Find where each one belongs and add it, or check that the file matches this version."
+      },
+      "stale": {
+        "changed": "The English version changed after this translation was made: {{text}}",
+        "changedMore": "{{count}} more English texts changed since this translation was made.",
+        "changedFix": "Update the Spanish to match, then save.",
+        "removed": "{{count}} English texts were removed since this translation was made.",
+        "removedFix": "Remove the Spanish text that no longer has an English original.",
+        "sourceGone": "The English version this was translated from no longer exists.",
+        "sourceGoneFix": "Check this version still matches the English page readers see.",
+      "markUpToDate": "Mark translation as up to date"
+      }
     }
   }
 }

@@ -10,6 +10,8 @@ import { parseGenerateResult, parseEditResult } from './parse';
 import { collectVerifiedLinks } from '../uploads';
 import type { Attachment } from '../uploads';
 import type { Notice } from '../lint';
+import type { ContentLanguage } from '../audience';
+import { buildAlignMessages, parseAlignResult, MAX_SLOTS_PER_REQUEST, type TextSlot } from '../translate';
 
 // The guides the Library actually lists (published pages included), so resourceRefList
 // links point at the same cards readers see.
@@ -58,6 +60,24 @@ export async function editPage(doc: ContentDoc, instruction: string, attachments
   if (parsed.errors.length) return { error: `The AI suggested a change we couldn't apply: ${parsed.errors[0]}` };
   if (!parsed.ops.length) return { error: 'The AI didn\'t suggest any changes to make.' };
   return { summary: parsed.summary, ops: parsed.ops };
+}
+
+/**
+ * Align a page's texts with a human translation of it: for each slot, the passage of
+ * `translation` that translates it (null when there is none). The model only locates
+ * passages — checkAlignment (../translate) verifies they're really in the file. Long
+ * pages go in batches, each with the whole translation for context.
+ */
+export async function alignTranslation(slots: TextSlot[], translation: string, language: ContentLanguage): Promise<{ values: Record<string, string | null> } | { error: string }> {
+  const values: Record<string, string | null> = {};
+  for (let i = 0; i < slots.length; i += MAX_SLOTS_PER_REQUEST) {
+    const batch = slots.slice(i, i + MAX_SLOTS_PER_REQUEST);
+    // Temperature 0: this is lookup, not writing.
+    const res = await invoke(buildAlignMessages(batch, translation, language), 0);
+    if ('error' in res) return { error: res.error };
+    Object.assign(values, parseAlignResult(res.result, batch));
+  }
+  return { values };
 }
 
 /** Ask the vision model to write alt text (and an optional caption) for an image URL.

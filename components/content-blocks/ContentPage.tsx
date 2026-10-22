@@ -26,7 +26,14 @@ import { StepModal } from './StepModal';
 import { FlipCardModal } from './FlipCardModal';
 import { PageReaderBar } from './PageReaderBar';
 
-export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean; onReachEnd?: () => void }) {
+export function ContentPage({ doc, forceLayout, preview, onReachEnd, languageFallback }: {
+  doc: ContentDoc;
+  forceLayout?: 'web' | 'mobile';
+  preview?: boolean;
+  onReachEnd?: () => void;
+  /** The reader's language has no version of this topic yet; show a short note. */
+  languageFallback?: boolean;
+}) {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -53,9 +60,11 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
   const [expandedStep, setExpandedStep] = useState<ResolvedStep | null>(null);
   const [flipDeck, setFlipDeck] = useState<FlipDeck | null>(null);
   // One TTS player for whichever card modal is open; the page reader has its own queue.
-  const cardTts = useTTS();
+  // Read aloud in the page's language, which can differ from the app's.
+  const pageLanguage = doc.language ?? 'en';
+  const cardTts = useTTS(pageLanguage);
   const segments = useMemo(() => docSpeechSegments(doc), [doc]);
-  const reader = usePageReader(segments);
+  const reader = usePageReader(segments, pageLanguage);
   const canListen = !preview && segments.length > 0;
 
   // Only one voice at a time: opening a card pauses the page; listening stops a card.
@@ -114,10 +123,22 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
     </>
   );
 
-  const titleNode = heroBlock ? (
-    <BlockEntrance delay={0} animate={!preview}><HeroTitle block={heroBlock} /></BlockEntrance>
-  ) : (
-    <Text style={[styles.pageTitle, { color: colors.textDark }, web && styles.pageTitleWeb]}>{doc.title}</Text>
+  const languageNote = languageFallback ? (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginTop: 10, paddingVertical: 7, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.infoBg }}>
+      <Ionicons name="language-outline" size={16} color={colors.info} />
+      <Text style={{ fontSize: 13, lineHeight: 18, color: colors.textDark, flexShrink: 1 }}>{t('common.languageFallback')}</Text>
+    </View>
+  ) : null;
+
+  const titleNode = (
+    <>
+      {heroBlock ? (
+        <BlockEntrance delay={0} animate={!preview}><HeroTitle block={heroBlock} /></BlockEntrance>
+      ) : (
+        <Text style={[styles.pageTitle, { color: colors.textDark }, web && styles.pageTitleWeb]}>{doc.title}</Text>
+      )}
+      {languageNote}
+    </>
   );
 
   const body = bodyBlocks.map((b, i) => (

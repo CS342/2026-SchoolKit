@@ -1,6 +1,7 @@
 {
   "common": {
     "continue": "Continuar",
+    "languageFallback": "Esta página aún no está disponible en español, así que se muestra en inglés.",
     "skipForNow": "Omitir por ahora",
     "getStarted": "Comenzar",
     "back": "Atrás",

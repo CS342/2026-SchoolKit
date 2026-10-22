@@ -1,7 +1,7 @@
 // Content Pages — block model types (spec: docs/content-blocks-spec.md §1–3).
 // Pure types, zero runtime deps. The doc is declarative data; renderers own behavior.
 
-import type { Audience } from './audience';
+import type { Audience, ContentLanguage } from './audience';
 
 export type ColorToken = 'primary' | 'teal' | 'coral' | 'amber' | 'indigo' | 'sky';
 
@@ -325,7 +325,18 @@ export interface ContentDoc {
   shareMessage?: string;
   /** Who the page is for. Missing = everyone. Off-audience pages are hidden from lists. */
   audience?: Audience;
+  /** The language this version is written in. Missing = English. */
+  language?: ContentLanguage;
+  /** On a translated version: the version it was translated from, with a fingerprint
+   *  of each of its texts at the time — so the editor can say which changed since. */
+  translatedFrom?: TranslationSource;
   blocks: ContentBlock[];
+}
+
+export interface TranslationSource {
+  pageId: string;
+  /** Text key (see textSlots in ./translate) → hash of the source text it was. */
+  textHashes: Record<string, string>;
 }
 
 // ─── Ops (spec §3) ────────────────────────────────────────────────────────────

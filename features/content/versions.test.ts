@@ -146,3 +146,51 @@ describe('guessAudienceFromFilename', () => {
     expect(new Set(got?.ageBands ?? [])).toEqual(new Set((expected as Audience).ageBands ?? []));
   });
 });
+
+describe('languages', () => {
+  const es = (id: string, audience?: Audience) => ({ id, audience, language: 'es' as const });
+  const parent = { role: 'parent' as const, gradeLevel: 'elementary' };
+
+  it("gives Spanish readers the best Spanish version, even over a closer English match", () => {
+    const versions = [everyone, parentsElem, es('es-everyone')];
+    expect(pickVersion(versions, { ...parent, language: 'es' })?.id).toBe('es-everyone');
+    expect(pickVersion(versions, parent)?.id).toBe('parents-elem');
+  });
+
+  it('matches audiences within Spanish the same way', () => {
+    const versions = [everyone, es('es-everyone'), es('es-parents', { roles: ['parent'] })];
+    expect(pickVersion(versions, { ...parent, language: 'es' })?.id).toBe('es-parents');
+    expect(pickVersion(versions, { role: 'student-hs', gradeLevel: '10', language: 'es' })?.id).toBe('es-everyone');
+  });
+
+  it('falls back to English when no Spanish version is meant for the reader', () => {
+    const versions = [everyone, hs, es('es-parents', { roles: ['parent'] })];
+    expect(pickVersion(versions, { role: 'student-hs', gradeLevel: '10', language: 'es' })?.id).toBe('hs');
+  });
+
+  it('never gives English readers a Spanish version', () => {
+    expect(pickVersion([es('es-everyone')], { role: 'parent', gradeLevel: '' })).toBeNull();
+    expect(pickVersion([hs, es('es-everyone')], parent)).toBeNull();
+  });
+
+  it("opens direct links in the reader's language, else English", () => {
+    const versions = [parents, es('es-parents', { roles: ['parent'] })];
+    expect(fallbackVersion(versions)?.id).toBe('parents');
+    expect(fallbackVersion(versions, 'es')?.id).toBe('es-parents');
+    expect(fallbackVersion([parents], 'es')?.id).toBe('parents');
+    expect(fallbackVersion([es('es-only')])?.id).toBe('es-only');
+  });
+
+  it('reports Spanish coverage, including English fallbacks', () => {
+    const versions = [everyone, es('es-parents', { roles: ['parent'] })];
+    const rows = coverage(versions, 'es');
+    expect(rows.find((r) => r.cell.key === 'parent-high')?.version?.id).toBe('es-parents');
+    expect(rows.find((r) => r.cell.key === 'hs')?.version?.id).toBe('everyone');
+    expect(coverage(versions).every((r) => r.version?.id === 'everyone')).toBe(true);
+  });
+
+  it('flags two Spanish versions competing for the same readers', () => {
+    const versions = [everyone, es('es-a'), es('es-b')];
+    expect(tieNotices(versions)).toHaveLength(1);
+  });
+});

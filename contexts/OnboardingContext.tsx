@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALL_RESOURCE_IDS } from '../constants/resources';
 import { useOffline, queueOfflineChange } from './OfflineContext';
-import { DEFAULT_VOICE, resolveVoice, toVoiceLang } from '../services/elevenLabs';
+import { DEFAULT_VOICE, resolveVoice, toVoiceLang, type VoiceLang } from '../services/elevenLabs';
 import { applyAppLanguage } from '../lib/i18n';
 
 export type UserRole = 'student-elementary' | 'student-k8' | 'student-hs' | 'parent' | 'staff';
@@ -54,6 +54,9 @@ interface OnboardingContextType {
   /** The guide to read with — the saved choice, or the language's default when the saved
    *  guide doesn't read the current language or has been retired from the roster. */
   selectedVoice: string;
+  /** The voice to read text in `lang` with — the chosen guide if it reads that language,
+   *  else that language's default (a page can be in a language other than the app's). */
+  voiceFor: (lang: VoiceLang) => string;
   updateVoice: (voiceId: string) => Promise<void>;
   // Language
   preferredLanguage: 'english' | 'spanish';
@@ -83,6 +86,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [voiceChoice, setSelectedVoice] = useState<string>(DEFAULT_VOICE.en);
   const [preferredLanguage, setPreferredLanguage] = useState<'english' | 'spanish'>('english');
   const selectedVoice = resolveVoice(voiceChoice, toVoiceLang(preferredLanguage));
+  const voiceFor = useCallback((lang: VoiceLang) => resolveVoice(voiceChoice, lang), [voiceChoice]);
 
   // Load downloads, voice, and language from AsyncStorage on mount
   useEffect(() => {
@@ -480,6 +484,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         isDownloaded,
         downloadAllResources,
         selectedVoice,
+        voiceFor,
         updateVoice,
         preferredLanguage,
         updatePreferredLanguage,

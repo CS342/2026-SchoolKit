@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import type { ContentBlock, ContentDoc, Op, BlockType } from './types';
 import { BLOCK_SCHEMAS, ARRAY_KEY, ColorTokenSchema } from './registry';
-import { parseAudience } from './audience';
+import { parseAudience, parseLanguage } from './audience';
 
 // Re-export so existing importers (ops.ts) keep `import { ARRAY_KEY } from './validate'`.
 export { ARRAY_KEY };
@@ -79,9 +79,18 @@ export function parseContentDoc(input: unknown): ParseResult {
     resourceId: isStr(input.resourceId) ? input.resourceId : undefined,
     shareMessage: isStr(input.shareMessage) ? input.shareMessage : undefined,
     audience: parseAudience(input.audience),
+    language: parseLanguage(input.language),
+    translatedFrom: parseTranslationSource(input.translatedFrom),
     blocks: kept,
   };
   return { doc, errors, warnings };
+}
+
+function parseTranslationSource(input: unknown): ContentDoc['translatedFrom'] {
+  if (!isObj(input) || !isNonEmpty(input.pageId) || !isObj(input.textHashes)) return undefined;
+  const textHashes: Record<string, string> = {};
+  for (const [k, v] of Object.entries(input.textHashes)) if (isStr(v)) textHashes[k] = v;
+  return { pageId: input.pageId as string, textHashes };
 }
 
 // ─── op validation (against a doc, before apply) ───────────────────────────────
