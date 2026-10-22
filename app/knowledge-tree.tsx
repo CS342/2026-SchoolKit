@@ -90,7 +90,7 @@ function KnowledgeTreeScreen() {
       <View style={webDesktop ? styles.webDesktopContainer : styles.fullContainer}>
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle]}>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')}
             onPress={() => router.back()}
             style={[styles.backButton, { backgroundColor: colors.white, borderColor: colors.border }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

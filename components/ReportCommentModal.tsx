@@ -81,7 +81,7 @@ export function ReportCommentModal({ visible, onClose, onSubmit }: ReportComment
         <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom + 20, 20) }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{t('stories.reportComment')}</Text>
-            <Pressable onPress={handleClose} hitSlop={10}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={handleClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>

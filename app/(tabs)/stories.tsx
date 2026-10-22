@@ -203,7 +203,7 @@ export default function StoriesScreen() {
           right={
             <>
               {isModerator && (
-                <Pressable
+                <Pressable accessibilityRole="button" accessibilityLabel={isModeratorMode ? t('common.a11y.moderatorOff') : t('common.a11y.moderatorOn')}
                   onPress={() => setIsModeratorMode((v) => !v)}
                   style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primaryFill, borderColor: colors.primary }]}
                   hitSlop={8}
@@ -216,7 +216,7 @@ export default function StoriesScreen() {
                   {!isModeratorMode && pendingCount > 0 && <View style={[styles.modDot, { backgroundColor: colors.destructiveFill, borderColor: colors.white }]} />}
                 </Pressable>
               )}
-              <Pressable onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.communityGuidelines')} onPress={() => setShowNormsModal(true)} hitSlop={8} style={{ padding: 4 }}>
                 <Ionicons name="information-circle-outline" size={22} color={colors.textLight} />
               </Pressable>
             </>
@@ -302,7 +302,7 @@ export default function StoriesScreen() {
                   onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
-                  <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.clearSearch')} onPress={() => setSearchQuery("")} hitSlop={8}>
                     <Ionicons name="close-circle" size={15} color={colors.textLight} />
                   </Pressable>
                 )}
@@ -325,7 +325,7 @@ export default function StoriesScreen() {
                   <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
                     {t(userPendingCount === 1 ? 'stories.reviewingOne' : 'stories.reviewingOther', { count: userPendingCount })}
                   </Text>
-                  <Pressable onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')} onPress={() => setDismissedPendingNotif(true)} hitSlop={10}>
                     <Ionicons name="close" size={16} color={colors.warningText} />
                   </Pressable>
                 </View>
@@ -341,7 +341,7 @@ export default function StoriesScreen() {
                     </View>
                     <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>{t('stories.reviewAction')}</Text>
                   </Pressable>
-                  <Pressable onPress={() => setDismissedRejectedNotif(true)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')} onPress={() => setDismissedRejectedNotif(true)} hitSlop={10} style={{ paddingLeft: 8 }}>
                     <Ionicons name="close" size={16} color={colors.error} />
                   </Pressable>
                 </View>
@@ -462,7 +462,7 @@ export default function StoriesScreen() {
           <View style={styles.headerActions}>
             {/* Mod shield button */}
             {isModerator && (
-              <Pressable
+              <Pressable accessibilityRole="button" accessibilityLabel={isModeratorMode ? t('common.a11y.moderatorOff') : t('common.a11y.moderatorOn')}
                 onPress={() => setIsModeratorMode((v) => !v)}
                 style={[styles.modBtn, { borderColor: colors.border }, isModeratorMode && { backgroundColor: colors.primaryFill, borderColor: colors.primary }]}
                 hitSlop={8}
@@ -479,7 +479,7 @@ export default function StoriesScreen() {
               </Pressable>
             )}
             {/* Info / norms */}
-            <Pressable
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.communityGuidelines')}
               onPress={() => setShowNormsModal(true)}
               hitSlop={8}
               style={{ padding: 4 }}
@@ -515,7 +515,7 @@ export default function StoriesScreen() {
             returnKeyType="search"
           />
           {Boolean(searchQuery.length > 0) && (
-            <Pressable onPress={() => setSearchQuery("")} hitSlop={10}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.clearSearch')} onPress={() => setSearchQuery("")} hitSlop={10}>
               <Ionicons
                 name="close-circle"
                 size={18}
@@ -729,7 +729,7 @@ export default function StoriesScreen() {
           <Text style={[styles.pendingBannerText, { color: colors.warningText }]}>
             {t(userPendingCount === 1 ? 'stories.reviewingSeeMyStoriesOne' : 'stories.reviewingSeeMyStoriesOther', { count: userPendingCount })}
           </Text>
-          <Pressable
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')}
             onPress={() => setDismissedPendingNotif(true)}
             hitSlop={10}
           >
@@ -758,7 +758,7 @@ export default function StoriesScreen() {
             </View>
             <Text style={[styles.rejectedBannerAction, { color: colors.error }]}>{t('stories.reviewAction')}</Text>
           </Pressable>
-          <Pressable
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')}
             onPress={() => setDismissedRejectedNotif(true)}
             hitSlop={10}
             style={{ paddingLeft: 8 }}
@@ -871,7 +871,7 @@ export default function StoriesScreen() {
 
       {/* FAB */}
       {Boolean(!isAnonymous && stories.length > 0) && (
-        <Pressable
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.writeStory')}
           style={[styles.fab, shadows.button]}
           onPress={() => router.push("/create-story" as any)}
         >

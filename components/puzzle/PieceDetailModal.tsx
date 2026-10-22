@@ -98,7 +98,7 @@ export default function PieceDetailModal({
       <View style={styles.centerContainer} pointerEvents="box-none">
         <Animated.View style={[styles.card, containerStyle]}>
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={handleDismiss}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.close')} style={styles.closeButton} onPress={handleDismiss}>
             <Ionicons name="close" size={20} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
 

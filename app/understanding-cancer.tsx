@@ -31,6 +31,7 @@ import { ContentColumn, ArticleLayout } from "../components/ui";
 import { ThemeColors, ThemeShadows } from "../constants/theme";
 import { TYPOGRAPHY, SPACING, RADII, BORDERS } from "../constants/onboarding-theme";
 
+import { useTranslation } from 'react-i18next';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -241,6 +242,7 @@ function ExpandedCardModal({
   colors: ThemeColors;
   styles: any;
 }) {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const flipAnim = useRef(new Animated.Value(0)).current;
@@ -434,7 +436,7 @@ function ExpandedCardModal({
                     <Animated.View style={{ height: 4, backgroundColor: "#10B981", width: underlineWidth, borderRadius: 2, marginTop: 2 }} />
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={isSpeaking ? t('common.a11y.stopReading') : t('common.a11y.readAloud')} onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio}>
                       {isLoadingAudio ? <ActivityIndicator size="small" color="#10B981" /> : (
                         <Ionicons name={isSpeaking ? "stop-circle-outline" : "volume-high-outline"} size={28} color={isSpeaking ? colors.error : colors.textDark} />
                       )}

@@ -117,7 +117,7 @@ export default function JournalLibraryScreen() {
                             >
                                 <View style={[styles.spine, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
                                 <View style={styles.notebookInner}>
-                                    <TouchableOpacity
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.moreOptions')}
                                         style={styles.moreButton}
                                         onPress={() => {
                                             Alert.alert(
@@ -490,7 +490,7 @@ export default function JournalLibraryScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.appBackground }]}>
             <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity style={appStyles.editBackButton} onPress={() => router.back()}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} style={appStyles.editBackButton} onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color={colors.textDark} />
                 </TouchableOpacity>
                 <Text style={appStyles.editHeaderTitle}>{t('journal.library.title')}</Text>

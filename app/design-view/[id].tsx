@@ -375,7 +375,7 @@ export default function DesignViewPage() {
           borderBottomColor: colors.borderCard,
         }}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={() => router.back()} style={{ padding: 4 }}>
           <Ionicons name="arrow-back" size={24} color={colors.textDark} />
         </TouchableOpacity>
         <Text

@@ -10,6 +10,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
 function GearButton() {
+  const { t } = useTranslation();
   const { open } = useSettings();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -19,7 +20,7 @@ function GearButton() {
 
   return (
     <View style={{ position: 'absolute', top: insets.top + 14, right: 20, zIndex: 1000 }}>
-      <Pressable onPress={open} hitSlop={12}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.settings')} onPress={open} hitSlop={12}>
         <Ionicons name="settings-outline" size={24} color={colors.textDark} />
       </Pressable>
     </View>

@@ -228,14 +228,14 @@ function CommentItem({
           )}
         </View>
         {isOwn || isModerator ? (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.deleteComment')}
             onPress={onDelete}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="trash-outline" size={15} color={colors.error} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={isReported ? t('common.a11y.reported') : t('common.a11y.reportComment')}
             onPress={onReport}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
             disabled={isReported}
@@ -757,7 +757,7 @@ export default function StoryDetailScreen() {
     return (
       <View style={styles.container}>
         <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-          <Pressable
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')}
             style={appStyles.editBackButton}
             onPress={() => router.back()}
           >
@@ -808,7 +808,7 @@ export default function StoryDetailScreen() {
             multiline
             maxLength={500}
           />
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.sendComment')}
             onPress={handleSubmitComment}
             disabled={!commentText.trim() || submitting}
             style={styles.sendButton}
@@ -852,7 +852,7 @@ export default function StoryDetailScreen() {
     ]}>
       <View style={styles.modalHeader}>
         <Text style={styles.modalTitle}>{t('stories.responses')}</Text>
-        <TouchableOpacity onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setIsCommentsModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="close" size={24} color={colors.textDark} />
         </TouchableOpacity>
       </View>
@@ -903,7 +903,7 @@ export default function StoryDetailScreen() {
       {/* Header */}
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }, Platform.OS === "web" && { justifyContent: "center", paddingHorizontal: 0 }]}>
         <View style={Platform.OS === "web" ? styles.webHeaderInner : { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Pressable
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')}
             style={appStyles.editBackButton}
             onPress={() => router.back()}
           >
@@ -922,7 +922,7 @@ export default function StoryDetailScreen() {
             <Text style={appStyles.editHeaderTitle}>{t('stories.storyHeader')}</Text>
           )}
           {isOwnStory ? (
-            <Pressable onPress={handleDelete} style={{ padding: 8 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.deleteStory')} onPress={handleDelete} style={{ padding: 8 }}>
               <Ionicons name="trash-outline" size={22} color={colors.error} />
             </Pressable>
           ) : (
@@ -1148,7 +1148,7 @@ export default function StoryDetailScreen() {
                 <View style={styles.actionRight}>
                   {!isOwnStory && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button" accessibilityLabel={isStoryReported(id || '') ? t('common.a11y.reported') : t('common.a11y.reportStory')}
                         onPress={() => {
                           if (!isStoryReported(id || "")) {
                             setShowReportModal(true);
@@ -1180,7 +1180,7 @@ export default function StoryDetailScreen() {
                       )}
                     </View>
                   )}
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button" accessibilityLabel={downloaded ? t('common.a11y.downloaded') : t('common.a11y.download')}
                     onPress={handleDownload}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
@@ -1192,7 +1192,7 @@ export default function StoryDetailScreen() {
                       />
                     </RNAnimated.View>
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button" accessibilityLabel={bookmarked ? t('common.a11y.removeBookmark') : t('common.a11y.bookmark')}
                     onPress={handleBookmark}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >

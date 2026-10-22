@@ -72,7 +72,7 @@ const MAX_RECENT_SEARCHES = 5;
 const CATEGORY_ICONS: Record<string, string> = {
   All: 'apps-outline',
   School: 'mci:school-outline',
-  Social: 'chatbubbles-outline',
+  Social: 'mci:forum-outline',
   Health: 'mci:heart-pulse',
   Family: 'mci:home-heart',
   Designs: 'color-palette-outline',
@@ -320,7 +320,7 @@ export default function LibraryScreen() {
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.clearSearch')} onPress={() => setSearchQuery('')} style={styles.clearButton}>
               <Ionicons name="close-circle" size={20} color={colors.textLight} />
             </Pressable>
           )}

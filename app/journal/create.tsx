@@ -214,7 +214,7 @@ export default function CreateNotebookScreen() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity style={appStyles.editBackButton} onPress={() => router.back()}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} style={appStyles.editBackButton} onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color={colors.textDark} />
                 </TouchableOpacity>
                 <Text style={appStyles.editHeaderTitle}>{t('journal.create.header')}</Text>

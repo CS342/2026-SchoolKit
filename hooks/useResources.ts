@@ -19,7 +19,7 @@ const DEFAULT_COLOR = '#7B68EE';
 // description are derived from the page's own doc so cards look intentional.
 const ACCENT_HEX: Record<string, string> = { primary: '#6B5AD6', teal: '#3C9A8D', coral: '#DC6A50', amber: '#DE9A2E', indigo: '#6C7CE0', sky: '#4F9FCB' };
 // Topic icons use AppIcon names: Ionicons, or `mci:` for Material Community Icons.
-const CATEGORY_ICONS: Record<string, string> = { School: 'mci:account-school', Health: 'mci:heart-pulse', Social: 'chatbubbles', Family: 'mci:home-heart', Emotions: 'mci:emoticon-happy' };
+const CATEGORY_ICONS: Record<string, string> = { School: 'mci:account-school', Health: 'mci:heart-pulse', Social: 'mci:forum', Family: 'mci:home-heart', Emotions: 'mci:emoticon-happy' };
 
 function contentPageToResource(row: any): Resource {
   const doc = row.doc || {};

@@ -29,7 +29,7 @@ export default function RejectedStoriesScreen() {
   return (
     <View style={styles.container}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <Pressable style={appStyles.editBackButton} onPress={() => router.back()}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} style={appStyles.editBackButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={appStyles.editHeaderTitle}>{t('stories.needsRevision')}</Text>

@@ -120,7 +120,7 @@ function LanguageView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.language')}</Text>
@@ -167,7 +167,7 @@ function AppearanceView({ theme, onBack }: { theme: AppTheme; onBack: () => void
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.appearance')}</Text>
@@ -222,7 +222,7 @@ function VoiceView({
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.voice')}</Text>
@@ -244,7 +244,7 @@ function AboutView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.aboutTitle')}</Text>
@@ -311,7 +311,7 @@ function FAQView({ theme, onBack }: { theme: AppTheme; onBack: () => void }) {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.faqShort')}</Text>
@@ -369,7 +369,7 @@ function FeedbackView({ theme, onBack }: { theme: AppTheme; onBack: () => void }
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.subHeader}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={10}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={onBack} style={styles.backButton} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={[styles.subTitle, { color: colors.textDark }]}>{t('profile.shareFeedback')}</Text>

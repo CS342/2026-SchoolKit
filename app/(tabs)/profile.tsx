@@ -362,7 +362,7 @@ export default function ProfileScreen() {
                   style={[styles.identityCard, styles.webIdentityCard, { borderColor: colors.border }]}
                 >
                   <View style={styles.webIdentity}>
-                    <Pressable onPress={() => setShowIconPicker(true)}>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.changeIcon')} onPress={() => setShowIconPicker(true)}>
                       <Animated.View style={avatarStyle}>
                         <View style={[styles.avatar, { backgroundColor: colors.primaryFill }]}>
                           {renderAvatarInner()}
@@ -521,7 +521,7 @@ export default function ProfileScreen() {
               style={[styles.identityCard, { borderColor: colors.border }]}
             >
             <View style={styles.identity}>
-              <Pressable onPress={() => setShowIconPicker(true)}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.changeIcon')} onPress={() => setShowIconPicker(true)}>
                 <Animated.View style={avatarStyle}>
                   <View style={[styles.avatar, { backgroundColor: colors.primaryFill }]}>
                     {renderAvatarInner()}

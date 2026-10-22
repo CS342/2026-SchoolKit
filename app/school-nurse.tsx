@@ -44,6 +44,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
+import { useTranslation } from 'react-i18next';
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
@@ -223,6 +224,7 @@ function BottomSheet({
   section: SectionData | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { isDark, colors } = useTheme();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -381,7 +383,7 @@ function BottomSheet({
             <TouchableOpacity onPress={() => setFontSizeStep(s => (s + 1) % FONT_STEPS.length)} hitSlop={10} activeOpacity={0.7}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: fontSizeStep > 0 ? section.color : '#9CA3AF' }}>Aa</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDismiss} style={{ padding: 4 }}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')} onPress={handleDismiss} style={{ padding: 4 }}>
               <Ionicons name="close" size={24} color={colors.textLight} />
             </TouchableOpacity>
           </View>

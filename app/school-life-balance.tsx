@@ -27,6 +27,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { ContentColumn, ArticleLayout } from "../components/ui";
 import { useAccomplishments } from "../contexts/AccomplishmentContext";
 
+import { useTranslation } from 'react-i18next';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const FONT_STEPS = [1.0, 1.2, 1.45];
@@ -323,6 +324,7 @@ function ExpandedCardModal({
     onTogglePlaybackRate: () => void;
     styles: any;
 }) {
+    const { t } = useTranslation();
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -409,7 +411,7 @@ function ExpandedCardModal({
                                             <Text style={{ fontSize: 12, fontWeight: '700', color }}>{playbackRate}x</Text>
                                         </TouchableOpacity>
                                     )}
-                                    <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={isSpeaking ? t('common.a11y.stopReading') : t('common.a11y.readAloud')} onPress={onToggleSpeak} style={styles.speakerButton} disabled={isLoadingAudio} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                                         {isLoadingAudio ? (
                                             <ActivityIndicator size="small" color={color} />
                                         ) : (
@@ -455,6 +457,7 @@ function ExpandedCardModal({
 
 // ─── Handout Modal ────────────────────────────────────────────────────────────
 function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; onClose: () => void; styles: any }) {
+    const { t } = useTranslation();
     const { isDark, colors } = useTheme();
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -508,7 +511,7 @@ function HandoutModal({ handout, onClose, styles }: { handout: Handout | null; o
                             <Ionicons name={handout.icon as any} size={22} color={handout.color} />
                         </View>
                         <Text style={[handoutStyles.title, { color: handout.color }]}>{handout.title}</Text>
-                        <TouchableOpacity onPress={handleClose} style={handoutStyles.closeBtn}>
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={handleClose} style={handoutStyles.closeBtn}>
                             <Ionicons name="close" size={22} color={colors.textLight} />
                         </TouchableOpacity>
                     </View>

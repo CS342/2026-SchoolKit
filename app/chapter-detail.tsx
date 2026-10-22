@@ -31,7 +31,7 @@ function ChapterDetailScreen() {
   if (!chapter) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
         </TouchableOpacity>
         <View style={styles.notFound}>
@@ -54,7 +54,7 @@ function ChapterDetailScreen() {
         style={styles.header}
       >
         <View style={webLayout ? styles.webInner : undefined}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
           <View style={styles.headerContent}>

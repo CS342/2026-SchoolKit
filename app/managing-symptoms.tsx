@@ -26,6 +26,7 @@ import { DownloadButton } from "../components/DownloadButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { ContentColumn, ArticleLayout } from "../components/ui";
 
+import { useTranslation } from 'react-i18next';
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const RESOURCE_ID = "17";
@@ -447,6 +448,7 @@ function ExpandedCardModal({
     onTogglePlaybackRate: () => void;
     styles: any;
 }) {
+    const { t } = useTranslation();
     const { isDark, colors } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -537,7 +539,7 @@ function ExpandedCardModal({
                                             <Text style={{ fontSize: 12, fontWeight: "700", color }}>{playbackRate}x</Text>
                                         </TouchableOpacity>
                                     )}
-                                    <TouchableOpacity
+                                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={isSpeaking ? t('common.a11y.stopReading') : t('common.a11y.readAloud')}
                                         onPress={onToggleSpeak}
                                         style={styles.speakerBtn}
                                         disabled={isLoadingAudio}

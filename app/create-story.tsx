@@ -189,7 +189,7 @@ export default function CreateStoryScreen() {
     <View style={[styles.container, Platform.OS === 'web' && styles.webContainer as any]}>
       <View style={Platform.OS === 'web' ? styles.webInner as any : { flex: 1 }}>
       <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-        <Pressable style={appStyles.editBackButton} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/stories' as any)}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} style={appStyles.editBackButton} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/stories' as any)}>
           <Ionicons name="close" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={appStyles.editHeaderTitle}>{isExhausted ? t('stories.createHeaderReview') : t('stories.shareYourStory')}</Text>
@@ -270,7 +270,7 @@ export default function CreateStoryScreen() {
                     return (
                       <View key={tag} style={[styles.tagBadge, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
                         <Text style={[styles.tagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
-                        <Pressable 
+                        <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.removeTag', { tag })} 
                           onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
                           hitSlop={8}
                           style={{ marginLeft: 4 }}
@@ -434,7 +434,7 @@ export default function CreateStoryScreen() {
                       <View key={tag} style={[styles.selectedTagChip, { backgroundColor: isDark ? color.text + '30' : color.bg }]}>
                         <Text style={[styles.selectedTagText, { color: isDark ? color.bg : color.text }]}>{tag}</Text>
                         {!isExhausted && (
-                          <Pressable
+                          <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.removeTag', { tag })}
                             onPress={() => setStoryTags(storyTags.filter(t => t !== tag))}
                             hitSlop={8}
                             style={{ marginLeft: 4 }}

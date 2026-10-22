@@ -17,6 +17,7 @@ import PieceRevealOverlay from '../components/puzzle/PieceRevealOverlay';
 import { SHOW_PUZZLES } from '../constants/features';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PersistentSidebar } from '../components/PersistentSidebar';
+import { HoverTooltip } from '../components/HoverTooltip';
 import { useResponsive } from '../hooks/useResponsive';
 
 function InnerLayout() {
@@ -87,6 +88,7 @@ function InnerLayout() {
     <NavThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <OfflineBanner />
+      <HoverTooltip />
       {isWebDesktop ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
           {!hideSidebar && <PersistentSidebar />}

@@ -61,7 +61,7 @@ export function StoryStartersModal({
         >
           <View style={styles.header}>
             <Text style={styles.title}>{t('stories.storyStarters')}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={onClose} hitSlop={10}>
               <Ionicons name="close" size={24} color={colors.textLight} />
             </Pressable>
           </View>

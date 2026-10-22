@@ -62,7 +62,7 @@ export function CommunityNormsModal({ visible, onClose, mode, onAgree }: Communi
       <View style={[styles.container, { paddingTop: Platform.OS === 'android' ? insets.top : 0 }]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('stories.communityNorms')}</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={24} color={colors.textDark} />
           </TouchableOpacity>
         </View>

@@ -79,6 +79,7 @@ function ImageItem({ image, index, isSelected, inputMode, onSelect, onMove, onMo
     onSelect: () => void; onMove: (x: number, y: number) => void;
     onMoveEnd: (x: number, y: number) => void; onDelete: () => void; primaryColor: string;
 }) {
+    const { t } = useTranslation();
     const dragStart = useRef({ x: 0, y: 0, imgX: 0, imgY: 0 });
     const currentPos = useRef({ x: image.x, y: image.y });
 
@@ -133,7 +134,7 @@ function ImageItem({ image, index, isSelected, inputMode, onSelect, onMove, onMo
                 />
             </TouchableOpacity>
             {isSelected && (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.removeImage')}
                     style={[styles.imageDeleteBtn, { backgroundColor: primaryColor }]}
                     onPress={onDelete}
                 >
@@ -601,7 +602,7 @@ export default function NotebookScreen() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <View style={[appStyles.editHeader, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity style={appStyles.editBackButton} onPress={() => router.back()}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')} style={appStyles.editBackButton} onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color={colors.textDark} />
                 </TouchableOpacity>
                 <Text style={[appStyles.editHeaderTitle, { fontSize: 18 }]} numberOfLines={1}>{notebook.title}</Text>
@@ -614,7 +615,7 @@ export default function NotebookScreen() {
                 {/* Top Toolbar */}
                 <View style={[styles.toolbar, { backgroundColor: colors.white, ...shadows.card }]}>
                     <View style={styles.toolbarSection}>
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.previousPage')}
                             style={[styles.pageArrow, currentPageIndex === 0 && { opacity: 0.3 }]}
                             onPress={() => currentPageIndex > 0 && navigateToPage(currentPageIndex - 1)}
                             disabled={currentPageIndex === 0}
@@ -625,24 +626,24 @@ export default function NotebookScreen() {
                             {currentPageIndex + 1}<Text style={{ color: colors.textLight }}> / {notebook.pages.length}</Text>
                         </Text>
                         {currentPageIndex < notebook.pages.length - 1 ? (
-                            <TouchableOpacity style={styles.pageArrow} onPress={() => navigateToPage(currentPageIndex + 1)}>
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.nextPage')} style={styles.pageArrow} onPress={() => navigateToPage(currentPageIndex + 1)}>
                                 <Ionicons name="chevron-forward" size={18} color={colors.textDark} />
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity style={styles.pageArrow} onPress={handleAddPage}>
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.addPage')} style={styles.pageArrow} onPress={handleAddPage}>
                                 <Ionicons name="add" size={18} color={colors.primary} />
                             </TouchableOpacity>
                         )}
                     </View>
 
                     <View style={[styles.toolbarCenter, { backgroundColor: colors.inputBackground }]}>
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.typeMode')}
                             style={[styles.modeBtn, inputMode === "type" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => setInputMode("type")}
                         >
                             <Ionicons name="text-outline" size={18} color={inputMode === "type" ? "#FFF" : colors.textLight} />
                         </TouchableOpacity>
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.drawMode')}
                             style={[styles.modeBtn, inputMode === "write" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => setInputMode("write")}
                         >
@@ -654,7 +655,7 @@ export default function NotebookScreen() {
                         >
                             <MaterialCommunityIcons name="eraser" size={18} color={inputMode === "erase" ? "#FFF" : colors.textLight} />
                         </TouchableOpacity>
-                        <TouchableOpacity
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.imageMode')}
                             style={[styles.modeBtn, inputMode === "image" && { backgroundColor: colors.primaryFill }]}
                             onPress={() => {
                                 if (inputMode === "image") {
@@ -670,7 +671,7 @@ export default function NotebookScreen() {
 
                     <View style={styles.toolbarSection}>
                         <View style={{ position: 'relative' }}>
-                            <TouchableOpacity style={styles.toolbarIconBtn} onPress={handlePageMenu}>
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.moreOptions')} style={styles.toolbarIconBtn} onPress={handlePageMenu}>
                                 <Ionicons name="ellipsis-horizontal" size={20} color={colors.textLight} />
                             </TouchableOpacity>
                             {showPageMenu && (
@@ -692,7 +693,7 @@ export default function NotebookScreen() {
                                 </>
                             )}
                         </View>
-                        <TouchableOpacity style={styles.toolbarIconBtn} onPress={handleSharePage}>
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.share')} style={styles.toolbarIconBtn} onPress={handleSharePage}>
                             <Ionicons name="share-outline" size={20} color={colors.textLight} />
                         </TouchableOpacity>
                     </View>
@@ -869,7 +870,7 @@ export default function NotebookScreen() {
                     {/* Floating undo/redo pill */}
                     {(undoStackRef.current.length > 0 || redoStackRef.current.length > 0) && (
                         <View style={[styles.undoRedoGroup, { zIndex: 6 }]} pointerEvents="box-none">
-                            <TouchableOpacity
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.undo')}
                                 style={[styles.undoRedoBtn, undoStackRef.current.length === 0 && { opacity: 0.3 }]}
                                 onPress={handleUndo}
                                 disabled={undoStackRef.current.length === 0}
@@ -877,7 +878,7 @@ export default function NotebookScreen() {
                                 <Ionicons name="arrow-undo" size={20} color={PAPER_INK} />
                             </TouchableOpacity>
                             <View style={{ width: 1, height: 20, backgroundColor: 'rgba(0,0,0,0.1)' }} />
-                            <TouchableOpacity
+                            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.a11y.redo')}
                                 style={[styles.undoRedoBtn, redoStackRef.current.length === 0 && { opacity: 0.3 }]}
                                 onPress={handleRedo}
                                 disabled={redoStackRef.current.length === 0}

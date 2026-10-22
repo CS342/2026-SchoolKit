@@ -103,7 +103,7 @@ function AccomplishmentsScreen() {
             style={[styles.webColumn, { maxWidth: CONTENT_WIDTH.app, paddingHorizontal: WEB_H_PAD }]}
           >
             <Animated.View style={[styles.webHeader, headerStyle]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')}
                 onPress={() => router.back()}
                 style={styles.backButton}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -153,7 +153,7 @@ function AccomplishmentsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t('common.goBack')}
           onPress={() => router.back()}
           style={styles.backButton}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

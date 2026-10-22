@@ -8,6 +8,7 @@ import { BlockStyles, CARD_HEIGHT_FRONT, CARD_HEIGHT_BACK, FONT_STEPS } from './
 import { AppIcon } from '../ui/AppIcon';
 import { ResolvedStep } from './context';
 
+import { useTranslation } from 'react-i18next';
 export function StepModal({
   visible, step, onClose, isSpeaking, isLoadingAudio, onToggleSpeak, playbackRate, onTogglePlaybackRate, isAudioLoaded, colors, styles,
 }: {
@@ -23,6 +24,7 @@ export function StepModal({
   colors: ThemeColors;
   styles: BlockStyles;
 }) {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const flipAnim = useRef(new Animated.Value(0)).current;
@@ -90,7 +92,7 @@ export function StepModal({
                   <AppIcon name={step.icon} size={22} color={color} />
                 </View>
                 <Text style={[styles.backTitle, { color }]}>{step.title}</Text>
-                <TouchableOpacity onPress={onToggleSpeak} style={styles.speakerBtn} disabled={isLoadingAudio}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={isSpeaking ? t('common.a11y.stopReading') : t('common.a11y.readAloud')} onPress={onToggleSpeak} style={styles.speakerBtn} disabled={isLoadingAudio}>
                   {isLoadingAudio ? <ActivityIndicator size="small" color={color} /> : <Ionicons name={isSpeaking ? 'stop-circle-outline' : 'volume-high-outline'} size={26} color={isSpeaking ? colors.error : colors.textDark} />}
                 </TouchableOpacity>
                 {isAudioLoaded && (

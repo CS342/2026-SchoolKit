@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADII } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
 
+import { useTranslation } from 'react-i18next';
 export type BannerType = 'success' | 'info' | 'warning' | 'error';
 
 interface FeedbackBannerProps {
@@ -31,6 +32,7 @@ export function FeedbackBanner({
   autoDismissTime = 4000,
   style,
 }: FeedbackBannerProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export function FeedbackBanner({
         <Ionicons name={iconName() as any} size={20} color={c.icon} style={styles.icon} />
         <Text style={[styles.text, { color: c.text }]}>{message}</Text>
       </View>
-      <Pressable onPress={onDismiss} hitSlop={12}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('common.a11y.dismiss')} onPress={onDismiss} hitSlop={12}>
         <Ionicons name="close" size={18} color={c.text} opacity={0.6} />
       </Pressable>
     </Animated.View>
