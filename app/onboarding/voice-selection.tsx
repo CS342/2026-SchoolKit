@@ -25,6 +25,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { RADII, ANIMATION } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { ThemeColors } from '../../constants/theme';
+import { isStudentRole } from '../../utils/profile';
 
 function AnimatedVoiceCard({ children, index }: { children: React.ReactNode; index: number }) {
   const scale = useSharedValue(1);
@@ -73,7 +74,7 @@ export default function VoiceSelectionScreen() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isSampleLoading, setIsSampleLoading] = useState(false);
 
-  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const isStudent = isStudentRole(data.role);
   const stepInfo = getOnboardingStep('voice', isStudent);
 
   useEffect(() => {

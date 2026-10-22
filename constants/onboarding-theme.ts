@@ -11,6 +11,7 @@ export const GRADIENTS = {
   loadingScreen: ['#6B5AD6', '#5E86D8', '#3C9A8D'] as const,
   authHeader: ['#7E6BEE', '#6B5AD6', '#5D4BC0'] as const,
   progressFill: ['#6B5AD6', '#8271EC'] as const,
+  roleStudentElementary: ['#F59E0B', '#FBBF24'] as const,
   roleStudentK8: ['#0EA5E9', '#38BDF8'] as const,
   roleStudentHS: ['#6B5AD6', '#8271EC'] as const,
   roleParent: ['#EC4899', '#F472B6'] as const,

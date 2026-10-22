@@ -6,7 +6,7 @@ import { ALL_RESOURCE_IDS } from '../constants/resources';
 import { useOffline, queueOfflineChange } from './OfflineContext';
 import { VOICES } from '../services/elevenLabs';
 
-export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
+export type UserRole = 'student-elementary' | 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus = 'current-treatment' | 'returning-after-treatment' | 'supporting-student' | 'special-needs';
 
 export interface OnboardingData {
@@ -46,7 +46,9 @@ interface OnboardingContextType {
   downloadResource: (resourceId: string) => Promise<void>;
   removeDownload: (resourceId: string) => Promise<void>;
   isDownloaded: (resourceId: string) => boolean;
-  downloadAllResources: () => Promise<void>;
+  /** Saves these resources for offline (the caller passes the Library's ids, from
+   *  useResources), keeping anything already downloaded. Defaults to the built-ins. */
+  downloadAllResources: (ids?: string[]) => Promise<void>;
   // Voice
   selectedVoice: string;
   updateVoice: (voiceId: string) => Promise<void>;
@@ -418,9 +420,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const isDownloaded = (resourceId: string) => downloads.includes(resourceId);
 
-  const downloadAllResources = async () => {
-    setDownloads([...ALL_RESOURCE_IDS]);
-    await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(ALL_RESOURCE_IDS));
+  const downloadAllResources = async (ids: string[] = ALL_RESOURCE_IDS) => {
+    const next = [...new Set([...downloads, ...ids])];
+    setDownloads(next);
+    await AsyncStorage.setItem('@schoolkit_downloads', JSON.stringify(next));
   };
 
   const updateVoice = async (voiceId: string) => {

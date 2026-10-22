@@ -15,6 +15,7 @@ import { editPage } from '../../features/content/ai/client';
 import { pickFiles, processFile, resolveUploadedImages, UPLOAD_ACCEPT, Attachment } from '../../features/content/uploads';
 import type { ContentDoc, Op } from '../../features/content/types';
 import { AttachmentBar } from './AttachmentBar';
+import { useFileDrop } from './useFileDrop';
 
 interface Pending {
   ops: Op[];
@@ -53,8 +54,9 @@ export function AIBar() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [result, setResult] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
-  const attach = async () => {
-    const files = await pickFiles(UPLOAD_ACCEPT);
+  const attach = async () => addFiles(await pickFiles(UPLOAD_ACCEPT));
+
+  const addFiles = async (files: File[]) => {
     if (!files.length) return;
     setProcessing(true); setResult(null);
     const added: Attachment[] = [];
@@ -114,6 +116,7 @@ export function AIBar() {
   const cancel = () => { if (!busy) setPending(null); }; // keep text + attachments to adjust and retry
 
   const canSend = (!!text.trim() || attachments.length > 0) && !busy && !processing;
+  const drop = useFileDrop(addFiles, !busy && !processing && !pending);
 
   // ── Diff preview + confirm ──
   if (pending) {
@@ -168,7 +171,13 @@ export function AIBar() {
 
   // ── Input ──
   return (
-    <View style={{ borderTopWidth: 1, borderTopColor: colors.borderCard, backgroundColor: colors.white, padding: 12, gap: 8 }}>
+    <View ref={drop.ref as any} style={{ borderTopWidth: 1, borderTopColor: colors.borderCard, backgroundColor: colors.white, padding: 12, gap: 8 }}>
+      {drop.dragging ? (
+        <View pointerEvents="none" style={{ position: 'absolute', top: 6, left: 6, right: 6, bottom: 6, zIndex: 10, borderRadius: RADII.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.primary, backgroundColor: colors.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+          <Text style={{ ...TYPOGRAPHY.bodySmall, fontFamily: 'Raleway_700Bold', color: colors.primary }}>Drop files to attach</Text>
+        </View>
+      ) : null}
       {result ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingHorizontal: 4 }}>
           <Ionicons name={result.kind === 'ok' ? 'checkmark-circle' : 'alert-circle'} size={14} color={result.kind === 'ok' ? colors.success : colors.error} style={{ marginTop: 1 }} />

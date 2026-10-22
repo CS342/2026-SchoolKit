@@ -3,14 +3,18 @@
 // the rest of the app uses. generatePage → a full ContentDoc; editPage → validated
 // ops the editor applies via applyOps.
 import { supabase } from '../../../lib/supabase';
-import { ALL_RESOURCES } from '../../../constants/resources';
+import { loadGuideIndex } from '../../../hooks/useResources';
 import type { ContentDoc, Op } from '../types';
-import { buildGenerateMessages, buildEditMessages, ResourceRef, VerifiedLink, ChatMessage } from './prompt';
+import { buildGenerateMessages, buildEditMessages, ResourceRef, VerifiedLink, ChatMessage, GenerateOptions } from './prompt';
 import { parseGenerateResult, parseEditResult } from './parse';
 import { collectVerifiedLinks } from '../uploads';
 import type { Attachment } from '../uploads';
+import type { Notice } from '../lint';
 
-const resourceIndex = (): ResourceRef[] => ALL_RESOURCES.map((r) => ({ id: r.id, title: r.title, tags: r.tags }));
+// The guides the Library actually lists (published pages included), so resourceRefList
+// links point at the same cards readers see.
+const resourceIndex = async (): Promise<ResourceRef[]> =>
+  (await loadGuideIndex()).map((r) => ({ id: r.id, title: r.title, tags: r.tags }));
 
 async function invoke(messages: ChatMessage[], temperature: number): Promise<{ result: unknown } | { error: string }> {
   const { data, error } = await supabase.functions.invoke('generate-content', {
@@ -30,18 +34,25 @@ async function invoke(messages: ChatMessage[], temperature: number): Promise<{ r
   return { result: data?.result };
 }
 
-export async function generatePage(prompt: string, attachments: Attachment[] = [], links: VerifiedLink[] = []): Promise<{ doc: ContentDoc; warnings: string[] } | { error: string }> {
+/** `opts` generates one version of a topic: its audience (also set on the returned doc)
+ *  and, optionally, a sibling version whose layout to mirror. */
+export async function generatePage(prompt: string, attachments: Attachment[] = [], links: VerifiedLink[] = [], opts: GenerateOptions = {}): Promise<{ doc: ContentDoc; notices: Notice[] } | { error: string }> {
   const allLinks = collectVerifiedLinks(attachments, prompt, links);
-  const res = await invoke(buildGenerateMessages(prompt, resourceIndex(), allLinks, attachments), 0.6);
+  // Lower temperature so the model stays faithful to the user's wording (it preserves
+  // supplied source text rather than drifting into a paraphrase); matches editPage.
+  const res = await invoke(buildGenerateMessages(prompt, await resourceIndex(),allLinks, attachments, opts), 0.4);
   if ('error' in res) return { error: res.error };
   const parsed = parseGenerateResult(res.result);
   if (!parsed.doc) return { error: parsed.errors.join('; ') || 'The AI returned a page we could not read.' };
-  return { doc: parsed.doc, warnings: parsed.warnings };
+  // An audience the caller sets (even undefined = everyone) is the author's choice and
+  // wins; otherwise the model's suggestion stands.
+  const doc = 'audience' in opts ? { ...parsed.doc, audience: opts.audience } : parsed.doc;
+  return { doc, notices: parsed.notices };
 }
 
 export async function editPage(doc: ContentDoc, instruction: string, attachments: Attachment[] = [], links: VerifiedLink[] = [], focusBlockId?: string): Promise<{ summary: string; ops: Op[] } | { error: string }> {
   const allLinks = collectVerifiedLinks(attachments, instruction, links);
-  const res = await invoke(buildEditMessages(doc, instruction, resourceIndex(), allLinks, attachments, focusBlockId), 0.4);
+  const res = await invoke(buildEditMessages(doc, instruction, await resourceIndex(),allLinks, attachments, focusBlockId), 0.4);
   if ('error' in res) return { error: res.error };
   const parsed = parseEditResult(res.result, doc);
   if (parsed.errors.length) return { error: `The AI suggested a change we couldn't apply: ${parsed.errors[0]}` };

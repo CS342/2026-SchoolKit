@@ -10,7 +10,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { ALL_RESOURCES, Resource } from '../../constants/resources';
+import type { Resource } from '../../constants/resources';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 

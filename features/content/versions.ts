@@ -1,0 +1,219 @@
+// Topic versions — a topic groups one or more pages ("versions"), each with its own
+// audience. Pure: no React Native imports, safe for the app, the editor and tests.
+//
+// Readers get exactly one version per topic: the most specific one that matches them.
+// A version with no audience is universal and acts as the fallback for everyone else.
+import type { UserRole } from '../../lib/database.types';
+import { ADULT_ROLES, bandsApplyTo, gradeToAgeBand, isVisibleTo, parseAudience, type AgeBand, type Audience, type AudienceViewer } from './audience';
+import type { Notice } from './lint';
+
+export interface VersionLike {
+  audience?: Audience;
+}
+
+const constraintCount = (a?: Audience): number =>
+  (a?.roles?.length ? 1 : 0) + (a?.ageBands?.length ? 1 : 0);
+
+/** Dimensions the version targets that the viewer is known on and matches. */
+function matchScore(a: Audience | undefined, viewer: AudienceViewer): number {
+  let score = 0;
+  if (a?.roles?.length && viewer.role !== null && a.roles.includes(viewer.role)) score++;
+  // Bands describe a parent's or staff member's child; they never count for students.
+  const band = gradeToAgeBand(viewer.gradeLevel);
+  if (a?.ageBands?.length && viewer.role !== null && bandsApplyTo(viewer.role) && band !== null && a.ageBands.includes(band)) score++;
+  return score;
+}
+
+/**
+ * Visible versions, best first: highest match score, then fewest constraints (so a
+ * viewer we know little about gets the universal version), then original order.
+ * Pass versions in creation order — that order is the final tie-break.
+ */
+export function rankVersions<T extends VersionLike>(versions: T[], viewer: AudienceViewer): T[] {
+  return versions
+    .map((v, i) => ({ v, i, score: matchScore(v.audience, viewer), c: constraintCount(v.audience) }))
+    .filter(({ v }) => isVisibleTo(v.audience, viewer))
+    .sort((a, b) => b.score - a.score || a.c - b.c || a.i - b.i)
+    .map(({ v }) => v);
+}
+
+/** The version this viewer reads, or null when no version is meant for them. */
+export function pickVersion<T extends VersionLike>(versions: T[], viewer: AudienceViewer): T | null {
+  return rankVersions(versions, viewer)[0] ?? null;
+}
+
+/** The least-targeted version (universal if there is one) — what a direct link opens
+ *  for a viewer no version is meant for. */
+export function fallbackVersion<T extends VersionLike>(versions: T[]): T | null {
+  let best: T | null = null;
+  for (const v of versions) if (!best || constraintCount(v.audience) < constraintCount(best.audience)) best = v;
+  return best;
+}
+
+export interface TopicGroup<T> {
+  topicId: string;
+  /** In the order given (pass rows in creation order). */
+  versions: T[];
+  /** The version this viewer reads, or null when no version is meant for them. */
+  chosen: T | null;
+  /** What represents the topic: `chosen`, else the fallback a direct link opens. */
+  shown: T;
+}
+
+/** Group version rows by topic and pick each topic's version for this viewer. */
+export function resolveTopics<T extends VersionLike & { topic_id: string }>(rows: T[], viewer: AudienceViewer): TopicGroup<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const r of rows) groups.set(r.topic_id, [...(groups.get(r.topic_id) ?? []), r]);
+  return [...groups].map(([topicId, versions]) => {
+    const chosen = pickVersion(versions, viewer);
+    return { topicId, versions, chosen, shown: chosen ?? fallbackVersion(versions)! };
+  });
+}
+
+// ─── Labels ──────────────────────────────────────────────────────────────────
+
+const ROLE_PLURAL: Record<UserRole, string> = {
+  'student-elementary': 'Elementary school students',
+  'student-k8': 'Middle school students',
+  'student-hs': 'High school students',
+  parent: 'Parents',
+  staff: 'School staff',
+};
+const ROLE_ORDER: UserRole[] = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'];
+
+const BAND_SHORT: Record<AgeBand, string> = {
+  elementary: 'Elementary',
+  middle: 'Middle',
+  high: 'High',
+  beyond: 'Beyond HS',
+};
+const BAND_ORDER: AgeBand[] = ['elementary', 'middle', 'high', 'beyond'];
+
+/**
+ * "Everyone", "High school students", "Parents · Elementary",
+ * "Middle school students + Parents · Elementary". Bands belong to the parent/staff part.
+ */
+export function audienceLabel(audience: Audience | undefined): string {
+  const roles = ROLE_ORDER.filter((r) => audience?.roles?.includes(r));
+  const bands = BAND_ORDER.filter((b) => audience?.ageBands?.includes(b));
+  const bandPart = bands.length && bands.length < BAND_ORDER.length ? bands.map((b) => BAND_SHORT[b]).join(' + ') : '';
+  if (roles.length === ROLE_ORDER.length && !bandPart) return 'Everyone';
+  const students = roles.filter((r) => !ADULT_ROLES.includes(r)).map((r) => ROLE_PLURAL[r]).join(' + ');
+  const adultRoles = roles.filter((r) => ADULT_ROLES.includes(r)).map((r) => ROLE_PLURAL[r]).join(' + ');
+  const adults = adultRoles && bandPart ? `${adultRoles} · ${bandPart}` : adultRoles;
+  return [students, adults].filter(Boolean).join(' + ') || 'Everyone';
+}
+
+// ─── Coverage ────────────────────────────────────────────────────────────────
+
+export interface ViewerCell {
+  key: string;
+  label: string;
+  viewer: AudienceViewer;
+}
+
+/** Every kind of reader that can see different versions: the two student roles (their
+ *  grade doesn't matter), and parents and staff by their child's grade band (see the
+ *  grade lists in app/edit-grade-level.tsx). Each uses a representative grade value. */
+export const VIEWER_CELLS: ViewerCell[] = [
+  { key: 'elem', label: 'Elementary school students', viewer: { role: 'student-elementary', gradeLevel: '3' } },
+  { key: 'k8', label: 'Middle school students', viewer: { role: 'student-k8', gradeLevel: '7' } },
+  { key: 'hs', label: 'High school students', viewer: { role: 'student-hs', gradeLevel: '10' } },
+  ...(['parent', 'staff'] as const).flatMap((role) => ([
+    ['elementary', 'elementary'], ['middle', 'middle-school'], ['high', 'high-school'], ['beyond', 'high-school-up'],
+  ] as const).map(([band, grade]) => ({
+    key: `${role}-${band}`,
+    label: `${ROLE_PLURAL[role]} · ${BAND_SHORT[band]}`,
+    viewer: { role, gradeLevel: grade } as AudienceViewer,
+  }))),
+];
+
+export interface CoverageRow<T> {
+  cell: ViewerCell;
+  /** The version this viewer gets, or null when the topic is hidden from them. */
+  version: T | null;
+  /** True when another version matches this viewer equally well (the earlier one wins). */
+  tie: boolean;
+  /** That other version, when `tie`. */
+  tiedWith: T | null;
+}
+
+export function coverage<T extends VersionLike>(versions: T[]): CoverageRow<T>[] {
+  return VIEWER_CELLS.map((cell) => {
+    const ranked = rankVersions(versions, cell.viewer);
+    const [a, b] = ranked;
+    const tie = !!a && !!b
+      && matchScore(a.audience, cell.viewer) === matchScore(b.audience, cell.viewer)
+      && constraintCount(a.audience) === constraintCount(b.audience);
+    return { cell, version: a ?? null, tie, tiedWith: tie ? b : null };
+  });
+}
+
+/**
+ * Checks-panel notices for versions that compete for the same readers. Unreached
+ * readers aren't flagged: a page meant for one audience is a normal thing to make.
+ */
+export function tieNotices<T extends VersionLike & { id: string; title?: string }>(versions: T[]): Notice[] {
+  const name = (x: T) => `“${audienceLabel(x.audience)}”`;
+  const byPair = new Map<string, { a: T; b: T; cells: string[] }>();
+  for (const row of coverage(versions)) {
+    if (!row.tie || !row.version || !row.tiedWith) continue;
+    const key = `${row.version.id}|${row.tiedWith.id}`;
+    const entry = byPair.get(key) ?? { a: row.version, b: row.tiedWith, cells: [] };
+    entry.cells.push(row.cell.label);
+    byPair.set(key, entry);
+  }
+  return [...byPair.values()].map(({ a, b, cells }) => ({
+    message: `${cells.join(', ')} match two versions equally — ${name(a)} and ${name(b)}. They'll see ${name(a)}, the older one.`,
+    fix: "Narrow one version's audience so each reader has one best match.",
+  }));
+}
+
+// ─── Bulk import helper ──────────────────────────────────────────────────────
+
+const ROLE_WORDS: Record<string, UserRole> = {
+  parent: 'parent', parents: 'parent', caregiver: 'parent', caregivers: 'parent', guardian: 'parent', guardians: 'parent', family: 'parent', families: 'parent',
+  staff: 'staff', teacher: 'staff', teachers: 'staff', educator: 'staff', educators: 'staff', nurse: 'staff', counselor: 'staff', counselors: 'staff',
+};
+const BAND_WORDS: Record<string, AgeBand> = {
+  elementary: 'elementary', prek: 'elementary', k5: 'elementary', kindergarten: 'elementary',
+  middle: 'middle', ms: 'middle', '6to8': 'middle',
+  high: 'high', hs: 'high', highschool: 'high', '9to12': 'high',
+  college: 'beyond', beyond: 'beyond', university: 'beyond',
+};
+const STUDENT_WORDS = new Set(['student', 'students', 'kid', 'kids', 'child', 'children']);
+const TEEN_WORDS = new Set(['teen', 'teens', 'teenager', 'teenagers']);
+
+/**
+ * Guess a version's audience from its source file's name, e.g.
+ * "basics-parents-elementary.pdf" → Parents · Elementary, "basics-hs.docx" → High school
+ * students. Only a prefill for the author to confirm; undefined = everyone / no idea.
+ */
+export function guessAudienceFromFilename(name: string): Audience | undefined {
+  const base = name.toLowerCase().replace(/\.[a-z0-9]+$/, '');
+  // Join multi-part words and grade ranges ("pre-k", "6-8") before splitting on separators.
+  const normalized = base
+    .replace(/pre-?k/g, 'prek').replace(/k-5/g, 'k5').replace(/high[\s_-]?school/g, 'highschool')
+    .replace(/(\d+)-(\d+)/g, '$1to$2');
+  const tokens = new Set(normalized.split(/[^a-z0-9]+/).filter(Boolean));
+
+  const roles = new Set<UserRole>();
+  const bands = new Set<AgeBand>();
+  for (const t of tokens) {
+    if (ROLE_WORDS[t]) roles.add(ROLE_WORDS[t]);
+    if (BAND_WORDS[t]) bands.add(BAND_WORDS[t]);
+  }
+  const mentionsStudents = [...tokens].some((t) => STUDENT_WORDS.has(t));
+  const mentionsTeens = [...tokens].some((t) => TEEN_WORDS.has(t));
+  // A student file, or an audience named only by school level ("…-hs"), means students.
+  // No student-relevant level ("…-students") means both student groups; teens means high school.
+  if (mentionsStudents || mentionsTeens || (roles.size === 0 && bands.size > 0)) {
+    const levelNamed = bands.has('elementary') || bands.has('middle') || bands.has('high') || bands.has('beyond');
+    if (mentionsTeens || bands.has('high') || bands.has('beyond') || !levelNamed) roles.add('student-hs');
+    if (bands.has('middle') || (!levelNamed && !mentionsTeens)) roles.add('student-k8');
+    if (bands.has('elementary') || (!levelNamed && !mentionsTeens)) roles.add('student-elementary');
+  }
+  // Students' own grade already implies the band; keep bands only for parents/staff.
+  const onlyStudents = [...roles].every((r) => !ADULT_ROLES.includes(r));
+  return parseAudience({ roles: [...roles], ageBands: onlyStudents ? [] : [...bands] });
+}

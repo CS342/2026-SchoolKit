@@ -1,8 +1,9 @@
 // The content-page editor: a live split view. Left = editable block list + page
 // settings; right = the real ContentPage rendering live. Topbar carries the title,
-// undo/redo, draft/publish, and save. Web-only (the (editor) group is web + admin).
+// undo/redo, draft/publish, and save; under it, the version bar switches between and
+// adds versions of the page's topic. Web-only (the (editor) group is web + admin).
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, Modal, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
@@ -13,14 +14,19 @@ import { PageSettingsCard } from './PageSettingsCard';
 import { PreviewPane } from './PreviewPane';
 import { AIBar } from './AIBar';
 import { LintPanel } from './LintPanel';
+import { VersionBar, type AddVersionKind } from './VersionBar';
 
 type Status = 'draft' | 'published';
 
-export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
+export function ContentEditor({ onBack, onSave, saving, initialStatus, onSwitchVersion, onAddVersion, onRenameTopic }: {
   onBack: () => void;
-  onSave: (status: Status) => void | Promise<void>;
+  /** Resolves false when the save failed. */
+  onSave: (status: Status) => void | boolean | Promise<void | boolean>;
   saving: boolean;
   initialStatus: Status;
+  onSwitchVersion: (pageId: string) => void;
+  onAddVersion: (kind: AddVersionKind) => void;
+  onRenameTopic: (name: string) => void;
 }) {
   const { colors, shadows } = useTheme();
   const doc = useEditorStore((s) => s.doc);
@@ -30,6 +36,24 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const [status, setStatus] = useState<Status>(initialStatus);
+  // An action that leaves this version (switch / add), waiting on the unsaved-changes prompt.
+  const [pending, setPending] = useState<(() => void) | null>(null);
+  const [savingForLeave, setSavingForLeave] = useState(false);
+
+  const whenSaved = (action: () => void) => {
+    if (!dirty) action();
+    else setPending(() => action);
+  };
+  const saveThenLeave = async () => {
+    if (!pending) return;
+    setSavingForLeave(true);
+    const ok = await onSave(status);
+    setSavingForLeave(false);
+    if (ok === false) return; // the route shows the error; stay here
+    const action = pending;
+    setPending(null);
+    action();
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.appBackground }}>
@@ -75,6 +99,12 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
         </Pressable>
       </View>
 
+      <VersionBar
+        onSwitch={(id) => whenSaved(() => onSwitchVersion(id))}
+        onAdd={(kind) => whenSaved(() => onAddVersion(kind))}
+        onRenameTopic={onRenameTopic}
+      />
+
       {/* Split view */}
       <View style={{ flex: 1, flexDirection: 'row' }}>
         {/* Edit pane */}
@@ -107,6 +137,32 @@ export function ContentEditor({ onBack, onSave, saving, initialStatus }: {
           <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.white }}>{lastError}</Text>
         </View>
       ) : null}
+
+      <Modal visible={!!pending} transparent animationType="fade" onRequestClose={() => !savingForLeave && setPending(null)}>
+        <Pressable onPress={() => !savingForLeave && setPending(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => {}} style={[{ width: 440, maxWidth: '92%', backgroundColor: colors.white, borderRadius: RADII.xl, padding: SPACING.xxl }, shadows.cardLarge]}>
+            <Text style={{ ...TYPOGRAPHY.h3, color: colors.textDark, marginBottom: 6 }}>Save changes to this version?</Text>
+            <Text style={{ ...TYPOGRAPHY.body, color: colors.textMuted }}>
+              You have unsaved changes. Save them as {status === 'published' ? 'published' : 'a draft'} before you leave this version, or discard them.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 22 }}>
+              <Pressable onPress={() => !savingForLeave && setPending(null)} style={{ paddingVertical: 10, paddingHorizontal: 14, cursor: 'pointer' as any }}>
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.textMuted }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { if (savingForLeave || !pending) return; const action = pending; setPending(null); action(); }}
+                style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: RADII.button, cursor: 'pointer' as any }}
+              >
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: colors.error }}>Discard</Text>
+              </Pressable>
+              <Pressable onPress={saveThenLeave} disabled={savingForLeave} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 10, paddingHorizontal: 18, borderRadius: RADII.button, backgroundColor: colors.primary, cursor: (savingForLeave ? 'default' : 'pointer') as any }}>
+                {savingForLeave ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={16} color="#fff" />}
+                <Text style={{ ...TYPOGRAPHY.button, fontSize: 15, color: '#fff' }}>{savingForLeave ? 'Saving…' : 'Save & continue'}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

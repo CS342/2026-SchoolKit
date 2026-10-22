@@ -21,6 +21,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { GRADIENTS, ANIMATION, COLORS, SIZING, RADII, BORDERS } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { ThemeColors } from '../../constants/theme';
+import { isStudentRole } from '../../utils/profile';
 
 interface RoleOption {
   role: UserRole;
@@ -31,10 +32,11 @@ interface RoleOption {
 }
 
 const ROLES: RoleOption[] = [
-  { role: 'student-k8', iconName: 'school', title: 'Student (Middle School)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
-  { role: 'student-hs', iconName: 'book', title: 'Student (High School and up)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
-  { role: 'parent', iconName: 'people', title: 'Parent / Caregiver', color: COLORS.parent, gradient: GRADIENTS.roleParent },
-  { role: 'staff', iconName: 'briefcase', title: 'School Staff', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
+  { role: 'student-elementary', iconName: 'color-palette', title: 'Student (elementary school)', color: COLORS.studentElementary, gradient: GRADIENTS.roleStudentElementary },
+  { role: 'student-k8', iconName: 'school', title: 'Student (middle school)', color: COLORS.studentK8, gradient: GRADIENTS.roleStudentK8 },
+  { role: 'student-hs', iconName: 'book', title: 'Student (high school and up)', color: COLORS.primary, gradient: GRADIENTS.roleStudentHS },
+  { role: 'parent', iconName: 'people', title: 'Parent / caregiver', color: COLORS.parent, gradient: GRADIENTS.roleParent },
+  { role: 'staff', iconName: 'briefcase', title: 'School staff', color: COLORS.staff, gradient: GRADIENTS.roleStaff },
 ];
 
 function RoleCard({
@@ -136,7 +138,7 @@ export default function Step2Screen() {
     if (selectedRole) {
       updateRole(selectedRole);
       // Students skip grade selection — go straight to school journey
-      if (selectedRole === 'student-k8' || selectedRole === 'student-hs') {
+      if (isStudentRole(selectedRole)) {
         router.push('/onboarding/step3');
       } else {
         router.push('/onboarding/step2b');

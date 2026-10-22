@@ -12,6 +12,7 @@ import { SelectableCard } from '../../components/onboarding/SelectableCard';
 import { useResponsive } from '../../hooks/useResponsive';
 import { COLORS } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import { isStudentRole } from '../../utils/profile';
 
 const SCHOOL_STATUS_OPTIONS: {
   value: SchoolStatus;
@@ -22,7 +23,7 @@ const SCHOOL_STATUS_OPTIONS: {
   { value: 'current-treatment', label: 'Currently in school', icon: 'school-outline', color: COLORS.primary },
   { value: 'returning-after-treatment', label: 'Taking a break from school', icon: 'home-outline', color: COLORS.studentK8 },
   { value: 'supporting-student', label: 'Planning to return to school soon', icon: 'arrow-forward-circle-outline', color: COLORS.staff },
-  { value: 'special-needs', label: 'Home Hospital Education', icon: 'laptop-outline', color: COLORS.parent },
+  { value: 'special-needs', label: 'Home hospital education', icon: 'laptop-outline', color: COLORS.parent },
 ];
 
 export default function Step3Screen() {
@@ -34,7 +35,7 @@ export default function Step3Screen() {
 
   const [selectedStatuses, setSelectedStatuses] = useState<SchoolStatus[]>(data.schoolStatuses ?? []);
 
-  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const isStudent = isStudentRole(data.role);
   const isSchoolStaff = data.role === 'staff';
   const title = isStudent ? 'Your school journey' : isSchoolStaff ? "Your student's school journey" : "Your child's school journey";
   const stepInfo = getOnboardingStep('journey', isStudent);

@@ -26,8 +26,7 @@ import { useOnboarding } from "../../contexts/OnboardingContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccomplishments } from "../../contexts/AccomplishmentContext";
 import { useStories } from "../../contexts/StoriesContext";
-import { PAGE_TOPICS } from "../../constants/resources";
-import { useResources } from "../../hooks/useResources";
+import { useResources, useVisibleTopics, matchesSavedTopic } from "../../hooks/useResources";
 import { TOTAL_PIECES } from "../../constants/accomplishments";
 import {
   RADII,
@@ -223,9 +222,10 @@ export default function ProfileScreen() {
     () => treeResources.filter(r => isResourceFullyViewed(r.id)).length,
     [treeResources, isResourceFullyViewed]
   );
+  const visibleTopics = useVisibleTopics();
   const selectedTopics = useMemo(
-    () => PAGE_TOPICS.filter(t => data.topics.includes(t.label)),
-    [data.topics]
+    () => visibleTopics.filter(t => data.topics.some(s => matchesSavedTopic(s, { id: t.id, title: t.label }))),
+    [visibleTopics, data.topics]
   );
 
   const myStoriesCount = stories.filter(s => s.author_id === user?.id).length;
@@ -305,7 +305,7 @@ export default function ProfileScreen() {
                 <SettingRow icon="person-outline" label="Name" value={data.name} onPress={() => { setShowEditProfile(false); router.push("/edit-name"); }} theme={theme} />
                 <SettingRow icon="school-outline" label="Role" value={roleDisplayName} onPress={() => { setShowEditProfile(false); router.push("/edit-role"); }} theme={theme} />
                 <SettingRow icon="book-outline" label="School Status" value={data.schoolStatuses.length > 0 ? `${data.schoolStatuses.length} selected` : 'Not set'} onPress={() => { setShowEditProfile(false); router.push("/edit-school-status"); }} theme={theme} />
-                <SettingRow icon="list-outline" label="Topics" value={`${data.topics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
+                <SettingRow icon="list-outline" label="Topics" value={`${selectedTopics.length} selected`} onPress={() => { setShowEditProfile(false); router.push("/edit-topics"); }} isLast theme={theme} />
               </View>
             </View>
           </View>
@@ -386,7 +386,7 @@ export default function ProfileScreen() {
                             'current-treatment': 'Currently in school',
                             'returning-after-treatment': 'Taking a break from school',
                             'supporting-student': 'Planning to return to school soon',
-                            'special-needs': 'Home Hospital Education',
+                            'special-needs': 'Home hospital education',
                           };
                           const label = labels[status] ?? status.replace(/-/g, ' ');
                           return (
@@ -544,7 +544,7 @@ export default function ProfileScreen() {
                       'current-treatment': 'Currently in school',
                       'returning-after-treatment': 'Taking a break from school',
                       'supporting-student': 'Planning to return to school soon',
-                      'special-needs': 'Home Hospital Education',
+                      'special-needs': 'Home hospital education',
                     };
                     const label = labels[status] ?? status.replace(/-/g, ' ');
                     return (

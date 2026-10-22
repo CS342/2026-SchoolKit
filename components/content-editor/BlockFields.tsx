@@ -6,7 +6,8 @@ import { View, Text, Pressable, TextInput, Image, ActivityIndicator } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { TYPOGRAPHY, SPACING, RADII } from '../../constants/onboarding-theme';
-import { ALL_RESOURCES } from '../../constants/resources';
+import { useResources } from '../../hooks/useResources';
+import { isListable } from '../../hooks/useAudienceFilter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEditorStore } from '../../features/content/editor/store';
 import { BLOCK_CONFIG, FieldDef, ItemConfig } from '../../features/content/editor/templates';
@@ -78,7 +79,9 @@ function FieldInput({ field, value, onChange }: { field: FieldDef; value: any; o
     case 'textarea': return <TextField label={field.label} value={value ?? ''} onChangeText={onChange} placeholder={field.placeholder} multiline />;
     case 'url': return <UrlField label={field.label} value={value ?? ''} onChange={onChange} placeholder={field.placeholder} />;
     case 'color': return <ColorSwatches value={(value ?? 'primary') as ColorToken} onChange={onChange} />;
-    case 'icon': return <IconField value={value ?? 'ellipse-outline'} onChange={onChange} />;
+    case 'icon': return field.optional
+      ? <IconField value={value} onChange={onChange} allowNone />
+      : <IconField value={value ?? 'ellipse-outline'} onChange={onChange} />;
     case 'toggle': return <ToggleRow label={field.label} value={!!value} onValueChange={onChange} />;
     case 'select': return <SelectRow label={field.label} options={field.options ?? []} value={value ?? field.options?.[0]?.value ?? ''} onChange={onChange} />;
   }
@@ -115,7 +118,7 @@ function HeroFields({ block }: { block: any }) {
         The highlighted word uses the page accent color (set in Page settings).
       </Text>
       <TextField label="Eyebrow" placeholder="Small label above the title" value={block.eyebrow ?? ''} onChangeText={(t) => set({ eyebrow: t })} />
-      <IconField value={block.eyebrowIcon ?? 'bookmark-outline'} onChange={(v) => set({ eyebrowIcon: v })} />
+      <IconField value={block.eyebrowIcon} onChange={(v) => set({ eyebrowIcon: v })} allowNone />
       <ColorSwatches value={(block.eyebrowColor ?? 'teal') as ColorToken} onChange={(v) => set({ eyebrowColor: v })} />
       <TextField label="Subtitle" placeholder="Optional" value={block.subtitle ?? ''} onChangeText={(t) => set({ subtitle: t })} />
     </View>
@@ -127,6 +130,10 @@ function ResourceRefFields({ block }: { block: any }) {
   const { colors } = useTheme();
   const dispatch = useEditorStore((s) => s.dispatch);
   const selected: string[] = block.resourceIds ?? [];
+  // The guides the Library lists (published pages included, in place of the built-ins
+  // they replace), plus any already selected so they can still be removed.
+  const { allResources } = useResources();
+  const guides = allResources.filter((r) => selected.includes(r.id) || (!r.designOnly && isListable(r)));
   const toggle = (id: string) => {
     const next = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
     dispatch([{ op: 'updateBlock', id: block.id, patch: { resourceIds: next } }]);
@@ -135,7 +142,10 @@ function ResourceRefFields({ block }: { block: any }) {
     <View style={{ marginTop: SPACING.xs }}>
       <SectionLabel>Guides to include{selected.length ? ` · ${selected.length} selected` : ''}</SectionLabel>
       <View style={{ gap: 8 }}>
-        {ALL_RESOURCES.map((r) => {
+        {guides.length === 0 ? (
+          <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>No guides are listed in the Library yet. Publish a page to link to it here.</Text>
+        ) : null}
+        {guides.map((r) => {
           const on = selected.includes(r.id);
           const rank = selected.indexOf(r.id) + 1;
           return (

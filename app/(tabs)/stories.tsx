@@ -51,6 +51,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { TopicTagsModal } from "../../components/TopicTagsModal";
 import { ThemeColors } from "../../constants/theme";
 import Constants from "expo-constants";
+import { isStudentRole } from '../../utils/profile';
 
 export default function StoriesScreen() {
   const router = useRouter();
@@ -107,9 +108,7 @@ export default function StoriesScreen() {
 
           let userGroup = "Students";
           if (
-            onboardingData?.role === "student-k8" ||
-            onboardingData?.role === "student-hs"
-          )
+            isStudentRole(onboardingData?.role))
             userGroup = "Students";
           else if (onboardingData?.role === "parent") userGroup = "Parents";
           else if (onboardingData?.role === "staff") userGroup = "School Staff";

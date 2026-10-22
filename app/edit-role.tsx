@@ -24,10 +24,11 @@ interface RoleOption {
 }
 
 const ROLE_OPTIONS: RoleOption[] = [
-  { value: 'student-k8', label: 'Student (Middle School)', icon: 'school', color: '#0EA5E9' },
-  { value: 'student-hs', label: 'Student (High School and up)', icon: 'book', color: '#7B68EE' },
-  { value: 'parent', label: 'Parent / Caregiver', icon: 'people', color: '#EC4899' },
-  { value: 'staff', label: 'School Staff', icon: 'briefcase', color: '#66D9A6' },
+  { value: 'student-elementary', label: 'Student (elementary school)', icon: 'color-palette', color: '#F59E0B' },
+  { value: 'student-k8', label: 'Student (middle school)', icon: 'school', color: '#0EA5E9' },
+  { value: 'student-hs', label: 'Student (high school and up)', icon: 'book', color: '#7B68EE' },
+  { value: 'parent', label: 'Parent / caregiver', icon: 'people', color: '#EC4899' },
+  { value: 'staff', label: 'School staff', icon: 'briefcase', color: '#66D9A6' },
 ];
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {

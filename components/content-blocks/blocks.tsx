@@ -1,13 +1,15 @@
 // Block renderers + registry. Each maps one ContentBlock type to a component; the
 // finances-derived ones (callout/accordion/cardGrid/stepper/linkList) are ported
 // so output is pixel-identical. Content is data; behavior/animation lives here.
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Animated, Image, Platform, LayoutAnimation, UIManager, Linking, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, Animated, Image, Platform, LayoutAnimation, UIManager, Linking, ScrollView, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ExternalLink } from '../external-link';
 import { RecommendationList } from '../RecommendationList';
-import { ALL_RESOURCES } from '../../constants/resources';
+import type { Resource } from '../../constants/resources';
+import { useAudienceFilter } from '../../hooks/useAudienceFilter';
+import { useResources } from '../../hooks/useResources';
 import {
   ContentBlock, BlockType, HeroBlock, CalloutBlock as CalloutT, AccordionBlock as AccordionT, AccordionItem,
   CardGridBlock as CardGridT, StepperBlock as StepperT, LinkListBlock as LinkListT,
@@ -18,6 +20,7 @@ import {
   ComparisonTableBlock as ComparisonTableT, VideoBlock as VideoT,
 } from '../../features/content/types';
 import { REGISTRY } from '../../features/content/registry';
+import { hostnameOf } from '../../features/content/links';
 import { useBlockCtx, BlockCtx } from './context';
 import { safeIcon, Markdown } from './util';
 import { BUBBLE_SIZE } from './styles';
@@ -169,7 +172,7 @@ export function CardGridBlock({ block }: { block: CardGridT }) {
 
 // ─── Stepper ───────────────────────────────────────────────────────────────────
 function MapBubble({ step, index, onPress }: { step: StepperT['steps'][number]; index: number; onPress: () => void }) {
-  const { styles, color } = useBlockCtx();
+  const { styles, color, preview, web } = useBlockCtx();
   const hex = color(step.color);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -191,8 +194,11 @@ function MapBubble({ step, index, onPress }: { step: StepperT['steps'][number]; 
     setTimeout(() => onPress(), 50);
   };
   const isLeft = index % 2 === 0;
+  // The bubble offsets are sized by the window; the editor's mobile preview is a phone
+  // frame inside a wide window, so use the phone offset there.
+  const phoneFrame = preview && !web;
   return (
-    <Animated.View style={[styles.bubbleWrapper, isLeft ? styles.bubbleLeft : styles.bubbleRight, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
+    <Animated.View style={[styles.bubbleWrapper, isLeft ? styles.bubbleLeft : styles.bubbleRight, phoneFrame && (isLeft ? { marginLeft: PHONE_BUBBLE_INSET } : { marginRight: PHONE_BUBBLE_INSET }), { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
       <TouchableOpacity activeOpacity={0.85} onPress={handlePress}>
         <View style={[styles.bubble, { backgroundColor: hex + '18', borderColor: hex + '50' }]}>
           <View style={[styles.bubbleNumber, { backgroundColor: hex }]}>
@@ -206,10 +212,13 @@ function MapBubble({ step, index, onPress }: { step: StepperT['steps'][number]; 
   );
 }
 
+const PHONE_BUBBLE_INSET = 20;
+
 function MapConnector({ hex, isFromLeft }: { hex: string; isFromLeft: boolean }) {
-  const { styles } = useBlockCtx();
+  const { styles, preview, web } = useBlockCtx();
+  const inset = preview && !web ? PHONE_BUBBLE_INSET + BUBBLE_SIZE / 2 : undefined;
   return (
-    <View style={[styles.connectorWrapper, isFromLeft ? styles.connectorLeft : styles.connectorRight]}>
+    <View style={[styles.connectorWrapper, isFromLeft ? styles.connectorLeft : styles.connectorRight, inset !== undefined && (isFromLeft ? { marginRight: inset } : { marginLeft: inset })]}>
       <View style={[styles.dashedLine, { borderColor: hex + '35' }]} />
     </View>
   );
@@ -275,10 +284,10 @@ export function LinkListBlock({ block }: { block: LinkListT }) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.orgName, { color: colors.textDark }]}>{org.name}</Text>
-                      <Text style={[styles.orgBlurb, { color: colors.textMuted }]}>{org.blurb}</Text>
+                      {org.blurb ? <Text style={[styles.orgBlurb, { color: colors.textMuted }]}>{org.blurb}</Text> : null}
                       <View style={styles.orgLinkRow}>
                         <Ionicons name="open-outline" size={13} color={hex} />
-                        <Text style={[styles.orgLink, { color: hex }]}>{org.display}</Text>
+                        <Text style={[styles.orgLink, { color: hex }]}>{org.display || hostnameOf(org.url)}</Text>
                       </View>
                     </View>
                   </View>
@@ -359,9 +368,15 @@ export function ImageBlock({ block }: { block: ImageT }) {
 export function ResourceRefListBlock({ block }: { block: RefListT }) {
   const { colors, shadows, styles, web, preview } = useBlockCtx();
   const router = useRouter();
+  const isVisible = useAudienceFilter();
+  // Looked up in the live Library, so a built-in guide replaced by a published page shows
+  // (and opens) that page. The editor preview shows every linked guide; readers only see
+  // their audience's.
+  const { allResources } = useResources();
   const items = block.resourceIds
-    .map((id) => ALL_RESOURCES.find((r) => r.id === id))
-    .filter(Boolean) as (typeof ALL_RESOURCES)[number][];
+    .map((id) => allResources.find((r) => r.id === id))
+    .filter((r): r is Resource => !!r)
+    .filter((r) => preview || isVisible(r));
   return (
     <View>
       <SectionHead heading={block.heading} subheading={block.subheading} />
@@ -394,11 +409,11 @@ export function ResourceRefListBlock({ block }: { block: RefListT }) {
 
 // ─── Recommendations ───────────────────────────────────────────────────────────
 export function RecommendationsBlock() {
-  const { resourceId, tags, preview } = useBlockCtx();
+  const { resourceId, tags, linkedResourceIds, preview } = useBlockCtx();
   // In the editor preview, keep it visible but inert so a card tap can't leave the editor.
   return (
     <View pointerEvents={preview ? 'none' : 'auto'}>
-      <RecommendationList currentId={resourceId ?? ''} currentTags={tags} />
+      <RecommendationList currentId={resourceId ?? ''} currentTags={tags} excludeIds={linkedResourceIds} />
     </View>
   );
 }
@@ -603,42 +618,63 @@ export function TabsBlock({ block }: { block: TabsT }) {
 }
 
 // ─── Flip cards ──────────────────────────────────────────────────────────────────
-function FlipCard({ item }: { item: FlipCardItem }) {
+const FLIP_PAD = 18;
+const FLIP_MIN_H = 120;
+
+/** One flip card's front. Tapping it opens the page-level reveal modal (FlipCardModal),
+ *  which turns it over to the back — so a long back never stretches the grid. Every card
+ *  is `height` tall, set by the parent block to the tallest front; `onMeasure` reports
+ *  this card's front. */
+function FlipCard({ item, height, onOpen, onMeasure }: {
+  item: FlipCardItem;
+  height: number;
+  onOpen: () => void;
+  onMeasure: (id: string, contentHeight: number) => void;
+}) {
   const { colors, shadows, color } = useBlockCtx();
   const hex = color(item.color);
-  const [flipped, setFlipped] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
-  const flip = () => {
-    Animated.spring(anim, { toValue: flipped ? 0 : 1, useNativeDriver: true, friction: 8, tension: 10 }).start();
-    setFlipped((f) => !f);
-  };
-  const frontRotate = anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
-  const backRotate = anim.interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
-  const face = { backfaceVisibility: 'hidden' as const, padding: 18, borderRadius: 16, borderWidth: 1, minHeight: 130, alignItems: 'center' as const, justifyContent: 'center' as const };
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={flip} style={[{ minHeight: 130 }, IS_WEB && { cursor: 'pointer' } as any]}>
-      <View>
-        <Animated.View style={[face, { backgroundColor: hex + '14', borderColor: hex + '44', transform: [{ perspective: 1000 }, { rotateY: frontRotate }] }, shadows.small]}>
-          {item.icon ? <Ionicons name={safeIcon(item.icon)} size={26} color={hex} style={{ marginBottom: 8 }} /> : null}
-          <Text style={{ fontSize: 16, fontFamily: 'Raleway_700Bold', color: colors.textDark, textAlign: 'center' }}>{item.front}</Text>
-        </Animated.View>
-        <Animated.View style={[face, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.white, borderColor: hex + '55', transform: [{ perspective: 1000 }, { rotateY: backRotate }] }, shadows.small]}>
-          <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center' }}>{item.back}</Text>
-        </Animated.View>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={item.front}
+      accessibilityHint="Opens the card and turns it over"
+      style={[{ minHeight: height, flex: 1, padding: FLIP_PAD, borderRadius: 16, borderWidth: 1, backgroundColor: hex + '14', borderColor: hex + '44', alignItems: 'center', justifyContent: 'center' }, shadows.small, IS_WEB && { cursor: 'pointer' } as any]}
+    >
+      <View onLayout={(e: LayoutChangeEvent) => onMeasure(item.id, Math.ceil(e.nativeEvent.layout.height))} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
+        {item.icon ? <Ionicons name={safeIcon(item.icon)} size={26} color={hex} style={{ marginBottom: 8 }} /> : null}
+        <Text style={{ fontSize: 16, lineHeight: 22, fontFamily: 'Raleway_700Bold', color: colors.textDark, textAlign: 'center' }}>{item.front}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10 }}>
+          <Ionicons name="sync-outline" size={13} color={hex} />
+          <Text style={{ fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: hex }}>Tap to reveal</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
 export function FlipCardBlock({ block }: { block: FlipCardT }) {
-  const { styles, web } = useBlockCtx();
+  const { styles, web, color, onOpenFlip } = useBlockCtx();
+  // Measured content height of every front; all cards share the tallest so the grid is
+  // uniform. Only current items count, so removing a long card lets the rest shrink back.
+  const [frontH, setFrontH] = useState<Record<string, number>>({});
+  const onMeasure = useCallback((id: string, h: number) => {
+    setFrontH((prev) => (prev[id] === h ? prev : { ...prev, [id]: h }));
+  }, []);
+  const tallest = block.items.reduce((m, c) => Math.max(m, frontH[c.id] ?? 0), 0);
+  const height = Math.max(FLIP_MIN_H, tallest + FLIP_PAD * 2 + 2);
+  const open = (index: number) => onOpenFlip({
+    cards: block.items.map((c) => ({ id: c.id, front: c.front, back: c.back, icon: c.icon, colorHex: color(c.color) })),
+    index,
+  });
   return (
     <View>
       {block.heading ? <SectionHead heading={block.heading} subheading={block.subheading} /> : null}
       <View style={web ? styles.gridRow : { gap: 12 }}>
-        {block.items.map((c) => (
+        {block.items.map((c, i) => (
           <View key={c.id} style={web ? styles.gridCol : undefined}>
-            <FlipCard item={c} />
+            <FlipCard item={c} height={height} onOpen={() => open(i)} onMeasure={onMeasure} />
           </View>
         ))}
         {web && <View style={styles.gridColSpacer} />}

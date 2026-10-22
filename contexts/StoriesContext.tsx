@@ -276,7 +276,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
               parsedLookingFor = s.looking_for.split(',').map((x: string) => x.trim()).filter((x: string) => x);
             }
           }
-          let parsedTargetAudiences: string[] = ['student-k8', 'student-hs', 'parent', 'staff'];
+          let parsedTargetAudiences: string[] = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'];
           if (Array.isArray(s.target_audiences)) {
             parsedTargetAudiences = s.target_audiences;
           } else if (typeof s.target_audiences === 'string') {
@@ -413,7 +413,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const createStory = async (title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }): Promise<Story | null> => {
     if (!user?.id || isAnonymous) return null;
 
-    const { postAnonymously = false, lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
+    const { postAnonymously = false, lookingFor = [], targetAudiences = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
 
     const displayName = postAnonymously ? 'Anonymous' : (onboardingData.name || 'Anonymous');
     const displayRole = postAnonymously ? null : onboardingData.role;
@@ -608,7 +608,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
   const updateStory = async (storyId: string, title: string, body: string, options?: { postAnonymously?: boolean; lookingFor?: string[]; targetAudiences?: string[]; storyTags?: string[] }): Promise<Story | null> => {
     if (!user?.id || isAnonymous) return null;
 
-    const { lookingFor = [], targetAudiences = ['student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
+    const { lookingFor = [], targetAudiences = ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff'], storyTags = [] } = options || {};
 
     try {
       const originalStory = stories.find(s => s.id === storyId);

@@ -1,6 +1,8 @@
 // Content Pages — block model types (spec: docs/content-blocks-spec.md §1–3).
 // Pure types, zero runtime deps. The doc is declarative data; renderers own behavior.
 
+import type { Audience } from './audience';
+
 export type ColorToken = 'primary' | 'teal' | 'coral' | 'amber' | 'indigo' | 'sky';
 
 /** Ionicons name. Validated softly at render (unknown → fallback icon). */
@@ -114,9 +116,11 @@ export interface LinkItem {
   name: string;
   icon: IconName;
   color: ColorToken;
-  blurb: string;
+  /** Optional description; shown only when the source gives one. */
+  blurb?: string;
   url: string;
-  display: string;
+  /** Link label (e.g. "acco.org"); the renderer falls back to the URL's domain. */
+  display?: string;
 }
 export interface LinkListBlock extends BlockBase {
   type: 'linkList';
@@ -319,6 +323,8 @@ export interface ContentDoc {
   resourceId?: string;
   /** Optional custom share text; falls back to the title. */
   shareMessage?: string;
+  /** Who the page is for. Missing = everyone. Off-audience pages are hidden from lists. */
+  audience?: Audience;
   blocks: ContentBlock[];
 }
 

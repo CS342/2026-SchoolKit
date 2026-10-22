@@ -31,13 +31,16 @@ export interface ImageAttachment {
 }
 
 /** Text extracted from a PDF/doc/text file, sent to the AI as reference context, plus
- *  any links found in it (passed to the AI as usable verifiedLinks). */
+ *  any links found in it (passed to the AI as usable verifiedLinks). PDFs also carry
+ *  `pageImages` — snapshots of the first pages so the vision model can see the layout;
+ *  they are reference-only (no token) and are never stored or placed. */
 export interface TextAttachment {
   kind: 'text';
   id: string;
   name: string;
   text: string;
   links: LinkRef[];
+  pageImages?: string[];
 }
 
 export type Attachment = ImageAttachment | TextAttachment;
@@ -147,9 +150,9 @@ export async function processFile(file: File): Promise<Attachment | { error: str
       return { kind: 'image', id, token: `upload://${id}`, name: file.name, dataUrl, file };
     }
     if (isPdf(file)) {
-      const { text, links } = await extractPdfText(file, MAX_TEXT_CHARS);
+      const { text, links, pageImages } = await extractPdfText(file, MAX_TEXT_CHARS);
       if (!text) return { error: `Couldn't read text from ${file.name} (it may be a scanned PDF).` };
-      return { kind: 'text', id: nanoid(6), name: file.name, text, links };
+      return { kind: 'text', id: nanoid(6), name: file.name, text, links, pageImages };
     }
     if (isDocx(file)) {
       const { text, links } = await extractDocxText(file, MAX_TEXT_CHARS);

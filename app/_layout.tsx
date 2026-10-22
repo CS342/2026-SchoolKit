@@ -26,7 +26,11 @@ function InnerLayout() {
   const isOnboardingPage = pathname.startsWith('/onboarding');
   const isAuthPage = pathname === '/auth' || pathname.startsWith('/auth');
   const isEditorPage = pathname.startsWith('/design/');
-  const hideSidebar = isWelcomePage || isChoosePage || isOnboardingPage || isAuthPage || isEditorPage;
+  // Standalone flow pages (account recovery, post-onboarding loader, public share links)
+  const isStandalonePage = ['/reset-password', '/confirm-email', '/loading'].some(
+    (p) => pathname === p || pathname === `${p}/`,
+  ) || pathname.startsWith('/share/');
+  const hideSidebar = isWelcomePage || isChoosePage || isOnboardingPage || isAuthPage || isEditorPage || isStandalonePage;
 
   const navigationTheme = isDark
     ? {
@@ -57,6 +61,7 @@ function InnerLayout() {
       <Stack.Screen name="share/[token]" />
       <Stack.Screen name="design-view/[id]" />
       <Stack.Screen name="auth" />
+      <Stack.Screen name="reset-password" />
       <Stack.Screen name="accomplishments" />
       <Stack.Screen name="chapter-detail" />
     </Stack>

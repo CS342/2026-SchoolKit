@@ -10,10 +10,11 @@ interface PublishModalProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'student-k8', label: 'Students (K-8)' },
+  { value: 'student-elementary', label: 'Students (elementary)' },
+  { value: 'student-k8', label: 'Students (middle school)' },
   { value: 'student-hs', label: 'Students (High School+)' },
   { value: 'parent', label: 'Parents/Caregivers' },
-  { value: 'staff', label: 'School Staff' },
+  { value: 'staff', label: 'School staff' },
 ];
 
 const ICON_OPTIONS = [
@@ -39,6 +40,7 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
   const [category, setCategory] = useState<string>(RESOURCE_CATEGORIES[0]);
   const [icon, setIcon] = useState('color-palette-outline');
   const [targetRoles, setTargetRoles] = useState<string[]>([
+    'student-elementary',
     'student-k8',
     'student-hs',
     'parent',
@@ -58,14 +60,14 @@ export function PublishModal({ visible, onClose }: PublishModalProps) {
           setDescription(resource.description);
           setCategory(resource.category || RESOURCE_CATEGORIES[0]);
           setIcon(resource.icon || 'color-palette-outline');
-          setTargetRoles(resource.targetRoles.length > 0 ? resource.targetRoles : ['student-k8', 'student-hs', 'parent', 'staff']);
+          setTargetRoles(resource.targetRoles.length > 0 ? resource.targetRoles : ['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff']);
         } else {
           setIsPublished(false);
           setTitle(designTitle);
           setDescription('');
           setCategory(RESOURCE_CATEGORIES[0]);
           setIcon('color-palette-outline');
-          setTargetRoles(['student-k8', 'student-hs', 'parent', 'staff']);
+          setTargetRoles(['student-elementary', 'student-k8', 'student-hs', 'parent', 'staff']);
         }
         setChecking(false);
       });

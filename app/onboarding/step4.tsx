@@ -18,7 +18,8 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { ANIMATION, RADII } from '../../constants/onboarding-theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { ThemeColors } from '../../constants/theme';
-import { PAGE_TOPICS } from '../../constants/resources';
+import { useTopicPicker } from '../../hooks/useResources';
+import { isStudentRole } from '../../utils/profile';
 
 function CounterPill({ count }: { count: number }) {
   const { colors } = useTheme();
@@ -59,23 +60,13 @@ export default function Step4Screen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isWebDesktop = isWeb && !isMobile;
 
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(data.topics ?? []);
+  const picker = useTopicPicker(data.topics ?? []);
 
-  const isStudent = data.role === 'student-k8' || data.role === 'student-hs';
+  const isStudent = isStudentRole(data.role);
   const stepInfo = getOnboardingStep('topics', isStudent);
 
-  const availableTopics = PAGE_TOPICS;
-
-  const toggleTopic = (topic: string) => {
-    setSelectedTopics(prev =>
-      prev.includes(topic)
-        ? prev.filter(t => t !== topic)
-        : [...prev, topic]
-    );
-  };
-
   const handleFinish = () => {
-    updateTopics(selectedTopics);
+    updateTopics(picker.toSave());
     router.push('/onboarding/voice-selection');
   };
 
@@ -108,15 +99,15 @@ export default function Step4Screen() {
               Choose what feels right - you can always explore more later.
             </Text>
 
-            <CounterPill count={selectedTopics.length} />
+            <CounterPill count={picker.count} />
 
             <View style={[styles.topicsContainer, isWebDesktop && { flexDirection: 'row', flexWrap: 'wrap', gap: 16 }]}>
-              {availableTopics.map((topic, index) => (
-                <View key={topic.label} style={isWebDesktop ? { width: '48%' } : undefined}>
+              {picker.topics.map((topic, index) => (
+                <View key={topic.id} style={isWebDesktop ? { width: '48%' } : undefined}>
                   <SelectableCard
                     title={topic.label}
-                    selected={selectedTopics.includes(topic.label)}
-                    onPress={() => toggleTopic(topic.label)}
+                    selected={picker.isSelected(topic)}
+                    onPress={() => picker.toggle(topic)}
                     multiSelect
                     color={topic.color}
                     icon={topic.icon as any}
@@ -131,7 +122,7 @@ export default function Step4Screen() {
                 <PrimaryButton
                   title="Get Started"
                   onPress={handleFinish}
-                  disabled={selectedTopics.length === 0}
+                  disabled={picker.count === 0}
                   icon="arrow-forward"
                 />
                 <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>
@@ -147,7 +138,7 @@ export default function Step4Screen() {
           <PrimaryButton
             title="Get Started"
             onPress={handleFinish}
-            disabled={selectedTopics.length === 0}
+            disabled={picker.count === 0}
             icon="arrow-forward"
           />
           <Pressable style={sharedStyles.skipButton} onPress={handleSkip}>

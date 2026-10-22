@@ -57,6 +57,41 @@ export function ToggleRow({ label, value, onValueChange }: { label: string; valu
   );
 }
 
+export function ChipMultiSelect<T extends string>({ label, options, value, onChange, hint }: {
+  label?: string; options: { value: T; label: string }[]; value: T[]; onChange: (v: T[]) => void; hint?: string;
+}) {
+  const { colors } = useTheme();
+  const toggle = (v: T) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  return (
+    <View style={{ marginBottom: SPACING.md }}>
+      {label ? <SectionLabel>{label}</SectionLabel> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {options.map((o) => {
+          const on = value.includes(o.value);
+          return (
+            <Pressable
+              key={o.value}
+              onPress={() => toggle(o.value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={o.label}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADII.pill, borderWidth: 1.5,
+                borderColor: on ? colors.primary : colors.border,
+                backgroundColor: on ? colors.primary : colors.inputBackground,
+                cursor: 'pointer' as any,
+              }}
+            >
+              <Text style={{ ...TYPOGRAPHY.caption, color: on ? '#fff' : colors.textDark }}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {hint ? <Text style={{ ...TYPOGRAPHY.caption, color: colors.textLight, marginTop: 6 }}>{hint}</Text> : null}
+    </View>
+  );
+}
+
 export function ColorSwatches({ value, onChange }: { value: ColorToken; onChange: (t: ColorToken) => void }) {
   const { colors } = useTheme();
   return (
@@ -103,7 +138,9 @@ export const ICON_SET = [
   'musical-notes-outline', 'game-controller-outline', 'football-outline', 'brush-outline', 'camera-outline', 'headset-outline',
 ];
 
-export function IconField({ value, onChange }: { value: string; onChange: (icon: string) => void }) {
+/** Icon picker. With `allowNone`, the field can be cleared — `value` is then undefined
+ *  and the picker leads with a "No icon" choice. */
+export function IconField({ value, onChange, allowNone }: { value: string | undefined; onChange: (icon: string | undefined) => void; allowNone?: boolean }) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -123,8 +160,8 @@ export function IconField({ value, onChange }: { value: string; onChange: (icon:
           borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 8, cursor: 'pointer' as any,
         }}
       >
-        <Ionicons name={value as any} size={22} color={colors.primary} />
-        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value.replace('-outline', '')}</Text>
+        <Ionicons name={(value ?? 'remove-circle-outline') as any} size={22} color={value ? colors.primary : colors.textLight} />
+        <Text style={{ ...TYPOGRAPHY.bodySmall, color: colors.textMuted }}>{value ? value.replace('-outline', '') : 'No icon'}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.textLight} />
       </Pressable>
 
@@ -137,6 +174,16 @@ export function IconField({ value, onChange }: { value: string; onChange: (icon:
               style={{ ...TYPOGRAPHY.body, color: colors.textDark, backgroundColor: colors.inputBackground, borderWidth: 1.5, borderColor: colors.border, borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 9, marginBottom: 14, outlineStyle: 'none' as any }}
             />
             <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} showsVerticalScrollIndicator={false}>
+              {allowNone && !q.trim() ? (
+                <Pressable
+                  onPress={() => { onChange(undefined); setOpen(false); }}
+                  accessibilityLabel="No icon"
+                  style={{ width: 52, height: 52, borderRadius: RADII.md, alignItems: 'center', justifyContent: 'center', backgroundColor: !value ? colors.primarySoft : colors.appBackgroundAlt, borderWidth: !value ? 1.5 : 1, borderStyle: 'dashed', borderColor: !value ? colors.primary : colors.border, cursor: 'pointer' as any }}
+                >
+                  <Ionicons name="ban-outline" size={20} color={!value ? colors.primary : colors.textMuted} />
+                  <Text style={{ fontSize: 9, fontFamily: 'Raleway_700Bold', color: !value ? colors.primary : colors.textMuted, marginTop: 2 }}>None</Text>
+                </Pressable>
+              ) : null}
               {filtered.map((icon) => {
                 const sel = icon === value;
                 return (

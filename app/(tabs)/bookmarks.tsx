@@ -134,7 +134,9 @@ export default function LibraryScreen() {
 
   const { bookmarksWithTimestamps, downloads = [] } = useOnboarding();
   const { stories, storyBookmarks, downloadedStories } = useStories();
-  const { resources, loading: resourcesLoading } = useResources();
+  // `resources` (audience-filtered) drives browsing; saved/downloaded look up
+  // `allResources` so they keep showing after a role or grade change.
+  const { resources, allResources, loading: resourcesLoading } = useResources();
 
   const [segmentContainerWidth, setSegmentContainerWidth] = useState(0);
 
@@ -214,12 +216,12 @@ export default function LibraryScreen() {
   // Saved
   const bookmarkedResources = useMemo(() => bookmarksWithTimestamps
     .map(b => {
-      const resource = resources.find(r => r.id === b.resourceId);
+      const resource = allResources.find(r => r.id === b.resourceId);
       return resource ? { ...resource, savedAt: b.savedAt } : null;
     })
     .filter((r): r is Resource & { savedAt: number } => r !== null)
     .filter(r => !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase())),
-  [bookmarksWithTimestamps, resources, searchQuery]);
+  [bookmarksWithTimestamps, allResources, searchQuery]);
 
   const bookmarkedStories = useMemo(() => stories
     .filter(s => storyBookmarks.includes(s.id))
@@ -228,10 +230,10 @@ export default function LibraryScreen() {
 
   // Downloaded
   const downloadedResources = useMemo(() => downloads
-    .map(id => resources.find(r => r.id === id))
+    .map(id => allResources.find(r => r.id === id))
     .filter((r): r is Resource => r !== undefined)
     .filter(r => !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase())),
-  [downloads, resources, searchQuery]);
+  [downloads, allResources, searchQuery]);
 
   const filteredDownloadedStories = useMemo(() => downloadedStories
     .filter(s => !searchQuery || s.title.toLowerCase().includes(searchQuery.toLowerCase())),

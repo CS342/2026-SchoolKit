@@ -50,6 +50,7 @@ export const COLORS_LIGHT = {
   backgroundLight: '#E9E4FA',  // primary-soft (icon circles, badges)
   disabledText: '#A39DB5',
   white: '#FFFFFF',
+  studentElementary: '#F59E0B',
   studentK8: '#0EA5E9',
   studentHS: '#6B5AD6',
   parent: '#EC4899',
@@ -98,6 +99,7 @@ export const COLORS_DARK = {
   backgroundLight: '#2A2447',
   disabledText: '#6A6480',
   white: '#221E30',            // "surface" semantic in dark
+  studentElementary: '#FBBF24',
   studentK8: '#38BDF8',
   studentHS: '#9A8CF2',
   parent: '#F472B6',

@@ -3,7 +3,7 @@
 // Kept as no-ops so the browser-only extraction libs stay out of the native bundle.
 import type { LinkRef } from './links';
 
-export interface Extracted { text: string; links: LinkRef[] }
+export interface Extracted { text: string; links: LinkRef[]; pageImages?: string[] }
 const EMPTY: Extracted = { text: '', links: [] };
 
 export async function extractPdfText(_file: File, _maxChars: number): Promise<Extracted> { return EMPTY; }

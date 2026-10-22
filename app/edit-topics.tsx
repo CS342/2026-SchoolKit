@@ -15,7 +15,7 @@ import { SelectableCard } from '../components/onboarding/SelectableCard';
 import { ContentColumn } from '../components/ui';
 import { SPACING, ANIMATION } from '../constants/onboarding-theme';
 import { useTheme } from '../contexts/ThemeContext';
-import { PAGE_TOPICS } from '../constants/resources';
+import { useTopicPicker } from '../hooks/useResources';
 
 function AnimatedCardWrapper({ children, index }: { children: React.ReactNode; index: number }) {
   const opacity = useSharedValue(0);
@@ -40,18 +40,10 @@ export default function EditTopicsScreen() {
   const insets = useSafeAreaInsets();
   const { data, updateTopics } = useOnboarding();
   const { colors, appStyles } = useTheme();
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(data.topics);
-
-  const toggleTopic = (topic: string) => {
-    setSelectedTopics(prev =>
-      prev.includes(topic)
-        ? prev.filter(t => t !== topic)
-        : [...prev, topic]
-    );
-  };
+  const picker = useTopicPicker(data.topics);
 
   const handleSave = () => {
-    updateTopics(selectedTopics);
+    updateTopics(picker.toSave());
     router.back();
   };
 
@@ -71,18 +63,18 @@ export default function EditTopicsScreen() {
         <ContentColumn width="reading">
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>Select topics you're interested in</Text>
           <Text style={[styles.selectedCount, { color: colors.primary }]}>
-            {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
+            {picker.count} topic{picker.count !== 1 ? 's' : ''} selected
           </Text>
 
           <View style={styles.cardsContainer}>
-            {PAGE_TOPICS.map((topic, index) => (
-              <AnimatedCardWrapper key={topic.label} index={index}>
+            {picker.topics.map((topic, index) => (
+              <AnimatedCardWrapper key={topic.id} index={index}>
                 <SelectableCard
                   title={topic.label}
                   color={topic.color}
                   icon={topic.icon as any}
-                  selected={selectedTopics.includes(topic.label)}
-                  onPress={() => toggleTopic(topic.label)}
+                  selected={picker.isSelected(topic)}
+                  onPress={() => picker.toggle(topic)}
                   multiSelect={true}
                 />
               </AnimatedCardWrapper>

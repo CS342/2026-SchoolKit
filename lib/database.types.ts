@@ -7,7 +7,7 @@
 import type { DesignDocument } from '../features/design-editor/types/document';
 import type { ContentDoc } from '../features/content/types';
 
-export type UserRole = 'student-k8' | 'student-hs' | 'parent' | 'staff';
+export type UserRole = 'student-elementary' | 'student-k8' | 'student-hs' | 'parent' | 'staff';
 export type SchoolStatus =
   | 'current-treatment'
   | 'returning-after-treatment'
@@ -64,8 +64,20 @@ export type Design = {
   updated_at: string;
 };
 
+/** A topic groups one or more content pages ("versions"), each with its own audience. */
+export type ContentTopicRow = {
+  id: string;
+  slug: string;
+  name: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ContentPageRow = {
   id: string;
+  /** The topic this page is a version of. */
+  topic_id: string;
   slug: string;
   title: string;
   category: string | null;
@@ -265,9 +277,14 @@ export type Database = {
         Omit<DesignAsset, 'id' | 'created_at' | 'file_size'> & { id?: string; file_size?: number | null },
         Partial<Omit<DesignAsset, 'id' | 'created_at'>>
       >;
+      content_topics: TableDef<
+        ContentTopicRow,
+        Partial<ContentTopicRow> & { slug: string; name: string },
+        Partial<Omit<ContentTopicRow, 'id' | 'created_at'>>
+      >;
       content_pages: TableDef<
         ContentPageRow,
-        Partial<ContentPageRow> & { slug: string; title: string; doc: ContentDoc },
+        Partial<ContentPageRow> & { topic_id: string; slug: string; title: string; doc: ContentDoc },
         Partial<Omit<ContentPageRow, 'id' | 'created_at'>>
       >;
       journals: TableDef<

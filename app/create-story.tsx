@@ -32,6 +32,7 @@ import {
   RADII,
   BORDERS,
 } from '../constants/onboarding-theme';
+import { isStudentRole } from '../utils/profile';
 
 // Exporting CreateStoryScreen as default component
 export default function CreateStoryScreen() {
@@ -48,7 +49,7 @@ export default function CreateStoryScreen() {
   const { colors, isDark, fontScale, appStyles } = useTheme();
 
   const userGroup = useMemo(() => {
-    if (onboardingData.role === 'student-k8' || onboardingData.role === 'student-hs') return 'Students';
+    if (isStudentRole(onboardingData.role)) return 'Students';
     if (onboardingData.role === 'parent') return 'Parents';
     if (onboardingData.role === 'staff') return 'School Staff';
     return '';

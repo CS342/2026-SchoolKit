@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions } from 'react
 import { useRouter } from 'expo-router';
 import { useStories, Story } from '../contexts/StoriesContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { ALL_RESOURCES, Resource } from '../constants/resources';
+import type { Resource } from '../constants/resources';
+import { useResources } from '../hooks/useResources';
 import { COLORS, TYPOGRAPHY, RADII } from '../constants/onboarding-theme';
 import { AppTheme } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 interface RecommendationListProps {
   currentId: string;
   currentTags: string[];
+  /** Resources not to recommend — e.g. guides the page already links. */
+  excludeIds?: string[];
   /** 'rail' = compact vertical list for a web sidebar rail. */
   variant?: 'default' | 'rail';
 }
@@ -21,12 +24,16 @@ type RecommendedItem =
   | { type: 'resource'; item: Resource; score: number };
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.75;
+// Capped so cards stay phone-sized in wide windows (e.g. the editor's mobile preview).
+const CARD_WIDTH = Math.min(width * 0.75, 300);
 
-export function RecommendationList({ currentId, currentTags, variant = 'default' }: RecommendationListProps) {
+export function RecommendationList({ currentId, currentTags, excludeIds, variant = 'default' }: RecommendationListProps) {
   const router = useRouter();
   const { stories } = useStories();
   const { colors, isDark } = useTheme();
+  // The Library's cards for this viewer: published pages included (and in place of the
+  // built-in guides they replace), already filtered to the viewer's audience.
+  const { resources } = useResources();
 
   const styles = React.useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -34,6 +41,7 @@ export function RecommendationList({ currentId, currentTags, variant = 'default'
     const lowercaseCurrentTags = (currentTags || []).map(t => t.toLowerCase());
 
     const items: RecommendedItem[] = [];
+    const excluded = new Set(excludeIds ?? []);
 
     // Calculate score for stories
     stories.forEach(story => {
@@ -48,8 +56,8 @@ export function RecommendationList({ currentId, currentTags, variant = 'default'
     });
 
     // Calculate score for resources
-    ALL_RESOURCES.forEach(resource => {
-      if (resource.id === currentId || resource.designOnly) return;
+    resources.forEach(resource => {
+      if (resource.id === currentId || resource.designOnly || excluded.has(resource.id)) return;
       const resourceTags = resource.tags || [];
       const lowerResourceTags = resourceTags.map(t => t.toLowerCase());
       const intersection = lowercaseCurrentTags.filter(t => lowerResourceTags.includes(t));
@@ -64,10 +72,10 @@ export function RecommendationList({ currentId, currentTags, variant = 'default'
 
     // Backfill with other resources if we have fewer than 4
     if (items.length < 4) {
-      const existingIds = new Set(items.map(i => i.item.id));
+      const existingIds = new Set([...items.map(i => i.item.id), ...excluded]);
       existingIds.add(currentId);
 
-      for (const resource of ALL_RESOURCES) {
+      for (const resource of resources) {
         if (!existingIds.has(resource.id) && !resource.designOnly) {
           items.push({ type: 'resource', item: resource, score: 0 });
           existingIds.add(resource.id);
@@ -77,7 +85,7 @@ export function RecommendationList({ currentId, currentTags, variant = 'default'
     }
 
     return items.slice(0, 4);
-  }, [currentId, currentTags, stories]);
+  }, [currentId, currentTags, excludeIds, stories, resources]);
 
   if (recommendations.length === 0) {
     return null;

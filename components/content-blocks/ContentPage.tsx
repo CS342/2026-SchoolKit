@@ -18,10 +18,11 @@ import { DownloadButton } from '../DownloadButton';
 import { ContentDoc, HeroBlock } from '../../features/content/types';
 import { WIDE_TYPES } from '../../features/content/registry';
 import { makeBlockStyles } from './styles';
-import { BlockCtx, BlockCtxProvider, makeColorResolver, ResolvedStep } from './context';
+import { BlockCtx, BlockCtxProvider, makeColorResolver, ResolvedStep, FlipDeck } from './context';
 import { BlockRenderer, HeroTitle, blockHeading } from './blocks';
 import { BlockEntrance } from './util';
 import { StepModal } from './StepModal';
+import { FlipCardModal } from './FlipCardModal';
 
 export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: ContentDoc; forceLayout?: 'web' | 'mobile'; preview?: boolean; onReachEnd?: () => void }) {
   const { selectedVoice } = useOnboarding();
@@ -48,6 +49,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
 
   // ── step modal + TTS (ported from finances) ──
   const [expandedStep, setExpandedStep] = useState<ResolvedStep | null>(null);
+  const [flipDeck, setFlipDeck] = useState<FlipDeck | null>(null);
   const cardPlayer = useAudioPlayer();
   const cardPlayerStatus = useAudioPlayerStatus(cardPlayer);
   const [isCardSpeaking, setIsCardSpeaking] = useState(false);
@@ -94,9 +96,13 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
   const closeStep = () => { cardPlayer.pause(); setIsCardSpeaking(false); setExpandedStep(null); };
 
   // ── ctx ──
+  const linkedResourceIds = useMemo(
+    () => doc.blocks.flatMap((b) => (b.type === 'resourceRefList' ? ((b as any).resourceIds ?? []) as string[] : [])),
+    [doc.blocks],
+  );
   const ctx: BlockCtx = useMemo(
-    () => ({ colors, shadows, isDark, web, styles, accent: doc.accent, resourceId: doc.resourceId, tags: doc.tags, color, onOpenStep: setExpandedStep, preview }),
-    [colors, shadows, isDark, web, styles, doc.accent, doc.resourceId, doc.tags, color, preview],
+    () => ({ colors, shadows, isDark, web, styles, accent: doc.accent, resourceId: doc.resourceId, tags: doc.tags, linkedResourceIds, color, onOpenStep: setExpandedStep, onOpenFlip: setFlipDeck, preview }),
+    [colors, shadows, isDark, web, styles, doc.accent, doc.resourceId, doc.tags, linkedResourceIds, color, preview],
   );
 
   // ── derive hero, body, TOC ──
@@ -133,23 +139,29 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
     </BlockEntrance>
   ));
 
-  const stepModal = (
-    <StepModal
-      visible={expandedStep !== null}
-      step={expandedStep}
-      onClose={closeStep}
-      isSpeaking={isCardSpeaking}
-      isLoadingAudio={isCardLoadingAudio}
-      onToggleSpeak={handleCardSpeak}
-      playbackRate={cardPlaybackRate}
-      onTogglePlaybackRate={toggleCardPlaybackRate}
-      isAudioLoaded={cardPlayerStatus.isLoaded}
-      colors={colors}
-      styles={styles}
-    />
+  // Page-level modals: blocks open them through ctx (onOpenStep / onOpenFlip).
+  const modals = (
+    <>
+      <StepModal
+        visible={expandedStep !== null}
+        step={expandedStep}
+        onClose={closeStep}
+        isSpeaking={isCardSpeaking}
+        isLoadingAudio={isCardLoadingAudio}
+        onToggleSpeak={handleCardSpeak}
+        playbackRate={cardPlaybackRate}
+        onTogglePlaybackRate={toggleCardPlaybackRate}
+        isAudioLoaded={cardPlayerStatus.isLoaded}
+        colors={colors}
+        styles={styles}
+      />
+      <FlipCardModal deck={flipDeck} onClose={() => setFlipDeck(null)} />
+    </>
   );
 
-  if (Platform.OS === 'web') {
+  // The web article frame sizes itself by the browser window, so the editor's mobile
+  // preview (forceLayout="mobile", a phone-width frame on web) uses the phone layout below.
+  if (Platform.OS === 'web' && forceLayout !== 'mobile') {
     return (
       <BlockCtxProvider value={ctx}>
         <ArticleLayout
@@ -166,7 +178,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
         >
           {body}
         </ArticleLayout>
-        {stepModal}
+        {modals}
       </BlockCtxProvider>
     );
   }
@@ -175,7 +187,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
     <BlockCtxProvider value={ctx}>
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: colors.white, borderBottomColor: colors.borderCard }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
+          <TouchableOpacity onPress={() => { if (!preview) router.back(); }} style={styles.backButton} accessibilityLabel="Go back">
             <Ionicons name="arrow-back" size={28} color={colors.textDark} />
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{actionsNode}</View>
@@ -192,7 +204,7 @@ export function ContentPage({ doc, forceLayout, preview, onReachEnd }: { doc: Co
           </ContentColumn>
         </ScrollView>
       </View>
-      {stepModal}
+      {modals}
     </BlockCtxProvider>
   );
 }

@@ -15,7 +15,7 @@ import { useOnboarding } from '../../contexts/OnboardingContext';
 import { getRoleDisplayName, getSchoolStatusText } from '../../utils/profile';
 import { ResourceCard } from '../../components/ResourceCard';
 import { PrimaryButton } from '../../components/onboarding/PrimaryButton';
-import { useResources } from '../../hooks/useResources';
+import { useResources, matchesSavedTopic } from '../../hooks/useResources';
 import { type Resource } from '../../constants/resources';
 import { useResponsive, CONTENT_WIDTH } from '../../hooks/useResponsive';
 import { useAccomplishments } from '../../contexts/AccomplishmentContext';
@@ -215,13 +215,23 @@ export default function ForYouScreen() {
   // ── "Continue where you left off" ─────────────────────────────────────────
   // Prefer a topic that's started but unfinished; otherwise the first unopened
   // one. Null when every topic is done (the card then hides).
+  // Saved topics (by id, or by title on older profiles) whose page is visible to this
+  // viewer — once each. Topics whose page is hidden (audience / hide switches) or no
+  // longer exists stay saved but aren't shown.
   const topicResources = useMemo(
     () =>
       data.topics
-        .map(t => resources.find(r => r.title.toLowerCase() === t.toLowerCase()))
-        .filter((r): r is Resource => !!r),
+        .map(t => resources.find(r => matchesSavedTopic(t, r)))
+        .filter((r, i, all): r is Resource => !!r && all.findIndex(x => x?.id === r.id) === i),
     [data.topics, resources]
   );
+  const visibleTopics = topicResources;
+  // Empty state: distinguish "never picked topics" from "picked topics are all hidden".
+  const topicsAllHidden = data.topics.length > 0 && visibleTopics.length === 0;
+  const emptyTitle = topicsAllHidden ? 'No topics available right now' : 'No topics selected yet';
+  const emptySubtitle = topicsAllHidden
+    ? "The topics you picked aren't available at the moment. Check back soon, or choose different topics in your profile."
+    : 'Visit your profile to update your interests and get personalized support.';
   const continueItem = useMemo(() => {
     const inProgress = topicResources.find(
       r => openedResourceIds.has(r.id) && !isResourceFullyViewed(r.id)
@@ -353,35 +363,34 @@ export default function ForYouScreen() {
               </View>
             </FadeSlideIn>
 
-            {data.topics.length > 0 ? (
+            {visibleTopics.length > 0 ? (
               <View
                 style={styles.topicsGrid}
                 onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
               >
-                {data.topics.map((topic, index) => {
-                  const resource = resources.find(r => r.title.toLowerCase() === topic.toLowerCase());
-                  const color = resource?.color || colors.primary;
-                  const icon = (resource?.icon || 'bookmarks') as keyof typeof Ionicons.glyphMap;
-                  const status: TopicStatusKind = resource && isResourceFullyViewed(resource.id)
+                {visibleTopics.map((resource, index) => {
+                  const color = resource.color || colors.primary;
+                  const icon = (resource.icon || 'bookmarks') as keyof typeof Ionicons.glyphMap;
+                  const status: TopicStatusKind = isResourceFullyViewed(resource.id)
                     ? 'done'
-                    : resource && openedResourceIds.has(resource.id)
+                    : openedResourceIds.has(resource.id)
                       ? 'started'
                       : 'new';
 
                   return (
                     <FadeSlideIn
-                      key={index}
+                      key={resource.id}
                       delay={(continueItem ? 220 : 150) + Math.min(index, 8) * 55}
                       style={topicWidth > 0 ? { width: topicWidth } : { width: '100%' }}
                     >
                       <ResourceRow
-                        title={topic}
+                        title={resource.title}
                         icon={icon}
                         color={color}
-                        category={resource?.category}
-                        description={resource?.shortDescription}
+                        category={resource.category}
+                        description={resource.shortDescription}
                         right={<TopicStatus status={status} colors={colors} />}
-                        onPress={() => handleTopicPress(topic, resource?.route)}
+                        onPress={() => handleTopicPress(resource.title, resource.route)}
                       />
                     </FadeSlideIn>
                   );
@@ -392,9 +401,9 @@ export default function ForYouScreen() {
                 <View style={sharedStyles.pageIconCircle}>
                   <Ionicons name="compass-outline" size={SIZING.iconPage} color={colors.primary} />
                 </View>
-                <Text style={sharedStyles.pageTitle}>No topics selected yet</Text>
+                <Text style={sharedStyles.pageTitle}>{emptyTitle}</Text>
                 <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                  Visit your profile to update your interests and get personalized support.
+                  {emptySubtitle}
                 </Text>
                 <PrimaryButton
                   title="Update Profile"
@@ -408,34 +417,28 @@ export default function ForYouScreen() {
           <>
             <Text style={styles.sectionTitle}>Your Support Topics</Text>
 
-            {data.topics.length > 0 ? (
+            {visibleTopics.length > 0 ? (
               <View style={styles.topicsContainer}>
-                {data.topics.map((topic, index) => {
-                  const resource = resources.find(r => r.title.toLowerCase() === topic.toLowerCase());
-                  const color = resource?.color || colors.primary;
-                  const icon = resource?.icon || 'bookmarks';
-
-                  return (
-                    <ResourceCard
-                      key={index}
-                      id={resource?.id || topic}
-                      title={topic}
-                      icon={icon}
-                      color={color}
-                      onPress={() => handleTopicPress(topic, resource?.route)}
-                      index={index}
-                    />
-                  );
-                })}
+                {visibleTopics.map((resource, index) => (
+                  <ResourceCard
+                    key={resource.id}
+                    id={resource.id}
+                    title={resource.title}
+                    icon={resource.icon || 'bookmarks'}
+                    color={resource.color || colors.primary}
+                    onPress={() => handleTopicPress(resource.title, resource.route)}
+                    index={index}
+                  />
+                ))}
               </View>
             ) : (
               <View style={styles.emptyContainer}>
                 <View style={sharedStyles.pageIconCircle}>
                   <Ionicons name="compass-outline" size={SIZING.iconPage} color={colors.primary} />
                 </View>
-                <Text style={sharedStyles.pageTitle}>No topics selected yet</Text>
+                <Text style={sharedStyles.pageTitle}>{emptyTitle}</Text>
                 <Text style={[sharedStyles.pageSubtitle, { marginBottom: 28 }]}>
-                  Visit your profile to update your interests and get personalized support.
+                  {emptySubtitle}
                 </Text>
                 <PrimaryButton
                   title="Update Profile"

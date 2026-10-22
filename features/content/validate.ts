@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import type { ContentBlock, ContentDoc, Op, BlockType } from './types';
 import { BLOCK_SCHEMAS, ARRAY_KEY, ColorTokenSchema } from './registry';
+import { parseAudience } from './audience';
 
 // Re-export so existing importers (ops.ts) keep `import { ARRAY_KEY } from './validate'`.
 export { ARRAY_KEY };
@@ -77,6 +78,7 @@ export function parseContentDoc(input: unknown): ParseResult {
     tags: isArr(input.tags) ? (input.tags as unknown[]).filter(isStr) : [],
     resourceId: isStr(input.resourceId) ? input.resourceId : undefined,
     shareMessage: isStr(input.shareMessage) ? input.shareMessage : undefined,
+    audience: parseAudience(input.audience),
     blocks: kept,
   };
   return { doc, errors, warnings };

@@ -37,7 +37,9 @@ const TitlePart = z.object({ text: z.string(), accent: z.boolean().optional() })
 const AccordionItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTokenSchema, summary: Str, body: Str });
 const CardItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTokenSchema, body: Str, href: z.string().optional() });
 const StepItemS = z.object({ id: Id, title: Str, icon: Icon, color: ColorTokenSchema, detail: Str });
-const LinkItemS = z.object({ id: Id, name: Str, icon: Icon, color: ColorTokenSchema, blurb: Str, url: Str, display: Str });
+// blurb/display are optional: a source's link list often has bare links, and requiring
+// them made the AI invent descriptions. The renderer shows the URL's domain without display.
+const LinkItemS = z.object({ id: Id, name: Str, icon: Icon, color: ColorTokenSchema, blurb: z.string().optional(), url: Str, display: z.string().optional() });
 const ReferenceItemS = z.object({ id: Id, label: Str, url: z.string().optional() });
 const ChecklistItemS = z.object({ id: Id, text: Str, done: z.boolean().optional() });
 const StatItemS = z.object({ id: Id, value: Str, label: Str, icon: Icon.optional(), color: ColorTokenSchema });
@@ -57,6 +59,8 @@ export interface FieldDef {
   placeholder?: string;
   /** For kind:'select' — the choices shown as a segmented control. */
   options?: { value: string; label: string }[];
+  /** For kind:'icon' — the schema allows no icon, so the picker offers "No icon". */
+  optional?: boolean;
 }
 export interface ItemConfig { arrayKey: string; noun: string; fields: FieldDef[]; make: () => any }
 export interface BlockConfig { fields: FieldDef[]; item?: ItemConfig; special?: 'hero' | 'resourceRefList' | 'comparisonTable' | 'image' }
@@ -141,7 +145,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     palette: { label: 'Text', icon: 'text-outline', blurb: 'A paragraph of prose.', manuallyAddable: true, order: 7 },
     headingField: 'heading',
     summary: (b) => (b.heading ? b.heading + ' — ' : '') + (b.markdown ?? '').replace(/[#*_>-]/g, '').slice(0, 70),
-    aiPrompt: `- richText: { id, type:"richText", heading?, markdown } — markdown supports **bold**, *italic*, [text](url), and "- " bullets.`,
+    aiPrompt: `- richText: { id, type:"richText", heading?, markdown } — markdown supports "### " subheadings, **bold**, *italic*, [text](url), "- " bullets, and "1. " numbered lists. Put each subheading and list item on its own line, and separate paragraphs with a blank line (\\n\\n).`,
   },
   quote: {
     type: 'quote',
@@ -246,7 +250,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     headingField: 'heading',
     wideLayout: true,
     summary: (b) => `${b.heading} · ${(b.items ?? []).length} items`,
-    aiPrompt: `- linkList: { id, type:"linkList", heading, subheading?, items:[{id,name,icon,color,blurb,url,display}] } — outside orgs; urls from verifiedLinks only.`,
+    aiPrompt: `- linkList: { id, type:"linkList", heading, subheading?, items:[{id,name,icon,color,blurb?,url,display?}] } — outside orgs/sites; urls from verifiedLinks only. EVERY list of outside links goes in a linkList — never as markdown links in a richText list. heading = the source's own line introducing the list, verbatim (e.g. "Want to learn more? Check out these great resources:"), else a 2–4 word label; never give that intro line to a different block. name = the link's text as written; blurb only if the source describes that link (otherwise omit); display = the site's domain, or omit.`,
   },
   resourceRefList: {
     type: 'resourceRefList',
@@ -311,7 +315,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'stat', make: makeStat, fields: [
       { key: 'value', label: 'Value', kind: 'text', placeholder: 'e.g. 1 in 5' },
       { key: 'label', label: 'Label', kind: 'text' },
-      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'icon', label: 'Icon', kind: 'icon', optional: true },
       { key: 'color', label: 'Color', kind: 'color' },
     ] } },
     palette: { label: 'Stat tiles', icon: 'stats-chart-outline', blurb: 'Number + label highlight tiles.', manuallyAddable: true, order: 15 },
@@ -372,7 +376,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     make: () => ({ id: nid(), type: 'tabs', heading: 'Section title', subheading: '', items: [makeTab(), makeTab()] }),
     editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'tab', make: makeTab, fields: [
       { key: 'label', label: 'Tab label', kind: 'text' },
-      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'icon', label: 'Icon', kind: 'icon', optional: true },
       { key: 'markdown', label: 'Content', kind: 'textarea' },
     ] } },
     palette: { label: 'Tabs', icon: 'albums-outline', blurb: 'Tabbed sections, one at a time.', manuallyAddable: true, order: 19 },
@@ -388,7 +392,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     editor: { fields: HEADER, item: { arrayKey: 'items', noun: 'card', make: makeFlipCard, fields: [
       { key: 'front', label: 'Front', kind: 'text' },
       { key: 'back', label: 'Back', kind: 'textarea' },
-      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'icon', label: 'Icon', kind: 'icon', optional: true },
       { key: 'color', label: 'Color', kind: 'color' },
     ] } },
     palette: { label: 'Flip cards', icon: 'sync-outline', blurb: 'Tap-to-flip term/definition cards.', manuallyAddable: true, order: 20 },

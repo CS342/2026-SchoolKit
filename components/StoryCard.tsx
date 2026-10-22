@@ -29,7 +29,7 @@ interface StoryCardProps {
 
 const ALL_AUDIENCES = ['Students', 'Parents', 'School Staff'];
 const AUDIENCE_DISPLAY: Record<string, string> = {
-  'student-k8': 'Students', 'student-hs': 'Students',
+  'student-elementary': 'Students', 'student-k8': 'Students', 'student-hs': 'Students',
   'parent': 'Parents', 'staff': 'School Staff',
   'Students': 'Students', 'Parents': 'Parents', 'School Staff': 'School Staff',
 };
@@ -46,6 +46,7 @@ function getAudienceHint(targetAudiences?: string[]): string {
 
 function getRoleLabel(role: UserRole | null): string {
   switch (role) {
+    case 'student-elementary':
     case 'student-k8': return 'Student';
     case 'student-hs': return 'Student';
     case 'parent': return 'Parent';

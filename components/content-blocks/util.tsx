@@ -47,9 +47,54 @@ export function BlockEntrance({
 }
 
 // ─── minimal markdown ──────────────────────────────────────────────────────────
-// Supports: paragraphs (blank-line separated), - bullet lists, **bold**, *italic*,
-// [text](url). No raw HTML. Renders to native <Text>.
+// Supports: # / ## / ### headings, paragraphs (blank-line separated; single newlines
+// soft-wrap), "- " / "* " bullet lists, "1. " numbered lists, **bold**, *italic*,
+// [text](url). Parsed line by line, so a heading or list can sit directly above a
+// paragraph without a blank line between (common in pasted/verbatim source text).
+// No raw HTML. Renders to native <Text>.
 type Run = { text: string; bold?: boolean; italic?: boolean; href?: string };
+
+type MdNode =
+  | { kind: 'heading'; level: number; text: string }
+  | { kind: 'para'; text: string }
+  | { kind: 'list'; ordered: boolean; items: { marker: string; text: string }[] };
+
+const HEADING_RE = /^(#{1,6})\s+(.*?)\s*#*$/;
+const BULLET_RE = /^[-*•]\s+(.*)$/;
+const ORDERED_RE = /^(\d{1,3})[.)]\s+(.*)$/;
+
+function parseMarkdown(md: string): MdNode[] {
+  const nodes: MdNode[] = [];
+  let para: string[] = [];
+  let list: Extract<MdNode, { kind: 'list' }> | null = null;
+  const flushPara = () => { if (para.length) { nodes.push({ kind: 'para', text: para.join(' ') }); para = []; } };
+  const flushList = () => { if (list) { nodes.push(list); list = null; } };
+
+  for (const raw of md.split('\n')) {
+    const line = raw.trim();
+    if (!line) { flushPara(); flushList(); continue; }
+    let m: RegExpExecArray | null;
+    if ((m = HEADING_RE.exec(line))) {
+      flushPara(); flushList();
+      nodes.push({ kind: 'heading', level: m[1].length, text: m[2] });
+      continue;
+    }
+    const bullet = BULLET_RE.exec(line);
+    const ordered = bullet ? null : ORDERED_RE.exec(line);
+    if (bullet || ordered) {
+      flushPara();
+      const isOrdered = !!ordered;
+      if (list && list.ordered !== isOrdered) flushList();
+      if (!list) list = { kind: 'list', ordered: isOrdered, items: [] };
+      list.items.push(ordered ? { marker: `${ordered[1]}.`, text: ordered[2] } : { marker: '•', text: bullet![1] });
+      continue;
+    }
+    flushList();
+    para.push(line);
+  }
+  flushPara(); flushList();
+  return nodes;
+}
 
 function parseInline(s: string): Run[] {
   const runs: Run[] = [];
@@ -82,20 +127,31 @@ export function Markdown({
   linkColor: string;
   onLink?: (href: string) => void;
 }) {
-  const blocks = markdown.split(/\n\s*\n/);
+  const nodes = parseMarkdown(markdown ?? '');
+  const baseSize = paraStyle.fontSize ?? 16;
   return (
     <>
-      {blocks.map((blk, bi) => {
-        const lines = blk.split('\n');
-        const isList = lines.every((l) => l.trim().startsWith('- '));
-        if (isList) {
+      {nodes.map((node, bi) => {
+        if (node.kind === 'heading') {
+          const fontSize = baseSize + (node.level <= 2 ? 4 : 2);
           return (
-            <View key={bi}>
-              {lines.map((l, li) => (
+            <Text
+              key={bi}
+              accessibilityRole="header"
+              style={[paraStyle, { fontFamily: 'Raleway_700Bold', fontSize, lineHeight: Math.round(fontSize * 1.3), marginTop: bi === 0 ? 0 : 8, marginBottom: 6 }]}
+            >
+              {renderRuns(parseInline(node.text), linkColor, onLink)}
+            </Text>
+          );
+        }
+        if (node.kind === 'list') {
+          return (
+            <View key={bi} style={{ marginBottom: 4 }}>
+              {node.items.map((item, li) => (
                 <View key={li} style={bulletRowStyle}>
-                  <Text style={bulletDotStyle}>{'•'}</Text>
+                  <Text style={[bulletDotStyle, node.ordered && { minWidth: 20 }]}>{item.marker}</Text>
                   <Text style={[paraStyle, { marginBottom: 0, flex: 1 }]}>
-                    {renderRuns(parseInline(l.trim().slice(2)), linkColor, onLink)}
+                    {renderRuns(parseInline(item.text), linkColor, onLink)}
                   </Text>
                 </View>
               ))}
@@ -104,7 +160,7 @@ export function Markdown({
         }
         return (
           <Text key={bi} style={paraStyle}>
-            {renderRuns(parseInline(blk.replace(/\n/g, ' ')), linkColor, onLink)}
+            {renderRuns(parseInline(node.text), linkColor, onLink)}
           </Text>
         );
       })}

@@ -30,7 +30,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { VOICE_META, generateSpeech } from '../services/elevenLabs';
-import { ALL_RESOURCES } from '../constants/resources';
+import { useResources } from '../hooks/useResources';
 import { ANIMATION, SPACING } from '../constants/onboarding-theme';
 import type { AppTheme } from '../constants/theme';
 
@@ -514,6 +514,12 @@ export function SettingsSheet() {
   const { colors, shadows } = theme;
   const { signOut, isAdmin } = useAuth();
   const { downloadAllResources, downloads, selectedVoice, updateVoice, resetOnboarding, preferredLanguage } = useOnboarding();
+  // Count against what the Library lists for this viewer (published pages included,
+  // hidden built-ins excluded), not the static built-in list.
+  const { resources } = useResources();
+  const libraryIds = resources.filter((r) => !r.designOnly).map((r) => r.id);
+  const savedCount = libraryIds.filter((id) => downloads.includes(id)).length;
+  const allDownloaded = libraryIds.length > 0 && savedCount === libraryIds.length;
   const [currentView, setCurrentView] = React.useState<SheetView>('main');
 
   // Reset to main view whenever sheet opens
@@ -550,7 +556,6 @@ export function SettingsSheet() {
   };
 
   const handleDownloadAll = () => {
-    const allDownloaded = downloads.length >= ALL_RESOURCES.length;
     if (allDownloaded) {
       if (Platform.OS === 'web') {
         window.alert('Already Downloaded\nAll resources are already available offline.');
@@ -559,11 +564,11 @@ export function SettingsSheet() {
       }
     } else if (Platform.OS === 'web') {
       if (!window.confirm('Download All Resources\nThis will save all resources for offline access.')) return;
-      downloadAllResources().then(() => { window.alert('Success\nAll resources are now available offline!'); });
+      downloadAllResources(libraryIds).then(() => { window.alert('Success\nAll resources are now available offline!'); });
     } else {
       Alert.alert('Download All Resources', 'This will save all resources for offline access.', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Download All', onPress: async () => { await downloadAllResources(); Alert.alert('Success', 'All resources are now available offline!'); } },
+        { text: 'Download All', onPress: async () => { await downloadAllResources(libraryIds); Alert.alert('Success', 'All resources are now available offline!'); } },
       ]);
     }
   };
@@ -618,7 +623,7 @@ export function SettingsSheet() {
                     <SheetRow icon="color-palette-outline" label="Design Editor" value="Create visuals" onPress={() => { close(); router.push('/(editor)/designs'); }} theme={theme} />
                   )}
                   {/* Content Pages now lives as a top-level admin tab in the left sidebar (PersistentSidebar). */}
-                  <SheetRow icon="cloud-download-outline" label="Download All" value={downloads.length >= ALL_RESOURCES.length ? 'All saved' : `${downloads.length}/${ALL_RESOURCES.length}`} onPress={handleDownloadAll} theme={theme} />
+                  <SheetRow icon="cloud-download-outline" label="Download All" value={allDownloaded ? 'All saved' : `${savedCount}/${libraryIds.length}`} onPress={handleDownloadAll} theme={theme} />
                   <SheetRow icon="refresh-outline" label="Retake Survey" onPress={handleRetakeSurvey} theme={theme} />
                   <SheetRow icon="information-circle-outline" label="About SchoolKit" onPress={() => setCurrentView('about')} theme={theme} />
                   <SheetRow icon="help-circle-outline" label="Frequently Asked Questions" onPress={() => setCurrentView('faq')} theme={theme} />

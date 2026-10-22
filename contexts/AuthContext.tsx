@@ -1,8 +1,24 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 import type { AppRole } from '../lib/database.types';
 import { Session, User } from '@supabase/supabase-js';
+
+/**
+ * Where the password-reset email link should send the user. On web we point at
+ * the running origin (so it works in both local dev and the deployed site without
+ * hardcoding a domain); on native we deep-link into the app via the custom scheme.
+ * The resulting URL must be listed under Supabase Auth → URL Configuration →
+ * Redirect URLs for the link to be accepted.
+ */
+function getPasswordResetRedirectUrl() {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return `${window.location.origin}/reset-password`;
+  }
+  return Linking.createURL('reset-password');
+}
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +36,7 @@ interface AuthContextType {
   linkEmailPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInAnonymously: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -104,7 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getPasswordResetRedirectUrl(),
+    });
+    return { error: error as Error | null };
+  };
+
+  // Called from the reset-password screen after the recovery link has established
+  // a session (Supabase detects the token in the URL on web via detectSessionInUrl).
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
     return { error: error as Error | null };
   };
 
@@ -148,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         linkEmailPassword,
         signInAnonymously,
         resetPassword,
+        updatePassword,
         signOut,
       }}
     >

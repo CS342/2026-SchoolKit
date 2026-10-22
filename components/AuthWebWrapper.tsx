@@ -344,9 +344,9 @@ const makeBrandStyles = () => StyleSheet.create({
 /* ─── Stepper bar styles (frosted glass, used by auth/confirm) ─────── */
 const makeStepperStyles = (c: ThemeColors) => StyleSheet.create({
   bar: {
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: c.whiteOverlay80,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(123,104,238,0.08)',
+    borderBottomColor: c.border,
     ...Platform.select({
       web: {
         backdropFilter: 'blur(20px)',
